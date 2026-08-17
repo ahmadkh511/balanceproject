@@ -1,0 +1,76 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <div class="card shadow">
+        <div class="card-header bg-info text-white d-flex justify-content-between align-items-center">
+            <h5 class="mb-0"><i class="fas fa-users ml-2"></i> تقرير المبيعات حسب العميل</h5>
+            <span class="badge badge-light">إجمالي الفواتير: {{ total_invoices }}</span>
+        </div>
+        <div class="card-body">
+            <!-- شريط البحث -->
+            <form method="GET" class="mb-4">
+                <div class="row">
+                    <div class="col-md-4">
+                        <input type="text" name="q" class="form-control" placeholder="بحث باسم العميل..." value="{{ search_query }}">
+                    </div>
+                    <div class="col-md-2">
+                        <button type="submit" class="btn btn-secondary"><i class="fas fa-search"></i> بحث</button>
+                        <a href="{% url 'invoice:sales_by_customer_report' %}" class="btn btn-outline-dark">إعادة تعيين</a>
+                    </div>
+                </div>
+            </form>
+
+            <!-- جدول النتائج -->
+            <div class="table-responsive">
+                <table class="table table-striped table-hover">
+                    <thead class="thead-dark">
+                        <tr>
+                            <th>#</th>
+                            <th>اسم العميل</th>
+                            <th>عدد الفواتير</th>
+                            <th>إجمالي المبيعات</th>
+                            <th>إجمالي المدفوع</th>
+                            <th>المتبقي</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for row in report_data %}
+                        <tr>
+                            <td>{{ forloop.counter }}</td>
+                            <td>
+                                <a href="{% url 'invoice:statement_report' %}?user_id={{ row.sale_customer__id }}">
+                                    {{ row.sale_customer__first_name }} {{ row.sale_customer__last_name }}
+                                    <small class="text-muted d-block">{{ row.sale_customer__username }}</small>
+                                </a>
+                            </td>
+                            <td><span class="badge badge-primary">{{ row.invoice_count }}</span></td>
+                            <td><b>{{ row.total_amount|floatformat:2 }}</b></td>
+                            <td class="text-success">{{ row.paid_amount|floatformat:2 }}</td>
+                            <td class="text-danger">
+                                {# استخدام widthratio للطرح: (total * 1) - paid #}
+                                {% widthratio row.total_amount 1 row.paid_amount as balance %}
+                                {{ balance|floatformat:2 }}
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="6" class="text-center text-muted">لا توجد بيانات مبيعات</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                    <tfoot class="font-weight-bold bg-light">
+                        <tr>
+                            <td colspan="2">الإجمالي الكلي</td>
+                            <td>{{ total_invoices }}</td>
+                            <td>{{ grand_total|floatformat:2 }}</td>
+                            <td colspan="2"></td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

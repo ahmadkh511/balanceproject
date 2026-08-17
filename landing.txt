@@ -1,0 +1,1627 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}BalanceIQ | نظام الفواتير، نقطة البيع والمتجر الإلكتروني{% endblock %}
+
+{% block extra_css %}
+<style nonce="{{ csp_nonce }}">
+    :root {
+        --primary: #0097a7;
+        --primary-dark: #006064;
+        --primary-light: #4dd0e1;
+        --aqua-1: #e0f7fa;
+        --aqua-2: #b2ebf2;
+        --aqua-3: #80deea;
+        --dark: #0a2540;
+        --text: #1e293b;
+        --text-muted: #64748b;
+        --bg: #f8fffe;
+        --white: #ffffff;
+        --border: #e2e8f0;
+        --error: #dc2626;
+        --error-bg: #fee2e2;
+        --radius: 12px;
+        --radius-lg: 20px;
+        --radius-xl: 28px;
+    }
+
+    .landing-wrapper {
+        font-family: 'Tajawal', sans-serif;
+        color: var(--text);
+        background: var(--bg);
+        overflow-x: hidden;
+        line-height: 1.7;
+    }
+
+    .landing-wrapper section[id] {
+        scroll-margin-top: 76px;
+    }
+
+    .landing-wrapper img {
+        max-width: 100%;
+    }
+
+    .landing-wrapper .container {
+        max-width: 1200px;
+    }
+
+    /* ===== رسائل الموقع ===== */
+    .global-messages {
+        position: fixed;
+        top: 84px;
+        left: 50%;
+        transform: translateX(-50%);
+        z-index: 9999;
+        width: 92%;
+        max-width: 480px;
+    }
+    .global-message-alert {
+        border-radius: var(--radius);
+        padding: 0.9rem 1.2rem;
+        font-size: 0.88rem;
+        display: flex;
+        align-items: center;
+        gap: 0.7rem;
+        box-shadow: 0 8px 30px rgba(0,0,0,0.12);
+        animation: slideDown 0.4s ease;
+        background: #fff;
+    }
+    .global-message-success {
+        color: #059669;
+        border-right: 4px solid #059669;
+    }
+    .global-message-error {
+        color: var(--error);
+        border-right: 4px solid var(--error);
+    }
+    @keyframes slideDown {
+        from { transform: translateY(-16px); opacity: 0; }
+        to { transform: translateY(0); opacity: 1; }
+    }
+
+    /* ===== الشريط العلوي ===== */
+    .landing-navbar {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        z-index: 1050;
+        background: rgba(255,255,255,0.88);
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        border-bottom: 1px solid transparent;
+        transition: border-color 0.3s, box-shadow 0.3s;
+    }
+    .landing-navbar.scrolled {
+        border-bottom-color: var(--border);
+        box-shadow: 0 1px 12px rgba(0,0,0,0.04);
+    }
+    .landing-nav-inner {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        height: 72px;
+    }
+    .landing-brand {
+        display: flex;
+        align-items: center;
+        gap: 0.6rem;
+        text-decoration: none;
+        color: var(--dark);
+        font-weight: 800;
+        font-size: 1.25rem;
+    }
+    .landing-brand-icon {
+        width: 36px;
+        height: 36px;
+        background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+        border-radius: 9px;
+        display: grid;
+        place-items: center;
+        color: #fff;
+        font-size: 0.9rem;
+    }
+    .landing-nav-links {
+        display: flex;
+        align-items: center;
+        gap: 0.25rem;
+    }
+    .landing-nav-links a {
+        color: var(--text-muted);
+        text-decoration: none;
+        font-weight: 600;
+        font-size: 0.84rem;
+        padding: 0.45rem 0.85rem;
+        border-radius: 8px;
+        transition: 0.2s;
+    }
+    .landing-nav-links a:hover {
+        color: var(--primary);
+        background: var(--aqua-1);
+    }
+    .landing-nav-actions {
+        display: flex;
+        align-items: center;
+        gap: 0.4rem;
+    }
+    .landing-btn {
+        border: none;
+        border-radius: 8px;
+        padding: 0.5rem 1.1rem;
+        font-family: 'Tajawal', sans-serif;
+        font-weight: 700;
+        font-size: 0.84rem;
+        cursor: pointer;
+        transition: 0.2s;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.4rem;
+        text-decoration: none;
+    }
+    .landing-btn-ghost {
+        background: transparent;
+        color: var(--primary);
+    }
+    .landing-btn-ghost:hover {
+        background: var(--aqua-1);
+    }
+    .landing-btn-primary {
+        background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+        color: #fff;
+        box-shadow: 0 2px 12px rgba(0,151,167,0.25);
+    }
+    .landing-btn-primary:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 6px 20px rgba(0,151,167,0.35);
+        color: #fff;
+    }
+    .landing-btn-lg {
+        padding: 0.75rem 2rem;
+        font-size: 0.95rem;
+        border-radius: 10px;
+    }
+    .landing-btn-white {
+        background: #fff;
+        color: var(--primary);
+        box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+    }
+    .landing-btn-white:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+    }
+    .landing-btn-trial-anim {
+        position: relative;
+        overflow: hidden;
+        background: linear-gradient(135deg, #0097a7, #00bcd4, #0097a7, #006064) !important;
+        background-size: 300% 300% !important;
+        animation: trialGradient 6s ease infinite, trialPulse 4s ease-in-out infinite;
+        z-index: 1;
+        color: #fff !important;
+        border-radius: 8px;
+        padding: 0.5rem 1.1rem;
+        font-family: 'Tajawal', sans-serif;
+        font-weight: 700;
+        font-size: 0.84rem;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.4rem;
+        text-decoration: none;
+        border: none;
+    }
+    @keyframes trialGradient {
+        0% { background-position: 0% 50% }
+        50% { background-position: 100% 50% }
+        100% { background-position: 0% 50% }
+    }
+    @keyframes trialPulse {
+        0%,100% { transform: scale(1); box-shadow: 0 2px 12px rgba(0,151,167,0.3) }
+        50% { transform: scale(1.025); box-shadow: 0 4px 18px rgba(0,151,167,0.4) }
+    }
+    .landing-btn-trial-anim::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(255,255,255,0.18), transparent);
+        animation: trialShine 5s ease-in-out infinite 1s;
+        z-index: 2;
+        pointer-events: none;
+    }
+    @keyframes trialShine {
+        0%,10% { left: -100% }
+        100% { left: 100% }
+    }
+    .landing-btn-trial-anim::after {
+        content: '';
+        position: absolute;
+        inset: -2px;
+        border-radius: inherit;
+        background: linear-gradient(135deg, #00e5ff, #0097a7, #00bcd4);
+        background-size: 300% 300%;
+        animation: trialHalo 5s ease infinite;
+        z-index: -1;
+        opacity: 0;
+        filter: blur(6px);
+        pointer-events: none;
+    }
+    @keyframes trialHalo {
+        0%,100% { opacity: 0; background-position: 0% 50% }
+        50% { opacity: 0.3; background-position: 100% 50% }
+    }
+    .landing-btn-trial-anim:hover {
+        filter: brightness(1.12);
+        color: #fff !important;
+        transform: translateY(-1px) !important;
+    }
+    .landing-btn-trial-anim.landing-btn-lg {
+        padding: 0.75rem 2rem;
+        font-size: 0.95rem;
+        border-radius: 10px;
+    }
+    .landing-section-cta {
+        margin-top: 2rem;
+    }
+    .landing-mobile-toggle {
+        display: none;
+        background: none;
+        border: none;
+        cursor: pointer;
+        width: 40px;
+        height: 40px;
+        border-radius: 8px;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 5px;
+    }
+    .landing-mobile-toggle span {
+        display: block;
+        width: 22px;
+        height: 2px;
+        background: var(--dark);
+        border-radius: 2px;
+        transition: 0.3s;
+    }
+    .landing-mobile-toggle.active span:nth-child(1) {
+        transform: rotate(45deg) translate(5px, 5px);
+    }
+    .landing-mobile-toggle.active span:nth-child(2) {
+        opacity: 0;
+    }
+    .landing-mobile-toggle.active span:nth-child(3) {
+        transform: rotate(-45deg) translate(5px, -5px);
+    }
+    .landing-mobile-menu {
+        display: none;
+        position: fixed;
+        top: 72px;
+        left: 0;
+        right: 0;
+        background: #fff;
+        border-bottom: 1px solid var(--border);
+        box-shadow: 0 12px 40px rgba(0,0,0,0.08);
+        padding: 1rem;
+        z-index: 1049;
+    }
+    .landing-mobile-menu.open {
+        display: block;
+        animation: slideDown 0.3s ease;
+    }
+    .landing-mobile-menu a {
+        display: block;
+        padding: 0.75rem 1rem;
+        color: var(--text);
+        text-decoration: none;
+        font-weight: 600;
+        border-radius: 8px;
+        transition: 0.2s;
+    }
+    .landing-mobile-menu a:hover {
+        background: var(--aqua-1);
+        color: var(--primary);
+    }
+
+    /* ===== الهيرو ===== */
+    .landing-hero {
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        padding-top: 72px;
+        position: relative;
+        overflow: hidden;
+        background: linear-gradient(170deg, #fff 0%, var(--bg) 50%, var(--aqua-1) 100%);
+    }
+    .landing-hero::before {
+        content: '';
+        position: absolute;
+        width: 600px;
+        height: 600px;
+        border-radius: 50%;
+        background: radial-gradient(circle, rgba(0,151,167,0.06) 0%, transparent 70%);
+        top: -100px;
+        left: -200px;
+        pointer-events: none;
+    }
+    .landing-hero::after {
+        content: '';
+        position: absolute;
+        width: 400px;
+        height: 400px;
+        border-radius: 50%;
+        background: radial-gradient(circle, rgba(0,151,167,0.05) 0%, transparent 70%);
+        bottom: -80px;
+        right: -100px;
+        pointer-events: none;
+    }
+    .landing-hero-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 4rem;
+        align-items: center;
+        position: relative;
+        z-index: 1;
+    }
+    .landing-hero-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.4rem;
+        background: var(--aqua-1);
+        border: 1px solid var(--aqua-2);
+        color: var(--primary);
+        padding: 0.3rem 0.9rem;
+        border-radius: 24px;
+        font-size: 0.78rem;
+        font-weight: 700;
+        margin-bottom: 1.5rem;
+    }
+    .landing-hero-badge i {
+        font-size: 0.7rem;
+    }
+    .landing-hero h1 {
+        font-size: 3.2rem;
+        font-weight: 900;
+        line-height: 1.2;
+        color: var(--dark);
+        margin-bottom: 1.2rem;
+    }
+    .landing-hero h1 .grad {
+        background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+        -webkit-background-clip: text;
+        background-clip: text;
+        -webkit-text-fill-color: transparent;
+    }
+    .landing-hero-desc {
+        font-size: 1.08rem;
+        color: var(--text-muted);
+        line-height: 1.9;
+        margin-bottom: 2rem;
+        max-width: 500px;
+    }
+    .landing-hero-actions {
+        display: flex;
+        gap: 0.75rem;
+        flex-wrap: wrap;
+        margin-bottom: 2.5rem;
+    }
+    .landing-hero-trust {
+        display: flex;
+        align-items: center;
+        gap: 0.6rem;
+        font-size: 0.82rem;
+        color: var(--text-muted);
+    }
+    .landing-hero-trust-avatars {
+        display: flex;
+    }
+    .landing-hero-trust-avatars span {
+        width: 30px;
+        height: 30px;
+        border-radius: 50%;
+        border: 2px solid #fff;
+        display: grid;
+        place-items: center;
+        font-size: 0.65rem;
+        font-weight: 700;
+        color: #fff;
+        margin-left: -8px;
+    }
+    .landing-hero-trust-avatars span:first-child {
+        margin-left: 0;
+    }
+    .landing-mockup {
+        background: #fff;
+        border-radius: var(--radius-lg);
+        box-shadow: 0 20px 60px rgba(0,96,100,0.12), 0 0 0 1px rgba(0,0,0,0.03);
+        overflow: hidden;
+        transform: perspective(800px) rotateY(-3deg) rotateX(2deg);
+        transition: transform 0.6s cubic-bezier(0.23,1,0.32,1);
+    }
+    .landing-mockup:hover {
+        transform: perspective(800px) rotateY(0deg) rotateX(0deg);
+    }
+    .landing-mock-topbar {
+        height: 34px;
+        background: #f1f5f9;
+        display: flex;
+        align-items: center;
+        padding: 0 14px;
+        gap: 6px;
+    }
+    .landing-mock-dot {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+    }
+    .landing-mock-dot.r { background: #ef4444; }
+    .landing-mock-dot.y { background: #f59e0b; }
+    .landing-mock-dot.g { background: #22c55e; }
+    .landing-mock-title {
+        margin-right: auto;
+        font-size: 0.65rem;
+        color: #94a3b8;
+        font-weight: 600;
+    }
+    .landing-mock-body {
+        display: flex;
+        min-height: 320px;
+    }
+    .landing-mock-sidebar {
+        width: 52px;
+        background: var(--dark);
+        padding: 14px 10px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 10px;
+    }
+    .landing-mock-nav {
+        width: 32px;
+        height: 32px;
+        border-radius: 8px;
+        display: grid;
+        place-items: center;
+        color: rgba(255,255,255,0.4);
+        font-size: 0.72rem;
+        transition: 0.2s;
+    }
+    .landing-mock-nav.on {
+        background: var(--primary);
+        color: #fff;
+    }
+    .landing-mock-content {
+        flex: 1;
+        padding: 16px;
+        background: #f8fafc;
+    }
+    .landing-mock-metrics {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 8px;
+        margin-bottom: 16px;
+    }
+    .landing-mock-metric {
+        background: #fff;
+        border-radius: 8px;
+        padding: 10px 12px;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+    }
+    .landing-mock-metric-val {
+        font-size: 1.05rem;
+        font-weight: 800;
+        color: var(--dark);
+        display: block;
+    }
+    .landing-mock-metric-lbl {
+        font-size: 0.6rem;
+        color: #94a3b8;
+    }
+    .landing-mock-chart {
+        display: flex;
+        align-items: flex-end;
+        gap: 7px;
+        height: 140px;
+    }
+    .landing-mock-bar {
+        flex: 1;
+        border-radius: 5px 5px 0 0;
+        background: linear-gradient(to top, var(--primary), var(--primary-light));
+        opacity: 0.8;
+        transition: 0.5s;
+    }
+    .landing-mock-bar:hover {
+        opacity: 1;
+    }
+    .landing-mock-chart-labels {
+        display: flex;
+        gap: 7px;
+        margin-top: 6px;
+    }
+    .landing-mock-chart-labels span {
+        flex: 1;
+        text-align: center;
+        font-size: 0.55rem;
+        color: #94a3b8;
+    }
+
+    /* ===== الإحصائيات ===== */
+    .landing-stats-bar {
+        background: var(--white);
+        border-bottom: 1px solid var(--border);
+        padding: 2rem 0;
+    }
+    .landing-stats-grid {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 2rem;
+        text-align: center;
+    }
+    .landing-stat-num {
+        font-size: 2.2rem;
+        font-weight: 900;
+        color: var(--primary-dark);
+        display: block;
+        line-height: 1.2;
+    }
+    .landing-stat-label {
+        font-size: 0.82rem;
+        color: var(--text-muted);
+        font-weight: 500;
+    }
+
+    /* ===== الأقسام العامة ===== */
+    .landing-section {
+        padding: 5.5rem 0;
+    }
+    .landing-section-alt {
+        background: var(--white);
+    }
+    .landing-section-label {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.35rem;
+        background: var(--aqua-1);
+        border: 1px solid var(--aqua-2);
+        color: var(--primary);
+        padding: 0.25rem 0.75rem;
+        border-radius: 24px;
+        font-size: 0.72rem;
+        font-weight: 700;
+        margin-bottom: 0.8rem;
+    }
+    .landing-section-title {
+        font-size: 2.1rem;
+        font-weight: 900;
+        color: var(--dark);
+        margin-bottom: 0.7rem;
+        line-height: 1.3;
+    }
+    .landing-section-desc {
+        font-size: 0.95rem;
+        color: var(--text-muted);
+        line-height: 1.9;
+        max-width: 560px;
+    }
+    .landing-section-header {
+        margin-bottom: 3rem;
+    }
+    .landing-section-header.center {
+        text-align: center;
+    }
+    .landing-section-header.center .landing-section-desc {
+        margin: 0 auto;
+    }
+
+    /* ===== بطاقات الخدمات ===== */
+    .landing-services-grid {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 1.25rem;
+    }
+    .landing-service-card {
+        background: var(--white);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        padding: 1.5rem;
+        transition: 0.3s;
+        position: relative;
+        overflow: hidden;
+    }
+    .landing-service-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        right: 0;
+        width: 100%;
+        height: 3px;
+        background: linear-gradient(90deg, var(--primary), var(--primary-light));
+        transform: scaleX(0);
+        transform-origin: right;
+        transition: transform 0.3s;
+    }
+    .landing-service-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 12px 32px rgba(0,151,167,0.1);
+        border-color: var(--aqua-2);
+    }
+    .landing-service-card:hover::before {
+        transform: scaleX(1);
+    }
+    .landing-service-icon {
+        width: 44px;
+        height: 44px;
+        border-radius: 10px;
+        background: var(--aqua-1);
+        display: grid;
+        place-items: center;
+        color: var(--primary);
+        font-size: 1.05rem;
+        margin-bottom: 1rem;
+        transition: 0.3s;
+    }
+    .landing-service-card:hover .landing-service-icon {
+        background: var(--primary);
+        color: #fff;
+    }
+    .landing-service-card h5 {
+        font-weight: 700;
+        font-size: 0.95rem;
+        margin-bottom: 0.4rem;
+        color: var(--dark);
+    }
+    .landing-service-card p {
+        font-size: 0.8rem;
+        color: var(--text-muted);
+        margin: 0;
+        line-height: 1.7;
+    }
+
+    /* ===== أقسام الغوص ===== */
+    .landing-dive-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 4rem;
+        align-items: center;
+    }
+    .landing-dive-grid.reverse .landing-dive-visual {
+        order: -1;
+    }
+    .landing-dive-visual {
+        position: relative;
+    }
+    .landing-dive-visual-bg {
+        background: linear-gradient(135deg, var(--aqua-1), var(--aqua-2));
+        border-radius: var(--radius-lg);
+        padding: 3rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 380px;
+        position: relative;
+        overflow: hidden;
+    }
+    .landing-dive-visual-bg::before {
+        content: '';
+        position: absolute;
+        width: 200px;
+        height: 200px;
+        border-radius: 50%;
+        background: rgba(0,151,167,0.08);
+        top: -60px;
+        right: -60px;
+    }
+    .landing-dive-visual-bg::after {
+        content: '';
+        position: absolute;
+        width: 150px;
+        height: 150px;
+        border-radius: 50%;
+        background: rgba(0,151,167,0.06);
+        bottom: -40px;
+        left: -40px;
+    }
+    .landing-dive-icon-main {
+        font-size: 5rem;
+        color: var(--primary);
+        opacity: 0.2;
+        position: relative;
+        z-index: 1;
+    }
+    .landing-dive-float {
+        position: absolute;
+        background: #fff;
+        border-radius: 10px;
+        padding: 0.7rem 1rem;
+        box-shadow: 0 4px 16px rgba(0,0,0,0.06);
+        font-size: 0.75rem;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        z-index: 2;
+        animation: floatY 4s ease-in-out infinite;
+    }
+    .landing-dive-float i {
+        color: var(--primary);
+    }
+    .landing-dive-float.f1 {
+        top: 20%;
+        right: 10%;
+        animation-delay: 0s;
+    }
+    .landing-dive-float.f2 {
+        bottom: 20%;
+        left: 10%;
+        animation-delay: 1.5s;
+    }
+    .landing-dive-float.f3 {
+        top: 50%;
+        left: 20%;
+        animation-delay: 3s;
+    }
+    @keyframes floatY {
+        0%,100% { transform: translateY(0) }
+        50% { transform: translateY(-10px) }
+    }
+    .landing-dive-list {
+        list-style: none;
+        padding: 0;
+        margin-top: 1.5rem;
+    }
+    .landing-dive-list li {
+        padding: 0.55rem 0;
+        display: flex;
+        align-items: flex-start;
+        gap: 0.7rem;
+        font-size: 0.92rem;
+        line-height: 1.7;
+    }
+    .landing-dive-list li i {
+        color: var(--primary);
+        font-size: 0.85rem;
+        margin-top: 0.4rem;
+        flex-shrink: 0;
+    }
+
+    /* ===== بطاقات المخزون ===== */
+    .landing-inv-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 1.5rem;
+    }
+    .landing-inv-card {
+        background: var(--white);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        padding: 2rem 1.5rem;
+        text-align: center;
+        transition: 0.3s;
+    }
+    .landing-inv-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 12px 32px rgba(0,151,167,0.1);
+        border-color: var(--aqua-2);
+    }
+    .landing-inv-icon {
+        width: 56px;
+        height: 56px;
+        border-radius: 14px;
+        background: var(--aqua-1);
+        display: grid;
+        place-items: center;
+        margin: 0 auto 1.2rem;
+        font-size: 1.3rem;
+        color: var(--primary);
+        transition: 0.3s;
+    }
+    .landing-inv-card:hover .landing-inv-icon {
+        background: var(--primary);
+        color: #fff;
+        transform: scale(1.08);
+    }
+    .landing-inv-card h5 {
+        font-weight: 700;
+        margin-bottom: 0.5rem;
+        color: var(--dark);
+    }
+    .landing-inv-card p {
+        font-size: 0.82rem;
+        color: var(--text-muted);
+        margin: 0;
+        line-height: 1.7;
+    }
+
+    /* ===== لماذا ===== */
+    .landing-why-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 1.5rem;
+    }
+    .landing-why-card {
+        padding: 1.8rem;
+        border-radius: var(--radius);
+        background: var(--white);
+        border: 1px solid var(--border);
+        transition: 0.3s;
+    }
+    .landing-why-card:hover {
+        border-color: var(--primary);
+        box-shadow: 0 8px 24px rgba(0,151,167,0.08);
+    }
+    .landing-why-num {
+        font-size: 2rem;
+        font-weight: 900;
+        color: var(--aqua-1);
+        line-height: 1;
+        margin-bottom: 0.8rem;
+    }
+    .landing-why-card h5 {
+        font-weight: 700;
+        margin-bottom: 0.4rem;
+        color: var(--dark);
+        font-size: 0.95rem;
+    }
+    .landing-why-card p {
+        font-size: 0.82rem;
+        color: var(--text-muted);
+        margin: 0;
+        line-height: 1.7;
+    }
+
+    /* ===== CTA ===== */
+    .landing-cta-section {
+        background: linear-gradient(135deg, var(--primary-dark) 0%, var(--primary) 50%, #00bcd4 100%);
+        position: relative;
+        overflow: hidden;
+        padding: 5.5rem 0;
+    }
+    .landing-cta-section::before {
+        content: '';
+        position: absolute;
+        width: 500px;
+        height: 500px;
+        border-radius: 50%;
+        background: rgba(255,255,255,0.04);
+        top: -200px;
+        right: -100px;
+    }
+    .landing-cta-section::after {
+        content: '';
+        position: absolute;
+        width: 300px;
+        height: 300px;
+        border-radius: 50%;
+        background: rgba(255,255,255,0.03);
+        bottom: -100px;
+        left: -50px;
+    }
+    .landing-cta-section h2 {
+        color: #fff;
+        font-size: 2.4rem;
+        font-weight: 900;
+        margin-bottom: 0.8rem;
+        position: relative;
+        z-index: 1;
+    }
+    .landing-cta-section p {
+        color: rgba(255,255,255,0.85);
+        font-size: 1.05rem;
+        margin-bottom: 2rem;
+        position: relative;
+        z-index: 1;
+    }
+    .landing-cta-section .landing-btn {
+        position: relative;
+        z-index: 1;
+    }
+
+    /* ===== التذييل ===== */
+    .landing-footer {
+        background: var(--dark);
+        color: rgba(255,255,255,0.7);
+        padding-top: 4rem;
+    }
+    .landing-footer-grid {
+        display: grid;
+        grid-template-columns: 2fr 1fr 1fr 1fr;
+        gap: 2.5rem;
+    }
+    .landing-footer-brand {
+        display: flex;
+        align-items: center;
+        gap: 0.6rem;
+        text-decoration: none;
+        color: #fff;
+        font-weight: 800;
+        font-size: 1.15rem;
+        margin-bottom: 1rem;
+    }
+    .landing-footer-desc {
+        font-size: 0.82rem;
+        line-height: 1.9;
+        max-width: 280px;
+        margin-bottom: 1.2rem;
+    }
+    .landing-footer-social {
+        display: flex;
+        gap: 0.4rem;
+    }
+    .landing-footer-social a {
+        width: 34px;
+        height: 34px;
+        border-radius: 8px;
+        background: rgba(255,255,255,0.08);
+        color: rgba(255,255,255,0.6);
+        display: grid;
+        place-items: center;
+        text-decoration: none;
+        font-size: 0.85rem;
+        transition: 0.2s;
+    }
+    .landing-footer-social a:hover {
+        background: var(--primary);
+        color: #fff;
+    }
+    .landing-footer-title {
+        font-weight: 700;
+        font-size: 0.9rem;
+        color: #fff;
+        margin-bottom: 1.2rem;
+    }
+    .landing-footer-links {
+        list-style: none;
+        padding: 0;
+    }
+    .landing-footer-links li {
+        margin-bottom: 0.5rem;
+    }
+    .landing-footer-links a {
+        color: rgba(255,255,255,0.5);
+        text-decoration: none;
+        font-size: 0.82rem;
+        transition: 0.2s;
+    }
+    .landing-footer-links a:hover {
+        color: var(--primary-light);
+        padding-right: 4px;
+    }
+    .landing-footer-bottom {
+        border-top: 1px solid rgba(255,255,255,0.08);
+        padding: 1.2rem 0;
+        margin-top: 3rem;
+        text-align: center;
+        font-size: 0.78rem;
+        color: rgba(255,255,255,0.35);
+    }
+
+    /* ===== تأثيرات الظهور ===== */
+    .landing-reveal {
+        opacity: 0;
+        transform: translateY(20px);
+        transition: opacity 0.6s ease, transform 0.6s ease;
+    }
+    .landing-reveal.active {
+        opacity: 1;
+        transform: translateY(0);
+    }
+    .landing-reveal.d1 { transition-delay: 0.1s; }
+    .landing-reveal.d2 { transition-delay: 0.2s; }
+    .landing-reveal.d3 { transition-delay: 0.3s; }
+    .landing-reveal.d4 { transition-delay: 0.4s; }
+
+    /* ===== التجاوب ===== */
+    @media(max-width:991px) {
+        .landing-hero-grid {
+            grid-template-columns: 1fr;
+            gap: 2.5rem;
+            text-align: center;
+        }
+        .landing-hero-desc {
+            margin: 0 auto 2rem;
+        }
+        .landing-hero-actions {
+            justify-content: center;
+        }
+        .landing-hero-trust {
+            justify-content: center;
+        }
+        .landing-mockup {
+            transform: none;
+            max-width: 500px;
+            margin: 0 auto;
+        }
+        .landing-dive-grid {
+            grid-template-columns: 1fr;
+            gap: 2.5rem;
+        }
+        .landing-dive-grid.reverse .landing-dive-visual {
+            order: 0;
+        }
+        .landing-services-grid {
+            grid-template-columns: repeat(2, 1fr);
+        }
+        .landing-inv-grid,
+        .landing-why-grid {
+            grid-template-columns: 1fr;
+            max-width: 400px;
+            margin: 0 auto;
+        }
+        .landing-stats-grid {
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1.5rem;
+        }
+        .landing-footer-grid {
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+        }
+    }
+
+    @media(max-width:767px) {
+        .landing-hero h1 {
+            font-size: 2rem;
+        }
+        .landing-section-title {
+            font-size: 1.6rem;
+        }
+        .landing-section {
+            padding: 3.5rem 0;
+        }
+        .landing-nav-links,
+        .landing-nav-actions .landing-btn-ghost {
+            display: none;
+        }
+        .landing-mobile-toggle {
+            display: flex;
+        }
+        .landing-services-grid {
+            grid-template-columns: 1fr;
+        }
+        .landing-dive-visual-bg {
+            min-height: 260px;
+            padding: 2rem;
+        }
+        .landing-dive-icon-main {
+            font-size: 3.5rem;
+        }
+        .landing-dive-float {
+            font-size: 0.68rem;
+            padding: 0.5rem 0.8rem;
+        }
+        .landing-stat-num {
+            font-size: 1.7rem;
+        }
+        .landing-cta-section h2 {
+            font-size: 1.7rem;
+        }
+        .landing-cta-section {
+            padding: 3.5rem 0;
+        }
+        .landing-mock-body {
+            min-height: 240px;
+        }
+        .landing-mock-metrics {
+            grid-template-columns: repeat(2, 1fr);
+        }
+        .landing-footer-grid {
+            grid-template-columns: 1fr;
+        }
+        .landing-nav-actions {
+            gap: 0.3rem;
+        }
+        .landing-nav-actions .landing-btn {
+            font-size: 0.78rem;
+            padding: 0.4rem 0.7rem;
+        }
+    }
+
+    @media(prefers-reduced-motion:reduce) {
+        *,*::before,*::after {
+            animation-duration: 0.01ms !important;
+            transition-duration: 0.01ms !important;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block auth_content %}
+<div class="landing-wrapper">
+    <!-- ===== رسائل الموقع ===== -->
+    <div class="global-messages">
+        {% if messages %}
+            {% for message in messages %}
+            <div class="global-message-alert global-message-{{ message.tags }}">
+                <i class="fas {% if message.tags == 'success' %}fa-check-circle{% else %}fa-exclamation-circle{% endif %}"></i>
+                <div>{{ message }}</div>
+                <button type="button" style="margin-right:auto;background:none;border:none;cursor:pointer;opacity:0.5;color:inherit;font-size:0.9rem;" onclick="this.parentElement.style.display='none'"><i class="fas fa-times"></i></button>
+            </div>
+            {% endfor %}
+        {% endif %}
+    </div>
+
+    <!-- ===== الشريط العلوي ===== -->
+    <nav class="landing-navbar" id="landingNav">
+        <div class="container">
+            <div class="landing-nav-inner">
+                <a href="/" class="landing-brand">
+                    <div class="landing-brand-icon"><i class="fas fa-file-invoice"></i></div>
+                    BalanceIQ
+                </a>
+                <div class="landing-nav-links">
+                    <a href="#services">الخدمات</a>
+                    <a href="#pos">نقطة البيع</a>
+                    <a href="#store">المتجر</a>
+                    <a href="#inventory">المخزون</a>
+                    <a href="#reports">التقارير</a>
+                </div>
+                <div class="landing-nav-actions">
+                    <!-- زر تسجيل الدخول المميز -->
+                    <a href="{% url 'accounts:login' %}" class="landing-btn landing-btn-primary"><i class="fas fa-sign-in-alt"></i> تسجيل الدخول</a>
+                    <!-- الأزرار الأخرى كما هي -->
+                    <a href="{% url 'accounts:register' %}" class="landing-btn landing-btn-ghost" style="color:var(--primary-dark);"><i class="fas fa-user-plus"></i> حساب جديد</a>
+                    <a href="{% url 'accounts:trial_request' %}" class="landing-btn-trial-anim"><i class="fas fa-rocket"></i> تجربة مجانية</a>
+                </div>
+                <button class="landing-mobile-toggle" id="landingMobileToggle"><span></span><span></span><span></span></button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- ===== القائمة المتنقلة ===== -->
+    <div class="landing-mobile-menu" id="landingMobileMenu">
+        <a href="#services">جميع الخدمات</a>
+        <a href="#pos">نقطة البيع</a>
+        <a href="#store">المتجر الإلكتروني</a>
+        <a href="#inventory">إدارة المخزون</a>
+        <a href="#reports">التقارير المالية</a>
+        <a href="#why">لماذا BalanceIQ</a>
+        <div style="padding:0.5rem 1rem;display:flex;flex-direction:column;gap:0.5rem;margin-top:0.5rem;">
+            <a href="{% url 'accounts:login' %}" class="landing-btn landing-btn-primary w-100" onclick="closeLandingMobile()"><i class="fas fa-sign-in-alt"></i> تسجيل الدخول</a>
+            <a href="{% url 'accounts:register' %}" class="landing-btn landing-btn-ghost w-100" onclick="closeLandingMobile()" style="color:var(--primary-dark);"><i class="fas fa-user-plus"></i> إنشاء حساب جديد</a>
+            <a href="{% url 'accounts:trial_request' %}" class="landing-btn-trial-anim w-100" onclick="closeLandingMobile()"><i class="fas fa-rocket"></i> تجربة مجانية</a>
+        </div>
+    </div>
+
+    <!-- ===== الهيرو ===== -->
+    <section class="landing-hero">
+        <div class="container">
+            <div class="landing-hero-grid">
+                <div>
+                    <div class="landing-hero-badge landing-reveal"><i class="fas fa-bolt"></i> النظام الشامل للمحاسبة والتجارة</div>
+                    <h1 class="landing-reveal d1">نظام <span class="grad">BalanceIQ</span><br>الفواتير، نقطة البيع والمتجر</h1>
+                    <p class="landing-hero-desc landing-reveal d2">إدارة متكاملة لفواتير المبيعات والمشتريات، نقطة بيع سريعة، متجر إلكتروني، وإدارة ذكية للباركود والمخزون بتقارير مالية دقيقة.</p>
+                    <div class="landing-hero-actions landing-reveal d3">
+                        <!-- زر "ابدأ الآن" الكبير والبارز -->
+                        <a href="{% url 'accounts:login' %}" class="landing-btn landing-btn-primary landing-btn-lg"><i class="fas fa-rocket"></i> ابدأ الآن</a>
+                        <!-- زر استعراض الخدمات -->
+                        <a href="#services" class="landing-btn landing-btn-ghost landing-btn-lg" style="border:1.5px solid var(--border)"><i class="fas fa-th-large"></i> استعرض الخدمات</a>
+                    </div>
+                    <div class="landing-hero-trust landing-reveal d4">
+                        <div class="landing-hero-trust-avatars">
+                            <span style="background:#0097a7">م</span>
+                            <span style="background:#006064">أ</span>
+                            <span style="background:#00838f">ع</span>
+                            <span style="background:#00695c">خ</span>
+                        </div>
+                        <span>يستخدمه <strong style="color:var(--dark)">+2,000</strong> تاجر في المنطقة</span>
+                    </div>
+                </div>
+                <div class="landing-reveal d2">
+                    <div class="landing-mockup">
+                        <div class="landing-mock-topbar">
+                            <span class="landing-mock-dot r"></span>
+                            <span class="landing-mock-dot y"></span>
+                            <span class="landing-mock-dot g"></span>
+                            <span class="landing-mock-title">لوحة التحكم — BalanceIQ</span>
+                        </div>
+                        <div class="landing-mock-body">
+                            <div class="landing-mock-sidebar">
+                                <div class="landing-mock-nav on"><i class="fas fa-home"></i></div>
+                                <div class="landing-mock-nav"><i class="fas fa-cash-register"></i></div>
+                                <div class="landing-mock-nav"><i class="fas fa-file-invoice"></i></div>
+                                <div class="landing-mock-nav"><i class="fas fa-box"></i></div>
+                                <div class="landing-mock-nav"><i class="fas fa-chart-bar"></i></div>
+                                <div class="landing-mock-nav"><i class="fas fa-store"></i></div>
+                            </div>
+                            <div class="landing-mock-content">
+                                <div class="landing-mock-metrics">
+                                    <div class="landing-mock-metric">
+                                        <span class="landing-mock-metric-val">١٢,٤٥٠</span>
+                                        <span class="landing-mock-metric-lbl">مبيعات اليوم</span>
+                                    </div>
+                                    <div class="landing-mock-metric">
+                                        <span class="landing-mock-metric-val">٣٤</span>
+                                        <span class="landing-mock-metric-lbl">فاتورة</span>
+                                    </div>
+                                    <div class="landing-mock-metric">
+                                        <span class="landing-mock-metric-val">٨٧٪</span>
+                                        <span class="landing-mock-metric-lbl">أداء المخزون</span>
+                                    </div>
+                                </div>
+                                <div class="landing-mock-chart">
+                                    <div class="landing-mock-bar" style="height:35%"></div>
+                                    <div class="landing-mock-bar" style="height:58%"></div>
+                                    <div class="landing-mock-bar" style="height:42%"></div>
+                                    <div class="landing-mock-bar" style="height:75%"></div>
+                                    <div class="landing-mock-bar" style="height:52%"></div>
+                                    <div class="landing-mock-bar" style="height:88%"></div>
+                                    <div class="landing-mock-bar" style="height:65%"></div>
+                                </div>
+                                <div class="landing-mock-chart-labels">
+                                    <span>سبت</span><span>أحد</span><span>إثنين</span>
+                                    <span>ثلاثاء</span><span>أربعاء</span><span>خميس</span><span>جمعة</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ===== الإحصائيات ===== -->
+    <div class="landing-stats-bar">
+        <div class="container">
+            <div class="landing-stats-grid">
+                <div class="landing-reveal">
+                    <span class="landing-stat-num" data-target="2000">0</span>
+                    <span class="landing-stat-label">تاجر نشط</span>
+                </div>
+                <div class="landing-reveal d1">
+                    <span class="landing-stat-num" data-target="150000">0</span>
+                    <span class="landing-stat-label">فاتورة مُصدّرة</span>
+                </div>
+                <div class="landing-reveal d2">
+                    <span class="landing-stat-num" data-target="98">0</span>
+                    <span class="landing-stat-label">% رضا العملاء</span>
+                </div>
+                <div class="landing-reveal d3">
+                    <span class="landing-stat-num" data-target="5">0</span>
+                    <span class="landing-stat-label">دول عربية</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== الخدمات ===== -->
+    <section class="landing-section landing-section-alt" id="services">
+        <div class="container">
+            <div class="landing-section-header center landing-reveal">
+                <div class="landing-section-label"><i class="fas fa-th-large"></i> جميع الخدمات</div>
+                <h2 class="landing-section-title">كل ما تحتاجه في مكان واحد</h2>
+                <p class="landing-section-desc">نظام متكامل يغطي كافة جوانب إدارة أعمالك التجارية من البيع إلى المحاسبة.</p>
+            </div>
+            <div class="landing-services-grid">
+                <div class="landing-service-card landing-reveal">
+                    <div class="landing-service-icon"><i class="fas fa-cash-register"></i></div>
+                    <h5>نقطة البيع POS</h5>
+                    <p>واجهة بيع سريعة تدعم الباركود والطباعة الحرارية والبحث الفوري.</p>
+                </div>
+                <div class="landing-service-card landing-reveal d1">
+                    <div class="landing-service-icon"><i class="fas fa-file-invoice-dollar"></i></div>
+                    <h5>الفواتير الإلكترونية</h5>
+                    <p>فواتير مبيعات ومشتريات مفصلة مع ضرائب وخصومات ومرتجعات.</p>
+                </div>
+                <div class="landing-service-card landing-reveal d2">
+                    <div class="landing-service-icon"><i class="fas fa-store"></i></div>
+                    <h5>المتجر الإلكتروني</h5>
+                    <p>متجرك جاهز بأقسام قابلة للتخصيص وعروض فلاش وسلة ذكية.</p>
+                </div>
+                <div class="landing-service-card landing-reveal d3">
+                    <div class="landing-service-icon"><i class="fas fa-boxes-stacked"></i></div>
+                    <h5>إدارة المخزون</h5>
+                    <p>تتبع فوري للكميات مع تنبيهات الرصيد المنخفض والمواد الراكدة.</p>
+                </div>
+                <div class="landing-service-card landing-reveal">
+                    <div class="landing-service-icon"><i class="fas fa-barcode"></i></div>
+                    <h5>الباركود والتتبع</h5>
+                    <p>حقول باركود ديناميكية تتكيف تلقائياً مع عدد المنتجات المباعة.</p>
+                </div>
+                <div class="landing-service-card landing-reveal d1">
+                    <div class="landing-service-icon"><i class="fas fa-chart-pie"></i></div>
+                    <h5>التقارير المالية</h5>
+                    <p>تقارير أرباح وخزينة وديون مع كشف حساب مفصّل لكل عميل.</p>
+                </div>
+                <div class="landing-service-card landing-reveal d2">
+                    <div class="landing-service-icon"><i class="fas fa-code-branch"></i></div>
+                    <h5>إدارة الفروع  .. قريباً</h5>
+                    <p>أدر عدة فروع من لوحة تحكم واحدة مع تتبع حركة البضائع.</p>
+                </div>
+                <div class="landing-service-card landing-reveal d3">
+                    <div class="landing-service-icon"><i class="fas fa-users-gear"></i></div>
+                    <h5>صلاحيات المستخدمين</h5>
+                    <p>تحكم دقيق في صلاحيات كل موظف: بيع، محاسبة، مخزون، تقارير.</p>
+                </div>
+                <div class="landing-service-card landing-reveal">
+                    <div class="landing-service-icon"><i class="fas fa-user-tie"></i></div>
+                    <h5>إدارة العملاء</h5>
+                    <p>قاعدة بيانات شاملة للعملاء والموردين مع كشف حساب لكل منهم.</p>
+                </div>
+                <div class="landing-service-card landing-reveal d1">
+                    <div class="landing-service-icon"><i class="fas fa-plug"></i></div>
+                    <h5>واجهة برمجة API .. قريباً</h5>
+                    <p>ربط نظامك مع منصات أخرى عبر API مرن وموثّق بالكامل.</p>
+                </div>
+                <div class="landing-service-card landing-reveal d2">
+                    <div class="landing-service-icon"><i class="fas fa-coins"></i></div>
+                    <h5>متعدد العملات</h5>
+                    <p>دعم تعاملات بعملات مختلفة مع تحويل تلقائي وأسعار صرف.</p>
+                </div>
+                <div class="landing-service-card landing-reveal d3">
+                    <div class="landing-service-icon"><i class="fas fa-cloud-arrow-up"></i></div>
+                    <h5>نسخ احتياطي</h5>
+                    <p>نسخ احتياطي تلقائي يومي لبياناتك مع إمكانية الاستعادة الفورية.</p>
+                </div>
+            </div>
+            <div class="landing-section-cta landing-reveal d4" style="text-align:center;margin-top:3rem;">
+                <a href="{% url 'accounts:trial_request' %}" class="landing-btn-trial-anim landing-btn-lg"><i class="fas fa-rocket"></i> ابدأ تجربة مجانية لمدة 14 يوماً</a>
+            </div>
+        </div>
+    </section>
+
+    <!-- ===== نقطة البيع ===== -->
+    <section class="landing-section" id="pos">
+        <div class="container">
+            <div class="landing-dive-grid">
+                <div>
+                    <div class="landing-section-label landing-reveal"><i class="fas fa-cash-register"></i> نقطة البيع والفواتير</div>
+                    <h2 class="landing-section-title landing-reveal d1">بيع أسرع، فواتير أدق</h2>
+                    <p class="landing-section-desc landing-reveal d2">سجّل مبيعاتك بسرعة فائقة عبر نقطة البيع أو أنشئ فواتير مفصلة مع ربط تلقائي للباركودات.</p>
+                    <ul class="landing-dive-list landing-reveal d3">
+                        <li><i class="fas fa-check-circle"></i> واجهة POS سريعة تدعم مسح الباركود والطباعة الحرارية</li>
+                        <li><i class="fas fa-check-circle"></i> فواتير مبيعات ومشتريات متقدمة مع إدارة المرتجعات</li>
+                        <li><i class="fas fa-check-circle"></i> ربط ديناميكي للباركودات مع حساب الكميات تلقائياً</li>
+                        <li><i class="fas fa-check-circle"></i> تحكم كامل في الضرائب والخصومات وتعدد طرق الدفع</li>
+                    </ul>
+                    <div class="landing-section-cta landing-reveal d4">
+                        <a href="{% url 'accounts:trial_request' %}" class="landing-btn-trial-anim"><i class="fas fa-cash-register"></i> جرّب نقطة البيع مجاناً</a>
+                    </div>
+                </div>
+                <div class="landing-dive-visual landing-reveal d2">
+                    <div class="landing-dive-visual-bg">
+                        <i class="fas fa-cash-register landing-dive-icon-main"></i>
+                        <div class="landing-dive-float f1"><i class="fas fa-barcode"></i> مسح باركود فوري</div>
+                        <div class="landing-dive-float f2"><i class="fas fa-print"></i> طباعة حرارية</div>
+                        <div class="landing-dive-float f3"><i class="fas fa-receipt"></i> فاتورة رقمية</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ===== المتجر الإلكتروني ===== -->
+    <section class="landing-section landing-section-alt" id="store">
+        <div class="container">
+            <div class="landing-dive-grid reverse">
+                <div>
+                    <div class="landing-section-label landing-reveal"><i class="fas fa-store"></i> المتجر الإلكتروني</div>
+                    <h2 class="landing-section-title landing-reveal d1">متجرك الإلكتروني جاهز خلال دقائق</h2>
+                    <p class="landing-section-desc landing-reveal d2">أنشئ متجراً احترافياً مرتبطاً مباشرة بمخزونك مع عروض فلاش وسلة شراء ذكية.</p>
+                    <ul class="landing-dive-list landing-reveal d3">
+                        <li><i class="fas fa-check-circle"></i> أقسام متجر قابلة للتخصيص بالكامل مع تصنيفات لا محدودة</li>
+                        <li><i class="fas fa-check-circle"></i> عروض فلاش وسعر خاص مع عداد تنازلي تلقائي</li>
+                        <li><i class="fas fa-check-circle"></i> سلة شراء ذكية متكاملة مع طرق دفع متعددة</li>
+                        <li><i class="fas fa-check-circle"></i> ربط مباشر بالمخزون: يُحدَّث الرقم تلقائياً عند كل عملية بيع</li>
+                    </ul>
+                    <div class="landing-section-cta landing-reveal d4">
+                        <a href="{% url 'accounts:trial_request' %}" class="landing-btn-trial-anim"><i class="fas fa-store"></i> أنشئ متجرك الإلكتروني مجاناً</a>
+                    </div>
+                </div>
+                <div class="landing-dive-visual landing-reveal d2">
+                    <div class="landing-dive-visual-bg">
+                        <i class="fas fa-store landing-dive-icon-main"></i>
+                        <div class="landing-dive-float f1"><i class="fas fa-cart-shopping"></i> سلة ذكية</div>
+                        <div class="landing-dive-float f2"><i class="fas fa-bolt"></i> عروض فلاش</div>
+                        <div class="landing-dive-float f3"><i class="fas fa-link"></i> ربط بالمخزون</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ===== إدارة المخزون ===== -->
+    <section class="landing-section" id="inventory">
+        <div class="container">
+            <div class="landing-section-header center landing-reveal">
+                <div class="landing-section-label"><i class="fas fa-boxes-stacked"></i> إدارة المخزون</div>
+                <h2 class="landing-section-title">تحكم كامل بمخزونك</h2>
+                <p class="landing-section-desc">تتبع كل حركة بضاعة من المشتريات وحتى المبيعات مع تنبيهات ذكية.</p>
+            </div>
+            <div class="landing-inv-grid">
+                <div class="landing-inv-card landing-reveal">
+                    <div class="landing-inv-icon"><i class="fas fa-magnifying-glass"></i></div>
+                    <h5>بحث وتتبع فوري</h5>
+                    <p>ابحث عن أي منتج بالاسم أو الباركود واحصل على موقعه وكميته فوراً.</p>
+                </div>
+                <div class="landing-inv-card landing-reveal d1">
+                    <div class="landing-inv-icon"><i class="fas fa-bell"></i></div>
+                    <h5>تنبيهات ذكية</h5>
+                    <p>إشعارات تلقائية عند وصول أي منتج للحد الأدنى مع اقتراحات إعادة التوريد.</p>
+                </div>
+                <div class="landing-inv-card landing-reveal d2">
+                    <div class="landing-inv-icon"><i class="fas fa-arrows-rotate"></i></div>
+                    <h5>حركة البضائع</h5>
+                    <p>سجل كامل لكل عملية دخول وخروج بضاعة مع التاريخ والكمية والسبب.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ===== التقارير المالية ===== -->
+    <section class="landing-section landing-section-alt" id="reports">
+        <div class="container">
+            <div class="landing-dive-grid">
+                <div>
+                    <div class="landing-section-label landing-reveal"><i class="fas fa-chart-pie"></i> التقارير المالية</div>
+                    <h2 class="landing-section-title landing-reveal d1">قرارات مبنية على بيانات حقيقية</h2>
+                    <p class="landing-section-desc landing-reveal d2">تقارير تفصيلية تساعدك على فهم أداء عملك واتخاذ القرارات الصحيحة.</p>
+                    <ul class="landing-dive-list landing-reveal d3">
+                        <li><i class="fas fa-check-circle"></i> تقرير الأرباح والخسائر الشهري والسنوي</li>
+                        <li><i class="fas fa-check-circle"></i> كشف حركة الخزينة النقدية بالتفصيل</li>
+                        <li><i class="fas fa-check-circle"></i> تقرير الديون والمستحقات لكل عميل ومورد</li>
+                        <li><i class="fas fa-check-circle"></i> تصدير التقارير بصيغة PDF و Excel</li>
+                    </ul>
+                </div>
+                <div class="landing-dive-visual landing-reveal d2">
+                    <div class="landing-dive-visual-bg">
+                        <i class="fas fa-chart-pie landing-dive-icon-main"></i>
+                        <div class="landing-dive-float f1"><i class="fas fa-file-pdf"></i> تصدير PDF</div>
+                        <div class="landing-dive-float f2"><i class="fas fa-table"></i> جداول Excel</div>
+                        <div class="landing-dive-float f3"><i class="fas fa-arrow-trend-up"></i> تحليل الأداء</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ===== لماذا BalanceIQ ===== -->
+    <section class="landing-section" id="why">
+        <div class="container">
+            <div class="landing-section-header center landing-reveal">
+                <div class="landing-section-label"><i class="fas fa-star"></i> لماذا BalanceIQ</div>
+                <h2 class="landing-section-title">ما يميّزنا عن غيرنا</h2>
+                <p class="landing-section-desc">اخترنا آلاف التجار لسبب واضح: بساطة الاستخدام مع قوة الأداء.</p>
+            </div>
+            <div class="landing-why-grid">
+                <div class="landing-why-card landing-reveal">
+                    <div class="landing-why-num">01</div>
+                    <h5>سهولة الاستخدام</h5>
+                    <p>واجهة عربية بديهية لا تحتاج تدريباً مسبقاً أو خبرة تقنية.</p>
+                </div>
+                <div class="landing-why-card landing-reveal d1">
+                    <div class="landing-why-num">02</div>
+                    <h5>دعم فني متواصل</h5>
+                    <p>فريق دعم متاح عبر الهاتف والواتساب خلال ساعات العمل.</p>
+                </div>
+                <div class="landing-why-card landing-reveal d2">
+                    <div class="landing-why-num">03</div>
+                    <h5>أمان عالي</h5>
+                    <p>تشفير كامل للبيانات مع نسخ احتياطي يومي تلقائي.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ===== CTA ===== -->
+    <section class="landing-cta-section">
+        <div class="container" style="text-align:center;">
+            <h2 class="landing-reveal">جاهز تبدأ رحلتك مع BalanceIQ؟</h2>
+            <p class="landing-reveal d1">أنشئ حسابك الآن واحصل على فترة تجريبية مجانية كاملة لمدة 14 يوماً.</p>
+            <a href="{% url 'accounts:trial_request' %}" class="landing-btn landing-btn-white landing-btn-lg landing-reveal d2"><i class="fas fa-rocket"></i> ابدأ التجربة المجانية الآن</a>
+        </div>
+    </section>
+
+    <!-- ===== التذييل ===== -->
+    <footer class="landing-footer">
+        <div class="container">
+            <div class="landing-footer-grid">
+                <div>
+                    <a href="/" class="landing-footer-brand">
+                        <div class="landing-brand-icon"><i class="fas fa-file-invoice"></i></div>
+                        BalanceIQ
+                    </a>
+                    <p class="landing-footer-desc">نظام محاسبي متكامل للمحلات التجارية والمتاجر الإلكترونية.</p>
+                    <div class="landing-footer-social">
+                        <a href="#"><i class="fab fa-facebook-f"></i></a>
+                        <a href="#"><i class="fab fa-instagram"></i></a>
+                        <a href="#"><i class="fab fa-whatsapp"></i></a>
+                        <a href="#"><i class="fab fa-youtube"></i></a>
+                    </div>
+                </div>
+                <div>
+                    <h6 class="landing-footer-title">المنتج</h6>
+                    <ul class="landing-footer-links">
+                        <li><a href="#services">جميع الخدمات</a></li>
+                        <li><a href="#pos">نقطة البيع</a></li>
+                        <li><a href="#store">المتجر الإلكتروني</a></li>
+                        <li><a href="#inventory">إدارة المخزون</a></li>
+                        <li><a href="#reports">التقارير المالية</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h6 class="landing-footer-title">الدعم</h6>
+                    <ul class="landing-footer-links">
+                        <li><a href="#">مركز المساعدة</a></li>
+                        <li><a href="#">الأسئلة الشائعة</a></li>
+                        <li><a href="#">تواصل معنا</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h6 class="landing-footer-title">قانوني</h6>
+                    <ul class="landing-footer-links">
+                        <li><a href="#">سياسة الخصوصية</a></li>
+                        <li><a href="#">شروط الاستخدام</a></li>
+                        <li><a href="#">سياسة الاسترجاع</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="landing-footer-bottom">&copy; 2025 BalanceIQ — جميع الحقوق محفوظة.</div>
+        </div>
+    </footer>
+</div>
+
+<!-- ===== الجافاسكريبت ===== -->
+<script nonce="{{ csp_nonce }}">
+(function(){
+    'use strict';
+
+    // شريط التنقل - تأثير التمرير
+    var landingNav = document.getElementById('landingNav');
+    window.addEventListener('scroll', function() {
+        landingNav.classList.toggle('scrolled', window.scrollY > 30);
+    });
+
+    // القائمة المتنقلة
+    var mobileToggle = document.getElementById('landingMobileToggle');
+    var mobileMenu = document.getElementById('landingMobileMenu');
+    mobileToggle.addEventListener('click', function() {
+        this.classList.toggle('active');
+        mobileMenu.classList.toggle('open');
+    });
+    window.closeLandingMobile = function() {
+        mobileToggle.classList.remove('active');
+        mobileMenu.classList.remove('open');
+    };
+    mobileMenu.querySelectorAll('a[href^="#"]').forEach(function(l) {
+        l.addEventListener('click', window.closeLandingMobile);
+    });
+
+    // تأثيرات الظهور
+    var revealEls = document.querySelectorAll('.landing-reveal');
+    var revealObs = new IntersectionObserver(function(entries) {
+        entries.forEach(function(e) {
+            if (e.isIntersecting) e.target.classList.add('active');
+        });
+    }, { threshold: 0.12, rootMargin: '0px 0px -40px 0px' });
+    revealEls.forEach(function(el) { revealObs.observe(el); });
+
+    // عدّادات الإحصائيات
+    var statNums = document.querySelectorAll('.landing-stat-num[data-target]');
+    var statsCounted = false;
+    var statsObs = new IntersectionObserver(function(entries) {
+        entries.forEach(function(e) {
+            if (e.isIntersecting && !statsCounted) {
+                statsCounted = true;
+                statNums.forEach(function(el) {
+                    var target = parseInt(el.getAttribute('data-target'));
+                    var step = target / 125;
+                    var cur = 0;
+                    var t = setInterval(function() {
+                        cur += step;
+                        if (cur >= target) {
+                            cur = target;
+                            clearInterval(t);
+                        }
+                        el.textContent = target >= 1000 ? Math.floor(cur).toLocaleString('ar-SA') : Math.floor(cur);
+                    }, 16);
+                });
+            }
+        });
+    }, { threshold: 0.5 });
+    if (statNums.length) {
+        statsObs.observe(statNums[0].closest('.landing-stats-grid') || statNums[0]);
+    }
+
+})();
+</script>
+{% endblock %}555

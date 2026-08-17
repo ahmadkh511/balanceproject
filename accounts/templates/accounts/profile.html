@@ -1,0 +1,810 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}الملف الشخصي{% endblock %}
+
+{% block extra_css %}
+<style>
+    :root {
+        --aqua-1: #e0f7fa; 
+        --aqua-2: #b2ebf2; 
+        --aqua-3: #4dd0e1; 
+        --aqua-4: #0097a7;
+        --text-dark: #006064; 
+        --shadow-sm: 0 2px 8px rgba(0, 150, 167, 0.1); 
+        --shadow-md: 0 8px 20px rgba(0, 150, 167, 0.15);
+    }
+    
+    .profile-header { 
+        background: linear-gradient(135deg, var(--aqua-4) 0%, var(--text-dark) 100%); 
+        color: white; 
+        padding: 40px 20px; 
+        border-radius: 16px; 
+        margin-bottom: 30px; 
+        box-shadow: var(--shadow-md); 
+    }
+    
+    .profile-avatar { 
+        width: 150px; 
+        height: 150px; 
+        border-radius: 50%; 
+        border: 5px solid rgba(255,255,255,0.3); 
+        box-shadow: 0 4px 15px rgba(0,0,0,0.2); 
+        object-fit: cover; 
+        transition: transform 0.3s ease; 
+    }
+    
+    .profile-avatar:hover { 
+        transform: scale(1.05); 
+    }
+    
+    .avatar-wrapper { 
+        position: relative; 
+        display: inline-block; 
+    }
+    
+    /* تحسين ظهور الأزرار - تظهر دائماً */
+    .avatar-overlay { 
+        position: absolute; 
+        inset: 0; 
+        border-radius: 50%; 
+        background: rgba(0,0,0,0.5); /* خلفية داكنة شفافة دائماً */
+        display: flex; 
+        align-items: center; 
+        justify-content: center; 
+        gap: 8px; 
+        opacity: 0.85; /* ظاهرة دائماً ولكن بشكل خفيف */
+        transition: opacity 0.3s ease; 
+        flex-wrap: wrap; 
+        padding: 8px; 
+    }
+    
+    .avatar-wrapper:hover .avatar-overlay {
+        opacity: 1; /* تصبح أوضح عند التمرير */
+    }
+    
+    .avatar-btn { 
+        width: 40px; 
+        height: 40px; 
+        border-radius: 50%; 
+        border: none; 
+        background: rgba(255,255,255,0.95); 
+        color: var(--aqua-4); 
+        display: flex; 
+        align-items: center; 
+        justify-content: center; 
+        cursor: pointer; 
+        transition: all 0.2s; 
+        font-size: 16px; 
+        box-shadow: 0 2px 8px rgba(0,0,0,0.3); 
+    }
+    
+    .avatar-btn:hover { 
+        background: #fff; 
+        transform: scale(1.15); 
+        box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+    }
+    
+    .avatar-btn.btn-camera { 
+        background: #fff; 
+        color: #007bff;
+    }
+    
+    .avatar-btn.btn-upload { 
+        background: #fff; 
+        color: #28a745;
+    }
+    
+    .avatar-btn.btn-delete { 
+        background: #fff; 
+        color: #dc3545; 
+    }
+    
+    /* زر تغيير الصورة النصي */
+    .change-photo-btn {
+        background: rgba(255, 255, 255, 0.2);
+        border: 2px solid rgba(255, 255, 255, 0.4);
+        color: white;
+        border-radius: 25px;
+        padding: 6px 18px;
+        font-size: 0.85rem;
+        transition: all 0.3s ease;
+        cursor: pointer;
+        backdrop-filter: blur(5px);
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+    }
+    
+    .change-photo-btn:hover {
+        background: rgba(255, 255, 255, 0.3);
+        border-color: rgba(255, 255, 255, 0.8);
+        transform: translateY(-2px);
+        color: white;
+    }
+    
+    .info-card { 
+        border: none; 
+        border-radius: 16px; 
+        box-shadow: var(--shadow-sm); 
+        transition: all 0.3s ease; 
+        overflow: hidden; 
+        margin-bottom: 24px; 
+        background: #fff; 
+    }
+    
+    .info-card:hover { 
+        transform: translateY(-4px); 
+        box-shadow: var(--shadow-md); 
+    }
+    
+    .info-card .card-header { 
+        background: linear-gradient(135deg, var(--aqua-3) 0%, var(--aqua-4) 100%); 
+        color: white; 
+        font-weight: 600; 
+        padding: 14px 20px; 
+        border-bottom: none; 
+    }
+    
+    .info-card .card-header h5 { 
+        margin: 0; 
+        font-size: 1.05rem; 
+    }
+    
+    .info-card .card-body { 
+        padding: 20px; 
+    }
+    
+    .info-list { 
+        list-style: none; 
+        padding: 0; 
+        margin: 0; 
+    }
+    
+    .info-list li { 
+        padding: 12px 0; 
+        border-bottom: 1px solid var(--aqua-1); 
+        display: flex; 
+        justify-content: space-between; 
+        align-items: center; 
+    }
+    
+    .info-list li:last-child { 
+        border-bottom: none; 
+    }
+    
+    .info-list .label { 
+        font-weight: 500; 
+        color: #6c757d; 
+        display: flex; 
+        align-items: center; 
+        gap: 8px; 
+    }
+    
+    .info-list .label i { 
+        color: var(--aqua-4); 
+        width: 18px; 
+        text-align: center; 
+    }
+    
+    .info-list .value { 
+        color: var(--text-dark); 
+        text-align: left; 
+        font-size: 0.95rem; 
+    }
+    
+    .stat-item { 
+        text-align: center; 
+        padding: 20px; 
+        background: var(--aqua-4); 
+        border-radius: 12px; 
+        color: white; 
+        box-shadow: var(--shadow-sm); 
+    }
+    
+    .stat-number { 
+        font-size: 1.5rem; 
+        font-weight: 700; 
+        display: block; 
+    }
+    
+    .stat-label { 
+        font-size: 0.85rem; 
+        opacity: 0.9; 
+    }
+    
+    .form-control, .form-select { 
+        border-radius: 8px; 
+        border: 1px solid var(--aqua-2); 
+        padding: 10px 14px; 
+        font-size: 0.95rem; 
+        transition: all 0.2s; 
+        background-color: #fff; 
+    }
+    
+    .form-control:focus, .form-select:focus { 
+        border-color: var(--aqua-4); 
+        box-shadow: 0 0 0 3px rgba(0, 151, 167, 0.15); 
+    }
+    
+    .form-label { 
+        font-weight: 500; 
+        color: #495057; 
+        margin-bottom: 6px; 
+        font-size: 0.9rem; 
+    }
+    
+    .form-text { 
+        font-size: 0.8rem; 
+        color: #6c757d; 
+        margin-top: 4px; 
+    }
+    
+    .section-title { 
+        font-size: 1.1rem; 
+        font-weight: 600; 
+        color: var(--aqua-4); 
+        margin-bottom: 20px; 
+        padding-bottom: 10px; 
+        border-bottom: 2px solid var(--aqua-1); 
+    }
+    
+    .user-type-badge { 
+        display: inline-block; 
+        padding: 4px 12px; 
+        border-radius: 20px; 
+        font-size: 0.85rem; 
+        font-weight: 500; 
+        background-color: var(--aqua-1); 
+        color: var(--text-dark); 
+    }
+    
+    .btn-primary { 
+        background: linear-gradient(135deg, var(--aqua-4) 0%, var(--text-dark) 100%); 
+        border: none; 
+        color: white; 
+        padding: 10px 24px; 
+        border-radius: 8px; 
+        font-weight: 500; 
+        transition: all 0.2s; 
+    }
+    
+    .btn-primary:hover { 
+        transform: translateY(-2px); 
+        box-shadow: var(--shadow-md); 
+        color: white; 
+    }
+    
+    .btn-outline-secondary { 
+        border: 1px solid var(--aqua-3); 
+        color: var(--aqua-4); 
+        border-radius: 8px; 
+    }
+    
+    .btn-outline-secondary:hover { 
+        background: var(--aqua-1); 
+        border-color: var(--aqua-4); 
+        color: var(--text-dark); 
+    }
+
+    /* إخفاء حقل رفع الصورة الأصلي */
+    .hidden-field { 
+        display: none !important; 
+    }
+
+    /* نافذة الكاميرا */
+    .camera-modal { 
+        position: fixed; 
+        inset: 0; 
+        background: rgba(0,0,0,0.85); 
+        display: none; 
+        align-items: center; 
+        justify-content: center; 
+        z-index: 9999; 
+        padding: 20px; 
+        backdrop-filter: blur(5px);
+    }
+    
+    .camera-modal.active { 
+        display: flex; 
+    }
+    
+    .camera-box { 
+        background: #fff; 
+        border-radius: 20px; 
+        padding: 25px; 
+        max-width: 560px; 
+        width: 100%; 
+        box-shadow: 0 20px 60px rgba(0,0,0,0.5); 
+    }
+    
+    .camera-box h5 { 
+        color: var(--text-dark); 
+        margin-bottom: 20px; 
+        text-align: center; 
+        font-weight: 600;
+    }
+    
+    .camera-video { 
+        width: 100%; 
+        border-radius: 12px; 
+        background: #000; 
+        transform: scaleX(-1); 
+        max-height: 400px;
+        object-fit: cover;
+    }
+    
+    .camera-actions { 
+        display: flex; 
+        justify-content: space-between; 
+        gap: 10px; 
+        margin-top: 20px; 
+    }
+    
+    .camera-actions .btn {
+        flex: 1;
+        padding: 10px;
+        border-radius: 10px;
+        font-weight: 500;
+    }
+    
+    .camera-canvas { 
+        display: none; 
+    }
+
+    /* تحسينات للجوال */
+    @media (max-width: 768px) {
+        .profile-avatar {
+            width: 120px;
+            height: 120px;
+        }
+        .avatar-btn {
+            width: 35px;
+            height: 35px;
+            font-size: 14px;
+        }
+        .change-photo-btn {
+            font-size: 0.75rem;
+            padding: 4px 14px;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <!-- العمود الأيسر: عرض المعلومات -->
+        <div class="col-lg-4">
+            <div class="profile-header text-center">
+                <div class="avatar-wrapper">
+                    <img src="{% if profile.profile_picture %}{{ profile.profile_picture.url }}{% else %}{% static 'images/default_avatar.png' %}{% endif %}" 
+                         alt="صورة الملف الشخصي" 
+                         class="profile-avatar" 
+                         id="avatar-preview-main">
+                    <div class="avatar-overlay">
+                        <button type="button" class="avatar-btn btn-camera" id="btn-open-camera" title="التقاط صورة بالكاميرا">
+                            <i class="fas fa-camera"></i>
+                        </button>
+                        <button type="button" class="avatar-btn btn-upload" id="btn-upload" title="اختيار صورة من الجهاز">
+                            <i class="fas fa-image"></i>
+                        </button>
+                        <button type="button" class="avatar-btn btn-delete" id="btn-delete" title="حذف الصورة">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- زر تغيير الصورة النصي (واضح للجميع) -->
+                <div class="mt-3">
+                    <button type="button" class="change-photo-btn" id="btn-change-photo-text">
+                        <i class="fas fa-camera me-1"></i> تغيير الصورة الشخصية
+                    </button>
+                </div>
+                
+                <div class="mt-3">
+                    <h2 class="h4 mb-1">{{ user.get_full_name|default:user.username }}</h2>
+                    <p class="mb-0 opacity-75">{{ profile.job_title|default:"لا توجد وظيفة" }}</p>
+                    <p class="mb-0 opacity-75"><i class="fas fa-building me-1"></i>{{ profile.company|default:"لا توجد شركة" }}</p>
+                </div>
+            </div>
+
+            <div class="row g-2 mb-4">
+                <div class="col-6">
+                    <div class="stat-item">
+                        <span class="stat-number">{{ profile.experience_years|default:0 }}</span>
+                        <span class="stat-label">سنة خبرة</span>
+                    </div>
+                </div>
+                <div class="col-6">
+                    <div class="stat-item">
+                        <span class="stat-number" style="font-size: 1rem;">{{ profile.get_education_level_display|default:"N/A" }}</span>
+                        <span class="stat-label">التعليم</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card info-card">
+                <div class="card-header"><h5><i class="fas fa-phone-alt me-2"></i>معلومات الاتصال</h5></div>
+                <div class="card-body">
+                    <ul class="info-list">
+                        <li><span class="label"><i class="fas fa-envelope"></i> البريد</span><span class="value">{{ user.email }}</span></li>
+                        <li><span class="label"><i class="fas fa-mobile-alt"></i> الهاتف</span><span class="value">{{ profile.phone_number|default:"-" }}</span></li>
+                        <li>
+                            <span class="label"><i class="fas fa-globe"></i> الموقع</span>
+                            <span class="value">{% if profile.website %}<a href="{{ profile.website }}" target="_blank" style="color:var(--aqua-4)">{{ profile.website }}</a>{% else %}-{% endif %}</span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="card info-card">
+                <div class="card-header"><h5><i class="fas fa-user me-2"></i>معلومات أساسية</h5></div>
+                <div class="card-body">
+                    <ul class="info-list">
+                        <li>
+                            <span class="label"><i class="fas fa-users"></i> النوع</span>
+                            <span class="value">
+                                <span class="user-type-badge">
+                                    {% if profile.is_customer and profile.is_supplier %}
+                                        <i class="fas fa-user-check me-1"></i> زبون و <i class="fas fa-truck me-1"></i> مورد
+                                    {% elif profile.is_supplier %}
+                                        <i class="fas fa-truck me-1"></i> مورد
+                                    {% else %}
+                                        <i class="fas fa-user-check me-1"></i> زبون
+                                    {% endif %}
+                                </span>
+                            </span>
+                        </li>
+                        <li><span class="label"><i class="fas fa-birthday-cake"></i> الميلاد</span><span class="value">{{ profile.birth_date|date:"Y-m-d"|default:"-" }}</span></li>
+                        <li><span class="label"><i class="fas fa-map-marker-alt"></i> الموقع</span><span class="value">{{ profile.city|default:"-" }}, {{ profile.country|default:"-" }}</span></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- العمود الأيمن: النموذج -->
+        <div class="col-lg-8">
+            <div class="card info-card">
+                <div class="card-header"><h5><i class="fas fa-edit me-2"></i>تحديث الملف الشخصي</h5></div>
+                <div class="card-body">
+                    {% if messages %}
+                        {% for message in messages %}
+                        <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                            {{ message }}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        </div>
+                        {% endfor %}
+                    {% endif %}
+
+                    <form method="post" enctype="multipart/form-data" id="profile-form">
+                        {% csrf_token %}
+
+                        <!-- حقل رفع الصورة: مخفي ومُدار عبر الأيقونات -->
+                        <div class="hidden-field" id="profile-picture-wrapper">
+                            {{ form.profile_picture }}
+                            <input type="checkbox" name="profile_picture-clear" id="profile_picture-clear" hidden>
+                        </div>
+
+                        <div class="form-section">
+                            <h6 class="section-title">المعلومات الأساسية</h6>
+                            
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label for="{{ form.first_name.id_for_label }}" class="form-label">الاسم الأول</label>
+                                    {{ form.first_name }}
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label for="{{ form.last_name.id_for_label }}" class="form-label">الاسم الأخير</label>
+                                    {{ form.last_name }}
+                                </div>
+                            </div>
+
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label for="{{ form.phone_number.id_for_label }}" class="form-label">رقم الهاتف</label>
+                                    {{ form.phone_number }}
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label for="{{ form.birth_date.id_for_label }}" class="form-label">تاريخ الميلاد</label>
+                                    {{ form.birth_date }}
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label for="{{ form.gender.id_for_label }}" class="form-label">الجنس</label>
+                                    {{ form.gender }}
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-section">
+                            <h6 class="section-title">معلومات العمل</h6>
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label for="{{ form.job_title.id_for_label }}" class="form-label">المسمى الوظيفي</label>
+                                    {{ form.job_title }}
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label for="{{ form.company.id_for_label }}" class="form-label">الشركة</label>
+                                    {{ form.company }}
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label for="{{ form.skills.id_for_label }}" class="form-label">المهارات</label>
+                                    {{ form.skills }}
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label for="{{ form.experience_years.id_for_label }}" class="form-label">سنوات الخبرة</label>
+                                    {{ form.experience_years }}
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label for="{{ form.education_level.id_for_label }}" class="form-label">المستوى التعليمي</label>
+                                    {{ form.education_level }}
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label for="{{ form.university_major.id_for_label }}" class="form-label">التخصص الجامعي</label>
+                                    {{ form.university_major }}
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label for="{{ form.languages.id_for_label }}" class="form-label">اللغات</label>
+                                    {{ form.languages }}
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-section">
+                            <h6 class="section-title">معلومات الاتصال والعنوان</h6>
+                            <div class="row">
+                                <div class="col-12 mb-3">
+                                    <label for="{{ form.website_display.id_for_label }}" class="form-label">الموقع الإلكتروني</label>
+                                    {{ form.website_display }}
+                                    <div class="form-text">أدخل اسم الموقع فقط (مثال: google.com)</div>
+                                </div>
+                                <div class="col-12 mb-3">
+                                    <label for="{{ form.address.id_for_label }}" class="form-label">العنوان</label>
+                                    {{ form.address }}
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <label for="{{ form.city.id_for_label }}" class="form-label">المدينة</label>
+                                    {{ form.city }}
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <label for="{{ form.country.id_for_label }}" class="form-label">الدولة</label>
+                                    {{ form.country }}
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <label for="{{ form.postal_code.id_for_label }}" class="form-label">الرمز البريدي</label>
+                                    {{ form.postal_code }}
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-section">
+                            <h6 class="section-title">التواصل الاجتماعي</h6>
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label for="{{ form.facebook.id_for_label }}" class="form-label">فيسبوك</label>
+                                    {{ form.facebook }}
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label for="{{ form.twitter.id_for_label }}" class="form-label">تويتر</label>
+                                    {{ form.twitter }}
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label for="{{ form.instagram.id_for_label }}" class="form-label">انستغرام</label>
+                                    {{ form.instagram }}
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label for="{{ form.linkedin.id_for_label }}" class="form-label">لينكد إن</label>
+                                    {{ form.linkedin }}
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-section">
+                            <h6 class="section-title">إعدادات إضافية</h6>
+                            <div class="row">
+                                <div class="col-12 mb-3">
+                                    <label for="{{ form.bio.id_for_label }}" class="form-label">السيرة الذاتية</label>
+                                    {{ form.bio }}
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <div class="form-check form-switch">
+                                        {{ form.is_public }} 
+                                        <label class="form-check-label" for="{{ form.is_public.id_for_label }}">
+                                            {{ form.is_public.label }}
+                                        </label>
+                                    </div>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <div class="form-check form-switch">
+                                        {{ form.email_notifications }} 
+                                        <label class="form-check-label" for="{{ form.email_notifications.id_for_label }}">
+                                            {{ form.email_notifications.label }}
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <hr>
+                        <div class="d-flex justify-content-between flex-wrap gap-2">
+                            <button type="submit" class="btn btn-primary btn-lg">
+                                <i class="fas fa-save me-2"></i>حفظ التغييرات
+                            </button>
+                            <a href="{% url 'index' %}" class="btn btn-outline-secondary btn-lg">
+                                <i class="fas fa-arrow-left me-2"></i>عودة
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- نافذة الكاميرا -->
+<div class="camera-modal" id="cameraModal">
+    <div class="camera-box">
+        <h5><i class="fas fa-camera me-2"></i>التقاط صورة شخصية</h5>
+        <video id="cameraVideo" class="camera-video" autoplay playsinline></video>
+        <canvas id="cameraCanvas" class="camera-canvas"></canvas>
+        <div class="camera-actions">
+            <button type="button" class="btn btn-outline-secondary" id="btn-cancel-camera">
+                <i class="fas fa-times me-1"></i>إلغاء
+            </button>
+            <button type="button" class="btn btn-primary" id="btn-capture">
+                <i class="fas fa-camera me-1"></i>التقاط
+            </button>
+        </div>
+    </div>
+</div>
+
+<script nonce="{{ csp_nonce }}">
+document.addEventListener('DOMContentLoaded', function() {
+    // ====== العناصر ======
+    const img = document.getElementById('avatar-preview-main');
+    const wrapper = document.getElementById('profile-picture-wrapper');
+    const fileInput = wrapper.querySelector('input[type="file"]');
+    const clearCheckbox = document.getElementById('profile_picture-clear');
+    const btnUpload = document.getElementById('btn-upload');
+    const btnDelete = document.getElementById('btn-delete');
+    const btnOpenCamera = document.getElementById('btn-open-camera');
+    const btnChangePhotoText = document.getElementById('btn-change-photo-text');
+
+    const cameraModal = document.getElementById('cameraModal');
+    const cameraVideo = document.getElementById('cameraVideo');
+    const cameraCanvas = document.getElementById('cameraCanvas');
+    const btnCapture = document.getElementById('btn-capture');
+    const btnCancelCamera = document.getElementById('btn-cancel-camera');
+
+    let stream = null;
+    const defaultAvatar = "{% static 'images/default_avatar.png' %}";
+    const currentAvatar = "{% if profile.profile_picture %}{{ profile.profile_picture.url }}{% else %}{{ defaultAvatar }}{% endif %}";
+
+    // ====== تحديث ظهور زر الحذف ======
+    function updateDeleteVisibility() {
+        const src = img.getAttribute('src') || '';
+        if (src === defaultAvatar || src.includes('default_avatar.png')) {
+            btnDelete.style.display = 'none';
+        } else {
+            btnDelete.style.display = 'flex';
+        }
+    }
+    updateDeleteVisibility();
+
+    // ====== زر اختيار صورة من الجهاز ======
+    btnUpload.addEventListener('click', function(e) {
+        e.preventDefault();
+        fileInput.click();
+    });
+
+    // ربط زر "تغيير الصورة الشخصية" النصي بنفس وظيفة رفع الصورة
+    btnChangePhotoText.addEventListener('click', function(e) {
+        e.preventDefault();
+        fileInput.click();
+    });
+
+    fileInput.addEventListener('change', function(e) {
+        if (this.files && this.files[0]) {
+            const reader = new FileReader();
+            reader.onload = function(ev) {
+                img.src = ev.target.result;
+                updateDeleteVisibility();
+            };
+            reader.readAsDataURL(this.files[0]);
+            // إلغاء تفعيل الـ clear
+            if (clearCheckbox) clearCheckbox.checked = false;
+        }
+    });
+
+    // ====== زر حذف الصورة ======
+    btnDelete.addEventListener('click', function(e) {
+        e.preventDefault();
+        // إعادة الصورة الافتراضية للمعاينة
+        img.src = defaultAvatar;
+        // مسح قيمة حقل الملف
+        if (fileInput) fileInput.value = '';
+        // تفعيل checkbox الحذف الخاص بـ Django ClearableFileInput
+        if (clearCheckbox) clearCheckbox.checked = true;
+        updateDeleteVisibility();
+    });
+
+    // ====== الكاميرا ======
+    function stopCamera() {
+        if (stream) {
+            stream.getTracks().forEach(track => track.stop());
+            stream = null;
+        }
+        cameraModal.classList.remove('active');
+    }
+
+    btnOpenCamera.addEventListener('click', async function(e) {
+        e.preventDefault();
+        try {
+            stream = await navigator.mediaDevices.getUserMedia({ 
+                video: { facingMode: 'user' }, 
+                audio: false 
+            });
+            cameraVideo.srcObject = stream;
+            cameraModal.classList.add('active');
+        } catch (err) {
+            alert('تعذر الوصول إلى الكاميرا. تأكد من منح الإذن للمتصفح واستخدام HTTPS.');
+            console.error('Camera error:', err);
+            stopCamera();
+        }
+    });
+
+    btnCancelCamera.addEventListener('click', stopCamera);
+
+    btnCapture.addEventListener('click', function() {
+        const width = cameraVideo.videoWidth || 480;
+        const height = cameraVideo.videoHeight || 480;
+        cameraCanvas.width = width;
+        cameraCanvas.height = height;
+        const ctx = cameraCanvas.getContext('2d');
+        // عكس الصورة أفقياً لتطابق المعاينة
+        ctx.translate(width, 0);
+        ctx.scale(-1, 1);
+        ctx.drawImage(cameraVideo, 0, 0, width, height);
+
+        cameraCanvas.toBlob(function(blob) {
+            if (!blob) {
+                alert('حدث خطأ أثناء التقاط الصورة');
+                return;
+            }
+            
+            const file = new File([blob], 'camera_capture.png', { type: 'image/png' });
+            // وضع الملف داخل حقل الإدخال
+            const dataTransfer = new DataTransfer();
+            dataTransfer.items.add(file);
+            fileInput.files = dataTransfer.files;
+            
+            // تحديث المعاينة
+            const reader = new FileReader();
+            reader.onload = function(ev) {
+                img.src = ev.target.result;
+                updateDeleteVisibility();
+            };
+            reader.readAsDataURL(file);
+            
+            // إلغاء تفعيل الـ clear
+            if (clearCheckbox) clearCheckbox.checked = false;
+            stopCamera();
+        }, 'image/png');
+    });
+
+    // ====== إغلاق الكاميرا عند الضغط على Esc ======
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape' && cameraModal.classList.contains('active')) {
+            stopCamera();
+        }
+    });
+
+    // ====== إغلاق الكاميرا عند الضغط خارج النافذة ======
+    cameraModal.addEventListener('click', function(e) {
+        if (e.target === cameraModal) {
+            stopCamera();
+        }
+    });
+});
+</script>
+{% endblock %}

@@ -1,0 +1,59 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{% if form.instance.pk %}تعديل طريقة الدفع{% else %}إضافة طريقة دفع جديدة{% endif %}{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>{% if form.instance.pk %}تعديل طريقة الدفع{% else %}إضافة طريقة دفع جديدة{% endif %}</h2>
+        <a href="{% url 'invoice:payment_method_list' %}" class="btn btn-secondary">
+            <i class="fas fa-arrow-right ms-1"></i>العودة للقائمة
+        </a>
+    </div>
+    
+    <div class="card">
+        <div class="card-body">
+            <form method="post">
+                {% csrf_token %}
+                
+                <div class="mb-3">
+                    <label for="{{ form.name.id_for_label }}" class="form-label">الاسم</label>
+                    {{ form.name }}
+                    {% if form.name.errors %}
+                    <div class="text-danger">
+                        {{ form.name.errors }}
+                    </div>
+                    {% endif %}
+                </div>
+                
+                <div class="mb-3">
+                    <label for="{{ form.notes.id_for_label }}" class="form-label">ملاحظات</label>
+                    {{ form.notes }}
+                    {% if form.notes.errors %}
+                    <div class="text-danger">
+                        {{ form.notes.errors }}
+                    </div>
+                    {% endif %}
+                </div>
+                
+                <div class="mb-3 form-check">
+                    {{ form.is_cash }}
+                    <label for="{{ form.is_cash.id_for_label }}" class="form-check-label">هل هي طريقة دفع نقدية؟</label>
+                    {% if form.is_cash.errors %}
+                    <div class="text-danger">
+                        {{ form.is_cash.errors }}
+                    </div>
+                    {% endif %}
+                </div>
+                
+                <div class="d-flex justify-content-end">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save ms-1"></i>حفظ
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

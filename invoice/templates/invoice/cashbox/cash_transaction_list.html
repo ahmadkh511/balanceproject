@@ -1,0 +1,537 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}حركات الصندوق{% endblock %}
+
+{% block extra_css %}
+    <link rel="stylesheet" href="{% static 'css/print_system.css' %}">
+    
+    <style>
+    /* ============================================
+       [DESIGN-GUIDE] نظام التصميم الموحد
+       General Design System
+       ============================================ */
+    :root {
+        --primary-1: #e0f7fa;
+        --primary-2: #b2ebf2;
+        --primary-3: #4dd0e1;
+        --primary-4: #0097a7;
+        --primary-dark: #006064;
+        --text-dark: #006064;
+        --text-light: #ffffff;
+        --shadow-sm: 0 2px 8px rgba(0, 150, 167, 0.08);
+        --shadow-md: 0 4px 12px rgba(0, 150, 167, 0.12);
+        --radius: 8px;
+        --radius-sm: 4px;
+        --ease: cubic-bezier(0.4, 0, 0.2, 1);
+        --print-margin: 10mm;
+    }
+
+    /* ============================================
+       أنماط المكونات الأساسية
+       ============================================ */
+
+    .card {
+        border: none;
+        border-radius: var(--radius);
+        box-shadow: var(--shadow-sm);
+        margin-bottom: 0;
+        overflow: hidden;
+    }
+
+    .card-header {
+        background: linear-gradient(135deg, var(--primary-4), var(--primary-dark));
+        color: var(--text-light);
+        padding: 0.45rem 0.85rem;
+        font-weight: 600;
+        font-size: 0.82rem;
+        display: flex;
+        align-items: center;
+        gap: 0.4rem;
+    }
+
+    .card-body {
+        padding: 0.6rem 0.75rem;
+    }
+
+    /* ============================================
+       أنماط حركات الصندوق
+       ============================================ */
+
+    .btn {
+        border-radius: var(--radius-sm);
+        padding: 0.28rem 0.55rem;
+        font-weight: 600;
+        font-size: 0.78rem;
+        border: none;
+        transition: all 0.2s var(--ease);
+        display: inline-flex;
+        align-items: center;
+        gap: 0.25rem;
+        font-family: 'Tajawal', sans-serif;
+    }
+    .btn-primary  { background: linear-gradient(135deg, var(--primary-4), var(--primary-dark)); color: #fff; }
+    .btn-success  { background: linear-gradient(135deg, #00897b, #00695c); color: #fff; }
+    .btn-warning  { background: linear-gradient(135deg, #ffb300, #ff8f00); color: #fff; }
+    .btn-danger   { background: linear-gradient(135deg, #e53935, #b71c1c); color: #fff; }
+    .btn-secondary{ background: linear-gradient(135deg, #78909c, #546e7a); color: #fff; }
+    .btn:hover { transform: translateY(-1px); box-shadow: var(--shadow-md); }
+    .btn:active { transform: translateY(0); }
+
+    .form-label { font-weight: 500; font-size: 0.7rem; margin-bottom: 0.1rem; color: var(--text-dark); display: flex; align-items: center; gap: 0.2rem; }
+    .form-control, .form-select { border-radius: var(--radius-sm); border: 1px solid var(--primary-2); padding: 0.28rem 0.45rem; font-size: 0.78rem; font-family: 'Tajawal', sans-serif; transition: all 0.2s var(--ease); accent-color: var(--primary-4); background-color: #fff; }
+    .form-control:focus, .form-select:focus { border-color: var(--primary-3); box-shadow: 0 0 0 2px rgba(77, 208, 225, 0.2); }
+
+    .page-root {
+        display: flex;
+        flex-direction: column;
+        gap: 0.6rem;
+        padding: 0.5rem 1rem 2rem;
+    }
+
+    .page-bar { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem; }
+    .page-bar h5 { margin: 0; font-size: 1.05rem; font-weight: 700; color: var(--text-dark); display: flex; align-items: center; gap: 0.45rem; }
+    .page-bar h5 i { font-size: 0.95rem; opacity: 0.7; }
+    .page-actions { display: flex; gap: 0.35rem; flex-wrap: wrap; }
+
+    .balance-card { background: linear-gradient(135deg, var(--primary-4) 0%, var(--primary-dark) 100%); color: var(--text-light); border-radius: var(--radius); padding: 0.85rem 1rem; display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 1.25rem; box-shadow: var(--shadow-md); position: relative; overflow: hidden; }
+    .balance-card::after { content: ''; position: absolute; inset: 0; background: radial-gradient(ellipse at 20% 50%, rgba(255,255,255,0.07) 0%, transparent 60%); pointer-events: none; }
+    .balance-card.negative { background: linear-gradient(135deg, #d32f2f 0%, #b71c1c 100%); }
+    .balance-card.negative::after { background: radial-gradient(ellipse at 20% 50%, rgba(255,255,255,0.05) 0%, transparent 60%); }
+    .balance-main { position: relative; z-index: 1; }
+    .balance-label { font-size: 0.72rem; opacity: 0.8; display: flex; align-items: center; gap: 0.3rem; margin-bottom: 0.15rem; }
+    .balance-value { font-size: clamp(1.3rem, 2.8vw, 1.8rem); font-weight: 700; letter-spacing: -0.3px; line-height: 1.2; }
+
+    .balance-day-stats { display: flex; gap: 0.5rem; position: relative; z-index: 1; flex-wrap: wrap; }
+    .day-stat { text-align: center; padding: 0.35rem 0.65rem; background: rgba(255, 255, 255, 0.1); border-radius: var(--radius-sm); backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px); min-width: 85px; transition: background 0.2s var(--ease); }
+    .day-stat:hover { background: rgba(255, 255, 255, 0.18); }
+    .day-stat__label { font-size: 0.6rem; opacity: 0.75; display: block; margin-bottom: 0.05rem; }
+    .day-stat__value { font-size: 0.85rem; font-weight: 700; display: block; }
+
+    .filter-card .card-header { cursor: pointer; user-select: none; padding: 0.4rem 0.85rem; }
+    .filter-card .card-header .chevron-icon { margin-right: auto; font-size: 0.65rem; transition: transform 0.3s var(--ease); }
+    .filter-card .card-header[aria-expanded="false"] .chevron-icon { transform: rotate(-90deg); }
+    .filter-body { overflow: visible; transition: max-height 0.35s var(--ease), padding 0.3s var(--ease), opacity 0.2s ease; max-height: 0; opacity: 0; padding: 0 0.75rem; }
+    .filter-body.show { max-height: 500px; opacity: 1; padding: 0.6rem 0.75rem; overflow: visible; }
+
+    .table-card { display: flex; flex-direction: column; }
+    .table-card .card-body { padding: 0; display: flex; flex-direction: column; }
+
+    .table-scroll { overflow-x: auto; }
+    .table-scroll::-webkit-scrollbar { width: 5px; height: 5px; }
+    .table-scroll::-webkit-scrollbar-thumb { background: var(--primary-3); border-radius: 3px; }
+    .table-scroll::-webkit-scrollbar-track { background: transparent; }
+
+    .tx-table { width: 100%; font-size: 0.76rem; border-collapse: separate; border-spacing: 0; margin: 0; }
+    .tx-table thead th { background: linear-gradient(135deg, var(--primary-3), var(--primary-4)); color: #fff; font-weight: 600; font-size: 0.72rem; text-align: center; padding: 0.4rem 0.35rem; white-space: nowrap; border: none; }
+    .tx-table tbody td { padding: 0.32rem 0.35rem; vertical-align: middle; text-align: center; border-bottom: 1px solid var(--primary-1); transition: background 0.15s var(--ease); }
+    .tx-table tbody tr { transition: background 0.15s var(--ease); }
+    .tx-table tbody tr:hover td { background: rgba(224, 247, 250, 0.6); }
+    .tx-table tbody tr:last-child td { border-bottom: none; }
+    .tx-table tbody tr[data-dir="in"] td:first-child { box-shadow: inset 3px 0 0 #00897b; }
+    .tx-table tbody tr[data-dir="out"] td:first-child { box-shadow: inset 3px 0 0 #e53935; }
+    .tx-table tbody tr[data-dir="neutral"] td:first-child { box-shadow: inset 3px 0 0 var(--primary-3); }
+
+    .amt-in  { color: #00897b; font-weight: 600; font-variant-numeric: tabular-nums; }
+    .amt-out { color: #e53935; font-weight: 600; font-variant-numeric: tabular-nums; }
+    .amt-net { color: var(--primary-4); font-weight: 700; font-variant-numeric: tabular-nums; }
+
+    .tx-badge { font-size: 0.63rem; padding: 0.12rem 0.45rem; border-radius: 20px; font-weight: 600; white-space: nowrap; display: inline-block; }
+    .tx-badge[data-type="deposit"], .tx-badge[data-type="sale_receipt"], .tx-badge[data-type="purchase_return"] { background: #e0f2f1; color: #00695c; }
+    .tx-badge[data-type="withdrawal"], .tx-badge[data-type="expense"], .tx-badge[data-type="purchase_payment"], .tx-badge[data-type="sale_return"] { background: #fce4ec; color: #c62828; }
+    .tx-badge:not([data-type]) { background: var(--primary-1); color: var(--text-dark); }
+
+    .inv-link { font-size: 0.65rem; color: var(--primary-4); text-decoration: none; display: inline-flex; align-items: center; gap: 0.15rem; transition: color 0.15s var(--ease); }
+    .inv-link:hover { color: var(--text-dark); text-decoration: underline; }
+
+    .tx-date { font-variant-numeric: tabular-nums; direction: ltr; text-align: center; line-height: 1.3; }
+    .tx-date small { color: #90a4ae; font-size: 0.65rem; }
+
+    .btn-view { padding: 0.2rem 0.4rem; font-size: 0.75rem; border-radius: var(--radius-sm); display: inline-flex; align-items: center; justify-content: center; min-width: 28px; height: 28px; }
+
+    .tx-table tfoot td { font-weight: 600; font-size: 0.76rem; padding: 0.35rem; text-align: center; border-top: 1.5px solid var(--primary-2); background: #fff; }
+    .tx-table tfoot tr:last-child td { background: var(--primary-1); border-top: 2px solid var(--primary-4); font-size: 0.8rem; }
+
+    .empty-state { text-align: center; padding: 2.5rem 1rem; color: #90a4ae; }
+    .empty-state i { font-size: 2.2rem; opacity: 0.4; display: block; margin-bottom: 0.4rem; }
+    .empty-state p { font-size: 0.82rem; margin: 0; }
+
+    .pager-bar { display: flex; justify-content: center; align-items: center; padding: 0.4rem 0.75rem; border-top: 1px solid var(--primary-1); gap: 0.2rem; flex-wrap: wrap; }
+    .pager-bar .page-link { border: none; border-radius: var(--radius-sm); padding: 0.18rem 0.45rem; font-size: 0.72rem; color: var(--text-dark); background: transparent; transition: all 0.15s var(--ease); min-width: 26px; text-align: center; line-height: 1.5; }
+    .pager-bar .page-link:hover { background: var(--primary-1); color: var(--primary-4); }
+    .pager-bar .page-item.active .page-link { background: linear-gradient(135deg, var(--primary-4), var(--primary-dark)); color: #fff; box-shadow: 0 2px 6px rgba(0, 150, 167, 0.25); }
+
+    .results-count { text-align: center; font-size: 0.7rem; color: #90a4ae; padding: 0.25rem; border-top: 1px solid var(--primary-1); }
+
+    .partner-name {
+        font-weight: 600;
+        color: var(--text-dark);
+        font-size: 0.78rem;
+        white-space: nowrap;
+    }
+    .partner-name .partner-icon {
+        font-size: 0.7rem;
+        opacity: 0.6;
+        margin-left: 0.2rem;
+    }
+
+    /* ============================================
+       أنماط الطباعة الخاصة (متبقية من القالب الأصلي)
+       ============================================ */
+    @media print {
+        .balance-card {
+            background: #fff !important;
+            color: var(--text-dark) !important;
+            border: 1px solid #ddd !important;
+        }
+        .balance-card::after {
+            display: none !important;
+        }
+        .balance-card.negative {
+            background: #fff !important;
+        }
+        .tx-table thead th {
+            background: var(--primary-1) !important;
+            color: var(--text-dark) !important;
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+        }
+        .tx-table tfoot tr:last-child td {
+            background: var(--primary-1) !important;
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+        }
+        .day-stat {
+            background: #f5f5f5 !important;
+            backdrop-filter: none !important;
+        }
+        .day-stat__value[style*="color:#a5d6a7"] {
+            color: #00897b !important;
+        }
+        .day-stat__value[style*="color:#ef9a9a"] {
+            color: #e53935 !important;
+        }
+    }
+
+    /* ============================================
+       استجابة (Responsive)
+       ============================================ */
+    @media (max-width: 992px) {
+        .balance-card { grid-template-columns: 1fr; text-align: center; gap: 0.6rem; padding: 0.7rem; }
+        .balance-label { justify-content: center; }
+        .balance-day-stats { justify-content: center; }
+    }
+
+    @media (max-width: 576px) {
+        .page-root { padding: 0.35rem 0.5rem 0.75rem; gap: 0.4rem; }
+        .page-bar h5 { font-size: 0.9rem; }
+        .btn { font-size: 0.72rem; padding: 0.25rem 0.45rem; }
+        .day-stat { min-width: 70px; padding: 0.25rem 0.4rem; }
+        .day-stat__value { font-size: 0.78rem; }
+        .tx-table { font-size: 0.7rem; }
+        .tx-table thead th { padding: 0.3rem 0.2rem; font-size: 0.66rem; }
+        .tx-table tbody td { padding: 0.25rem 0.2rem; }
+        .partner-name { font-size: 0.7rem; }
+    }
+
+    @media (prefers-reduced-motion: reduce) { 
+        *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; } 
+    }
+
+    .btn:focus-visible, .form-control:focus-visible, .form-select:focus-visible, .page-link:focus-visible, [role="button"]:focus-visible { 
+        outline: 2px solid var(--primary-3); outline-offset: 2px; 
+    }
+    html { scroll-behavior: smooth; }
+    </style>
+{% endblock %}
+
+{% block content %}
+<!-- ============================================
+     منطقة الطباعة (المحتوى القابل للطباعة)
+     ============================================ -->
+<div class="invoice-print-area" id="printableArea">
+    
+    <!-- ===== المحتوى الأساسي (حركات الصندوق) ===== -->
+    <main class="page-root">
+
+        <!-- شريط العنوان والأزرار -->
+        <div class="page-bar no-print">
+            <h5><i class="fas fa-solid fa-cash-register"></i> حركات الصندوق</h5>
+            <div class="page-actions">
+                <a href="?{% for key, value in request.GET.items %}{{ key }}={{ value }}&{% endfor %}export=csv" class="btn btn-warning" title="تصدير CSV" aria-label="تصدير CSV">
+                    <i class="fas fa-solid fa-file-csv"></i>
+                    <span class="d-none d-sm-inline">تصدير</span>
+                </a>
+                <a href="{% url 'invoice:cash_transaction_create' %}" class="btn btn-success" aria-label="إضافة حركة">
+                    <i class="fas fa-solid fa-plus"></i>
+                    <span class="d-none d-sm-inline">إضافة حركة</span>
+                </a>
+            </div>
+        </div>
+
+        <!-- بطاقة الرصيد -->
+        <div class="balance-card {% if is_balance_negative %}negative{% endif %}" role="status" aria-label="الرصيد الإجمالي">
+            <div class="balance-main">
+                <div class="balance-label"><i class="fas fa-solid fa-wallet"></i> الرصيد الإجمالي للصندوق</div>
+                <div class="balance-value">{{ overall_balance|floatformat:2 }}</div>
+            </div>
+            <div class="balance-day-stats">
+                <div class="day-stat">
+                    <span class="day-stat__label">إيداعات اليوم</span>
+                    <span class="day-stat__value" style="color:#a5d6a7">{{ today_in|floatformat:2 }}</span>
+                </div>
+                <div class="day-stat">
+                    <span class="day-stat__label">مسحوبات اليوم</span>
+                    <span class="day-stat__value" style="color:#ef9a9a">{{ today_out|floatformat:2 }}</span>
+                </div>
+                <div class="day-stat">
+                    <span class="day-stat__label">صافي اليوم</span>
+                    <span class="day-stat__value">{{ today_net|floatformat:2 }}</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- فلتر البحث -->
+        <div class="card filter-card no-print">
+            <div class="card-header" data-bs-toggle="collapse" data-bs-target="#filterPanel" role="button" aria-expanded="true" aria-controls="filterPanel">
+                <i class="fas fa-solid fa-sliders-h"></i> تصفية النتائج
+                <i class="fas fa-solid fa-chevron-down chevron-icon"></i>
+            </div>
+            <div class="filter-body show" id="filterPanel">
+                <form method="get" id="filterForm">
+                    <div class="row g-2 align-items-end">
+                        <div class="col-lg-3 col-md-4 col-6">
+                            <label for="f_q" class="form-label"><i class="fas fa-solid fa-search"></i> بحث</label>
+                            <input type="text" name="q" id="f_q" class="form-control" placeholder="ملاحظات..." value="{{ current_filter.q }}">
+                        </div>
+                        <div class="col-lg-2 col-md-4 col-6">
+                            <label for="f_type" class="form-label"><i class="fas fa-solid fa-tag"></i> النوع</label>
+                            <select name="type" id="f_type" class="form-select">
+                                <option value="">الكل</option>
+                                {% for choice in CashTransaction.TRANSACTION_TYPES %}
+                                <option value="{{ choice.0 }}" {% if current_filter.type == choice.0 %}selected{% endif %}>{{ choice.1 }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-lg-2 col-md-4 col-6">
+                            <label for="f_from" class="form-label"><i class="fas fa-solid fa-calendar"></i> من</label>
+                            <input type="date" name="start_date" id="f_from" class="form-control" value="{{ current_filter.start_date }}">
+                        </div>
+                        <div class="col-lg-2 col-md-4 col-6">
+                            <label for="f_to" class="form-label"><i class="fas fa-solid fa-calendar-check"></i> إلى</label>
+                            <input type="date" name="end_date" id="f_to" class="form-control" value="{{ current_filter.end_date }}">
+                        </div>
+                        <div class="col-lg-3 col-md-8 col-12 d-flex gap-1">
+                            <button type="submit" class="btn btn-primary"><i class="fas fa-solid fa-check"></i> تطبيق</button>
+                            <button type="button" class="btn btn-secondary" id="clearFilterBtn"><i class="fas fa-solid fa-eraser"></i> مسح</button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- جدول الحركات -->
+        <div class="card table-card">
+            <div class="card-body">
+                <div class="table-scroll">
+                    <table class="tx-table" aria-label="جدول حركات الصندوق">
+                        <thead>
+                            <tr>
+                                <th style="width:38px" data-print-field="col-index">#</th>
+                                <th data-print-field="col-date">التاريخ</th>
+                                <th data-print-field="col-type">النوع</th>
+                                <th data-print-field="col-in">داخل</th>
+                                <th data-print-field="col-out">خارج</th>
+                                <th style="text-align:start" data-print-field="col-notes">البيان</th>
+                                <th data-print-field="col-partner">الطرف الآخر</th>
+                                <th data-print-field="col-user">بواسطة</th>
+                                <th style="width:36px" class="no-print"></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for transaction in page_obj %}
+                            <tr data-amount-in="{{ transaction.amount_in|default:0 }}" data-amount-out="{{ transaction.amount_out|default:0 }}">
+                                <td data-print-field="col-index">{{ page_obj.start_index|add:forloop.counter0 }}</td>
+                                <td data-print-field="col-date">
+                                    <span class="tx-date">
+                                        {{ transaction.transaction_date|date:"Y-m-d" }}
+                                        <br><small>{{ transaction.transaction_date|date:"H:i" }}</small>
+                                    </span>
+                                </td>
+                                <td data-print-field="col-type">
+                                    <span class="tx-badge" data-type="{{ transaction.transaction_type }}">
+                                        {{ transaction.get_transaction_type_display }}
+                                    </span>
+                                </td>
+                                <td class="amt-in" data-print-field="col-in">{{ transaction.amount_in|floatformat:2|default:"—" }}</td>
+                                <td class="amt-out" data-print-field="col-out">{{ transaction.amount_out|floatformat:2|default:"—" }}</td>
+                                <td style="text-align:start; max-width:220px;" data-print-field="col-notes">
+                                    <span>{{ transaction.notes|truncatechars:40|default:"—" }}</span>
+                                    
+                                    {% if transaction.purchase_invoice %}
+                                    <br>
+                                    <a href="{% url 'invoice:purch_detail' transaction.purchase_invoice.slug %}" class="inv-link no-print">
+                                        <i class="fas fa-solid fa-file-invoice"></i>
+                                        {{ transaction.purchase_invoice.uniqueId }}
+                                    </a>
+                                    <span class="d-print-inline" style="display:none;">
+                                        {{ transaction.purchase_invoice.uniqueId }}
+                                    </span>
+                                    {% endif %}
+                                    
+                                    {% if transaction.sale_invoice %}
+                                    <br>
+                                    <span class="inv-link" style="cursor: default; opacity: 0.6;">
+                                        <i class="fas fa-solid fa-file-invoice-dollar"></i>
+                                        {{ transaction.sale_invoice.uniqueId }}
+                                    </span>
+                                    {% endif %}
+                                </td>
+                                <td data-print-field="col-partner">
+                                    {% if transaction.partner_name and transaction.partner_name != "—" %}
+                                    <span class="partner-name">
+                                        <i class="fas fa-solid fa-user partner-icon"></i>
+                                        {{ transaction.partner_name }}
+                                    </span>
+                                    {% else %}
+                                    <span style="color: #90a4ae; font-size: 0.7rem;">—</span>
+                                    {% endif %}
+                                </td>
+                                <td data-print-field="col-user">{{ transaction.created_by.get_full_name|default:transaction.created_by.username|default:"—" }}</td>
+                                <td class="no-print">
+                                    <a href="{% url 'invoice:cash_transaction_detail' transaction.pk %}" class="btn btn-primary btn-view" title="عرض التفاصيل" aria-label="عرض الحركة">
+                                        <i class="fas fa-solid fa-eye"></i>
+                                    </a>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="9" style="border:none;">
+                                    <div class="empty-state">
+                                        <i class="fas fa-solid fa-inbox"></i>
+                                        <p>لا توجد حركات مطابقة للتصفية</p>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                        {% if page_obj.object_list %}
+                        <tfoot>
+                            <tr>
+                                <td colspan="3" style="text-align:end">إجمالي الصفحة</td>
+                                <td class="amt-in">{{ page_total_in|floatformat:2 }}</td>
+                                <td class="amt-out">{{ page_total_out|floatformat:2 }}</td>
+                                <td colspan="4" class="amt-net">{{ page_total_net|floatformat:2 }}</td>
+                            </tr>
+                            <tr>
+                                <td colspan="3" style="text-align:end">الإجمالي العام</td>
+                                <td class="amt-in">{{ total_in|floatformat:2 }}</td>
+                                <td class="amt-out">{{ total_out|floatformat:2 }}</td>
+                                <td colspan="4" class="amt-net">{{ net_total|floatformat:2 }}</td>
+                            </tr>
+                        </tfoot>
+                        {% endif %}
+                    </table>
+                </div>
+
+                <div class="results-count no-print">
+                    عرض {{ page_obj.start_index|default:"0" }}–{{ page_obj.end_index|default:"0" }}
+                    من أصل {{ page_obj.paginator.count|default:"0" }}
+                </div>
+
+                {% if page_obj.has_other_pages %}
+                <nav class="pager-bar no-print" aria-label="ترقيم الصفحات">
+                    <ul class="pagination pagination-sm mb-0">
+                        {% if page_obj.has_previous %}
+                        <li class="page-item"><a class="page-link" href="?{% for k, v in request.GET.items %}{% if k != 'page' %}{{ k }}={{ v }}&{% endif %}{% endfor %}page=1" aria-label="الأولى"><i class="fas fa-solid fa-angles-right"></i></a></li>
+                        <li class="page-item"><a class="page-link" href="?{% for k, v in request.GET.items %}{% if k != 'page' %}{{ k }}={{ v }}&{% endif %}{% endfor %}page={{ page_obj.previous_page_number }}" aria-label="السابقة"><i class="fas fa-solid fa-angle-right"></i></a></li>
+                        {% endif %}
+                        {% for num in page_obj.paginator.page_range %}
+                            {% if page_obj.number == num %}
+                            <li class="page-item active" aria-current="page"><span class="page-link">{{ num }}</span></li>
+                            {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                            <li class="page-item"><a class="page-link" href="?{% for k, v in request.GET.items %}{% if k != 'page' %}{{ k }}={{ v }}&{% endif %}{% endfor %}page={{ num }}">{{ num }}</a></li>
+                            {% endif %}
+                        {% endfor %}
+                        {% if page_obj.has_next %}
+                        <li class="page-item"><a class="page-link" href="?{% for k, v in request.GET.items %}{% if k != 'page' %}{{ k }}={{ v }}&{% endif %}{% endfor %}page={{ page_obj.next_page_number }}" aria-label="التالية"><i class="fas fa-solid fa-angle-left"></i></a></li>
+                        <li class="page-item"><a class="page-link" href="?{% for k, v in request.GET.items %}{% if k != 'page' %}{{ k }}={{ v }}&{% endif %}{% endfor %}page={{ page_obj.paginator.num_pages }}" aria-label="الأخيرة"><i class="fas fa-solid fa-angles-left"></i></a></li>
+                        {% endif %}
+                    </ul>
+                </nav>
+                {% endif %}
+            </div>
+        </div>
+
+    </main>
+</div>
+
+<!-- ===== استدعاء نظام الطباعة الموحد ===== -->
+{% include 'includes/print_system.html' %}
+
+<!-- ============================================
+     JavaScript - الوظائف الأصلية للقالب فقط
+     ============================================ -->
+<script nonce="{{ csp_nonce }}">
+document.addEventListener('DOMContentLoaded', function () {
+
+    /* ==========================================
+       الكود الأصلي لحركات الصندوق (بدون كود الطباعة)
+       ========================================== */
+    var STORAGE_KEY = 'cash_tx_filter';
+    var form   = document.getElementById('filterForm');
+    var fQ     = document.getElementById('f_q');
+    var fType  = document.getElementById('f_type');
+    var fFrom  = document.getElementById('f_from');
+    var fTo    = document.getElementById('f_to');
+
+    if (form) {
+        form.addEventListener('submit', function () {
+            sessionStorage.setItem(STORAGE_KEY, JSON.stringify({ q: fQ.value, type: fType.value, start_date: fFrom.value, end_date: fTo.value }));
+        });
+    }
+
+    if (fFrom && !fFrom.value) {
+        try {
+            var saved = JSON.parse(sessionStorage.getItem(STORAGE_KEY));
+            if (saved) {
+                if (saved.q && !fQ.value) fQ.value = saved.q;
+                if (saved.type && !fType.value) fType.value = saved.type;
+            }
+        } catch(e) {}
+    }
+
+    var clearBtn = document.getElementById('clearFilterBtn');
+    if (clearBtn) {
+        clearBtn.addEventListener('click', function () {
+            fQ.value = ''; fType.value = ''; fFrom.value = ''; fTo.value = '';
+            sessionStorage.removeItem(STORAGE_KEY);
+            form.submit();
+        });
+    }
+
+    document.querySelectorAll('.tx-table tbody tr[data-amount-in]').forEach(function (row) {
+        var inVal  = parseFloat(row.getAttribute('data-amount-in'))  || 0;
+        var outVal = parseFloat(row.getAttribute('data-amount-out')) || 0;
+        if (inVal > 0) row.setAttribute('data-dir', 'in');
+        else if (outVal > 0) row.setAttribute('data-dir', 'out');
+        else row.setAttribute('data-dir', 'neutral');
+    });
+
+    var panel = document.getElementById('filterPanel');
+    if (panel && form) {
+        var hasValue = Array.from(form.querySelectorAll('input, select')).some(function (el) { return el.value.trim() !== ''; });
+        if (!hasValue) {
+            if (typeof bootstrap !== 'undefined' && bootstrap.Collapse) {
+                bootstrap.Collapse.getOrCreateInstance(panel, { toggle: false }).hide();
+                panel.closest('.filter-card').querySelector('.card-header').setAttribute('aria-expanded', 'false');
+            }
+        }
+    }
+});
+</script>
+{% endblock %}
+
+{% block extra_js %}
+    <script src="{% static 'js/print_system.js' %}"></script>
+{% endblock %}

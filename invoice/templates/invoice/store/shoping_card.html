@@ -1,0 +1,620 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>بطاقة منتج إلكتروني   </title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background-color: #f5f5f5;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .product-card {
+            width: 320px;
+            background: white;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+            position: relative;
+        }
+        
+        .product-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+        }
+        
+        .product-badges {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            z-index: 2;
+            display: flex;
+            gap: 8px;
+        }
+        
+        .badge {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 14px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            transition: transform 0.3s ease;
+        }
+        
+        .badge:hover {
+            transform: scale(1.1);
+        }
+        
+        .badge.discount {
+            background: linear-gradient(135deg, #ff4757, #ff6b81);
+        }
+        
+        .badge.featured {
+            background: linear-gradient(135deg, #2ed573, #7bed9f);
+        }
+        
+        .badge.new {
+            background: linear-gradient(135deg, #1e90ff, #70a1ff);
+        }
+        
+        .product-image {
+            width: 100%;
+            height: 220px;
+            position: relative;
+            overflow: hidden;
+            cursor: zoom-in;
+        }
+        
+        .product-image img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.5s ease;
+        }
+        
+        .product-card:hover .product-image img {
+            transform: scale(1.05);
+        }
+        
+        .quick-actions {
+            position: absolute;
+            bottom: -50px;
+            left: 0;
+            width: 100%;
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            padding: 10px;
+            background: rgba(255,255,255,0.95);
+            transition: bottom 0.3s ease;
+            z-index: 3;
+        }
+        
+        .product-card:hover .quick-actions {
+            bottom: 0;
+        }
+        
+        .quick-action-btn {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: white;
+            border: none;
+            color: #555;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            transition: all 0.3s ease;
+            position: relative;
+        }
+        
+        .quick-action-btn::after {
+            content: attr(data-tooltip);
+            position: absolute;
+            bottom: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #333;
+            color: white;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            white-space: nowrap;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+        }
+        
+        .quick-action-btn:hover::after {
+            opacity: 1;
+        }
+        
+        .quick-action-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+        }
+        
+        .quick-view:hover {
+            color: #1e90ff;
+            background: #e6f2ff;
+        }
+        
+        .zoom-btn:hover {
+            color: #ff4757;
+            background: #ffebee;
+        }
+        
+        .product-content {
+            padding: 16px;
+        }
+        
+        .product-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 8px;
+            height: 40px;
+            overflow: hidden;
+        }
+        
+        .product-rating {
+            display: flex;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        
+        .stars {
+            color: #ffb800;
+            font-size: 14px;
+            margin-left: 5px;
+        }
+        
+        .rating-count {
+            font-size: 12px;
+            color: #777;
+        }
+        
+        .product-price {
+            display: flex;
+            align-items: center;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        
+        .current-price {
+            font-size: 20px;
+            font-weight: bold;
+            color: #2f3542;
+        }
+        
+        .old-price {
+            font-size: 14px;
+            color: #777;
+            text-decoration: line-through;
+        }
+        
+        .discount-percent {
+            background: #ffebee;
+            color: #ff4757;
+            font-size: 12px;
+            font-weight: bold;
+            padding: 2px 6px;
+            border-radius: 4px;
+        }
+        
+        .product-actions {
+            display: flex;
+            gap: 8px;
+            margin-top: 15px;
+        }
+        
+        .add-to-cart, .add-to-wishlist {
+            flex: 1;
+            padding: 10px;
+            border: none;
+            border-radius: 6px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+        
+        .add-to-cart {
+            background: linear-gradient(135deg, #4CAF50, #2ecc71);
+            color: white;
+            box-shadow: 0 2px 10px rgba(76, 175, 80, 0.3);
+        }
+        
+        .add-to-cart:hover {
+            background: linear-gradient(135deg, #3e8e41, #27ae60);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(76, 175, 80, 0.4);
+        }
+        
+        .add-to-wishlist {
+            background: #f8f9fa;
+            color: #555;
+            border: 1px solid #ddd;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+        }
+        
+        .add-to-wishlist:hover {
+            background: #fff;
+            color: #ff4757;
+            border-color: #ff4757;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+        
+        /* تحسينات نافذة التكبير */
+        .zoom-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.9);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            backdrop-filter: blur(5px);
+        }
+        
+        .zoom-overlay.active {
+            opacity: 1;
+            display: flex;
+        }
+        
+        .zoomed-image-container {
+            position: relative;
+            max-width: 90%;
+            max-height: 90%;
+            animation: zoomFadeIn 0.3s ease;
+        }
+        
+        .zoomed-image {
+            max-width: 100%;
+            max-height: 80vh;
+            object-fit: contain;
+            border-radius: 8px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+        }
+        
+        .close-zoom {
+            position: absolute;
+            top: -40px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(255,255,255,0.2);
+            color: white;
+            border: none;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            font-size: 18px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .close-zoom:hover {
+            background: rgba(255,255,255,0.3);
+            transform: translateX(-50%) rotate(90deg);
+        }
+        
+        @keyframes zoomFadeIn {
+            from {
+                opacity: 0;
+                transform: scale(0.8);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+        
+        /* تحسينات نافذة المواصفات */
+        .specs-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        
+        .specs-overlay.active {
+            opacity: 1;
+            display: flex;
+        }
+        
+        .specs-modal {
+            background: white;
+            width: 90%;
+            max-width: 500px;
+            border-radius: 10px;
+            padding: 20px;
+            max-height: 80vh;
+            overflow-y: auto;
+            animation: modalFadeIn 0.3s ease;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+        
+        @keyframes modalFadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .modal-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #333;
+        }
+        
+        .close-modal {
+            background: none;
+            border: none;
+            font-size: 20px;
+            cursor: pointer;
+            color: #777;
+            transition: all 0.3s ease;
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+        }
+        
+        .close-modal:hover {
+            color: #ff4757;
+            background: #f5f5f5;
+        }
+        
+        .specs-list {
+            list-style-type: none;
+        }
+        
+        .specs-list li {
+            padding: 8px 0;
+            border-bottom: 1px dashed #eee;
+            display: flex;
+        }
+        
+        .spec-name {
+            font-weight: 600;
+            color: #555;
+            min-width: 120px;
+        }
+        
+        .spec-value {
+            color: #333;
+        }
+    </style>
+</head>
+<body>
+    <!-- بطاقة المنتج -->
+    <div class="product-card">
+        <!-- العلامات المحسنة -->
+        <div class="product-badges">
+            <div class="badge discount" title="خصم 20%"><i class="fas fa-tag"></i></div>
+            <div class="badge featured" title="منتج مميز"><i class="fas fa-star"></i></div>
+            <div class="badge new" title="منتج جديد"><i class="fas fa-bolt"></i></div>
+        </div>
+        
+        <!-- صورة المنتج مع ميزة التكبير المحسنة -->
+        <div class="product-image" onclick="zoomImage()">
+            <img src="https://images.unsplash.com/photo-1505740420928-5e560c06d30e?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60" alt="سماعات رأس لاسلكية">
+            
+            <!-- أزرار سريعة مع تلميحات -->
+            <div class="quick-actions">
+                <button class="quick-action-btn quick-view" data-tooltip="عرض سريع" onclick="showSpecs(event)">
+                    <i class="far fa-eye"></i>
+                </button>
+                <button class="quick-action-btn zoom-btn" data-tooltip="تكبير الصورة" onclick="zoomImage(event)">
+                    <i class="fas fa-search-plus"></i>
+                </button>
+                <button class="quick-action-btn add-to-wishlist-btn" data-tooltip="إضافة إلى المفضلة" onclick="addToWishlist()">
+                    <i class="far fa-heart"></i>
+                </button>
+            </div>
+        </div>
+        
+        <!-- محتوى البطاقة -->
+        <div class="product-content">
+            <h3 class="product-title">سماعات رأس لاسلكية بجودة صوت عالية - إصدار 2023</h3>
+            
+            <div class="product-rating">
+                <div class="stars">★★★★★</div>
+                <div class="rating-count">(128 تقييم)</div>
+            </div>
+            
+            <div class="product-price">
+                <span class="current-price">199 ر.س</span>
+                <span class="old-price">249 ر.س</span>
+                <span class="discount-percent">وفر 50 ر.س</span>
+            </div>
+            
+            <div class="product-actions">
+                <button class="add-to-cart" onclick="addToCart()">
+                    <i class="fas fa-shopping-cart"></i>
+                    <span>أضف إلى السلة</span>
+                </button>
+                <button class="add-to-wishlist" onclick="addToWishlist()">
+                    <i class="far fa-heart"></i>
+                    <span>المفضلة</span>
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- نافذة التكبير المحسنة -->
+    <div class="zoom-overlay" id="zoomOverlay" onclick="closeZoom(event)">
+        <div class="zoomed-image-container">
+            <img class="zoomed-image" src="https://images.unsplash.com/photo-1505740420928-5e560c06d30e?ixlib=rb-1.2.1&auto=format&fit=crop&w=1000&q=80" alt="صورة مكبرة للمنتج">
+            <button class="close-zoom" onclick="closeZoom(event)">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+    </div>
+    
+    <!-- نافذة المواصفات -->
+    <div class="specs-overlay" id="specsOverlay" onclick="hideSpecs(event)">
+        <div class="specs-modal" onclick="event.stopPropagation()">
+            <div class="modal-header">
+                <h3 class="modal-title">مواصفات المنتج</h3>
+                <button class="close-modal" onclick="hideSpecs()">×</button>
+            </div>
+            
+            <ul class="specs-list">
+                <li>
+                    <span class="spec-name">اسم المنتج:</span>
+                    <span class="spec-value">سماعات رأس لاسلكية بجودة صوت عالية - إصدار 2023</span>
+                </li>
+                <li>
+                    <span class="spec-name">النوع:</span>
+                    <span class="spec-value">سماعات رأس لاسلكية</span>
+                </li>
+                <li>
+                    <span class="spec-name">اللون:</span>
+                    <span class="spec-value">أسود</span>
+                </li>
+                <li>
+                    <span class="spec-name">نوع البلوتوث:</span>
+                    <span class="spec-value">5.0</span>
+                </li>
+                <li>
+                    <span class="spec-name">المدة الزمنية للبطارية:</span>
+                    <span class="spec-value">حتى 30 ساعة</span>
+                </li>
+                <li>
+                    <span class="spec-name">نطاق البلوتوث:</span>
+                    <span class="spec-value">10 أمتار</span>
+                </li>
+                <li>
+                    <span class="spec-name">المقاومة للماء:</span>
+                    <span class="spec-value">IPX4</span>
+                </li>
+                <li>
+                    <span class="spec-name">الوزن:</span>
+                    <span class="spec-value">250 جرام</span>
+                </li>
+                <li>
+                    <span class="spec-name">الضمان:</span>
+                    <span class="spec-value">سنتان</span>
+                </li>
+            </ul>
+        </div>
+    </div>
+    
+    <script nonce="{{ csp_nonce }}">
+        // تحسينات JavaScript
+        document.addEventListener('DOMContentLoaded', function() {
+            // منع تأثير التكبير المزدوج
+            const productImage = document.querySelector('.product-image');
+            productImage.addEventListener('click', function(e) {
+                if(e.target.classList.contains('quick-action-btn')) {
+                    e.stopPropagation();
+                }
+            });
+        });
+        
+        // عرض نافذة المواصفات
+        function showSpecs(event) {
+            if(event) event.stopPropagation();
+            document.getElementById('specsOverlay').classList.add('active');
+            document.body.style.overflow = 'hidden';
+        }
+        
+        // إخفاء نافذة المواصفات
+        function hideSpecs(event) {
+            if(event && event.target !== event.currentTarget) return;
+            document.getElementById('specsOverlay').classList.remove('active');
+            document.body.style.overflow = 'auto';
+        }
+        
+        // تكبير الصورة
+        function zoomImage(event) {
+            if(event) event.stopPropagation();
+            document.getElementById('zoomOverlay').classList.add('active');
+            document.body.style.overflow = 'hidden';
+        }
+        
+        // إغلاق نافذة التكبير
+        function closeZoom(event) {
+            if(event && event.target !== event.currentTarget && !event.target.classList.contains('close-zoom')) return;
+            document.getElementById('zoomOverlay').classList.remove('active');
+            document.body.style.overflow = 'auto';
+        }
+        
+        // إضافة إلى السلة
+        function addToCart() {
+            alert("تمت إضافة المنتج إلى سلة التسوق");
+        }
+        
+        // إضافة إلى المفضلة
+        function addToWishlist() {
+            const wishlistBtns = document.querySelectorAll('.fa-heart');
+            
+            wishlistBtns.forEach(btn => {
+                if(btn.classList.contains('far')) {
+                    btn.classList.replace('far', 'fas');
+                    btn.style.color = '#ff4757';
+                } else {
+                    btn.classList.replace('fas', 'far');
+                    btn.style.color = '';
+                }
+            });
+        }
+    </script>
+</body>
+</html>
+
+بطاقة مادة 

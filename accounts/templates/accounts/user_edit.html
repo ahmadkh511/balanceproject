@@ -1,0 +1,383 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    :root {
+        --aqua-1: #e0f7fa; --aqua-2: #b2ebf2; --aqua-3: #4dd0e1; --aqua-4: #0097a7;
+        --text-dark: #006064; --shadow-sm: 0 2px 8px rgba(0, 150, 167, 0.1); --shadow-md: 0 8px 20px rgba(0, 150, 167, 0.15);
+    }
+    .page-header { background: linear-gradient(135deg, var(--aqua-4) 0%, var(--text-dark) 100%); color: white; padding: 25px 30px; border-radius: 16px; margin-bottom: 25px; box-shadow: var(--shadow-md); }
+    .info-card { border: none; border-radius: 16px; box-shadow: var(--shadow-sm); transition: all 0.3s ease; overflow: hidden; margin-bottom: 24px; background: #fff; }
+    .info-card:hover { transform: translateY(-3px); box-shadow: var(--shadow-md); }
+    .info-card .card-header { background: linear-gradient(135deg, var(--aqua-3) 0%, var(--aqua-4) 100%); color: white; font-weight: 600; padding: 14px 20px; border-bottom: none; }
+    .info-card .card-header h5 { margin: 0; font-size: 1.05rem; }
+    .info-card .card-body { padding: 20px; }
+    .form-control, .form-select { border-radius: 8px; border: 1px solid var(--aqua-2); padding: 10px 14px; font-size: 0.95rem; transition: all 0.2s; }
+    .form-control:focus, .form-select:focus { border-color: var(--aqua-4); box-shadow: 0 0 0 3px rgba(0, 151, 167, 0.15); }
+    .form-label { font-weight: 500; color: #495057; margin-bottom: 6px; font-size: 0.9rem; }
+    .form-text { font-size: 0.8rem; color: #6c757d; margin-top: 4px; }
+    .btn-primary { background: linear-gradient(135deg, var(--aqua-4) 0%, var(--text-dark) 100%); border: none; color: white; padding: 10px 24px; border-radius: 8px; font-weight: 500; transition: all 0.2s; }
+    .btn-primary:hover { transform: translateY(-2px); box-shadow: var(--shadow-md); color: white; }
+    .btn-outline-secondary { border: 1px solid var(--aqua-3); color: var(--aqua-4); border-radius: 8px; }
+    .btn-outline-secondary:hover { background: var(--aqua-1); border-color: var(--aqua-4); color: var(--text-dark); }
+
+    /* === تنسيقات كارت الصلاحيات === */
+    .group-select-wrapper { position: relative; }
+    .group-select-wrapper .form-select {
+        padding-right: 40px;
+        appearance: none;
+        -webkit-appearance: none;
+        background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%230097a7' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m2 5 6 6 6-6'/%3e%3c/svg%3e");
+        background-repeat: no-repeat;
+        background-position: left 12px center;
+        background-size: 16px 12px;
+    }
+    .group-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        background: var(--aqua-1);
+        color: var(--text-dark);
+        padding: 4px 10px;
+        border-radius: 20px;
+        font-size: 0.78rem;
+        font-weight: 500;
+        border: 1px solid var(--aqua-2);
+    }
+    .permissions-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+        gap: 8px;
+        max-height: 200px;
+        overflow-y: auto;
+        padding: 4px;
+    }
+    .permissions-grid::-webkit-scrollbar { width: 4px; }
+    .permissions-grid::-webkit-scrollbar-track { background: var(--aqua-1); border-radius: 4px; }
+    .permissions-grid::-webkit-scrollbar-thumb { background: var(--aqua-3); border-radius: 4px; }
+    .perm-item {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        padding: 6px 10px;
+        background: #f8fffe;
+        border: 1px solid var(--aqua-2);
+        border-radius: 8px;
+        font-size: 0.8rem;
+        color: #495057;
+        transition: all 0.2s;
+    }
+    .perm-item:hover { background: var(--aqua-1); }
+    .perm-item i { color: var(--aqua-4); font-size: 0.7rem; }
+    .no-group-hint {
+        text-align: center;
+        padding: 20px;
+        color: #adb5bd;
+        font-size: 0.85rem;
+    }
+    .no-group-hint i { font-size: 1.5rem; display: block; margin-bottom: 8px; }
+    .group-header-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 12px;
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="page-header d-flex justify-content-between align-items-center">
+        <div>
+            <h1 class="h4 mb-1"><i class="fas fa-user-edit me-2"></i>{{ title }}</h1>
+            <p class="mb-0 opacity-75">تعديل بيانات: <strong>{{ user_to_edit.get_full_name|default:user_to_edit.username }}</strong></p>
+        </div>
+        <a href="{% url 'accounts:user_list' %}" class="btn btn-light"><i class="fas fa-arrow-right ms-2"></i>العودة للقائمة</a>
+    </div>
+
+    {% if messages %}
+        {% for message in messages %}
+        <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">{{ message }}<button type="button" class="btn-close" data-bs-dismiss="alert"></button></div>
+        {% endfor %}
+    {% endif %}
+
+    <form method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+        <div class="row">
+            <!-- العمود الأيسر -->
+            <div class="col-lg-4">
+                <div class="info-card">
+                    <div class="card-header"><h5><i class="fas fa-user-cog me-2"></i>بيانات الحساب</h5></div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <label for="{{ form.username.id_for_label }}" class="form-label">{{ form.username.label }}</label>
+                            {{ form.username }}
+                            {% if form.username.errors %}<div class="text-danger small mt-1">{{ form.username.errors }}</div>{% endif %}
+                        </div>
+                        <div class="mb-3">
+                            <label for="{{ form.email.id_for_label }}" class="form-label">{{ form.email.label }}</label>
+                            {{ form.email }}
+                            {% if form.email.errors %}<div class="text-danger small mt-1">{{ form.email.errors }}</div>{% endif %}
+                        </div>
+                        <div class="row">
+                            <div class="col-6 mb-3">
+                                <label for="{{ form.first_name.id_for_label }}" class="form-label">{{ form.first_name.label }}</label>
+                                {{ form.first_name }}
+                            </div>
+                            <div class="col-6 mb-3">
+                                <label for="{{ form.last_name.id_for_label }}" class="form-label">{{ form.last_name.label }}</label>
+                                {{ form.last_name }}
+                            </div>
+                        </div>
+                        <hr>
+                        <div class="mb-3 form-check form-switch">{{ form.is_active }} <label class="form-check-label" for="{{ form.is_active.id_for_label }}">{{ form.is_active.label }}</label></div>
+                        <div class="form-check form-switch">{{ form.is_staff }} <label class="form-check-label" for="{{ form.is_staff.id_for_label }}">{{ form.is_staff.label }}</label></div>
+                    </div>
+                </div>
+
+                <!-- ===== كارت الصلاحيات والمجموعات (جديد) ===== -->
+                <div class="info-card">
+                    <div class="card-header">
+                        <h5><i class="fas fa-shield-alt me-2"></i>الصلاحيات والمجموعات</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <label for="group_select" class="form-label">المجموعة</label>
+                            <div class="group-select-wrapper">
+                                <select name="group_id" id="group_select" class="form-select">
+                                    <option value="">— بدون مجموعة —</option>
+                                    {% for group in available_groups %}
+                                    <option value="{{ group.id }}" {% if group.id == current_group_id %}selected{% endif %}>
+                                        {{ group.name }}
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="form-text">اختر مجموعة الصلاحيات التي سيتبع لها هذا المستخدم</div>
+                        </div>
+
+                        <div id="permissions-display">
+                            {% if current_group %}
+                            <div class="group-header-row">
+                                <span class="form-label mb-0">صلاحيات المجموعة:</span>
+                                <span class="group-badge">
+                                    <i class="fas fa-tag"></i>
+                                    {{ current_group.name }}
+                                </span>
+                            </div>
+                            {% if current_group_permissions %}
+                            <div class="permissions-grid">
+                                {% for perm in current_group_permissions %}
+                                <div class="perm-item">
+                                    <i class="fas fa-check-circle"></i>
+                                    <span>{{ perm.name }}</span>
+                                </div>
+                                {% endfor %}
+                            </div>
+                            {% else %}
+                            <div class="no-group-hint">
+                                <i class="fas fa-info-circle"></i>
+                                هذه المجموعة لا تحتوي على صلاحيات محددة بعد
+                            </div>
+                            {% endif %}
+                            {% else %}
+                            <div class="no-group-hint" id="no-group-hint">
+                                <i class="fas fa-layer-group"></i>
+                                اختر مجموعة لعرض صلاحياتها
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                <!-- ===== نهاية كارت الصلاحيات ===== -->
+
+                <div class="info-card">
+                    <div class="card-header"><h5><i class="fas fa-camera me-2"></i>الصورة الشخصية</h5></div>
+                    <div class="card-body text-center">
+                        <img src="{% if profile.profile_picture %}{{ profile.profile_picture.url }}{% else %}{% static 'images/default_avatar.png' %}{% endif %}" 
+                             alt="صورة الملف الشخصي" id="avatar-preview" class="rounded-circle mb-3" style="width: 120px; height: 120px; object-fit: cover; border: 3px solid var(--aqua-2);">
+                        {{ profile_form.profile_picture }}
+                        <div class="form-text">يُفضل صورة مربعة بحجم لا يتجاوز 2 ميجابايت</div>
+                    </div>
+                </div>
+
+                <div class="info-card">
+                    <div class="card-header"><h5><i class="fas fa-users me-2"></i>نوع المستخدم</h5></div>
+                    <div class="card-body">
+                        <div class="form-check form-switch mb-3">
+                            {{ profile_form.is_customer }}
+                            <label class="form-check-label" for="{{ profile_form.is_customer.id_for_label }}">
+                                <i class="fas fa-user-check text-success me-1"></i> {{ profile_form.is_customer.label }}
+                            </label>
+                        </div>
+                        <div class="form-check form-switch">
+                            {{ profile_form.is_supplier }}
+                            <label class="form-check-label" for="{{ profile_form.is_supplier.id_for_label }}">
+                                <i class="fas fa-truck text-primary me-1"></i> {{ profile_form.is_supplier.label }}
+                            </label>
+                        </div>
+                        <div class="form-text mt-2">يمكن تفعيل الخيارين معاً.</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- العمود الأيمن -->
+            <div class="col-lg-8">
+                <div class="info-card">
+                    <div class="card-header"><h5><i class="fas fa-id-card me-2"></i>المعلومات الأساسية</h5></div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6 mb-3">{{ profile_form.phone_number }}</div>
+                            <div class="col-md-6 mb-3">{{ profile_form.birth_date }}</div>
+                            <div class="col-md-6 mb-3">{{ profile_form.gender }}</div>
+                            <div class="col-md-6 mb-0">{{ profile_form.bio }}</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="info-card">
+                    <div class="card-header"><h5><i class="fas fa-briefcase me-2"></i>معلومات العمل</h5></div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6 mb-3">{{ profile_form.job_title }}</div>
+                            <div class="col-md-6 mb-3">{{ profile_form.company }}</div>
+                            <div class="col-md-6 mb-3">{{ profile_form.experience_years }}</div>
+                            <div class="col-md-6 mb-3">{{ profile_form.education_level }}</div>
+                            <div class="col-md-6 mb-3">{{ profile_form.university_major }}</div>
+                            <div class="col-md-6 mb-3">{{ profile_form.skills }}</div>
+                            <div class="col-md-6 mb-0">{{ profile_form.languages }}</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="info-card">
+                    <div class="card-header"><h5><i class="fas fa-map-marker-alt me-2"></i>الاتصال والعنوان</h5></div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-12 mb-3">
+                                {{ profile_form.website_display }}
+                                <div class="form-text">أدخل اسم الموقع فقط (مثال: google.com)</div>
+                                {% if profile_form.website_display.errors %}<div class="text-danger small mt-1">{{ profile_form.website_display.errors }}</div>{% endif %}
+                            </div>
+                            <div class="col-12 mb-3">{{ profile_form.address }}</div>
+                            <div class="col-md-4 mb-3">{{ profile_form.city }}</div>
+                            <div class="col-md-4 mb-3">{{ profile_form.country }}</div>
+                            <div class="col-md-4 mb-0">{{ profile_form.postal_code }}</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="info-card">
+                    <div class="card-header"><h5><i class="fas fa-share-alt me-2"></i>التواصل الاجتماعي</h5></div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6 mb-3">{{ profile_form.facebook }}</div>
+                            <div class="col-md-6 mb-3">{{ profile_form.twitter }}</div>
+                            <div class="col-md-6 mb-3">{{ profile_form.instagram }}</div>
+                            <div class="col-md-6 mb-0">{{ profile_form.linkedin }}</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="info-card">
+                    <div class="card-header"><h5><i class="fas fa-cog me-2"></i>الإعدادات</h5></div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6"><div class="form-check form-switch">{{ profile_form.is_public }} <label class="form-check-label" for="{{ profile_form.is_public.id_for_label }}">{{ profile_form.is_public.label }}</label></div></div>
+                            <div class="col-md-6"><div class="form-check form-switch">{{ profile_form.email_notifications }} <label class="form-check-label" for="{{ profile_form.email_notifications.id_for_label }}">{{ profile_form.email_notifications.label }}</label></div></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="d-flex justify-content-between mt-3 mb-4">
+                    <button type="submit" class="btn btn-primary btn-lg"><i class="fas fa-save me-2"></i>حفظ جميع التغييرات</button>
+                    <a href="{% url 'accounts:user_list' %}" class="btn btn-outline-secondary btn-lg"><i class="fas fa-times me-2"></i>إلغاء</a>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+
+<script nonce="{{ csp_nonce }}">
+document.addEventListener('DOMContentLoaded', function() {
+    // معاينة الصورة
+    const input = document.querySelector('input[type="file"]');
+    const img = document.getElementById('avatar-preview');
+    if (input && img) {
+        input.addEventListener('change', function(e) {
+            if (this.files && this.files[0]) {
+                const reader = new FileReader();
+                reader.onload = e => img.src = e.target.result;
+                reader.readAsDataURL(this.files[0]);
+            }
+        });
+    }
+
+    // عرض الصلاحيات عند تغيير المجموعة (AJAX)
+    const groupSelect = document.getElementById('group_select');
+    const permsDisplay = document.getElementById('permissions-display');
+
+    if (groupSelect && permsDisplay) {
+        groupSelect.addEventListener('change', function() {
+            const groupId = this.value;
+            if (!groupId) {
+                permsDisplay.innerHTML = `
+                    <div class="no-group-hint">
+                        <i class="fas fa-layer-group"></i>
+                        اختر مجموعة لعرض صلاحياتها
+                    </div>`;
+                return;
+            }
+
+            // إظهار حالة التحميل
+            permsDisplay.innerHTML = `
+                <div class="no-group-hint">
+                    <i class="fas fa-spinner fa-spin"></i>
+                    جارٍ تحميل الصلاحيات...
+                </div>`;
+
+            fetch(`/accounts/api/group-permissions/${groupId}/`)
+                .then(response => {
+                    if (!response.ok) throw new Error('خطأ في الجلب');
+                    return response.json();
+                })
+                .then(data => {
+                    if (data.permissions.length === 0) {
+                        permsDisplay.innerHTML = `
+                            <div class="group-header-row">
+                                <span class="form-label mb-0">صلاحيات المجموعة:</span>
+                                <span class="group-badge"><i class="fas fa-tag"></i>${data.group_name}</span>
+                            </div>
+                            <div class="no-group-hint">
+                                <i class="fas fa-info-circle"></i>
+                                هذه المجموعة لا تحتوي على صلاحيات محددة بعد
+                            </div>`;
+                    } else {
+                        let permsHtml = data.permissions.map(p =>
+                            `<div class="perm-item"><i class="fas fa-check-circle"></i><span>${p}</span></div>`
+                        ).join('');
+                        permsDisplay.innerHTML = `
+                            <div class="group-header-row">
+                                <span class="form-label mb-0">صلاحيات المجموعة:</span>
+                                <span class="group-badge"><i class="fas fa-tag"></i>${data.group_name}</span>
+                            </div>
+                            <div class="permissions-grid">${permsHtml}</div>`;
+                    }
+                })
+                .catch(() => {
+                    permsDisplay.innerHTML = `
+                        <div class="no-group-hint" style="color: #dc3545;">
+                            <i class="fas fa-exclamation-triangle"></i>
+                            تعذر تحميل الصلاحيات
+                        </div>`;
+                });
+        });
+    }
+});
+</script>
+{% endblock %}

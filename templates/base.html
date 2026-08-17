@@ -1,0 +1,2872 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>{% block title %}نظام إدارة الفواتير{% endblock %}</title>
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.rtl.min.css" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;600;700&display=swap" rel="stylesheet" />
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script nonce="{{ csp_nonce }}">
+        tailwind.config = { prefix: 'tw-', corePlugins: { preflight: false } }
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <style>
+        /* ===== المتغيرات ===== */
+        :root {
+            --aqua-1: #e0f7fa;
+            --aqua-2: #b2ebf2;
+            --aqua-3: #4dd0e1;
+            --aqua-4: #0097a7;
+            --aqua-5: #006064;
+            --text-dark: #006064;
+            --text-light: #ffffff;
+            --shadow-sm: 0 2px 8px rgba(0, 150, 167, 0.08);
+            --shadow-md: 0 4px 12px rgba(0, 150, 167, 0.12);
+            --shadow-lg: 0 16px 48px rgba(0, 96, 100, 0.18);
+            --sidebar-width: 280px;
+            --navbar-height: 60px;
+            --navbar-gutter: 0.5rem;
+            --selector-radius: 14px;
+            
+            /* ===== متغيرات واتساب (أبعاد التبويب المستطيل الضيق) ===== */
+            --wa-tab-width: 1.6rem;
+            --wa-tab-height: 4.5rem;
+            --wa-tab-width-mobile: 1.4rem;
+            --wa-tab-height-mobile: 3.5rem;
+            --wa-tab-width-small: 1.2rem;
+            --wa-tab-height-small: 3rem;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Tajawal', sans-serif;
+            background-color: var(--aqua-1);
+            color: var(--text-dark);
+            direction: rtl;
+            text-align: right;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            font-size: 0.9rem;
+            overflow-y: auto;
+        }
+
+        /* ===== أنماط السلة المحسنة ===== */
+        
+        /* نبض السلة عند الإضافة */
+        @keyframes cartPulse {
+            0% { transform: scale(1); }
+            30% { transform: scale(1.8); background: #ff1744; }
+            60% { transform: scale(0.85); }
+            100% { transform: scale(1); }
+        }
+        
+        .cart-badge-pulse {
+            animation: cartPulse 0.6s cubic-bezier(.36,.07,.19,.97) forwards !important;
+        }
+        
+        /* حركة الطيران المحسنة - أكثر واقعية وجمالاً */
+        @keyframes flyToCart {
+            0% { 
+                opacity: 1; 
+                transform: scale(1) translate(0, 0) rotate(0deg);
+                box-shadow: 0 0 0 0 rgba(0,151,167,0.5);
+            }
+            25% {
+                opacity: 1;
+                transform: scale(1.3) translate(calc(var(--fx) * 0.15), calc(var(--fy) * 0.15) - 40px) rotate(12deg);
+                box-shadow: 0 0 30px 10px rgba(0,151,167,0.3);
+            }
+            50% {
+                opacity: 0.95;
+                transform: scale(0.8) translate(calc(var(--fx) * 0.5), calc(var(--fy) * 0.5) - 20px) rotate(6deg);
+                box-shadow: 0 0 20px 5px rgba(0,151,167,0.2);
+            }
+            75% {
+                opacity: 0.7;
+                transform: scale(0.4) translate(calc(var(--fx) * 0.8), calc(var(--fy) * 0.8) - 8px) rotate(-3deg);
+                box-shadow: 0 0 10px 2px rgba(0,151,167,0.1);
+            }
+            100% { 
+                opacity: 0; 
+                transform: scale(0.1) translate(var(--fx), var(--fy)) rotate(-8deg);
+                box-shadow: 0 0 0 0 rgba(0,151,167,0);
+            }
+        }
+        
+        .flying-item {
+            position: fixed;
+            z-index: 100000;
+            pointer-events: none;
+            animation: flyToCart 0.9s cubic-bezier(.34, 1.56, .64, 1) forwards;
+            border-radius: 50%;
+            box-shadow: 0 8px 40px rgba(0,0,0,0.35);
+            border: 3px solid rgba(255,255,255,0.8);
+            background-size: cover !important;
+            background-position: center !important;
+            background-repeat: no-repeat !important;
+            will-change: transform, opacity;
+        }
+        
+        /* تأثير التموج عند الإضافة */
+        @keyframes rippleEffect {
+            0% { 
+                transform: scale(0.3); 
+                opacity: 0.8;
+                box-shadow: 0 0 20px 5px rgba(0,151,167,0.4);
+            }
+            100% { 
+                transform: scale(2.5); 
+                opacity: 0;
+                box-shadow: 0 0 50px 20px rgba(0,151,167,0);
+            }
+        }
+        
+        .ripple-circle {
+            position: fixed;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(0,151,167,0.3), rgba(0,151,167,0.05));
+            pointer-events: none;
+            z-index: 99999;
+            animation: rippleEffect 0.8s ease-out forwards;
+        }
+        
+        /* تنبيه السلة المنبثق المحسن */
+        .cart-toast-enhanced {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%) translateY(120px) scale(0.8);
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            color: white;
+            padding: 14px 28px;
+            border-radius: 16px;
+            font-size: 0.9rem;
+            opacity: 0;
+            transition: all 0.5s cubic-bezier(.68,-.55,.265,1.55);
+            z-index: 99999;
+            pointer-events: none;
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            box-shadow: 0 12px 50px rgba(0,0,0,0.5);
+            border: 1px solid rgba(255,255,255,0.1);
+            backdrop-filter: blur(10px);
+        }
+        .cart-toast-enhanced.show {
+            opacity: 1;
+            transform: translateX(-50%) translateY(0) scale(1);
+        }
+        .cart-toast-enhanced .t-icon {
+            width: 34px;
+            height: 34px;
+            background: linear-gradient(135deg, #00c853, #00e676);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.85rem;
+            flex-shrink: 0;
+            box-shadow: 0 0 20px rgba(0,200,83,0.3);
+        }
+        .cart-toast-enhanced .t-count {
+            color: #4dd0e1;
+            font-weight: 800;
+            font-size: 0.85rem;
+            background: rgba(255,255,255,0.08);
+            padding: 2px 12px;
+            border-radius: 20px;
+            border: 1px solid rgba(255,255,255,0.05);
+        }
+        .cart-toast-enhanced .t-product {
+            font-weight: 600;
+            color: #fff;
+            max-width: 150px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        /* ===== أيقونة القائمة الجانبية ===== */
+        .sidebar-toggle {
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1.5px solid rgba(255, 255, 255, 0.25);
+            border-radius: 10px;
+            color: rgba(255, 255, 255, 0.85);
+            font-size: 1.3rem;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+        }
+        .sidebar-toggle::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.2), rgba(255, 255, 255, 0.05));
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            border-radius: 10px;
+        }
+        .sidebar-toggle:hover {
+            background: rgba(255, 255, 255, 0.2);
+            border-color: rgba(255, 255, 255, 0.5);
+            transform: scale(1.05) rotate(-5deg);
+            color: #ffffff;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        }
+        .sidebar-toggle:hover::before {
+            opacity: 1;
+        }
+        .sidebar-toggle:active {
+            transform: scale(0.95);
+        }
+        .sidebar-toggle.active {
+            background: rgba(255, 255, 255, 0.25);
+            border-color: rgba(255, 255, 255, 0.6);
+            color: #ffffff;
+            transform: rotate(90deg);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
+        }
+        .sidebar-toggle span {
+            display: none;
+        }
+
+        /* ===== الشريط العلوي ===== */
+        .navbar-mainbg {
+            background: transparent;
+            height: calc(var(--navbar-height) + var(--navbar-gutter));
+            padding-top: var(--navbar-gutter);
+            padding-left: var(--navbar-gutter);
+            padding-right: var(--navbar-gutter);
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 1030;
+        }
+        .navbar-inner {
+            max-width: 1400px;
+            width: 100%;
+            margin: 0 auto;
+            padding: 0 1rem;
+            height: var(--navbar-height);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: linear-gradient(135deg, var(--aqua-4) 0%, var(--aqua-5) 100%);
+            border-radius: 12px;
+            box-shadow: var(--shadow-md);
+            position: relative;
+        }
+        .navbar-right-section {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-shrink: 0;
+            min-width: 0;
+        }
+        .navbar-logo {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            text-decoration: none;
+            color: var(--text-light);
+            font-weight: 700;
+            font-size: 0.9rem;
+            min-width: 0;
+        }
+        .navbar-logo:hover {
+            color: var(--text-light);
+        }
+        .logo-icon {
+            width: 40px;
+            height: 40px;
+            background: rgba(255, 255, 255, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            flex-shrink: 0;
+        }
+        .logo-icon i {
+            color: var(--text-light);
+            font-size: 1.1rem;
+        }
+        .logo-icon img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
+        .navbar-logo .company-name {
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            flex-shrink: 1;
+            min-width: 0;
+        }
+
+        .navbar-center-section {
+            flex: 1;
+            display: flex;
+            justify-content: flex-start;
+            overflow: visible;
+            margin-right: 10px;
+        }
+        #navbarSupportedContent {
+            position: relative;
+            overflow: visible;
+        }
+        #navbarSupportedContent ul {
+            padding: 0;
+            margin: 0;
+            list-style: none;
+            display: flex;
+            align-items: stretch;
+        }
+        #navbarSupportedContent li {
+            float: right;
+            position: relative;
+        }
+        #navbarSupportedContent ul li a {
+            color: rgba(255, 255, 255, 0.7);
+            text-decoration: none;
+            font-size: 13px;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 18px 7px;
+            position: relative;
+            transition: color 0.3s ease;
+            white-space: nowrap;
+            gap: 4px;
+        }
+        #navbarSupportedContent ul li a i.nav-icon {
+            font-size: 0.75rem;
+            margin: 0;
+        }
+
+        #navbarSupportedContent>ul>li:hover>a {
+            color: #ffffff;
+        }
+        #navbarSupportedContent>ul>li.active>a {
+            color: #ffffff;
+            font-weight: 600;
+            text-shadow: 0 1px 8px rgba(0, 0, 0, 0.15);
+        }
+
+        /* ===== المؤشر المتحرك ===== */
+        .hori-selector {
+            display: inline-block;
+            position: absolute;
+            height: 100%;
+            top: 0;
+            left: 0;
+            transition-duration: 0.5s;
+            transition-timing-function: cubic-bezier(0.34, 1.56, 0.64, 1);
+            background: linear-gradient(145deg,
+                    rgba(255, 255, 255, 0.30) 0%,
+                    rgba(255, 255, 255, 0.08) 60%,
+                    rgba(255, 255, 255, 0.02) 100%);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border-radius: var(--selector-radius);
+            margin-top: 4px;
+            z-index: 0;
+            pointer-events: none;
+            border: 1px solid rgba(255, 255, 255, 0.20);
+            box-shadow:
+                0 0 40px rgba(77, 208, 225, 0.25),
+                inset 0 1px 0 rgba(255, 255, 255, 0.30);
+            overflow: hidden;
+        }
+        .hori-selector::before {
+            content: '';
+            position: absolute;
+            inset: -3px;
+            border-radius: calc(var(--selector-radius) + 3px);
+            background: linear-gradient(135deg,
+                    rgba(77, 208, 225, 0.35),
+                    rgba(0, 188, 212, 0.10),
+                    rgba(77, 208, 225, 0.35));
+            z-index: -1;
+            filter: blur(14px);
+            opacity: 0.7;
+            animation: selectorGlow 4s ease-in-out infinite alternate;
+        }
+        @keyframes selectorGlow {
+            0% {
+                opacity: 0.5;
+                transform: scale(0.96) rotate(-1deg);
+            }
+            100% {
+                opacity: 0.9;
+                transform: scale(1.04) rotate(1deg);
+            }
+        }
+        .hori-selector::after {
+            content: '';
+            position: absolute;
+            bottom: 3px;
+            left: 12%;
+            right: 12%;
+            height: 3px;
+            background: linear-gradient(90deg,
+                    transparent,
+                    #4dd0e1 20%,
+                    #00e5ff 50%,
+                    #4dd0e1 80%,
+                    transparent);
+            border-radius: 4px;
+            box-shadow:
+                0 0 20px rgba(77, 208, 225, 0.7),
+                0 0 60px rgba(0, 229, 255, 0.3);
+            animation: linePulse 3s ease-in-out infinite;
+        }
+        @keyframes linePulse {
+            0%,
+            100% {
+                opacity: 0.6;
+                transform: scaleX(0.85);
+                filter: brightness(0.9);
+            }
+            50% {
+                opacity: 1;
+                transform: scaleX(1.15);
+                filter: brightness(1.3);
+            }
+        }
+        .hori-selector .sparkle {
+            position: absolute;
+            width: 4px;
+            height: 4px;
+            background: rgba(255, 255, 255, 0.7);
+            border-radius: 50%;
+            filter: blur(1px);
+            animation: sparkleFloat 5s ease-in-out infinite;
+        }
+        .hori-selector .sparkle:nth-child(1) {
+            top: 15%;
+            left: 10%;
+            animation-delay: 0s;
+        }
+        .hori-selector .sparkle:nth-child(2) {
+            top: 60%;
+            right: 15%;
+            animation-delay: 1.2s;
+            width: 3px;
+            height: 3px;
+        }
+        .hori-selector .sparkle:nth-child(3) {
+            bottom: 20%;
+            left: 40%;
+            animation-delay: 2.5s;
+            width: 5px;
+            height: 5px;
+        }
+        @keyframes sparkleFloat {
+            0%,
+            100% {
+                opacity: 0.2;
+                transform: translateY(0) scale(0.8);
+            }
+            50% {
+                opacity: 1;
+                transform: translateY(-6px) scale(1.2);
+            }
+        }
+        #navbarSupportedContent>ul>li {
+            z-index: 1;
+        }
+
+        /* ===== القوائم المنسدلة ===== */
+        .menu-submenu {
+            position: absolute;
+            top: 100%;
+            right: 0;
+            transform: translateY(-4px) scale(0.96);
+            min-width: 320px;
+            max-width: 480px;
+            background: rgba(255, 255, 255, 0.98);
+            backdrop-filter: blur(14px);
+            -webkit-backdrop-filter: blur(14px);
+            border-radius: 18px;
+            box-shadow: var(--shadow-lg), 0 0 0 1px rgba(77, 208, 225, 0.12);
+            border: none;
+            padding: 8px 10px;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+            z-index: 1060;
+            max-height: min(80vh, 600px);
+            overflow-y: auto;
+            overflow-x: hidden;
+            overscroll-behavior: contain;
+            text-align: right;
+            transform-origin: top center;
+            display: grid !important;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 3px 6px;
+        }
+        
+        .menu-submenu::-webkit-scrollbar {
+            width: 4px;
+        }
+        .menu-submenu::-webkit-scrollbar-track {
+            background: rgba(0, 150, 167, 0.05);
+            border-radius: 10px;
+        }
+        .menu-submenu::-webkit-scrollbar-thumb {
+            background: var(--aqua-3);
+            border-radius: 10px;
+        }
+        .menu-submenu::-webkit-scrollbar-thumb:hover {
+            background: var(--aqua-4);
+        }
+
+        #navbarSupportedContent li.has-submenu:hover>.menu-submenu {
+            opacity: 1;
+            visibility: visible;
+            transform: translateY(0) scale(1);
+        }
+
+        .menu-submenu li {
+            float: none !important;
+            margin: 0 !important;
+            border-radius: 10px;
+            overflow: hidden;
+            transition: all 0.25s ease;
+            background: transparent;
+            list-style: none;
+        }
+        .menu-submenu li:hover {
+            background: linear-gradient(135deg, var(--aqua-1), rgba(77, 208, 225, 0.15));
+            transform: translateX(-2px) scale(1.02);
+            box-shadow: 0 4px 12px rgba(0, 150, 167, 0.08);
+        }
+        .menu-submenu li a {
+            color: var(--text-dark) !important;
+            padding: 8px 10px 8px 8px !important;
+            font-size: 0.8rem !important;
+            display: flex !important;
+            align-items: center !important;
+            gap: 8px !important;
+            transition: all 0.25s ease;
+            border-radius: 10px;
+            font-weight: 500;
+            position: relative;
+            text-decoration: none !important;
+            width: 100%;
+            white-space: nowrap;
+        }
+        .menu-submenu li a::before {
+            content: '';
+            position: absolute;
+            right: 0;
+            top: 20%;
+            height: 60%;
+            width: 2.5px;
+            background: linear-gradient(180deg, var(--aqua-3), var(--aqua-4));
+            border-radius: 0 3px 3px 0;
+            opacity: 0;
+            transition: opacity 0.25s ease;
+        }
+        .menu-submenu li:hover a::before {
+            opacity: 1;
+        }
+        .menu-submenu li a i {
+            color: #9ca3af;
+            font-size: 0.8rem;
+            width: 18px;
+            text-align: center;
+            margin: 0 !important;
+            transition: all 0.3s ease;
+            flex-shrink: 0;
+        }
+        .menu-submenu li a:hover {
+            background: transparent !important;
+            color: var(--aqua-4) !important;
+        }
+        .menu-submenu li a:hover i {
+            color: var(--aqua-4) !important;
+            transform: scale(1.1) rotate(-3deg);
+        }
+        .menu-submenu li.sub-active a {
+            background: linear-gradient(135deg, var(--aqua-1), rgba(77, 208, 225, 0.20)) !important;
+            color: var(--aqua-4) !important;
+            font-weight: 600;
+        }
+        .menu-submenu li.sub-active a i {
+            color: var(--aqua-4) !important;
+        }
+        .menu-submenu li.sub-active a::before {
+            opacity: 1;
+        }
+
+        .menu-submenu::before {
+            content: '';
+            position: absolute;
+            top: -7px;
+            right: 30px;
+            width: 14px;
+            height: 14px;
+            background: rgba(255, 255, 255, 0.98);
+            transform: rotate(45deg);
+            border-radius: 4px 0 0 0;
+            box-shadow: -2px -2px 10px rgba(0, 0, 0, 0.05);
+            border: 1px solid rgba(77, 208, 225, 0.10);
+            border-bottom: none;
+            border-right: none;
+            z-index: 1;
+        }
+
+        .menu-submenu.dropdown-left {
+            right: auto;
+            left: 0;
+        }
+        .menu-submenu.dropdown-left::before {
+            right: auto;
+            left: 30px;
+            transform: rotate(45deg);
+            border-radius: 0 4px 0 0;
+            border-left: none;
+            border-bottom: none;
+            box-shadow: 2px -2px 10px rgba(0, 0, 0, 0.05);
+        }
+
+        .menu-submenu li a.pos-quick-link {
+            color: #047857 !important;
+            font-weight: 700 !important;
+            background: linear-gradient(135deg, #ecfdf5, #d1fae5) !important;
+            border: 1px solid #a7f3d0;
+        }
+        .menu-submenu li a.pos-quick-link i {
+            color: #047857 !important;
+        }
+        .menu-submenu li a.pos-quick-link:hover {
+            background: linear-gradient(135deg, #d1fae5, #a7f3d0) !important;
+            color: #065f46 !important;
+            transform: translateX(-2px) scale(1.03);
+            box-shadow: 0 2px 12px rgba(4, 120, 87, 0.15);
+        }
+        .menu-submenu li a.pos-quick-link:hover i {
+            color: #065f46 !important;
+            transform: scale(1.15) rotate(-3deg);
+        }
+
+        .menu-submenu.wide-grid {
+            min-width: 380px;
+            max-width: 560px;
+        }
+
+        /* ===== استجابة الشاشات الصغيرة ===== */
+        @media (max-width: 992px) {
+            .hori-selector {
+                display: none !important;
+            }
+            .menu-submenu {
+                position: static !important;
+                transform: none !important;
+                opacity: 1 !important;
+                visibility: visible !important;
+                box-shadow: none !important;
+                background: transparent !important;
+                backdrop-filter: none !important;
+                padding: 0 !important;
+                max-height: none !important;
+                overflow-y: visible !important;
+                overscroll-behavior: auto !important;
+                border-radius: 0 !important;
+                display: none !important;
+                grid-template-columns: 1fr !important;
+                min-width: unset !important;
+                max-width: unset !important;
+                gap: 0 !important;
+            }
+            .has-submenu.active .menu-submenu {
+                display: grid !important;
+            }
+            .menu-submenu::before {
+                display: none;
+            }
+            .menu-submenu li {
+                margin: 0 !important;
+                border-radius: 0 !important;
+            }
+            .menu-submenu li a {
+                padding: 8px 16px 8px 12px !important;
+                font-size: 0.8rem !important;
+                white-space: normal !important;
+            }
+            .menu-submenu li a::before {
+                display: none;
+            }
+            .menu-submenu.wide-grid {
+                min-width: unset !important;
+                max-width: unset !important;
+                grid-template-columns: 1fr !important;
+            }
+            .menu-submenu.dropdown-left {
+                right: 0;
+                left: 0;
+            }
+            .menu-submenu.dropdown-left::before {
+                display: none;
+            }
+        }
+
+        /* ===== باقي الأنماط ===== */
+        .navbar-left-section {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-shrink: 0;
+        }
+        .nav-username {
+            color: rgba(255, 255, 255, 0.9);
+            font-size: 0.82rem;
+            font-weight: 600;
+            max-width: 110px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .nav-action-btn {
+            position: relative;
+            width: 34px;
+            height: 34px;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(255, 255, 255, 0.1);
+            color: rgba(255, 255, 255, 0.75);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-decoration: none;
+            font-size: 0.88rem;
+        }
+        .nav-action-btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+            color: var(--text-light);
+            border-color: rgba(255, 255, 255, 0.3);
+        }
+        .nav-badge {
+            position: absolute;
+            top: -4px;
+            left: -4px;
+            min-width: 16px;
+            height: 16px;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.55rem;
+            font-weight: 700;
+            padding: 0 3px;
+            border: 2px solid var(--aqua-4);
+        }
+        .nav-badge.green {
+            background: #00897b;
+            color: white;
+        }
+        .nav-badge.red {
+            background: #e53935;
+            color: white;
+            animation: badgePulse 2s infinite;
+        }
+        @keyframes badgePulse {
+            0% {
+                box-shadow: 0 0 0 0 rgba(229, 57, 53, 0.5);
+            }
+            70% {
+                box-shadow: 0 0 0 6px rgba(229, 57, 53, 0);
+            }
+            100% {
+                box-shadow: 0 0 0 0 rgba(229, 57, 53, 0);
+            }
+        }
+
+        /* ===== القائمة المنسدلة للمستخدم ===== */
+        .user-dropdown-wrapper {
+            position: relative;
+            z-index: 1080;
+        }
+        .user-dropdown-trigger {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 34px;
+            height: 34px;
+            border-radius: 4px;
+            border: 2px solid rgba(255, 255, 255, 0.4);
+            background: rgba(255, 255, 255, 0.15);
+            cursor: pointer;
+            overflow: hidden;
+            transition: all 0.2s ease;
+        }
+        .user-dropdown-trigger:hover {
+            border-color: rgba(255, 255, 255, 0.7);
+            background: rgba(255, 255, 255, 0.25);
+        }
+        .user-dropdown-trigger img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        .user-dropdown-trigger i {
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 0.75rem;
+        }
+        .user-dropdown-menu {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            margin-top: 8px;
+            min-width: 240px;
+            background: #ffffff;
+            border-radius: 12px;
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.18);
+            border: 1px solid var(--aqua-2);
+            padding: 0;
+            z-index: 1080;
+            overflow: hidden;
+            opacity: 0;
+            visibility: hidden;
+            pointer-events: none;
+            transform: translateY(-8px) scale(0.97);
+            transform-origin: top right;
+            transition: opacity 0.2s ease, visibility 0.2s ease, transform 0.2s ease;
+        }
+        .user-dropdown-menu.show {
+            opacity: 1;
+            visibility: visible;
+            pointer-events: auto;
+            transform: translateY(0) scale(1);
+        }
+        .user-dropdown-menu .ud-header {
+            padding: 14px 18px;
+            background: linear-gradient(135deg, var(--aqua-4) 0%, var(--aqua-5) 100%);
+            color: var(--text-light);
+        }
+        .user-dropdown-menu .ud-name {
+            font-size: 0.9rem;
+            font-weight: 600;
+            margin: 0;
+        }
+        .user-dropdown-menu .ud-role {
+            font-size: 0.72rem;
+            opacity: 0.8;
+            margin: 3px 0 0;
+        }
+        .user-dropdown-menu .ud-login-info {
+            padding: 9px 18px;
+            background: var(--aqua-1);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.72rem;
+            color: var(--text-dark);
+            border-bottom: 1px solid var(--aqua-2);
+        }
+        .user-dropdown-menu .ud-login-info i {
+            color: var(--aqua-4);
+            font-size: 0.7rem;
+        }
+        .user-dropdown-menu .ud-login-info span {
+            opacity: 0.75;
+        }
+        .user-dropdown-menu .ud-links {
+            padding: 6px 0;
+        }
+        .user-dropdown-menu a,
+        .user-dropdown-menu button {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            width: 100%;
+            padding: 10px 18px;
+            font-size: 0.84rem;
+            color: var(--text-dark);
+            text-decoration: none;
+            background: none;
+            border: none;
+            cursor: pointer;
+            transition: all 0.15s ease;
+            font-family: 'Tajawal', sans-serif;
+            text-align: right;
+        }
+        .user-dropdown-menu a:hover,
+        .user-dropdown-menu button:hover {
+            background: var(--aqua-1);
+            color: var(--aqua-4);
+        }
+        .user-dropdown-menu a i,
+        .user-dropdown-menu button i {
+            color: #9ca3af;
+            width: 18px;
+            text-align: center;
+            transition: color 0.15s ease;
+            font-size: 0.82rem;
+        }
+        .user-dropdown-menu a:hover i,
+        .user-dropdown-menu button:hover i {
+            color: var(--aqua-4);
+        }
+        .user-dropdown-menu hr {
+            margin: 0;
+            border-color: var(--aqua-2);
+        }
+
+        /* ===== القائمة الجانبية ===== */
+        .sidebar {
+            position: fixed;
+            top: calc(var(--navbar-height) + var(--navbar-gutter));
+            right: 0;
+            width: var(--sidebar-width);
+            height: calc(100vh - var(--navbar-height) - var(--navbar-gutter));
+            background-color: white;
+            box-shadow: -2px 0 15px rgba(0, 150, 167, 0.08);
+            z-index: 1020;
+            transition: right 0.3s ease, width 0.3s ease;
+            overflow-y: auto;
+            overflow-x: hidden;
+            transform: translateX(100%);
+            right: 0;
+        }
+        .sidebar.active {
+            transform: translateX(0);
+        }
+        .sidebar-login-bar {
+            padding: 10px 16px;
+            background: var(--aqua-1);
+            border-bottom: 1px solid var(--aqua-2);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.72rem;
+            color: var(--text-dark);
+            flex-shrink: 0;
+        }
+        .sidebar-login-bar i {
+            color: var(--aqua-4);
+            font-size: 0.7rem;
+        }
+        .sidebar-login-bar .sl-label {
+            opacity: 0.6;
+        }
+        .sidebar-login-bar .sl-value {
+            font-weight: 600;
+        }
+        .sidebar-menu {
+            list-style: none;
+            padding: 8px 0;
+            margin: 0;
+        }
+        .sidebar-item {
+            position: relative;
+        }
+        .sidebar-link {
+            display: flex;
+            align-items: center;
+            padding: 11px 18px;
+            color: var(--text-dark);
+            text-decoration: none;
+            transition: all 0.2s ease;
+            font-weight: 500;
+            font-size: 0.85rem;
+            position: relative;
+        }
+        .sidebar-link:hover {
+            background-color: var(--aqua-1);
+            color: var(--aqua-4);
+        }
+        .sidebar-link.active {
+            background-color: var(--aqua-1);
+            color: var(--aqua-4);
+            font-weight: 600;
+        }
+        .sidebar-link.active::before {
+            content: '';
+            position: absolute;
+            right: 0;
+            top: 0;
+            bottom: 0;
+            width: 3px;
+            background: linear-gradient(180deg, var(--aqua-3), var(--aqua-4));
+            border-radius: 0 3px 3px 0;
+        }
+        .sidebar-icon {
+            font-size: 0.95rem;
+            width: 22px;
+            text-align: center;
+            margin-left: 10px;
+            flex-shrink: 0;
+        }
+        .sidebar-text {
+            white-space: nowrap;
+        }
+        .sidebar-arrow {
+            margin-right: auto;
+            transition: transform 0.3s ease;
+            font-size: 0.65rem;
+            color: #9ca3af;
+            flex-shrink: 0;
+        }
+        .sidebar-item.has-dropdown.active .sidebar-arrow {
+            transform: rotate(180deg);
+            color: var(--aqua-4);
+        }
+        .sidebar-dropdown {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.35s ease;
+            background-color: rgba(224, 247, 250, 0.3);
+        }
+        .sidebar-item.has-dropdown.active .sidebar-dropdown {
+            max-height: 2000px;
+        }
+        .sidebar-dropdown .sidebar-link {
+            padding-right: 50px;
+            font-size: 0.8rem;
+        }
+        .sidebar-cart-count {
+            background: #00897b;
+            color: white;
+            font-size: 0.65rem;
+            padding: 2px 7px;
+            border-radius: 4px;
+            margin-right: auto;
+            font-weight: 700;
+        }
+        .sidebar-link.pos-quick-link {
+            color: #047857;
+            font-weight: 700;
+        }
+        .sidebar-link.pos-quick-link .sidebar-icon {
+            color: #047857;
+        }
+        .sidebar-link.pos-quick-link:hover {
+            background-color: #d1fae5;
+            color: #065f46;
+        }
+        .sidebar-link.pos-quick-link:hover .sidebar-icon {
+            color: #065f46;
+        }
+        .sidebar-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(0, 96, 100, 0.3);
+            z-index: 1015;
+            display: none;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        .sidebar-overlay.active {
+            display: block;
+            opacity: 1;
+        }
+
+        /* ===== المحتوى الرئيسي ===== */
+        .main-content {
+            max-width: 1400px;
+            width: 100%;
+            margin: 0 auto;
+            padding: 0.75rem 0.5rem;
+            padding-top: calc(var(--navbar-height) + var(--navbar-gutter) + 0.75rem);
+            min-height: calc(100vh - var(--navbar-height) - var(--navbar-gutter));
+        }
+        .auth-main-content {
+            padding-top: 2rem;
+        }
+
+        /* ===== التذييل ===== */
+        .footer {
+            background: transparent;
+            color: var(--text-light);
+            padding: 0.5rem;
+            width: 100%;
+        }
+        .footer-container {
+            max-width: 1400px;
+            width: 100%;
+            margin: 0 auto;
+            background: linear-gradient(135deg, var(--aqua-4) 0%, var(--aqua-5) 100%);
+            border-radius: 12px;
+            padding: 1rem;
+            box-shadow: var(--shadow-md);
+            overflow: hidden;
+        }
+        .footer-logo {
+            display: flex;
+            align-items: center;
+            gap: 0.8rem;
+            margin-bottom: 0.8rem;
+        }
+        .footer-logo .f-logo {
+            width: 45px;
+            height: 45px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            flex-shrink: 0;
+        }
+        .footer-logo .f-logo img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
+        .footer-logo .f-logo i {
+            font-size: 1.2rem;
+        }
+        .footer-logo-text {
+            font-size: 1rem;
+            font-weight: 700;
+        }
+        .footer-links h6 {
+            color: var(--aqua-2);
+            margin-bottom: 0.6rem;
+            font-weight: 600;
+            font-size: 0.82rem;
+        }
+        .footer-links ul {
+            list-style: none;
+            padding: 0;
+        }
+        .footer-links li {
+            margin-bottom: 0.2rem;
+        }
+        .footer-links a {
+            color: rgba(255, 255, 255, 0.65);
+            text-decoration: none;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+            font-size: 0.8rem;
+        }
+        .footer-links a:hover {
+            color: var(--text-light);
+        }
+        .footer-contact i {
+            width: 18px;
+            color: var(--aqua-3);
+            font-size: 0.75rem;
+        }
+        .footer-bottom {
+            border-top: 1px solid rgba(255, 255, 255, 0.15);
+            padding-top: 0.8rem;
+            margin-top: 0.8rem;
+            text-align: center;
+            color: rgba(255, 255, 255, 0.5);
+            font-size: 0.72rem;
+        }
+        .social-links {
+            display: flex;
+            gap: 0.4rem;
+            margin-top: 0.6rem;
+        }
+        .social-links a {
+            width: 28px;
+            height: 28px;
+            border-radius: 4px;
+            background: rgba(255, 255, 255, 0.1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s ease;
+            color: rgba(255, 255, 255, 0.7);
+        }
+        .social-links a:hover {
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+        }
+
+        /* ===== مكونات إضافية ===== */
+        .card {
+            border: none;
+            border-radius: 12px;
+            box-shadow: var(--shadow-sm);
+            margin-bottom: 1rem;
+            overflow: hidden;
+        }
+        .card:hover {
+            box-shadow: var(--shadow-md);
+        }
+        .card-header {
+            background: linear-gradient(135deg, var(--aqua-4) 0%, var(--aqua-5) 100%);
+            color: var(--text-light);
+            padding: 0.6rem 1rem;
+            font-weight: 600;
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .card-body {
+            padding: 1rem;
+        }
+        .btn {
+            border-radius: 4px;
+            padding: 0.35rem 0.7rem;
+            font-weight: 600;
+            font-size: 0.8rem;
+            border: none;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.3rem;
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, var(--aqua-4) 0%, var(--aqua-5) 100%);
+            color: white;
+        }
+        .btn-primary:hover {
+            background: linear-gradient(135deg, #00838f 0%, #004d40 100%);
+            transform: translateY(-1px);
+        }
+        .btn-success {
+            background: linear-gradient(135deg, #00897b 0%, #00695c 100%);
+            color: white;
+        }
+        .btn-success:hover {
+            transform: translateY(-1px);
+        }
+        .btn-danger {
+            background: linear-gradient(135deg, #e53935 0%, #b71c1c 100%);
+            color: white;
+        }
+        .btn-danger:hover {
+            transform: translateY(-1px);
+        }
+        .btn-warning {
+            background: linear-gradient(135deg, #ffb300 0%, #ff8f00 100%);
+            color: white;
+        }
+        .btn-warning:hover {
+            transform: translateY(-1px);
+        }
+        .table {
+            font-size: 0.8rem;
+        }
+        .table thead th {
+            background: linear-gradient(135deg, var(--aqua-3) 0%, var(--aqua-4) 100%);
+            color: white;
+            font-weight: 600;
+            text-align: center;
+            border-color: var(--aqua-4);
+        }
+        .form-control,
+        .form-select {
+            border-radius: 4px;
+            border: 1px solid var(--aqua-2);
+            padding: 0.35rem 0.5rem;
+            font-size: 0.8rem;
+            transition: all 0.2s;
+        }
+        .form-control:focus,
+        .form-select:focus {
+            border-color: var(--aqua-3);
+            box-shadow: 0 0 0 2px rgba(77, 208, 225, 0.2);
+        }
+        .form-label {
+            font-weight: 500;
+            font-size: 0.75rem;
+            margin-bottom: 0.2rem;
+            color: var(--text-dark);
+            display: flex;
+            align-items: center;
+            gap: 0.3rem;
+        }
+        .alert {
+            border-radius: 4px;
+            border: none;
+            padding: 0.6rem 1rem;
+            margin-bottom: 1rem;
+            font-size: 0.85rem;
+        }
+        .required-field::after {
+            content: " *";
+            color: #d32f2f;
+        }
+        .stat-card {
+            background: white;
+            border-radius: 12px;
+            padding: 1rem;
+            box-shadow: var(--shadow-sm);
+            transition: all 0.2s ease;
+            height: 100%;
+        }
+        .stat-card:hover {
+            transform: translateY(-3px);
+            box-shadow: var(--shadow-md);
+        }
+        .stat-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 10px;
+            font-size: 1.2rem;
+            color: white;
+        }
+        .stat-icon.primary {
+            background: linear-gradient(135deg, var(--aqua-3), var(--aqua-4));
+        }
+        .stat-icon.success {
+            background: linear-gradient(135deg, #00897b, #00695c);
+        }
+        .stat-icon.warning {
+            background: linear-gradient(135deg, #ffb300, #ff8f00);
+        }
+        .stat-icon.danger {
+            background: linear-gradient(135deg, #e53935, #b71c1c);
+        }
+        .stat-icon.info {
+            background: linear-gradient(135deg, #8e24aa, #6a1b9a);
+        }
+        .stat-value {
+            font-size: 1.6rem;
+            font-weight: 700;
+            margin-bottom: 2px;
+        }
+        .stat-label {
+            color: #78909c;
+            font-size: 0.8rem;
+        }
+
+        /* ===== واتساب على شكل شريط مستطيل شفاف ومختفي ===== */
+        .wa-float-container {
+            position: fixed;
+            top: 65%;
+            left: 0;
+            transform: translateY(-50%);
+            z-index: 9999;
+            display: flex;
+            align-items: center;
+            gap: 0;
+            animation: wa-fadeIn 0.5s ease-out forwards;
+        }
+
+        .wa-float-msg {
+            background: rgba(255, 255, 255, 0.95);
+            color: #333;
+            padding: 0.4rem 0.9rem;
+            border-radius: 0 0.6rem 0.6rem 0;
+            box-shadow: 0 0.25rem 1rem rgba(0, 0, 0, 0.1);
+            font-family: 'Tajawal', sans-serif;
+            font-size: 0.8rem;
+            font-weight: 600;
+            white-space: nowrap;
+            opacity: 0;
+            transform: translateX(-1.25rem);
+            animation: wa-slideIn 0.5s 0.3s ease-out forwards;
+            border: 1px solid #f0f0f0;
+            border-left: none;
+            margin-left: -2px; 
+            pointer-events: none;
+        }
+
+        .wa-float-btn {
+            width: var(--wa-tab-width);
+            height: var(--wa-tab-height);
+            min-width: var(--wa-tab-width);
+            min-height: var(--wa-tab-height);
+            background-color: #25D366;
+            color: white !important;
+            border-radius: 0 6px 6px 0; /* شكل شريط مستطيل مدور من اليمين */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 2px 0 8px rgba(37, 211, 102, 0.2);
+            text-decoration: none !important;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            border: none;
+            flex-shrink: 0;
+            overflow: hidden;
+            padding: 0;
+            line-height: 1;
+            cursor: pointer;
+            opacity: 0.2; /* شفافية عالية جداً (مختفي أكثر) */
+            margin-left: -0.8rem; /* إخفاء جزء كبير من الشريط خلف الشاشة */
+        }
+
+        .wa-float-btn i {
+            font-size: 1.2rem;
+            color: white !important;
+            line-height: 1;
+            transition: transform 0.3s ease;
+        }
+
+        .wa-float-btn:hover {
+            opacity: 1; /* يظهر بالكامل */
+            background-color: #128C7E;
+            transform: translateX(8px); /* ينزلق للداخل */
+            width: calc(var(--wa-tab-width) + 0.5rem); /* يتسع قليلاً */
+            border-radius: 0 10px 10px 0;
+            box-shadow: 4px 0 15px rgba(37, 211, 102, 0.5);
+            text-decoration: none !important;
+            color: white !important;
+        }
+
+        .wa-float-btn:hover i {
+            transform: scale(1.1);
+        }
+
+        .wa-float-btn:active {
+            transform: scale(0.95);
+        }
+
+        .wa-float-msg-hide {
+            opacity: 0 !important;
+            transition: opacity 0.5s ease;
+        }
+
+        @keyframes wa-slideIn {
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        @keyframes wa-fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(-50%) translateX(-1.25rem);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(-50%) translateX(0);
+            }
+        }
+
+        @media (max-width: 992px) {
+            .wa-float-container {
+                top: 70%;
+            }
+            .wa-float-btn {
+                width: var(--wa-tab-width-mobile);
+                height: var(--wa-tab-height-mobile);
+                min-width: var(--wa-tab-width-mobile);
+                min-height: var(--wa-tab-height-mobile);
+                margin-left: -0.6rem;
+                opacity: 0.25;
+            }
+            .wa-float-btn i {
+                font-size: 1rem;
+            }
+            .wa-float-msg {
+                font-size: 0.75rem;
+                padding: 0.35rem 0.8rem;
+            }
+        }
+
+        @media (max-width: 576px) {
+            .wa-float-container {
+                top: auto;
+                bottom: 1rem;
+                left: 0;
+                transform: translateY(0);
+            }
+            .wa-float-btn {
+                width: var(--wa-tab-width-small);
+                height: var(--wa-tab-height-small);
+                min-width: var(--wa-tab-width-small);
+                min-height: var(--wa-tab-height-small);
+                opacity: 0.2;
+                margin-left: -0.5rem;
+            }
+            .wa-float-btn i {
+                font-size: 0.9rem;
+            }
+            .wa-float-msg {
+                display: none;
+            }
+        }
+
+        @media (max-width: 400px) {
+            .wa-float-container {
+                bottom: 0.5rem;
+            }
+            .wa-float-btn {
+                width: 1rem;
+                height: 2.5rem;
+                min-width: 1rem;
+                min-height: 2.5rem;
+                border-radius: 0 4px 4px 0;
+                margin-left: -0.4rem;
+            }
+            .wa-float-btn i {
+                font-size: 0.75rem;
+            }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            .wa-float-btn {
+                animation: none !important;
+            }
+            .wa-float-msg {
+                animation: none !important;
+                opacity: 1 !important;
+                transform: none !important;
+            }
+            .wa-float-container {
+                animation: none !important;
+            }
+        }
+
+        /* ===== استجابة باقي الشاشات ===== */
+        @media (max-width: 1200px) {
+            #navbarSupportedContent ul li a {
+                padding: 18px 5px;
+                font-size: 12px;
+            }
+            #navbarSupportedContent ul li a i.nav-icon {
+                display: none;
+            }
+            .menu-submenu {
+                min-width: 280px;
+                max-width: 400px;
+            }
+        }
+        @media (max-width: 992px) {
+            .navbar-center-section {
+                display: none !important;
+            }
+            .sidebar {
+                width: 300px;
+                max-width: 85vw;
+            }
+            .menu-submenu {
+                min-width: unset !important;
+                max-width: unset !important;
+                grid-template-columns: 1fr !important;
+            }
+        }
+        @media (max-width: 768px) {
+            :root {
+                --navbar-height: 56px;
+                --navbar-gutter: 0.25rem;
+            }
+            .main-content {
+                padding: 0.5rem;
+                padding-top: calc(var(--navbar-height) + var(--navbar-gutter) + 0.5rem);
+            }
+            .navbar-inner {
+                padding: 0 0.75rem;
+            }
+            .navbar-right-section {
+                gap: 8px;
+            }
+            .navbar-logo .company-name {
+                font-size: 0.72rem;
+                max-width: 130px;
+                line-height: 1.2;
+            }
+            .logo-icon {
+                width: 38px;
+                height: 38px;
+            }
+            .logo-icon i {
+                font-size: 1rem;
+            }
+            .nav-username {
+                display: none !important;
+            }
+            .sidebar {
+                width: 88vw;
+                max-width: 340px;
+            }
+            .sidebar-login-bar {
+                padding: 8px 14px;
+                font-size: 0.68rem;
+            }
+            .sidebar-link {
+                padding: 10px 14px;
+                font-size: 0.82rem;
+            }
+            .sidebar-icon {
+                width: 20px;
+                font-size: 0.88rem;
+                margin-left: 8px;
+            }
+            .sidebar-dropdown .sidebar-link {
+                padding-right: 44px;
+                font-size: 0.78rem;
+            }
+            .sidebar-cart-count {
+                font-size: 0.6rem;
+                padding: 1px 5px;
+            }
+            .footer {
+                padding: 0.25rem;
+            }
+            .footer-container {
+                padding: 0.75rem;
+            }
+            .footer-logo {
+                flex-direction: column;
+                text-align: center;
+                gap: 0.4rem;
+            }
+            .footer-logo-text {
+                font-size: 0.9rem;
+            }
+            .footer-bottom {
+                font-size: 0.65rem;
+            }
+            .footer-bottom .row {
+                flex-direction: column;
+                gap: 0.3rem;
+            }
+            .footer-bottom .col-md-6 {
+                text-align: center !important;
+            }
+            .card-header {
+                padding: 0.5rem 0.8rem;
+                font-size: 0.82rem;
+            }
+            .card-body {
+                padding: 0.8rem;
+            }
+            .btn {
+                font-size: 0.75rem;
+                padding: 0.3rem 0.6rem;
+            }
+            .table {
+                font-size: 0.75rem;
+            }
+            .form-control,
+            .form-select {
+                font-size: 0.78rem;
+            }
+            .stat-card {
+                padding: 0.8rem;
+            }
+            .stat-icon {
+                width: 40px;
+                height: 40px;
+                font-size: 1rem;
+            }
+            .stat-value {
+                font-size: 1.3rem;
+            }
+            
+            .user-dropdown-wrapper {
+                z-index: 10790;
+            }
+            .user-dropdown-menu {
+                position: fixed !important;
+                top: auto !important;
+                bottom: 0 !important;
+                left: 0 !important;
+                right: 0 !important;
+                width: 100% !important;
+                max-width: 100% !important;
+                min-width: 100% !important;
+                border-radius: 20px 20px 0 0 !important;
+                border: none !important;
+                border-top: 3px solid var(--aqua-3) !important;
+                box-shadow: 0 -4px 30px rgba(0, 0, 0, 0.15) !important;
+                max-height: 85vh;
+                overflow-y: auto;
+                margin-top: 0 !important;
+                transform: translateY(100%) !important;
+                transform-origin: bottom center !important;
+                transition: transform 0.3s cubic-bezier(0.32, 0.72, 0, 1), opacity 0.3s ease, visibility 0.3s ease !important;
+                z-index: 10790 !important;
+            }
+            .user-dropdown-menu.show {
+                transform: translateY(0) !important;
+            }
+            .user-dropdown-menu::before {
+                content: '';
+                display: block;
+                width: 36px;
+                height: 4px;
+                background: #d0d0d0;
+                border-radius: 4px;
+                margin: 10px auto 0;
+            }
+            .user-dropdown-menu .ud-header {
+                padding: 14px 20px 12px;
+            }
+            .user-dropdown-menu .ud-name {
+                font-size: 0.95rem;
+            }
+            .user-dropdown-menu .ud-role {
+                font-size: 0.78rem;
+            }
+            .user-dropdown-menu .ud-login-info {
+                padding: 10px 20px;
+                font-size: 0.75rem;
+            }
+            .user-dropdown-menu .ud-links {
+                padding: 8px 0 16px;
+            }
+            .user-dropdown-menu a,
+            .user-dropdown-menu button {
+                padding: 13px 20px;
+                font-size: 0.92rem;
+                gap: 12px;
+            }
+            .user-dropdown-menu a i,
+            .user-dropdown-menu button i {
+                width: 22px;
+                font-size: 0.9rem;
+            }
+            .user-dropdown-menu hr {
+                margin: 4px 0;
+            }
+        }
+        
+        @media (max-width: 576px) {
+            :root {
+                --navbar-gutter: 0.5rem;
+            }
+            .main-content {
+                padding: 0.5rem;
+                padding-top: calc(var(--navbar-height) + var(--navbar-gutter) + 0.5rem);
+            }
+            .navbar-inner {
+                padding: 0 0.65rem;
+                border-radius: 10px;
+            }
+            .navbar-logo .company-name {
+                font-size: 0.68rem;
+                max-width: 100px;
+            }
+            .navbar-right-section {
+                gap: 6px;
+            }
+            .nav-action-btn {
+                width: 30px;
+                height: 30px;
+                font-size: 0.8rem;
+            }
+            .nav-badge {
+                min-width: 14px;
+                height: 14px;
+                font-size: 0.5rem;
+                top: -3px;
+                left: -3px;
+            }
+            .user-dropdown-trigger {
+                width: 30px;
+                height: 30px;
+            }
+            .sidebar {
+                width: 92vw;
+                max-width: none;
+            }
+            .sidebar-link {
+                padding: 9px 12px;
+                font-size: 0.8rem;
+            }
+            .sidebar-icon {
+                width: 18px;
+                font-size: 0.82rem;
+                margin-left: 6px;
+            }
+            .sidebar-dropdown .sidebar-link {
+                padding-right: 38px;
+                font-size: 0.75rem;
+            }
+            .footer {
+                padding: 0.5rem;
+            }
+            .footer-container {
+                padding: 0.5rem;
+            }
+            .footer-links h6 {
+                font-size: 0.72rem;
+                margin-bottom: 0.4rem;
+            }
+            .footer-links a {
+                font-size: 0.7rem;
+                gap: 0.2rem;
+            }
+            .footer-contact a {
+                font-size: 0.65rem;
+            }
+            .footer-contact i {
+                width: 14px;
+                font-size: 0.65rem;
+            }
+            .card {
+                margin-bottom: 0.6rem;
+                border-radius: 10px;
+            }
+            .card-header {
+                padding: 0.45rem 0.6rem;
+                font-size: 0.78rem;
+                gap: 0.3rem;
+            }
+            .card-body {
+                padding: 0.6rem;
+            }
+            .btn {
+                font-size: 0.7rem;
+                padding: 0.25rem 0.5rem;
+                border-radius: 3px;
+            }
+            .table {
+                font-size: 0.7rem;
+            }
+            .table thead th {
+                font-size: 0.7rem;
+                padding: 0.4rem 0.3rem;
+            }
+            .table td {
+                padding: 0.35rem 0.3rem;
+            }
+            .form-control,
+            .form-select {
+                font-size: 0.75rem;
+                padding: 0.3rem 0.4rem;
+            }
+            .form-label {
+                font-size: 0.7rem;
+            }
+            .alert {
+                font-size: 0.78rem;
+                padding: 0.5rem 0.7rem;
+            }
+            .stat-card {
+                padding: 0.6rem;
+                border-radius: 10px;
+            }
+            .stat-icon {
+                width: 36px;
+                height: 36px;
+                font-size: 0.9rem;
+                margin-bottom: 6px;
+            }
+            .stat-value {
+                font-size: 1.15rem;
+            }
+            .stat-label {
+                font-size: 0.7rem;
+            }
+            .table-responsive {
+                margin: 0 -0.5rem;
+            }
+            .card .table-responsive {
+                margin: -0.6rem;
+                border-radius: 0 0 10px 10px;
+                overflow: hidden;
+            }
+        }
+        
+        @media (max-width: 400px) {
+            :root {
+                --navbar-height: 52px;
+                --navbar-gutter: 0.375rem;
+            }
+            .navbar-inner {
+                padding: 0 0.5rem;
+                border-radius: 8px;
+            }
+            .navbar-right-section {
+                gap: 4px;
+            }
+            .navbar-logo .company-name {
+                font-size: 0.62rem;
+                max-width: 75px;
+            }
+            .navbar-logo {
+                gap: 6px;
+            }
+            .logo-icon {
+                width: 34px;
+                height: 34px;
+                border-radius: 3px;
+            }
+            .logo-icon i {
+                font-size: 0.85rem;
+            }
+            .sidebar-toggle {
+                width: 34px;
+                height: 34px;
+                font-size: 1.1rem;
+            }
+            .main-content {
+                padding: 0.375rem;
+                padding-top: calc(var(--navbar-height) + var(--navbar-gutter) + 0.375rem);
+            }
+            .sidebar-link {
+                padding: 8px 10px;
+                font-size: 0.78rem;
+            }
+            .sidebar-icon {
+                width: 16px;
+                font-size: 0.78rem;
+                margin-left: 5px;
+            }
+            .sidebar-dropdown .sidebar-link {
+                padding-right: 32px;
+                font-size: 0.72rem;
+            }
+            .sidebar-arrow {
+                font-size: 0.55rem;
+            }
+            .sidebar-cart-count {
+                font-size: 0.55rem;
+                padding: 1px 4px;
+            }
+            .card {
+                margin-bottom: 0.5rem;
+                border-radius: 8px;
+            }
+            .card-header {
+                font-size: 0.72rem;
+                padding: 0.4rem 0.5rem;
+            }
+            .card-body {
+                padding: 0.5rem;
+            }
+            .btn {
+                font-size: 0.65rem;
+                padding: 0.2rem 0.4rem;
+            }
+            .table {
+                font-size: 0.65rem;
+            }
+            .table thead th {
+                font-size: 0.65rem;
+            }
+            .stat-card {
+                padding: 0.5rem;
+                border-radius: 8px;
+            }
+            .stat-icon {
+                width: 32px;
+                height: 32px;
+                font-size: 0.8rem;
+            }
+            .stat-value {
+                font-size: 1rem;
+            }
+            .stat-label {
+                font-size: 0.65rem;
+            }
+            .footer {
+                padding: 0.375rem;
+            }
+            .footer-container {
+                padding: 0.5rem;
+            }
+            .footer-bottom {
+                font-size: 0.6rem;
+            }
+        }
+    </style>
+
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+
+    <script type="application/json" id="baseAppData">
+        {
+            "posUrl": "{% url 'invoice:pos_sale_create' %}",
+            "canAddSale": {% if perms.invoice.add_sale %}true{% else %}false{% endif %}
+        }
+    </script>
+
+    {% if user.is_authenticated %}
+
+    <!-- ===== الشريط العلوي ===== -->
+    <nav class="navbar-mainbg">
+        <div class="navbar-inner">
+            <div class="navbar-right-section">
+                <button type="button" id="menuToggle" class="sidebar-toggle" aria-label="القائمة">
+                    <i class="fas fa-sliders-h"></i>
+                </button>
+                <a href="{% url 'index' %}" class="navbar-logo" title="{{ company_settings.company_name|default:'نظام إدارة الفواتير' }}">
+                    <div class="logo-icon">
+                        {% if company_settings.company_logo %}
+                        <img src="{{ company_settings.company_logo.url }}" alt="شعار الشركة" loading="lazy">
+                        {% elif company_logo %}
+                        <img src="{{ company_logo.url }}" alt="شعار الشركة" loading="lazy">
+                        {% else %}
+                        <i class="fas fa-file-invoice-dollar"></i>
+                        {% endif %}
+                    </div>
+                    <span class="company-name">{{ company_settings.company_name|default:"أدخل اسم شركتك" }}</span>
+                </a>
+            </div>
+
+            <div class="navbar-center-section">
+                <div id="navbarSupportedContent">
+                    <div class="hori-selector">
+                        <span class="sparkle"></span>
+                        <span class="sparkle"></span>
+                        <span class="sparkle"></span>
+                    </div>
+                    <ul>
+                        <!-- فواتير -->
+                        <li class="has-submenu {% if 'purch' in current_url_name or 'sale' in current_url_name %}active{% endif %}">
+                            <a href="#"><i class="fas fa-file-invoice nav-icon"></i>الفواتير</a>
+                            <ul class="menu-submenu wide-grid">
+                                {% if perms.invoice.add_purch %}
+                                <li class="{% if current_url_name == 'purch_create' %}sub-active{% endif %}"><a href="{% url 'invoice:purch_create' %}"><i class="fas fa-plus-circle"></i>إنشاء فاتورة شراء</a></li>
+                                {% endif %}
+                                {% if perms.invoice.view_purch %}
+                                <li class="{% if current_url_name == 'purch_list' %}sub-active{% endif %}"><a href="{% url 'invoice:purch_list' %}"><i class="fas fa-list"></i>قائمة فواتير المشتريات</a></li>
+                                {% endif %}
+                                {% if perms.invoice.add_sale %}
+                                <li class="{% if current_url_name == 'sale_create' %}sub-active{% endif %}"><a href="{% url 'invoice:sale_create' %}"><i class="fas fa-plus-circle"></i>إنشاء فاتورة بيع</a></li>
+                                <li class="{% if current_url_name == 'pos_sale_create' %}sub-active{% endif %}"><a href="{% url 'invoice:pos_sale_create' %}" class="pos-quick-link"><i class="fas fa-cash-register"></i>نقطة بيع سريعة (F4)</a></li>
+                                {% endif %}
+                                <li class="{% if current_url_name == 'sale_list' %}sub-active{% endif %}"><a href="{% url 'invoice:sale_list' %}"><i class="fas fa-list"></i>قائمة فواتير المبيعات</a></li>
+                                {% if perms.invoice.view_purchreturn %}
+                                <li class="{% if current_url_name == 'purchase_return_list' %}sub-active{% endif %}"><a href="{% url 'invoice:purchase_return_list' %}"><i class="fas fa-undo"></i>مرتجعات المشتريات</a></li>
+                                {% endif %}
+                                <li class="{% if current_url_name == 'sale_return_list' %}sub-active{% endif %}"><a href="{% url 'invoice:sale_return_list' %}"><i class="fas fa-receipt"></i>مرتجعات المبيعات</a></li>
+                            </ul>
+                        </li>
+
+                        <!-- منتجات -->
+                        {% if perms.invoice.view_product %}
+                        <li class="has-submenu {% if 'product' in current_url_name %}active{% endif %}">
+                            <a href="#"><i class="fas fa-boxes nav-icon"></i>المنتجات</a>
+                            <ul class="menu-submenu">
+                                <li class="{% if current_url_name == 'product_list' %}sub-active{% endif %}"><a href="{% url 'invoice:product_list' %}"><i class="fas fa-list"></i>قائمة المنتجات</a></li>
+                                {% if perms.invoice.add_product %}
+                                <li class="{% if current_url_name == 'product_create' %}sub-active{% endif %}"><a href="{% url 'invoice:product_create' %}"><i class="fas fa-plus-circle"></i>إضافة منتج</a></li>
+                                {% endif %}
+                                <li><a href="{% url 'invoice:barcode_statement' %}#barcode-section"><i class="fas fa-barcode"></i>إدارة الباركود</a></li>
+                                {% if perms.invoice.change_product %}
+                                <li class="{% if current_url_name == 'product_bulk_update' %}sub-active{% endif %}"><a href="{% url 'invoice:product_bulk_update' %}"><i class="fas fa-tags"></i>نظام التسعير</a></li>
+                                {% endif %}
+                            </ul>
+                        </li>
+                        {% endif %}
+
+                        <!-- متجر إلكتروني -->
+                        <li class="has-submenu {% if 'orders' in current_url_name or 'store' in current_url_name or 'checkout' in current_url_name or 'notification' in current_url_name %}active{% endif %}">
+                            <a href="#"><i class="fas fa-store nav-icon"></i>المتجر الإلكتروني</a>
+                            <ul class="menu-submenu wide-grid">
+                                {% if perms.invoice.view_order %}
+                                <li class="{% if current_url_name == 'orders_list' %}sub-active{% endif %}"><a href="{% url 'invoice:orders_list' %}"><i class="fas fa-inbox"></i>إدارة الطلبات</a></li>
+                                <li class="{% if current_url_name == 'admin_stock_notifications' %}sub-active{% endif %}"><a href="{% url 'invoice:admin_stock_notifications' %}"><i class="fas fa-bell"></i>تنبيهات المخزون</a></li>
+                                <li class="{% if current_url_name == 'notification_archive' %}sub-active{% endif %}"><a href="{% url 'invoice:notification_archive' %}"><i class="fas fa-history"></i>أرشيف الإشعارات</a></li>
+                                {% endif %}
+                                {% if perms.invoice.change_order %}
+                                <li class="{% if current_url_name == 'control_store' %}sub-active{% endif %}"><a href="{% url 'invoice:control_store' %}"><i class="fas fa-sliders-h"></i>إدارة المتجر</a></li>
+                                {% endif %}
+                                <li class="{% if current_url_name == 'store_front' %}sub-active{% endif %}"><a href="{% url 'invoice:store_front' %}" target="_blank" rel="nofollow noopener noreferrer"><i class="fas fa-external-link-alt"></i>واجهة المتجر</a></li>
+                                {% if perms.invoice.view_order %}
+                                <li class="{% if current_url_name == 'checkout' %}sub-active{% endif %}"><a href="{% url 'invoice:checkout' %}"><i class="fas fa-credit-card"></i>صفحة الدفع</a></li>
+                                {% endif %}
+                                <li><a href="{% url 'invoice:cart_detail' %}"><i class="fas fa-shopping-cart"></i>سلة التسوق {% if cart_count > 0 %}<span style="background:#00897b;color:#fff;border-radius:4px;padding:0 6px;font-size:0.7rem;margin-right:4px;">{{ cart_count }}</span>{% endif %}</a></li>
+                            </ul>
+                        </li>
+
+                        <!-- صندوق -->
+                        {% if perms.invoice.view_cashtransaction %}
+                        <li class="has-submenu {% if 'cash' in current_url_name %}active{% endif %}">
+                            <a href="#"><i class="fas fa-wallet nav-icon"></i>الصندوق</a>
+                            <ul class="menu-submenu">
+                                <li class="{% if current_url_name == 'cash_transaction_list' %}sub-active{% endif %}"><a href="{% url 'invoice:cash_transaction_list' %}"><i class="fas fa-exchange-alt"></i>حركة الصندوق</a></li>
+                                {% if perms.invoice.add_cashtransaction %}
+                                <li class="{% if current_url_name == 'cash_transaction_create' %}sub-active{% endif %}"><a href="{% url 'invoice:cash_transaction_create' %}"><i class="fas fa-hand-holding-usd"></i>حركة مالية</a></li>
+                                {% endif %}
+                            </ul>
+                        </li>
+                        {% endif %}
+
+                        <!-- تقارير -->
+                        {% if request.user.is_superuser %}
+                        <li class="has-submenu {% if 'report' in current_url_name %}active{% endif %}">
+                            <a href="#"><i class="fas fa-chart-bar nav-icon"></i>التقارير</a>
+                            <ul class="menu-submenu wide-grid">
+                                <li class="{% if current_url_name == 'profit_report' %}sub-active{% endif %}"><a href="{% url 'invoice:profit_report' %}"><i class="fas fa-chart-line"></i>تقرير الأرباح</a></li>
+                                <li class="{% if current_url_name == 'daily_sales_summary' %}sub-active{% endif %}"><a href="{% url 'invoice:daily_sales_summary' %}"><i class="fas fa-calendar-day"></i>ملخص المبيعات اليومي</a></li>
+                                <li class="{% if current_url_name == 'sales_by_customer_report' %}sub-active{% endif %}"><a href="{% url 'invoice:sales_by_customer_report' %}"><i class="fas fa-users"></i>مبيعات العملاء</a></li>
+                                <li class="{% if current_url_name == 'purchases_by_supplier_report' %}sub-active{% endif %}"><a href="{% url 'invoice:purchases_by_supplier_report' %}"><i class="fas fa-truck"></i>مشتريات الموردين</a></li>
+                                <li class="{% if current_url_name == 'unpaid_invoices_report' %}sub-active{% endif %}"><a href="{% url 'invoice:unpaid_invoices_report' %}"><i class="fas fa-file-invoice-dollar"></i>فواتير غير مسددة</a></li>
+                                <li class="{% if current_url_name == 'unpaid_sales_report' %}sub-active{% endif %}"><a href="{% url 'invoice:unpaid_sales_report' %}"><i class="fas fa-exclamation-triangle"></i>الديون المتراكمة</a></li>
+                                <li class="{% if current_url_name == 'dead_stock_report' %}sub-active{% endif %}"><a href="{% url 'invoice:dead_stock_report' %}"><i class="fas fa-box-open"></i>منتجات راكدة</a></li>
+                                <li class="{% if current_url_name == 'barcode_statement' %}sub-active{% endif %}"><a href="{% url 'invoice:barcode_statement' %}"><i class="fas fa-barcode"></i>حركة الباركود</a></li>
+                                <li class="{% if current_url_name == 'statement_report' %}sub-active{% endif %}"><a href="{% url 'invoice:statement_report' %}"><i class="fas fa-file-alt"></i>كشف حساب</a></li>
+                            </ul>
+                        </li>
+                        {% endif %}
+
+                        <!-- مستخدمين -->
+                        {% if perms.auth.view_user %}
+                        <li class="has-submenu {% if 'user' in current_url_name or 'register' in current_url_name or 'permissions' in current_url_name %}active{% endif %}">
+                            <a href="#"><i class="fas fa-users-cog nav-icon"></i>المستخدمين</a>
+                            <ul class="menu-submenu">
+                                <li class="{% if current_url_name == 'user_list' %}sub-active{% endif %}"><a href="{% url 'accounts:user_list' %}"><i class="fas fa-list"></i>قائمة المستخدمين</a></li>
+                                {% if perms.auth.add_user %}
+                                <li class="{% if current_url_name == 'register' %}sub-active{% endif %}"><a href="{% url 'accounts:register' %}"><i class="fas fa-user-plus"></i>إضافة مستخدم جديد</a></li>
+                                {% endif %}
+                                {% if request.user.is_superuser %}
+                                <li class="{% if current_url_name == 'permissions' %}sub-active{% endif %}"><a href="{% url 'accounts:permissions' %}"><i class="fas fa-user-shield"></i>الصلاحيات والأدوار</a></li>
+                                {% endif %}
+                            </ul>
+                        </li>
+                        {% endif %}
+
+                        <!-- إعدادات -->
+                        {% if request.user.is_superuser %}
+                        <li class="has-submenu {% if 'currency' in current_url_name or 'payment_method' in current_url_name or 'shipping_company' in current_url_name or 'status' in current_url_name or 'price_type' in current_url_name or 'email' in current_url_name %}active{% endif %}">
+                            <a href="#"><i class="fas fa-cogs nav-icon"></i>الإعدادات</a>
+                            <ul class="menu-submenu wide-grid dropdown-left">
+                                <li class="{% if current_url_name == 'email_settings' %}sub-active{% endif %}"><a href="{% url 'invoice:email_settings' %}"><i class="fas fa-envelope-open-text"></i>إعدادات البريد</a></li>
+                                <li class="{% if current_url_name == 'currency_list' %}sub-active{% endif %}"><a href="{% url 'invoice:currency_list' %}"><i class="fas fa-dollar-sign"></i>العملات</a></li>
+                                <li class="{% if current_url_name == 'payment_method_list' %}sub-active{% endif %}"><a href="{% url 'invoice:payment_method_list' %}"><i class="fas fa-credit-card"></i>طرق الدفع</a></li>
+                                <li class="{% if current_url_name == 'shipping_company_list' %}sub-active{% endif %}"><a href="{% url 'invoice:shipping_company_list' %}"><i class="fas fa-truck"></i>شركات الشحن</a></li>
+                                <li class="{% if current_url_name == 'status_list' %}sub-active{% endif %}"><a href="{% url 'invoice:status_list' %}"><i class="fas fa-info-circle"></i>الحالات</a></li>
+                                <li class="{% if current_url_name == 'price_type_list' %}sub-active{% endif %}"><a href="{% url 'invoice:price_type_list' %}"><i class="fas fa-tags"></i>أنواع الأسعار</a></li>
+                            </ul>
+                        </li>
+                        {% endif %}
+                    </ul>
+                </div>
+            </div>
+
+            <div class="navbar-left-section">
+                <a href="{% url 'invoice:cart_detail' %}" id="cartBtn" class="nav-action-btn tw-hidden sm:tw-inline-flex" title="سلة التسوق">
+                    <i class="fas fa-shopping-cart"></i>
+                    <span class="nav-badge green cart-count" id="cart-count">{{ cart_count|default:0 }}</span>
+                </a>
+                {% if request.user.is_superuser %}
+                <button type="button" id="notificationBtn" class="nav-action-btn tw-hidden sm:tw-inline-flex" title="الإشعارات">
+                    <i class="fas fa-bell"></i>
+                    <span class="nav-badge red">3</span>
+                </button>
+                {% endif %}
+
+                <span class="nav-username d-none d-md-inline-block" title="{{ user.get_full_name|default:user.username }}">
+                    {{ user.get_full_name|default:user.username }}
+                </span>
+
+                <div class="user-dropdown-wrapper" id="userDropdownWrapper">
+                    <div class="user-dropdown-trigger" id="userMenuBtn">
+                        {% if user.profile.profile_picture %}
+                        <img src="{{ user.profile.profile_picture.url }}" alt="صورة المستخدم">
+                        {% else %}
+                        <i class="fas fa-user"></i>
+                        {% endif %}
+                    </div>
+                    <div class="user-dropdown-menu" id="userDropdown">
+                        <div class="ud-header">
+                            <p class="ud-name">{{ user.get_full_name|default:user.username }}</p>
+                            <p class="ud-role">{% if user.is_staff %}موظف{% else %}عميل{% endif %}</p>
+                        </div>
+                        <div class="ud-login-info">
+                            <i class="fas fa-clock"></i>
+                            <span>آخر دخول:</span>
+                            <strong>{% now "j F Y H:i" %}</strong>
+                        </div>
+                        <div class="ud-links">
+                            <a href="{% url 'accounts:profile' %}"><i class="fas fa-user-circle"></i>الملف الشخصي</a>
+                            <a href="{% url 'accounts:change_password' %}"><i class="fas fa-key"></i>تغيير كلمة المرور</a>
+                            {% if user.is_superuser %}
+                            <a href="{% url 'accounts:company_settings' %}"><i class="fas fa-building"></i>إعدادات الشركة</a>
+                            {% endif %}
+                            <hr>
+                            <form action="{% url 'accounts:logout' %}" method="post">
+                                {% csrf_token %}
+                                <button type="submit" style="color:#e53935;"><i class="fas fa-sign-out-alt"></i>تسجيل الخروج</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- ===== القائمة الجانبية ===== -->
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-login-bar">
+            <i class="fas fa-clock"></i>
+            <span class="sl-label">آخر دخول</span>
+            <span class="sl-value">{% now "j F Y H:i" %}</span>
+        </div>
+        <ul class="sidebar-menu">
+            <li class="sidebar-item">
+                <a href="{% url 'index' %}" class="sidebar-link {% if current_url_name == 'index' %}active{% endif %}">
+                    <i class="fas fa-home sidebar-icon"></i><span class="sidebar-text">الرئيسية</span>
+                </a>
+            </li>
+            <li class="sidebar-item has-dropdown {% if 'purch' in current_url_name or 'sale' in current_url_name %}active{% endif %}">
+                <a href="#" class="sidebar-link">
+                    <i class="fas fa-file-invoice sidebar-icon"></i><span class="sidebar-text">الفواتير</span>
+                    <i class="fas fa-chevron-left sidebar-arrow"></i>
+                </a>
+                <ul class="sidebar-dropdown">
+                    {% if perms.invoice.add_purch %}
+                    <li class="sidebar-item"><a href="{% url 'invoice:purch_create' %}" class="sidebar-link"><i class="fas fa-plus-circle sidebar-icon"></i><span class="sidebar-text">إنشاء فاتورة شراء</span></a></li>
+                    {% endif %}
+                    {% if perms.invoice.view_purch %}
+                    <li class="sidebar-item"><a href="{% url 'invoice:purch_list' %}" class="sidebar-link"><i class="fas fa-list sidebar-icon"></i><span class="sidebar-text">قائمة فواتير المشتريات</span></a></li>
+                    {% endif %}
+                    {% if perms.invoice.add_sale %}
+                    <li class="sidebar-item"><a href="{% url 'invoice:sale_create' %}" class="sidebar-link"><i class="fas fa-plus-circle sidebar-icon"></i><span class="sidebar-text">إنشاء فاتورة بيع</span></a></li>
+                    <li class="sidebar-item"><a href="{% url 'invoice:pos_sale_create' %}" class="sidebar-link pos-quick-link"><i class="fas fa-cash-register sidebar-icon"></i><span class="sidebar-text">نقطة بيع سريعة (F4)</span></a></li>
+                    {% endif %}
+                    <li class="sidebar-item"><a href="{% url 'invoice:sale_list' %}" class="sidebar-link"><i class="fas fa-list sidebar-icon"></i><span class="sidebar-text">قائمة فواتير المبيعات</span></a></li>
+                    {% if perms.invoice.view_purchreturn %}
+                    <li class="sidebar-item"><a href="{% url 'invoice:purchase_return_list' %}" class="sidebar-link"><i class="fas fa-undo sidebar-icon"></i><span class="sidebar-text">مرتجعات المشتريات</span></a></li>
+                    {% endif %}
+                    <li class="sidebar-item"><a href="{% url 'invoice:sale_return_list' %}" class="sidebar-link"><i class="fas fa-receipt sidebar-icon"></i><span class="sidebar-text">مرتجعات المبيعات</span></a></li>
+                </ul>
+            </li>
+            {% if perms.invoice.view_product %}
+            <li class="sidebar-item has-dropdown {% if 'product' in current_url_name %}active{% endif %}">
+                <a href="#" class="sidebar-link">
+                    <i class="fas fa-boxes sidebar-icon"></i><span class="sidebar-text">المنتجات</span>
+                    <i class="fas fa-chevron-left sidebar-arrow"></i>
+                </a>
+                <ul class="sidebar-dropdown">
+                    <li class="sidebar-item"><a href="{% url 'invoice:product_list' %}" class="sidebar-link"><i class="fas fa-list sidebar-icon"></i><span class="sidebar-text">قائمة المنتجات</span></a></li>
+                    {% if perms.invoice.add_product %}
+                    <li class="sidebar-item"><a href="{% url 'invoice:product_create' %}" class="sidebar-link"><i class="fas fa-plus-circle sidebar-icon"></i><span class="sidebar-text">إضافة منتج</span></a></li>
+                    {% endif %}
+                    <li class="sidebar-item"><a href="{% url 'invoice:barcode_statement' %}#barcode-section" class="sidebar-link"><i class="fas fa-barcode sidebar-icon"></i><span class="sidebar-text">إدارة الباركود</span></a></li>
+                    {% if perms.invoice.change_product %}
+                    <li class="sidebar-item"><a href="{% url 'invoice:product_bulk_update' %}" class="sidebar-link"><i class="fas fa-tags sidebar-icon"></i><span class="sidebar-text">نظام التسعير</span></a></li>
+                    {% endif %}
+                </ul>
+            </li>
+            {% endif %}
+            <li class="sidebar-item has-dropdown {% if 'orders' in current_url_name or 'store' in current_url_name or 'checkout' in current_url_name or 'notification' in current_url_name %}active{% endif %}">
+                <a href="#" class="sidebar-link">
+                    <i class="fas fa-store sidebar-icon"></i><span class="sidebar-text">المتجر الإلكتروني</span>
+                    <i class="fas fa-chevron-left sidebar-arrow"></i>
+                </a>
+                <ul class="sidebar-dropdown">
+                    {% if perms.invoice.view_order %}
+                    <li class="sidebar-item"><a href="{% url 'invoice:orders_list' %}" class="sidebar-link"><i class="fas fa-inbox sidebar-icon"></i><span class="sidebar-text">إدارة الطلبات</span></a></li>
+                    <li class="sidebar-item"><a href="{% url 'invoice:admin_stock_notifications' %}" class="sidebar-link"><i class="fas fa-bell sidebar-icon"></i><span class="sidebar-text">تنبيهات المخزون</span></a></li>
+                    <li class="sidebar-item"><a href="{% url 'invoice:notification_archive' %}" class="sidebar-link"><i class="fas fa-history sidebar-icon"></i><span class="sidebar-text">أرشيف الإشعارات</span></a></li>
+                    {% endif %}
+                    {% if perms.invoice.change_order %}
+                    <li class="sidebar-item"><a href="{% url 'invoice:control_store' %}" class="sidebar-link"><i class="fas fa-sliders-h sidebar-icon"></i><span class="sidebar-text">إدارة المتجر</span></a></li>
+                    {% endif %}
+                    <li class="sidebar-item"><a href="{% url 'invoice:store_front' %}" target="_blank" rel="nofollow noopener noreferrer" class="sidebar-link"><i class="fas fa-external-link-alt sidebar-icon"></i><span class="sidebar-text">واجهة المتجر</span></a></li>
+                    {% if perms.invoice.view_order %}
+                    <li class="sidebar-item"><a href="{% url 'invoice:checkout' %}" class="sidebar-link"><i class="fas fa-credit-card sidebar-icon"></i><span class="sidebar-text">صفحة الدفع</span></a></li>
+                    {% endif %}
+                    <li class="sidebar-item">
+                        <a href="{% url 'invoice:cart_detail' %}" class="sidebar-link">
+                            <i class="fas fa-shopping-cart sidebar-icon"></i><span class="sidebar-text">سلة التسوق</span>
+                            <span class="sidebar-cart-count cart-count" id="sidebar-cart-count">{{ cart_count|default:0 }}</span>
+                        </a>
+                    </li>
+                </ul>
+            </li>
+            {% if perms.invoice.view_cashtransaction %}
+            <li class="sidebar-item has-dropdown {% if 'cash' in current_url_name %}active{% endif %}">
+                <a href="#" class="sidebar-link">
+                    <i class="fas fa-wallet sidebar-icon"></i><span class="sidebar-text">الصندوق</span>
+                    <i class="fas fa-chevron-left sidebar-arrow"></i>
+                </a>
+                <ul class="sidebar-dropdown">
+                    <li class="sidebar-item"><a href="{% url 'invoice:cash_transaction_list' %}" class="sidebar-link"><i class="fas fa-exchange-alt sidebar-icon"></i><span class="sidebar-text">حركة الصندوق</span></a></li>
+                    {% if perms.invoice.add_cashtransaction %}
+                    <li class="sidebar-item"><a href="{% url 'invoice:cash_transaction_create' %}" class="sidebar-link"><i class="fas fa-hand-holding-usd sidebar-icon"></i><span class="sidebar-text">حركة مالية</span></a></li>
+                    {% endif %}
+                </ul>
+            </li>
+            {% endif %}
+            {% if request.user.is_superuser %}
+            <li class="sidebar-item has-dropdown {% if 'report' in current_url_name %}active{% endif %}">
+                <a href="#" class="sidebar-link">
+                    <i class="fas fa-chart-bar sidebar-icon"></i><span class="sidebar-text">التقارير</span>
+                    <i class="fas fa-chevron-left sidebar-arrow"></i>
+                </a>
+                <ul class="sidebar-dropdown">
+                    <li class="sidebar-item"><a href="{% url 'invoice:profit_report' %}" class="sidebar-link"><i class="fas fa-chart-line sidebar-icon"></i><span class="sidebar-text">تقرير الأرباح</span></a></li>
+                    <li class="sidebar-item"><a href="{% url 'invoice:daily_sales_summary' %}" class="sidebar-link"><i class="fas fa-calendar-day sidebar-icon"></i><span class="sidebar-text">ملخص المبيعات اليومي</span></a></li>
+                    <li class="sidebar-item"><a href="{% url 'invoice:sales_by_customer_report' %}" class="sidebar-link"><i class="fas fa-users sidebar-icon"></i><span class="sidebar-text">مبيعات العملاء</span></a></li>
+                    <li class="sidebar-item"><a href="{% url 'invoice:purchases_by_supplier_report' %}" class="sidebar-link"><i class="fas fa-truck sidebar-icon"></i><span class="sidebar-text">مشتريات الموردين</span></a></li>
+                    <li class="sidebar-item"><a href="{% url 'invoice:unpaid_invoices_report' %}" class="sidebar-link"><i class="fas fa-file-invoice-dollar sidebar-icon"></i><span class="sidebar-text">فواتير غير مسددة</span></a></li>
+                    <li class="sidebar-item"><a href="{% url 'invoice:unpaid_sales_report' %}" class="sidebar-link"><i class="fas fa-exclamation-triangle sidebar-icon"></i><span class="sidebar-text">الديون المتراكمة</span></a></li>
+                    <li class="sidebar-item"><a href="{% url 'invoice:dead_stock_report' %}" class="sidebar-link"><i class="fas fa-box-open sidebar-icon"></i><span class="sidebar-text">منتجات راكدة</span></a></li>
+                    <li class="sidebar-item"><a href="{% url 'invoice:barcode_statement' %}" class="sidebar-link"><i class="fas fa-barcode sidebar-icon"></i><span class="sidebar-text">حركة الباركود</span></a></li>
+                    <li class="sidebar-item"><a href="{% url 'invoice:statement_report' %}" class="sidebar-link"><i class="fas fa-file-alt sidebar-icon"></i><span class="sidebar-text">كشف حساب</span></a></li>
+                </ul>
+            </li>
+            {% endif %}
+            {% if perms.auth.view_user %}
+            <li class="sidebar-item has-dropdown {% if 'user' in current_url_name or 'register' in current_url_name or 'permissions' in current_url_name %}active{% endif %}">
+                <a href="#" class="sidebar-link">
+                    <i class="fas fa-users-cog sidebar-icon"></i><span class="sidebar-text">المستخدمين</span>
+                    <i class="fas fa-chevron-left sidebar-arrow"></i>
+                </a>
+                <ul class="sidebar-dropdown">
+                    <li class="sidebar-item"><a href="{% url 'accounts:user_list' %}" class="sidebar-link"><i class="fas fa-list sidebar-icon"></i><span class="sidebar-text">قائمة المستخدمين</span></a></li>
+                    {% if perms.auth.add_user %}
+                    <li class="sidebar-item"><a href="{% url 'accounts:register' %}" class="sidebar-link"><i class="fas fa-user-plus sidebar-icon"></i><span class="sidebar-text">إضافة مستخدم جديد</span></a></li>
+                    {% endif %}
+                    {% if request.user.is_superuser %}
+                    <li class="sidebar-item"><a href="{% url 'accounts:permissions' %}" class="sidebar-link"><i class="fas fa-user-shield sidebar-icon"></i><span class="sidebar-text">الصلاحيات والأدوار</span></a></li>
+                    {% endif %}
+                </ul>
+            </li>
+            {% endif %}
+            {% if request.user.is_superuser %}
+            <li class="sidebar-item has-dropdown {% if 'currency' in current_url_name or 'payment_method' in current_url_name or 'shipping_company' in current_url_name or 'status' in current_url_name or 'price_type' in current_url_name or 'email' in current_url_name %}active{% endif %}">
+                <a href="#" class="sidebar-link">
+                    <i class="fas fa-cogs sidebar-icon"></i><span class="sidebar-text">الإعدادات</span>
+                    <i class="fas fa-chevron-left sidebar-arrow"></i>
+                </a>
+                <ul class="sidebar-dropdown">
+                    <li class="sidebar-item"><a href="{% url 'invoice:email_settings' %}" class="sidebar-link"><i class="fas fa-envelope-open-text sidebar-icon"></i><span class="sidebar-text">إعدادات البريد</span></a></li>
+                    <li class="sidebar-item"><a href="{% url 'invoice:currency_list' %}" class="sidebar-link"><i class="fas fa-dollar-sign sidebar-icon"></i><span class="sidebar-text">العملات</span></a></li>
+                    <li class="sidebar-item"><a href="{% url 'invoice:payment_method_list' %}" class="sidebar-link"><i class="fas fa-credit-card sidebar-icon"></i><span class="sidebar-text">طرق الدفع</span></a></li>
+                    <li class="sidebar-item"><a href="{% url 'invoice:shipping_company_list' %}" class="sidebar-link"><i class="fas fa-truck sidebar-icon"></i><span class="sidebar-text">شركات الشحن</span></a></li>
+                    <li class="sidebar-item"><a href="{% url 'invoice:status_list' %}" class="sidebar-link"><i class="fas fa-info-circle sidebar-icon"></i><span class="sidebar-text">الحالات</span></a></li>
+                    <li class="sidebar-item"><a href="{% url 'invoice:price_type_list' %}" class="sidebar-link"><i class="fas fa-tags sidebar-icon"></i><span class="sidebar-text">أنواع الأسعار</span></a></li>
+                </ul>
+            </li>
+            <li class="sidebar-item">
+                <a href="{% url 'accounts:system_logs' %}" class="sidebar-link {% if current_url_name == 'system_logs' %}active{% endif %}">
+                    <i class="fas fa-file-alt sidebar-icon"></i><span class="sidebar-text">سجلات النظام</span>
+                </a>
+            </li>
+            {% endif %}
+        </ul>
+    </aside>
+
+    <!-- ===== المحتوى الرئيسي ===== -->
+    <main class="main-content">
+        {% if messages %}
+        <div class="alert-container">
+            {% for message in messages %}
+            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                <div class="d-flex align-items-center">
+                    <i class="fas {% if message.tags == 'success' %}fa-check-circle{% elif message.tags == 'error' or message.tags == 'danger' %}fa-exclamation-circle{% elif message.tags == 'warning' %}fa-exclamation-triangle{% else %}fa-info-circle{% endif %} ms-2"></i>
+                    <div class="me-2">{{ message }}</div>
+                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="إغلاق"></button>
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+        {% block content %}{% endblock %}
+    </main>
+
+    <!-- ===== تنبيه السلة المحسن ===== -->
+    <div class="cart-toast-enhanced" id="cartToastEnhanced">
+        <span class="t-icon"><i class="fas fa-check"></i></span>
+        <span class="t-product" id="cartToastProduct">تمت الإضافة</span>
+        <span class="t-count" id="cartToastCount">(0)</span>
+    </div>
+
+    <!-- ===== التذييل ===== -->
+    <footer class="footer">
+        <div class="footer-container">
+            <div class="row g-3">
+                <div class="col-lg-4 col-md-6">
+                    <div class="footer-logo">
+                        <div class="f-logo">
+                            {% if company_settings.company_logo %}
+                            <img src="{{ company_settings.company_logo.url }}" alt="شعار الشركة" loading="lazy">
+                            {% elif company_logo %}
+                            <img src="{{ company_logo.url }}" alt="شعار الشركة" loading="lazy">
+                            {% else %}
+                            <i class="fas fa-file-invoice-dollar"></i>
+                            {% endif %}
+                        </div>
+                        <div class="footer-logo-text">{{ company_settings.company_name|default:"أدخل اسم شركتك" }}</div>
+                    </div>
+                    <p style="color:rgba(255,255,255,0.65);margin-bottom:0.6rem;font-size:0.8rem;">نظام متكامل لإدارة الفواتير والمخزون والعملاء.</p>
+                    <div class="social-links">
+                        {% if company_settings.social_facebook %}
+                        <a href="{{ company_settings.social_facebook }}" target="_blank" rel="nofollow noopener noreferrer"><i class="fab fa-facebook-f"></i></a>
+                        {% else %}
+                        <a href="#" rel="nofollow noopener noreferrer"><i class="fab fa-facebook-f"></i></a>
+                        {% endif %}
+                        {% if company_settings.social_twitter %}
+                        <a href="{{ company_settings.social_twitter }}" target="_blank" rel="nofollow noopener noreferrer"><i class="fab fa-twitter"></i></a>
+                        {% else %}
+                        <a href="#" rel="nofollow noopener noreferrer"><i class="fab fa-twitter"></i></a>
+                        {% endif %}
+                        {% if company_settings.social_instagram %}
+                        <a href="{{ company_settings.social_instagram }}" target="_blank" rel="nofollow noopener noreferrer"><i class="fab fa-instagram"></i></a>
+                        {% else %}
+                        <a href="#" rel="nofollow noopener noreferrer"><i class="fab fa-instagram"></i></a>
+                        {% endif %}
+                        {% if company_settings.social_linkedin %}
+                        <a href="{{ company_settings.social_linkedin }}" target="_blank" rel="nofollow noopener noreferrer"><i class="fab fa-linkedin-in"></i></a>
+                        {% else %}
+                        <a href="#" rel="nofollow noopener noreferrer"><i class="fab fa-linkedin-in"></i></a>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="col-lg-2 col-md-6 col-6">
+                    <div class="footer-links">
+                        <h6>{{ company_settings.footer_quick_links_title|default:"روابط سريعة" }}</h6>
+                        <ul>
+                            <li><a href="{{ company_settings.quick_link_support|default:'#' }}" target="_blank" rel="nofollow noopener noreferrer"><i class="fas fa-angle-left"></i> الدعم الفني</a></li>
+                            <li><a href="{{ company_settings.quick_link_guide|default:'#' }}" target="_blank" rel="nofollow noopener noreferrer"><i class="fas fa-angle-left"></i> دليل الاستخدام</a></li>
+                            <li><a href="{{ company_settings.quick_link_faq|default:'#' }}" target="_blank" rel="nofollow noopener noreferrer"><i class="fas fa-angle-left"></i> الأسئلة الشائعة</a></li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="col-lg-3 col-md-6 col-6">
+                    <div class="footer-links">
+                        <h6>{{ company_settings.footer_features_title|default:"المميزات" }}</h6>
+                        <ul>
+                            <li><a href="{{ company_settings.feature_invoices|default:'#' }}" target="_blank" rel="nofollow noopener noreferrer"><i class="fas fa-angle-left"></i> إدارة الفواتير</a></li>
+                            <li><a href="{{ company_settings.feature_inventory|default:'#' }}" target="_blank" rel="nofollow noopener noreferrer"><i class="fas fa-angle-left"></i> إدارة المخزون</a></li>
+                            <li><a href="{{ company_settings.feature_reports|default:'#' }}" target="_blank" rel="nofollow noopener noreferrer"><i class="fas fa-angle-left"></i> التقارير الذكية</a></li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="col-lg-3 col-md-12">
+                    <div class="footer-links">
+                        <h6>{{ company_settings.footer_contact_title|default:"تواصل معنا" }}</h6>
+                        <ul class="footer-contact">
+                            {% if company_settings.contact_email %}
+                            <li><a href="mailto:{{ company_settings.contact_email }}"><i class="fas fa-envelope"></i><span>{{ company_settings.contact_email }}</span></a></li>
+                            {% else %}
+                            <li><a href="mailto:info@example.com"><i class="fas fa-envelope"></i><span>info@example.com</span></a></li>
+                            {% endif %}
+                            {% if company_settings.contact_phone %}
+                            <li><a href="tel:{{ company_settings.contact_phone }}"><i class="fas fa-phone"></i><span>{{ company_settings.contact_phone }}</span></a></li>
+                            {% else %}
+                            <li><a href="tel:+966123456789"><i class="fas fa-phone"></i><span>+966 12 345 6789</span></a></li>
+                            {% endif %}
+                            {% if company_settings.contact_address %}
+                            <li><a href="#"><i class="fas fa-map-marker-alt"></i><span>{{ company_settings.contact_address }}</span></a></li>
+                            {% else %}
+                            <li><a href="#"><i class="fas fa-map-marker-alt"></i><span>المملكة العربية السعودية</span></a></li>
+                            {% endif %}
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <div class="row align-items-center">
+                    <div class="col-md-6 text-md-start mb-1 mb-md-0">
+                        <span>الإصدار 2.1</span>
+                    </div>
+                    <div class="col-md-6 text-md-end">
+                        <p class="mb-0">{{ company_settings.footer_copyright_text|default:"جميع الحقوق محفوظة" }} &copy; {% now "Y" %} {{ company_settings.company_name|default:"أدخل اسم شركتك" }}</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- ===== واتساب على شكل شريط مستطيل شفاف ومختفي ===== -->
+    {% if company_settings.whatsapp_number %}
+    <div class="wa-float-container">
+        <div class="wa-float-msg">تواصل معنا 💬</div>
+        <a href="https://wa.me/{{ company_settings.whatsapp_number }}?text={% if company_settings.whatsapp_message %}{{ company_settings.whatsapp_message|urlencode }}{% else %}مرحباً{% endif %}" 
+           target="_blank" 
+           rel="nofollow noopener noreferrer" 
+           class="wa-float-btn"
+           aria-label="واتساب">
+            <i class="fab fa-whatsapp"></i>
+        </a>
+    </div>
+    {% endif %}
+
+    {% else %}
+
+    <!-- ===== المحتوى للمستخدمين غير المسجلين ===== -->
+    <main class="main-content auth-main-content">
+        {% block auth_content %}{% endblock %}
+    </main>
+
+    {% endif %}
+
+    <!-- ===== الجافاسكريبت ===== -->
+    <script nonce="{{ csp_nonce }}">
+        document.addEventListener('DOMContentLoaded', function() {
+
+            var appDataEl = document.getElementById('baseAppData');
+            var appData = appDataEl ? JSON.parse(appDataEl.textContent) : {};
+
+            /* =============================================
+               ① دالة تحديث شارة السلة - الأهم
+               ============================================= */
+            window.updateCartBadge = function(count) {
+                // تحديث جميع العناصر التي تحمل class cart-count
+                document.querySelectorAll('.cart-count').forEach(function(el) {
+                    var oldVal = parseInt(el.textContent) || 0;
+                    el.textContent = count;
+                    
+                    // إضافة تأثير النبض عند الزيادة
+                    if (count > oldVal) {
+                        el.classList.remove('cart-badge-pulse');
+                        void el.offsetWidth; // إعادة تعيين الأنيميشن
+                        el.classList.add('cart-badge-pulse');
+                        setTimeout(function() {
+                            el.classList.remove('cart-badge-pulse');
+                        }, 650);
+                    }
+                });
+                
+                // حفظ في localStorage
+                try {
+                    localStorage.setItem('cartCount', count);
+                } catch(e) {}
+            };
+
+            /* =============================================
+               ② حركة الطيران المحسنة للسلة
+               ============================================= */
+            window.flyToCart = function(btn, productName) {
+                var card = btn.closest('.product-card') || btn.closest('.flash-card') || btn.closest('[data-pid]');
+                if (!card) {
+                    // محاولة إيجاد الصورة بطريقة أخرى
+                    var img = btn.closest('.btn-cart')?.previousElementSibling?.querySelector('img') || 
+                              document.querySelector('.product-card img');
+                    if (img) {
+                        var r = img.getBoundingClientRect();
+                        var sz = Math.min(r.width, r.height) * 0.5;
+                        var cart = document.querySelector('a[href*="cart"]') || document.querySelector('.nav-action-btn');
+                        var tr = cart ? cart.getBoundingClientRect() : { left: window.innerWidth - 50, top: 20, width: 0, height: 0 };
+                        var fx = (tr.left + tr.width / 2) - (r.left + r.width / 2);
+                        var fy = (tr.top + tr.height / 2) - (r.top + r.height / 2);
+                        
+                        var el = document.createElement('div');
+                        el.className = 'flying-item';
+                        el.style.left = (r.left + r.width / 2 - sz / 2) + 'px';
+                        el.style.top = (r.top + r.height / 2 - sz / 2) + 'px';
+                        el.style.width = sz + 'px';
+                        el.style.height = sz + 'px';
+                        el.style.backgroundImage = 'url(' + img.src + ')';
+                        el.style.setProperty('--fx', fx + 'px');
+                        el.style.setProperty('--fy', fy + 'px');
+                        document.body.appendChild(el);
+                        
+                        setTimeout(function() { el.remove(); }, 1000);
+                    }
+                    return;
+                }
+                
+                var img = card.querySelector('img');
+                if (!img) return;
+                
+                var r = img.getBoundingClientRect();
+                var sz = Math.min(r.width, r.height) * 0.5;
+                var cart = document.querySelector('a[href*="cart"]') || document.querySelector('.nav-action-btn');
+                var tr = cart ? cart.getBoundingClientRect() : { left: window.innerWidth - 50, top: 20, width: 0, height: 0 };
+                var fx = (tr.left + tr.width / 2) - (r.left + r.width / 2);
+                var fy = (tr.top + tr.height / 2) - (r.top + r.height / 2);
+                
+                // العنصر الطائر
+                var el = document.createElement('div');
+                el.className = 'flying-item';
+                el.style.left = (r.left + r.width / 2 - sz / 2) + 'px';
+                el.style.top = (r.top + r.height / 2 - sz / 2) + 'px';
+                el.style.width = sz + 'px';
+                el.style.height = sz + 'px';
+                el.style.backgroundImage = 'url(' + img.src + ')';
+                el.style.setProperty('--fx', fx + 'px');
+                el.style.setProperty('--fy', fy + 'px');
+                document.body.appendChild(el);
+                
+                // تأثير التموج في مكان الزر
+                var btnRect = btn.getBoundingClientRect();
+                var ripple = document.createElement('div');
+                ripple.className = 'ripple-circle';
+                var size = Math.max(btnRect.width, btnRect.height) * 2;
+                ripple.style.width = size + 'px';
+                ripple.style.height = size + 'px';
+                ripple.style.left = (btnRect.left + btnRect.width / 2 - size / 2) + 'px';
+                ripple.style.top = (btnRect.top + btnRect.height / 2 - size / 2) + 'px';
+                document.body.appendChild(ripple);
+                
+                setTimeout(function() {
+                    el.remove();
+                    ripple.remove();
+                }, 1000);
+                
+                // عرض التنبيه المنبثق
+                var toast = document.getElementById('cartToastEnhanced');
+                var productEl = document.getElementById('cartToastProduct');
+                var countEl = document.getElementById('cartToastCount');
+                if (toast && productEl && countEl) {
+                    productEl.textContent = productName || 'تمت الإضافة';
+                    countEl.textContent = '(0)';
+                    toast.classList.add('show');
+                    setTimeout(function() {
+                        toast.classList.remove('show');
+                    }, 2500);
+                }
+            };
+
+            /* =============================================
+               ③ تحديث العدد من localStorage (تم تعديله للحل المشكلة)
+               ============================================= */
+            try {
+                // قراءة القيمة التي أرسلها السيرفر (Django) للقالب
+                var serverCount = parseInt(document.getElementById('cart-count')?.textContent) || 0;
+                
+                // إذا كان السيرفر يؤكد أن السلة فارغة (0)، نتجاهل الذاكرة المحلية ونصفر الواجهة
+                if (serverCount === 0) {
+                    window.updateCartBadge(0);
+                    localStorage.setItem('cartCount', 0);
+                } else {
+                    var savedCount = localStorage.getItem('cartCount');
+                    if (savedCount !== null) {
+                        window.updateCartBadge(parseInt(savedCount));
+                    }
+                }
+            } catch(e) {}
+
+            /* =============================================
+               ④ القائمة المنسدلة للمستخدم
+               ============================================= */
+            var userMenuBtn = document.getElementById('userMenuBtn');
+            var userDropdown = document.getElementById('userDropdown');
+            var userDropdownWrapper = document.getElementById('userDropdownWrapper');
+            var isUserMenuOpen = false;
+
+            if (userMenuBtn && userDropdown) {
+
+                userMenuBtn.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    e.preventDefault();
+                    isUserMenuOpen = !isUserMenuOpen;
+                    if (isUserMenuOpen) {
+                        userDropdown.classList.add('show');
+                    } else {
+                        userDropdown.classList.remove('show');
+                    }
+                });
+
+                var dropdownLinks = userDropdown.querySelectorAll('a, button[type="submit"]');
+                for (var i = 0; i < dropdownLinks.length; i++) {
+                    dropdownLinks[i].addEventListener('click', function() {
+                        isUserMenuOpen = false;
+                        userDropdown.classList.remove('show');
+                    });
+                }
+
+                document.addEventListener('click', function(e) {
+                    if (isUserMenuOpen && !userDropdownWrapper.contains(e.target)) {
+                        isUserMenuOpen = false;
+                        userDropdown.classList.remove('show');
+                    }
+                });
+
+                document.addEventListener('keydown', function(e) {
+                    if (e.key === 'Escape' && isUserMenuOpen) {
+                        isUserMenuOpen = false;
+                        userDropdown.classList.remove('show');
+                        userMenuBtn.focus();
+                    }
+                });
+            }
+
+            /* =============================================
+               ⑤ القائمة الجانبية
+               ============================================= */
+            var menuToggle = document.getElementById('menuToggle');
+            var sidebar = document.getElementById('sidebar');
+            var sidebarOverlay = document.getElementById('sidebarOverlay');
+
+            if (menuToggle && sidebar) {
+                menuToggle.addEventListener('click', function() {
+                    menuToggle.classList.toggle('active');
+                    sidebar.classList.toggle('active');
+                    if (sidebarOverlay) sidebarOverlay.classList.toggle('active');
+                });
+
+                if (sidebarOverlay) {
+                    sidebarOverlay.addEventListener('click', function() {
+                        menuToggle.classList.remove('active');
+                        sidebar.classList.remove('active');
+                        sidebarOverlay.classList.remove('active');
+                    });
+                }
+
+                var dropdownParents = sidebar.querySelectorAll('.has-dropdown > .sidebar-link');
+                for (var j = 0; j < dropdownParents.length; j++) {
+                    dropdownParents[j].addEventListener('click', function(e) {
+                        e.preventDefault();
+                        var parent = this.parentElement;
+                        for (var k = 0; k < dropdownParents.length; k++) {
+                            if (dropdownParents[k] !== this) {
+                                dropdownParents[k].parentElement.classList.remove('active');
+                            }
+                        }
+                        parent.classList.toggle('active');
+                    });
+                }
+            }
+
+            /* =============================================
+               ⑥ المؤشر المتحرك
+               ============================================= */
+            var horiSelector = document.querySelector('.hori-selector');
+            var navLinks = document.querySelectorAll('#navbarSupportedContent > ul > li');
+
+            function setHoriSelector(el) {
+                if (!horiSelector || !el) return;
+                var rect = el.getBoundingClientRect();
+                var parentRect = el.parentElement.getBoundingClientRect();
+                var offsetLeft = rect.left - parentRect.left;
+                horiSelector.style.width = el.offsetWidth + 'px';
+                horiSelector.style.left = offsetLeft + 'px';
+            }
+
+            if (horiSelector && navLinks.length > 0) {
+                var activeLink = document.querySelector('#navbarSupportedContent > ul > li.active');
+                if (activeLink) {
+                    setHoriSelector(activeLink);
+                } else {
+                    horiSelector.style.width = '0px';
+                    horiSelector.style.left = '0px';
+                }
+
+                for (var m = 0; m < navLinks.length; m++) {
+                    (function(li) {
+                        li.addEventListener('mouseenter', function() {
+                            setHoriSelector(li);
+                        });
+                        li.addEventListener('mouseleave', function() {
+                            var cur = document.querySelector('#navbarSupportedContent > ul > li.active');
+                            if (cur) {
+                                setHoriSelector(cur);
+                            } else {
+                                horiSelector.style.width = '0px';
+                                horiSelector.style.left = '0px';
+                            }
+                        });
+                    })(navLinks[m]);
+                }
+
+                var resizeTimer;
+                window.addEventListener('resize', function() {
+                    clearTimeout(resizeTimer);
+                    resizeTimer = setTimeout(function() {
+                        var cur = document.querySelector('#navbarSupportedContent > ul > li.active');
+                        if (cur && horiSelector) {
+                            var rect = cur.getBoundingClientRect();
+                            var parentRect = cur.parentElement.getBoundingClientRect();
+                            horiSelector.style.width = cur.offsetWidth + 'px';
+                            horiSelector.style.left = (rect.left - parentRect.left) + 'px';
+                        }
+                    }, 150);
+                });
+            }
+
+            /* =============================================
+               ⑦ القوائم المنسدلة على الشاشات الصغيرة
+               ============================================= */
+            var hasSubmenu = document.querySelectorAll('#navbarSupportedContent .has-submenu > a');
+            for (var n = 0; n < hasSubmenu.length; n++) {
+                hasSubmenu[n].addEventListener('click', function(e) {
+                    if (window.innerWidth <= 992) {
+                        e.preventDefault();
+                        var parent = this.parentElement;
+                        parent.classList.toggle('active');
+                    }
+                });
+            }
+
+            /* =============================================
+               ⑧ تفاعل زر واتساب الجانبي
+               ============================================= */
+            var waContainer = document.querySelector('.wa-float-container');
+            var waMsg = document.querySelector('.wa-float-msg');
+            if (waMsg && waContainer) {
+                // إخفاء الرسالة بعد 5 ثواني
+                setTimeout(function() {
+                    waMsg.classList.add('wa-float-msg-hide');
+                }, 5000);
+
+                // إظهار الرسالة عند تمرير المؤشر على الحاوية
+                waContainer.addEventListener('mouseenter', function() {
+                    waMsg.classList.remove('wa-float-msg-hide');
+                });
+                
+                // إخفاء الرسالة مرة أخرى بعد إبعاد المؤشر
+                waContainer.addEventListener('mouseleave', function() {
+                    setTimeout(function() {
+                        waMsg.classList.add('wa-float-msg-hide');
+                    }, 1000);
+                });
+            }
+
+            /* =============================================
+               ⑨ اختصار F4
+               ============================================= */
+            if (appData.canAddSale && appData.posUrl) {
+                document.addEventListener('keydown', function(e) {
+                    if (e.key === 'F4') {
+                        e.preventDefault();
+                        window.location.href = appData.posUrl;
+                    }
+                });
+            }
+
+            /* =============================================
+               ⑩ إغلاق التنبيهات تلقائياً
+               ============================================= */
+            setTimeout(function() {
+                document.querySelectorAll('.alert').forEach(function(alert) {
+                    try { new bootstrap.Alert(alert).close(); } catch (e) {}
+                });
+            }, 5000);
+
+        });
+
+        function confirmDelete(message) {
+            if (!message) message = 'هل أنت متأكد من أنك تريد الحذف؟';
+            return confirm(message);
+        }
+    </script>
+
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+    {% block extra_js %}{% endblock %}
+
+    {% if show_force_change %}
+    <div style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(220, 53, 69, 0.95); z-index: 9999999; display: flex; justify-content: center; align-items: center;">
+        <div style="background: #fff; padding: 40px; border-radius: 15px; max-width: 500px; width: 90%; text-align: center; box-shadow: 0 0 30px #000;">
+            <h2 style="color: #dc3545; margin-bottom: 20px;">⚠️ تنبيه أمني خطير!</h2>
+            <p style="margin: 20px 0; font-size: 1.2rem;">كلمة مرورك لا تزال مؤقتة. يجب تغييرها الآن لاستخدام النظام.</p>
+            <a href="{% url 'accounts:change_password' %}" class="btn btn-danger btn-lg w-100 mt-3">تغيير كلمة المرور الآن</a>
+        </div>
+    </div>
+    {% endif %}
+
+</body>
+</html>

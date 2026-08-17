@@ -1,0 +1,258 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="dashboard-container">
+    <div class="row justify-content-center">
+        <div class="col-lg-8 col-md-10">
+            <div class="card shadow-sm mt-4">
+                <div class="card-header bg-danger text-white">
+                    <h4 class="mb-0"><i class="fas fa-envelope-open-text me-2"></i> إعدادات خادم البريد الإلكتروني (SMTP)</h4>
+                </div>
+                <div class="card-body">
+                    <form method="post">
+                        {% csrf_token %}
+                        
+                        <!-- عرض الأخطاء العامة -->
+                        {% if form.non_field_errors %}
+                            <div class="alert alert-danger">
+                                {% for error in form.non_field_errors %}
+                                    <p class="mb-0">{{ error }}</p>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+
+                        <!-- قسم الإعدادات الأساسية -->
+                        <h5 class="text-muted border-bottom pb-2 mb-3">
+                            <i class="fas fa-server me-1"></i> إعدادات الخادم (Server Settings)
+                        </h5>
+
+                        <!-- حقل: Email Backend -->
+                        <div class="mb-3">
+                            <label for="id_email_backend" class="form-label fw-bold">
+                                نوع المحرك (Email Backend)
+                            </label>
+                            <input type="text" 
+                                   name="email_backend" 
+                                   class="form-control" 
+                                   id="id_email_backend" 
+                                   value="{{ form.email_backend.value|default:'django.core.mail.backends.smtp.EmailBackend' }}">
+                            <div class="form-text text-muted small">عادة لا يُغير هذا الخيار إلا من قبل مطورين.</div>
+                        </div>
+
+                        <!-- حقل: Host -->
+                        <div class="row">
+                            <div class="col-md-8 mb-3">
+                                <label for="id_email_host" class="form-label fw-bold">
+                                    عنوان الخادم (SMTP Host)
+                                </label>
+                                <input type="text" 
+                                       name="email_host" 
+                                       class="form-control" 
+                                       id="id_email_host" 
+                                       placeholder="مثال: smtp.gmail.com"
+                                       value="{{ form.email_host.value|default:'' }}">
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label for="id_email_port" class="form-label fw-bold">
+                                    المنفذ (Port)
+                                </label>
+                                <input type="number" 
+                                       name="email_port" 
+                                       class="form-control" 
+                                       id="id_email_port" 
+                                       placeholder="587"
+                                       value="{{ form.email_port.value|default:'' }}">
+                            </div>
+                        </div>
+
+                        <!-- حقل: TLS -->
+                        <div class="mb-3">
+                            <div class="form-check form-switch">
+                                <input type="checkbox" 
+                                       name="email_use_tls" 
+                                       class="form-check-input" 
+                                       id="id_email_use_tls" 
+                                       {% if form.email_use_tls.value %}checked{% endif %}>
+                                <label class="form-check-label fw-bold" for="id_email_use_tls">
+                                    تفعيل تشفير TLS (Use TLS)
+                                </label>
+                            </div>
+                        </div>
+
+                        <!-- قسم بيانات الدخول -->
+                        <h5 class="text-muted border-bottom pb-2 mb-3 mt-4">
+                            <i class="fas fa-key me-1"></i> بيانات الدخول (Authentication)
+                        </h5>
+
+                        <!-- حقل: Username -->
+                        <div class="mb-3">
+                            <label for="id_email_host_user" class="form-label fw-bold">
+                                البريد الإلكتروني (Username)
+                            </label>
+                            <input type="email" 
+                                   name="email_host_user" 
+                                   class="form-control" 
+                                   id="id_email_host_user" 
+                                   placeholder="example@gmail.com"
+                                   value="{{ form.email_host_user.value|default:'' }}">
+                        </div>
+
+                        <!-- حقل: Password (تم التعديل هنا) -->
+                        <div class="mb-3">
+                            <label for="id_email_host_password" class="form-label fw-bold">
+                                كلمة المرور (Password / App Password)
+                            </label>
+                            <input type="password" 
+                                   name="email_host_password" 
+                                   class="form-control" 
+                                   id="id_email_host_password" 
+                                   placeholder="أدخل كلمة مرور التطبيق هنا"
+                                   value="{{ form.email_host_password.value|default:'' }}">
+                            
+                            <!-- الرابط التفاعلي لفتح الشرح -->
+                            <div class="form-text text-muted small mt-2">
+                                <button type="button" 
+                                        class="btn btn-link p-0 m-0 align-baseline text-decoration-none text-danger fw-bold" 
+                                        data-bs-toggle="modal" 
+                                        data-bs-target="#gmailAppPasswordModal">
+                                    <i class="fas fa-external-link-alt me-1"></i> لـ Gmail، يجب استخدام "App Password" وليس كلمة مرور الحساب العادية. (اضغط هنا للشرح)
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- قسم الإعدادات الافتراضية -->
+                        <h5 class="text-muted border-bottom pb-2 mb-3 mt-4">
+                            <i class="fas fa-paper-plane me-1"></i> خيارات الإرسال
+                        </h5>
+
+                        <!-- حقل: Default From Email -->
+                        <div class="mb-3">
+                            <label for="id_default_from_email" class="form-label fw-bold">
+                                البريد المرسل الافتراضي (Default From Email)
+                            </label>
+                            <input type="email" 
+                                   name="default_from_email" 
+                                   class="form-control" 
+                                   id="id_default_from_email" 
+                                   placeholder="عادة يكون نفس البريد الإلكتروني"
+                                   value="{{ form.default_from_email.value|default:'' }}">
+                        </div>
+
+                        <div class="d-grid gap-2 mt-4">
+                            <button type="submit" class="btn btn-danger btn-lg">
+                                <i class="fas fa-save me-2"></i> حفظ الإعدادات الجديدة
+                            </button>
+                        </div>
+                    </form>
+                </div>
+                <div class="card-footer text-muted">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <small><i class="fas fa-info-circle me-1"></i> التغييرات تتم مباشرة على قاعدة البيانات.</small>
+                        </div>
+                        <div class="col-md-6 text-md-end">
+                            <small class="text-danger">* تأكد من صحة المنفذ (587 أو 465) حسب مزود الخدمة.</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- نافذة منبثقة (Modal) لشرح Gmail App Password -->
+    <div class="modal fade" id="gmailAppPasswordModal" tabindex="-1" aria-labelledby="gmailModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header bg-light">
+                    <h5 class="modal-title fw-bold" id="gmailModalLabel">
+                        <i class="fab fa-google me-2 text-danger"></i> كيفية إنشاء كلمة مرور تطبيق (App Password) لـ Gmail
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="alert alert-warning border-warning">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        <strong>ملاحظة هامة جداً:</strong> لا يمكن استخدام كلمة مرور حسابك العادية لتسجيل الدخول من خلال البرامج الخارجية (مثل برنامجنا) لأسباب أمنية من جوجل. يجب عليك إنشاء "كلمة مرور تطبيق" خاصة.
+                    </div>
+
+                    <h6 class="fw-bold mt-3 text-primary">الخطوة 1: تأكد من تفعيل التحقق الثنائي (2-Step Verification)</h6>
+                    <p class="text-muted small">لن تظهر لك خاصية كلمات مرور التطبيق إلا إذا كان التحقق الثنائي مفعلاً.</p>
+                    <ol class="small">
+                        <li>ادخل إلى إعدادات حساب جوجل (Google Account).</li>
+                        <li>من القائمة اليمنى اختر <strong>الأمان (Security)</strong>.</li>
+                        <li>ابحث عن خيار <strong>"التحقق بخطوتين" (2-Step Verification)</strong>.</li>
+                        <li>إذا كان مفعلاً، انتقل للخطوة التالية. إذا لم يكن، قم بتفعيله أولاً.</li>
+                    </ol>
+
+                    <hr class="my-3">
+
+                    <h6 class="fw-bold mt-3 text-primary">الخطوة 2: الدخول إلى إعدادات كلمات المرور</h6>
+                    <ol class="small">
+                        <li>في نفس صفحة الأمان، قم بالتمرير للأسفل وابحث عن قسم <strong>"كلمات مرور التطبيق" (App Passwords)</strong>.</li>
+                        <li>قد تجد هذا القسم أسفل "تسجيل الدخول إلى جوجل".</li>
+                        <li>اضغط على السهم (<i class="fas fa-chevron-right small"></i>) أو على أيقونة القلم بجانبها.</li>
+                        <li>سيطلب منك جوجل إعادة كتابة كلمة مرور حسابك للتأكيد.</li>
+                    </ol>
+
+                    <hr class="my-3">
+
+                    <h6 class="fw-bold mt-3 text-primary">الخطوة 3: اختيار البرنامج وتوليد الرمز</h6>
+                    <ol class="small">
+                        <li>ستظهر لك نافذة منبثقة. في القائمة المنسدلة الأولى "اختر التطبيق" (Select app)، اختر <strong>البريد (Mail)</strong>.</li>
+                        <li>في القائمة الثانية "اختر الجهاز" (Select device)، اختر <strong>أخرى (Other - Custom name)</strong>.</li>
+                        <li>اكتب اسماً للبرنامج لتسهيل التعرف عليه (مثلاً: <em>برنامج المحاسبة</em>).</li>
+                        <li>اضغط على زر <strong>توليد (GENERATE)</strong>.</li>
+                    </ol>
+
+                    <hr class="my-3">
+
+                    <h6 class="fw-bold mt-3 text-success">الخطوة 4: نسخ الرمز واستخدامه</h6>
+                    <p class="text-muted small">سيظهر لك مربع أصفر يحتوي على كلمة مرور مكونة من 16 حرفاً (مثال: <code>xyzw abcd efgh ijkl</code>).</p>
+                    <div class="alert alert-light border">
+                        <strong>ماذا تفعل الآن؟</strong>
+                        <ul class="mb-0 mt-2 small">
+                            <li>قم بنسخ هذه الكلمة <strong>كاملة</strong> (حتى المسافات).</li>
+                            <li>الصقها في حقل "كلمة المرور" أعلاه في برنامجنا.</li>
+                            <li>اضغط على "حفظ الإعدادات".</li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="modal-footer bg-light">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إغلاق</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .card {
+        border: none;
+        border-radius: 12px;
+    }
+    .form-control {
+        border-radius: 8px;
+        border: 1px solid #d1d5db;
+        padding: 12px;
+        font-size: 15px;
+    }
+    .form-control:focus {
+        border-color: #EF4444; /* Danger color */
+        box-shadow: 0 0 0 0.2rem rgba(239, 68, 68, 0.15);
+    }
+    h5.text-muted {
+        font-size: 16px;
+        font-weight: 600;
+    }
+    /* تنسيق خاص للنافذة المنبثقة */
+    .modal-body ol li {
+        margin-bottom: 8px;
+    }
+    .modal-body hr {
+        border-top: 1px dashed #dee2e6;
+    }
+</style>
+{% endblock %}

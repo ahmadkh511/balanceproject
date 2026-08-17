@@ -1,0 +1,67 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}تفاصيل شركة الشحن{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>تفاصيل شركة الشحن</h2>
+        <div>
+            <a href="{% url 'invoice:shipping_company_edit' shipping_company.pk %}" class="btn btn-primary">
+                <i class="fas fa-edit ms-1"></i>تعديل
+            </a>
+            <a href="{% url 'invoice:shipping_company_list' %}" class="btn btn-secondary">
+                <i class="fas fa-arrow-right ms-1"></i>العودة للقائمة
+            </a>
+        </div>
+    </div>
+    
+    <div class="card">
+        <div class="card-body">
+            <table class="table table-borderless">
+                <tr>
+                    <th width="30%">الاسم:</th>
+                    <td>{{ shipping_company.name }}</td>
+                </tr>
+                <tr>
+                    <th>شخص الاتصال:</th>
+                    <td>{{ shipping_company.contact_person|default:"-" }}</td>
+                </tr>
+                <tr>
+                    <th>رقم الهاتف:</th>
+                    <td>{{ shipping_company.phone_number|default:"-" }}</td>
+                </tr>
+                <tr>
+                    <th>البريد الإلكتروني:</th>
+                    <td>{{ shipping_company.email|default:"-" }}</td>
+                </tr>
+                <tr>
+                    <th>العنوان:</th>
+                    <td>{{ shipping_company.address|default:"-" }}</td>
+                </tr>
+                <tr>
+                    <th>ملاحظات:</th>
+                    <td>{{ shipping_company.notes|default:"-" }}</td>
+                </tr>
+                <tr>
+                    <th>الرقم المسلسل:</th>
+                    <td>{{ shipping_company.uniqueId }}</td>
+                </tr>
+                <tr>
+                    <th>Slug:</th>
+                    <td>{{ shipping_company.slug }}</td>
+                </tr>
+                <tr>
+                    <th>تاريخ الإنشاء:</th>
+                    <td>{{ shipping_company.date_created|date:"Y-m-d H:i" }}</td>
+                </tr>
+                <tr>
+                    <th>آخر تحديث:</th>
+                    <td>{{ shipping_company.last_updated|date:"Y-m-d H:i" }}</td>
+                </tr>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

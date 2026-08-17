@@ -1,0 +1,512 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}فاتورة مرتجع مبيعات - {{ sale_return.uniqueId }}{% endblock %}
+
+{% block extra_css %}
+
+<style>
+/* استيراد الخطوط */
+@import url('https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700&display=swap');
+
+/* متغيرات الألوان (معدلة لمرتجع المبيعات) */
+:root {
+--primary: #f57c00; /* برتقالي للمرتجع */
+--primary-light: #ffb74d;
+--primary-soft: #fff3e0;
+--accent: #4361ee; /* أزرق للروابط والتفاصيل */
+--success: #06d6a0;
+--warning: #ffb703;
+--danger: #ef476f;
+--dark: #2b2d42;
+--gray: #8d99ae;
+--light: #edf2f4;
+--shadow: 0 4px 20px rgba(245, 124, 0, 0.08);
+--shadow-hover: 0 8px 25px rgba(245, 124, 0, 0.15);
+--radius: 14px;
+}
+
+body {
+font-family: 'Cairo', sans-serif;
+background: #f8faff;
+}
+
+.container-fluid {
+padding: 1.5rem;
+max-width: 1400px;
+margin: 0 auto;
+}
+
+/* حاوية مدمجة */
+.compact-wrapper {
+background: white;
+border-radius: var(--radius);
+box-shadow: var(--shadow);
+border: 1px solid rgba(245, 124, 0, 0.1);
+overflow: hidden;
+}
+
+/* رأس الصفحة */
+.compact-header {
+display: flex;
+align-items: center;
+justify-content: space-between;
+background: white;
+padding: 0.8rem 1.2rem;
+border-bottom: 1px solid rgba(245, 124, 0, 0.1);
+}
+
+.header-title {
+display: flex;
+align-items: center;
+gap: 0.8rem;
+}
+
+.title-badge {
+width: 40px;
+height: 40px;
+background: linear-gradient(135deg, var(--primary), var(--primary-light));
+border-radius: 10px;
+display: flex;
+align-items: center;
+justify-content: center;
+color: white;
+font-size: 1.2rem;
+}
+
+.title-badge i {
+animation: gentle-spin 8s linear infinite;
+}
+
+@keyframes gentle-spin {
+from { transform: rotate(0deg); }
+to { transform: rotate(360deg); }
+}
+
+.header-title h1 {
+font-size: 1.4rem;
+font-weight: 700;
+margin: 0;
+color: var(--dark);
+}
+
+.header-title p {
+margin: 0;
+font-size: 0.8rem;
+color: var(--gray);
+display: flex;
+align-items: center;
+gap: 0.3rem;
+}
+
+.stats-mini {
+display: flex;
+gap: 0.5rem;
+font-size: 0.8rem;
+background: var(--primary-soft);
+padding: 0.2rem 0.8rem;
+border-radius: 30px;
+color: var(--primary);
+}
+
+/* شريط المعلومات السريع */
+.info-strip {
+background: var(--light);
+padding: 0.6rem 1.2rem;
+display: flex;
+flex-wrap: wrap;
+gap: 1.5rem;
+border-bottom: 1px solid rgba(245, 124, 0, 0.1);
+font-size: 0.85rem;
+}
+
+.info-strip-item {
+display: flex;
+align-items: center;
+gap: 0.4rem;
+}
+
+.info-strip-item i {
+color: var(--accent); /* أيقونة زرقاء للتمييز */
+font-size: 0.8rem;
+}
+
+.info-strip-label {
+color: var(--gray);
+}
+
+.info-strip-value {
+font-weight: 600;
+color: var(--dark);
+}
+
+.info-strip-value a {
+color: var(--accent);
+text-decoration: none;
+}
+
+.info-strip-value a:hover {
+text-decoration: underline;
+}
+
+/* شريط الإجماليات */
+.totals-strip {
+background: white;
+padding: 0.6rem 1.2rem;
+display: flex;
+flex-wrap: wrap;
+gap: 1.5rem;
+border-bottom: 1px solid rgba(245, 124, 0, 0.1);
+font-size: 0.85rem;
+}
+
+.total-strip-item {
+display: flex;
+align-items: center;
+gap: 0.4rem;
+}
+
+.total-strip-label {
+color: var(--gray);
+}
+
+.total-strip-value {
+font-weight: 700;
+font-family: 'Courier New', monospace;
+direction: ltr;
+display: inline-block;
+}
+
+.total-strip-value.success { color: var(--success); }
+.total-strip-value.warning { color: var(--warning); }
+.total-strip-value.primary { color: var(--primary); }
+
+/* شارة الحالة */
+.status-badge {
+display: inline-flex;
+align-items: center;
+gap: 0.3rem;
+padding: 0.25rem 0.8rem;
+border-radius: 30px;
+font-size: 0.75rem;
+font-weight: 600;
+}
+
+.status-badge.success { background: #d1fae5; color: #065f46; }
+.status-badge.warning { background: #fed7aa; color: #92400e; }
+.status-badge.danger { background: #fee2e2; color: #b91c1c; }
+
+/* جدول البنود */
+.table-compact {
+background: white;
+overflow: hidden;
+}
+
+.table-compact table {
+width: 100%;
+border-collapse: collapse;
+}
+
+.table-compact th {
+background: #f8faff;
+padding: 0.7rem 0.8rem;
+font-weight: 600;
+font-size: 0.8rem;
+color: var(--dark);
+border-bottom: 1px solid rgba(245, 124, 0, 0.1);
+white-space: nowrap;
+}
+
+.table-compact td {
+padding: 0.7rem 0.8rem;
+font-size: 0.85rem;
+border-bottom: 1px solid var(--light);
+color: var(--dark);
+vertical-align: middle;
+}
+
+.table-compact tr:last-child td { border-bottom: none; }
+.table-compact tr:hover { background: #fff8e1; } /* خلفية صفراء خفيفة عند التمرير */
+
+/* شارات صغيرة */
+.badge-mini {
+display: inline-flex;
+align-items: center;
+gap: 0.2rem;
+padding: 0.2rem 0.6rem;
+border-radius: 30px;
+font-size: 0.7rem;
+font-weight: 600;
+background: var(--light);
+color: var(--gray);
+white-space: nowrap;
+}
+
+.badge-mini.success { background: #d1fae5; color: #065f46; }
+.badge-mini.info { background: #dbeafe; color: #1e40af; }
+
+/* أزرار الإجراءات */
+.action-mini { display: flex; gap: 0.2rem; }
+
+.action-mini a, .action-mini button {
+width: 26px;
+height: 26px;
+border-radius: 6px;
+display: inline-flex;
+align-items: center;
+justify-content: center;
+color: white;
+font-size: 0.75rem;
+text-decoration: none;
+transition: all 0.2s;
+border: none;
+cursor: pointer;
+}
+
+.action-mini a:hover, .action-mini button:hover { transform: translateY(-2px); }
+
+.action-view { background: linear-gradient(135deg, var(--accent), #4895ef); }
+.action-delete { background: linear-gradient(135deg, var(--danger), #ff6b6b); }
+.action-print { background: linear-gradient(135deg, var(--gray), #6c757d); }
+.action-edit { background: linear-gradient(135deg, var(--primary), var(--primary-light)); }
+
+/* شريط الإجراءات السفلي */
+.action-bar {
+background: #f8faff;
+padding: 0.8rem 1.2rem;
+display: flex;
+gap: 0.5rem;
+flex-wrap: wrap;
+border-top: 1px solid rgba(245, 124, 0, 0.1);
+}
+
+/* الملاحظات */
+.notes-section {
+background: #f8faff;
+padding: 0.6rem 1.2rem;
+border-top: 1px dashed rgba(245, 124, 0, 0.2);
+font-size: 0.8rem;
+color: var(--gray);
+}
+
+.notes-section i { color: var(--primary); margin-left: 0.3rem; }
+
+/* شريط التصحيح */
+.debug-info {
+background: #fff3cd;
+padding: 0.4rem 1rem;
+border-radius: var(--radius);
+margin-bottom: 1rem;
+font-family: monospace;
+font-size: 0.8rem;
+color: #856404;
+border-right: 3px solid #ffc107;
+}
+
+.number-format {
+font-family: 'Courier New', monospace;
+direction: ltr;
+display: inline-block;
+unicode-bidi: embed;
+}
+
+/* استجابة للشاشات الصغيرة */
+@media (max-width: 768px) {
+.container-fluid { padding: 0.8rem; }
+.info-strip, .totals-strip { flex-direction: column; gap: 0.5rem; }
+.table-compact { overflow-x: auto; }
+.table-compact table { min-width: 700px; }
+}
+
+@media print {
+.action-bar, .debug-info { display: none !important; }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+
+<div class="container-fluid">
+
+<!-- شريط التصحيح -->
+<div class="debug-info">
+<i class="fas fa-info-circle"></i>
+<strong>مرتجع مبيعات:</strong> {{ sale_return.uniqueId }} |
+<strong>الحالة:</strong> {{ sale_return.get_settlement_status_display }} |
+<strong>البنود:</strong> {{ sale_return.salereturnitem_set.count }}
+</div>
+
+<div class="compact-wrapper">
+<!-- رأس الصفحة -->
+<div class="compact-header">
+<div class="header-title">
+<div class="title-badge">
+<i class="fas fa-undo-alt"></i>
+</div>
+<div>
+<h1>فاتورة مرتجع مبيعات</h1>
+<p>
+<i class="fas fa-hashtag"></i>
+{{ sale_return.uniqueId|default:"غير محدد" }}
+</p>
+</div>
+</div>
+<div class="stats-mini">
+<span class="status-badge
+{% if sale_return.settlement_status == 'settled' %}success
+{% elif sale_return.settlement_status == 'partial' %}warning
+{% else %}danger{% endif %}">
+<i class="fas
+{% if sale_return.settlement_status == 'settled' %}fa-check-circle
+{% elif sale_return.settlement_status == 'partial' %}fa-adjust
+{% else %}fa-clock{% endif %}">
+</i>
+{{ sale_return.get_settlement_status_display }}
+</span>
+</div>
+</div>
+
+<!-- شريط المعلومات السريع -->
+<div class="info-strip">
+<div class="info-strip-item">
+<i class="fas fa-file-invoice"></i>
+<span class="info-strip-label">الفاتورة الأصلية:</span>
+<span class="info-strip-value">
+{% if original_sale %}
+<a href="{% url 'invoice:sale_detail' original_sale.slug %}">
+{{ original_sale.uniqueId }}
+</a>
+{% else %} - {% endif %}
+</span>
+</div>
+<div class="info-strip-item">
+<i class="fas fa-calendar"></i>
+<span class="info-strip-label">التاريخ:</span>
+<span class="info-strip-value">{{ sale_return.return_date|date:"Y/m/d" }}</span>
+</div>
+<div class="info-strip-item">
+<i class="fas fa-user"></i>
+<span class="info-strip-label">العميل:</span>
+<span class="info-strip-value">{{ original_sale.sale_customer.get_full_name|default:original_sale.sale_customer.username|truncatechars:15 }}</span>
+</div>
+<div class="info-strip-item">
+<i class="fas fa-money-bill"></i>
+<span class="info-strip-label">العملة:</span>
+<span class="info-strip-value">{{ sale_return.return_currency.name|default:"-" }}</span>
+</div>
+</div>
+
+<!-- شريط الإجماليات -->
+<div class="totals-strip">
+<div class="total-strip-item">
+<i class="fas fa-cubes"></i>
+<span class="total-strip-label">البنود:</span>
+<span class="total-strip-value">{{ sale_return.salereturnitem_set.count }}</span>
+</div>
+<div class="total-strip-item">
+<i class="fas fa-hand-holding-usd"></i>
+<span class="total-strip-label">المصروف:</span>
+<span class="total-strip-value success">{{ sale_return.paid_amount|floatformat:2 }}</span>
+</div>
+<div class="total-strip-item">
+<i class="fas fa-clock"></i>
+<span class="total-strip-label">المتبقي:</span>
+<span class="total-strip-value {% if sale_return.remaining_amount > 0 %}warning{% else %}success{% endif %}">{{ sale_return.remaining_amount|floatformat:2 }}</span>
+</div>
+<div class="total-strip-item">
+<i class="fas fa-money-bill-wave"></i>
+<span class="total-strip-label">الإجمالي:</span>
+<span class="total-strip-value primary">{{ sale_return.return_final_total|floatformat:2 }}</span>
+</div>
+</div>
+
+<!-- جدول البنود -->
+<div class="table-compact">
+<table>
+<thead>
+<tr>
+<th>#</th>
+<th>المنتج</th>
+<th>الكمية المرتجعة</th>
+<th>سعر الوحدة</th>
+<th>الضريبة</th>
+<th>الإجمالي</th>
+<th>الباركودات</th>
+</tr>
+</thead>
+<tbody>
+{% for item in sale_return.salereturnitem_set.all %}
+<tr>
+<td>{{ forloop.counter }}</td>
+<td>
+<strong style="color: var(--primary);">
+{{ item.item_name|truncatechars:30 }}
+</strong>
+</td>
+<td>
+<span class="badge-mini success">
+<i class="fas fa-box"></i> {{ item.returned_quantity }}
+</span>
+</td>
+<td class="number-format">{{ item.unit_price|floatformat:2 }}</td>
+<td class="number-format">{{ item.item_tax_percentage|default:"0.00"|floatformat:2 }}%</td>
+<td class="number-format"><strong>{{ item.return_total|floatformat:2 }}</strong></td>
+<td>
+<div style="display: flex; flex-wrap: wrap; gap: 2px;">
+{% for barcode_item in item.return_item_barcodes.all %}
+<span class="badge-mini info">{{ barcode_item.barcode.barcode_in }}</span>
+{% empty %}
+<span class="text-muted">--</span>
+{% endfor %}
+</div>
+</td>
+</tr>
+{% empty %}
+<tr>
+<td colspan="7" style="text-align: center; padding: 2rem;">
+<i class="fas fa-box-open" style="font-size: 2rem; color: var(--primary-soft);"></i>
+<p style="color: var(--gray);">لا توجد بنود مرتجعة</p>
+</td>
+</tr>
+{% endfor %}
+</tbody>
+</table>
+</div>
+
+<!-- الملاحظات -->
+{% if sale_return.return_notes %}
+<div class="notes-section">
+<i class="fas fa-sticky-note"></i>
+<strong>ملاحظات:</strong> {{ sale_return.return_notes }}
+</div>
+{% endif %}
+
+<!-- شريط الإجراءات -->
+<div class="action-bar">
+<div class="action-mini">
+<a href="{% url 'invoice:sale_return_list' %}" class="action-view" title="رجوع للقائمة">
+<i class="fas fa-arrow-right"></i>
+</a>
+{% if request.user.is_superuser or sale_return.created_by == request.user %}
+<a href="{% url 'invoice:sale_return_update' sale_return.slug %}" class="action-edit" title="تعديل">
+<i class="fas fa-edit"></i>
+</a>
+<a href="{% url 'invoice:sale_return_delete' sale_return.slug %}" class="action-delete" title="حذف"
+onclick="return confirm('هل أنت متأكد من حذف هذا المرتجع؟');">
+<i class="fas fa-trash"></i>
+</a>
+{% endif %}
+<button onclick="window.print()" class="action-print" title="طباعة">
+<i class="fas fa-print"></i>
+</button>
+</div>
+</div>
+</div></div>
+{% endblock %}
+
+{% block extra_js %}
+
+<script nonce="{{ csp_nonce }}">
+console.log('تم تحميل صفحة تفاصيل مرتجع المبيعات');
+</script>
+{% endblock %}

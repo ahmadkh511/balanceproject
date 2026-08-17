@@ -1,0 +1,98 @@
+{% extends 'base.html' %}
+{% load markdownify %}
+
+{% block title %}دليل المستخدم{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* تنسيقات خاصة لدليل المستخدم لجعله ككتاب احترافي */
+    .manual-wrapper {
+        background: #ffffff;
+        padding: 40px;
+        border-radius: 8px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+        max-width: 900px;
+        margin: 20px auto;
+        direction: rtl;
+        text-align: right;
+        font-family: 'Tajawal', sans-serif;
+        line-height: 1.8;
+        color: #333;
+    }
+
+    .manual-wrapper h1 {
+        color: #006064; /* اللون الأزرق الداكن الخاص بك */
+        font-size: 2.2rem;
+        border-bottom: 3px solid #4dd0e1;
+        padding-bottom: 15px;
+        margin-bottom: 30px;
+        margin-top: 40px;
+    }
+
+    .manual-wrapper h2 {
+        color: #0097a7;
+        font-size: 1.6rem;
+        background: #e0f7fa;
+        padding: 10px 15px;
+        border-right: 5px solid #0097a7;
+        margin-top: 35px;
+        margin-bottom: 15px;
+    }
+
+    .manual-wrapper h3 {
+        color: #00838f;
+        font-size: 1.2rem;
+        margin-top: 25px;
+        margin-bottom: 10px;
+        font-weight: 700;
+    }
+
+    .manual-wrapper p {
+        font-size: 1rem;
+        margin-bottom: 15px;
+        color: #455a64;
+    }
+
+    .manual-wrapper ul, .manual-wrapper ol {
+        margin-bottom: 20px;
+        padding-right: 25px;
+    }
+
+    .manual-wrapper li {
+        margin-bottom: 8px;
+        color: #455a64;
+    }
+
+    .manual-wrapper strong {
+        color: #006064;
+    }
+
+    .manual-wrapper code {
+        background: #eceff1;
+        padding: 2px 6px;
+        border-radius: 4px;
+        color: #d32f2f;
+        font-size: 0.9rem;
+    }
+
+    .manual-wrapper blockquote {
+        border-right: 4px solid #ff9800;
+        background: #fff3e0;
+        padding: 15px;
+        margin: 20px 0;
+        border-radius: 4px;
+    }
+    
+    .manual-wrapper hr {
+        border: 0;
+        border-top: 1px dashed #b2ebf2;
+        margin: 40px 0;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="manual-wrapper">
+    {{ manual_content|markdownify }}
+</div>
+{% endblock %}

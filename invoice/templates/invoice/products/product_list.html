@@ -1,0 +1,1285 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}قائمة المنتجات{% endblock %}
+
+{% block extra_css %}
+    <link rel="stylesheet" href="{% static 'css/print_system.css' %}">
+{% endblock %}
+
+{% block content %}
+<style>
+    /* === إعدادات عامة === */
+    body {
+        background-color: #f0f2f5;
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    .compact-container {
+        padding: 1.5rem;
+        max-width: 1400px;
+        margin: 0 auto;
+    }
+
+    /* === رأس الصفحة === */
+    .compact-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1.5rem;
+        flex-wrap: wrap;
+        gap: 1rem;
+    }
+
+    .header-title h1 {
+        font-size: 1.6rem;
+        color: #1a252f;
+        margin: 0;
+        font-weight: 800;
+        letter-spacing: -0.5px;
+    }
+
+    .header-title span {
+        color: #8395a7;
+        font-size: 0.9rem;
+        display: block;
+        margin-top: 0.2rem;
+    }
+
+    .toolbar {
+        display: flex;
+        gap: 0.75rem;
+        align-items: center;
+        flex-wrap: wrap;
+    }
+
+    .search-input-compact {
+        border: 2px solid #e1e8ed;
+        border-radius: 10px;
+        padding: 0.6rem 1rem 0.6rem 2.8rem;
+        width: 280px;
+        transition: all 0.3s ease;
+        background-color: #fff;
+        font-size: 0.95rem;
+    }
+
+    .search-input-compact:focus {
+        border-color: #3498db;
+        box-shadow: 0 0 0 4px rgba(52, 152, 219, 0.1);
+        outline: none;
+    }
+
+    .search-wrapper {
+        position: relative;
+    }
+
+    .search-wrapper i {
+        position: absolute;
+        left: 14px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: #bdc3c7;
+        font-size: 0.9rem;
+    }
+
+    .btn-add-compact {
+        background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
+        color: white;
+        padding: 0.65rem 1.5rem;
+        border-radius: 10px;
+        text-decoration: none;
+        font-weight: 600;
+        transition: all 0.3s ease;
+        white-space: nowrap;
+        box-shadow: 0 4px 6px rgba(52, 152, 219, 0.2);
+    }
+
+    .btn-add-compact:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 12px rgba(52, 152, 219, 0.3);
+        color: white;
+    }
+
+    /* === زر إظهار/إخفاء الكل === */
+    .btn-toggle-all-serials {
+        background: #fff;
+        color: #2c3e50;
+        padding: 0.65rem 1.2rem;
+        border: 2px solid #e1e8ed;
+        border-radius: 10px;
+        text-decoration: none;
+        font-weight: 600;
+        transition: all 0.3s ease;
+        white-space: nowrap;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+    }
+    .btn-toggle-all-serials:hover {
+        background: #f8f9fa;
+        border-color: #bdc3c7;
+        transform: translateY(-2px);
+    }
+    .btn-toggle-all-serials.expanded {
+        background: #eaf2f8;
+        color: #2980b9;
+        border-color: #3498db;
+    }
+
+    /* === بطاقة الجدول === */
+    .table-card {
+        background: white;
+        border-radius: 16px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04);
+        overflow-x: auto;
+        border: 1px solid #e1e8ed;
+    }
+    
+    .table-card::-webkit-scrollbar {
+        display: none;
+        height: 0;
+        width: 0;
+    }
+    .table-card {
+        -ms-overflow-style: none;  
+        scrollbar-width: none;  
+    }
+
+    /* === الجدول === */
+    .compact-table {
+        width: 100%;
+        min-width: 700px;
+        border-collapse: collapse;
+        text-align: right;
+    }
+
+    .compact-table thead th {
+        background-color: #f8f9fa;
+        color: #6c757d;
+        font-weight: 700;
+        font-size: 0.8rem;
+        padding: 1rem 1.2rem;
+        border-bottom: 2px solid #e9ecef;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        white-space: nowrap;
+        cursor: pointer;
+        user-select: none;
+        position: relative;
+        transition: all 0.2s ease;
+    }
+
+    .compact-table thead th:hover {
+        background-color: #e9ecef;
+        color: #2c3e50;
+    }
+
+    .compact-table thead th .sort-icon {
+        margin-right: 5px;
+        font-size: 0.7rem;
+        opacity: 0.5;
+    }
+
+    .compact-table thead th.active-sort .sort-icon {
+        opacity: 1;
+        color: #3498db;
+    }
+
+    .compact-table thead th.active-sort {
+        color: #1a252f;
+        background-color: #eaf2f8;
+    }
+
+    .compact-table tbody tr {
+        border-bottom: 1px solid #f1f3f5;
+        transition: all 0.2s ease;
+        cursor: pointer;
+    }
+
+    .compact-table tbody tr:hover {
+        background-color: #f8f9fa;
+    }
+
+    .compact-table tbody td {
+        padding: 1rem 1.2rem;
+        vertical-align: middle;
+        font-size: 0.95rem;
+        color: #2c3e50;
+    }
+
+    /* === عناصر داخل الجدول === */
+    .img-thumb {
+        width: 45px;
+        height: 45px;
+        border-radius: 10px;
+        object-fit: cover;
+        background: #f1f3f5;
+        border: 2px solid #e9ecec;
+    }
+
+    .no-img-icon {
+        width: 45px;
+        height: 45px;
+        background: #f1f3f5;
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #ced4da;
+        border: 2px solid #e9ecec;
+    }
+
+    .product-name-cell {
+        font-weight: 700;
+        color: #1a252f;
+        font-size: 1rem;
+    }
+
+    .main-barcode-cell {
+        font-family: 'Courier New', Courier, monospace;
+        font-size: 0.9rem;
+        font-weight: bold;
+        color: #1565c0;
+        background: #e3f2fd;
+        padding: 0.3rem 0.7rem;
+        border-radius: 6px;
+        border: 1px solid #bbdefb;
+        display: inline-block;
+    }
+
+    .barcode-wrapper {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+    }
+
+    .btn-copy-code {
+        background: none;
+        border: none;
+        color: #bdc3c7;
+        cursor: pointer;
+        padding: 0 2px;
+        font-size: 0.85rem;
+        transition: all 0.2s ease;
+        line-height: 1;
+    }
+
+    .btn-copy-code:hover {
+        color: #3498db;
+        transform: scale(1.2);
+    }
+
+    .btn-copy-code.copied {
+        color: #27ae60;
+    }
+
+    .badge-sm {
+        padding: 0.35rem 0.75rem;
+        border-radius: 20px;
+        font-size: 0.8rem;
+        font-weight: 700;
+        display: inline-block;
+    }
+    .bg-low { background-color: #ffeaea; color: #e74c3c; }
+    .bg-med { background-color: #fff8e1; color: #f39c12; }
+    .bg-high { background-color: #eafaf1; color: #27ae60; }
+    .bg-info-soft { background-color: #eaf2f8; color: #2980b9; }
+
+    /* === زر إظهار/إخفاء للصف الواحد === */
+    .serial-toggle-wrapper {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        cursor: pointer;
+        user-select: none;
+        padding: 0.2rem 0.4rem;
+        border-radius: 6px;
+        transition: background 0.2s;
+    }
+    .serial-toggle-wrapper:hover {
+        background: #f1f3f5;
+    }
+    .serial-toggle-icon {
+        font-size: 0.7rem;
+        color: #2980b9;
+        transition: transform 0.3s ease;
+    }
+    .main-product-row.expanded .serial-toggle-icon {
+        transform: rotate(180deg);
+    }
+
+    .actions-cell {
+        white-space: nowrap;
+    }
+
+    .btn-icon-sm {
+        width: 36px;
+        height: 36px;
+        padding: 0;
+        line-height: 36px;
+        text-align: center;
+        border-radius: 8px;
+        color: #adb5bd;
+        background: transparent;
+        border: 1px solid transparent;
+        display: inline-block;
+        margin: 0 0.15rem;
+        transition: all 0.2s ease;
+    }
+
+    .btn-icon-sm:hover {
+        color: #fff;
+        border-color: transparent;
+        transform: translateY(-1px);
+    }
+    .btn-icon-sm.text-danger:hover { background: #e74c3c; box-shadow: 0 4px 8px rgba(231,76,60,0.3); }
+    .btn-icon-sm.text-primary:hover { background: #3498db; box-shadow: 0 4px 8px rgba(52,152,219,0.3); }
+    .btn-icon-sm.text-warning:hover { background: #f39c12; box-shadow: 0 4px 8px rgba(243,156,18,0.3); }
+
+    /* === قسم الأكورديون المنسدل === */
+    .accordion-row {
+        background-color: #fcfdff;
+    }
+    
+    .accordion-content {
+        padding: 1.2rem;
+        border-bottom: 1px solid #f1f3f5;
+        font-size: 0.9rem;
+        display: none;
+        background-color: #fcfdff;
+    }
+    
+    .accordion-content.show {
+        display: block;
+        animation: slideDown 0.3s ease;
+    }
+
+    @keyframes slideDown {
+        from { opacity: 0; transform: translateY(-10px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    .barcode-tag {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        background: #f8f9fa;
+        padding: 0.4rem 0.8rem;
+        border-radius: 6px;
+        margin-left: 0.4rem;
+        margin-bottom: 0.4rem;
+        font-family: 'Courier New', Courier, monospace;
+        font-size: 0.9rem;
+        font-weight: bold;
+        border: 1px solid #e9ecef;
+        color: #495057;
+        transition: all 0.2s ease-in-out;
+    }
+
+    .barcode-tag:hover {
+        border-color: #d1d3e2;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.03);
+    }
+    
+    .barcode-tag.primary {
+        background: #e3f2fd;
+        border-color: #bbdefb;
+        color: #1565c0;
+    }
+
+    .empty-row td {
+        text-align: center;
+        padding: 4rem 2rem;
+        color: #adb5bd;
+    }
+    .empty-row i { font-size: 3rem; margin-bottom: 1rem; display: block; }
+
+    @media (max-width: 992px) {
+        .search-input-compact { width: 200px; }
+        .hide-tablet { display: none; }
+    }
+    
+    @media (max-width: 768px) {
+        .compact-container { padding: 1rem; }
+        .header-title h1 { font-size: 1.3rem; }
+        .hide-mobile { display: none; }
+        .search-input-compact { width: 100%; }
+        .toolbar { width: 100%; }
+        .btn-add-compact, .btn-toggle-all-serials { flex: 1; text-align: center; justify-content: center; }
+    }
+
+    /* === إعدادات الطباعة المتقدمة === */
+    @media print {
+        body { background: white !important; }
+        .compact-container { padding: 0 !important; max-width: 100% !important; }
+        .table-card { overflow: visible !important; border: none !important; box-shadow: none !important; border-radius: 0 !important; scrollbar-width: none !important; }
+        .table-card::-webkit-scrollbar { display: none !important; }
+        .compact-table { min-width: auto !important; width: 100% !important; }
+        .invoice-print-area { padding-bottom: 10pt !important; }
+        /* إجبار إظهار السيريالات عند الطباعة دائماً */
+        .accordion-content { display: block !important; padding: 5pt 10pt !important; }
+        .barcode-tag { border: 1px solid #ddd !important; box-shadow: none !important; }
+        .no-print { display: none !important; }
+    }
+</style>
+
+<!-- بيانات الشركة للطباعة -->
+<script id="companyData" type="application/json" nonce="{{ csp_nonce }}">
+{
+    "name": "{{ company_settings.company_name|default:'شركة تجريبية' }}",
+    "logo_url": "{% if company_settings.company_logo %}{{ company_settings.company_logo.url }}{% else %}{% endif %}",
+    "phone": "{{ company_settings.contact_phone|default:'0591234567' }}",
+    "address": "{{ company_settings.contact_address|default:'دمشق - سوريا' }}",
+    "footer_text": "{{ company_settings.footer_copyright_text|default:'شكراً لتعاملكم معنا' }}"
+}
+</script>
+
+<div class="compact-container">
+    <!-- ===== المحتوى القابل للطباعة ===== -->
+    <div class="invoice-print-area" id="printableArea">
+        <!-- الشريط العلوي -->
+        <div class="compact-header no-print">
+            <div class="header-title">
+                <h1>المخزون والمنتجات</h1>
+                <span>إدارة وتتبع جميع المواد</span>
+            </div>
+            <div class="toolbar">
+                <div class="search-wrapper">
+                    <i class="fas fa-search"></i>
+                    <input type="text" id="searchInput" class="search-input-compact" placeholder="بحث بالاسم أو الباركود أو السيريال...">
+                </div>
+                
+                <!-- زر إظهار / إخفاء الكل -->
+                <button class="btn-toggle-all-serials" id="toggleAllSerialsBtn">
+                    <i class="fas fa-chevron-circle-down"></i>
+                    <span class="btn-text">إظهار كل السيريالات</span>
+                </button>
+
+                <a href="{% url 'invoice:product_create' %}" class="btn-add-compact">
+                    <i class="fas fa-plus ms-1"></i> مادة جديدة
+                </a>
+            </div>
+        </div>
+
+        <!-- الجدول -->
+        <div class="table-card" data-print-field="products-table">
+            <table class="compact-table" id="productTable">
+                <thead>
+                    <tr>
+                        <th class="hide-mobile no-print" style="width: 50px;" data-sort="index"># <span class="sort-icon"><i class="fas fa-sort"></i></span></th>
+                        <th style="width: 60px;" data-sort="image">الصورة</th>
+                        <th data-sort="name" data-print-field="col-product">اسم المنتج <span class="sort-icon"><i class="fas fa-sort"></i></span></th>
+                        <th data-sort="stock" data-print-field="col-stock">المخزون <span class="sort-icon"><i class="fas fa-sort"></i></span></th>
+                        <th data-sort="serials" data-print-field="col-serials">السيريالات <span class="sort-icon"><i class="fas fa-sort"></i></span></th>
+                        <th data-sort="barcode" data-print-field="col-barcode">الباركود الأساسي <span class="sort-icon"><i class="fas fa-sort"></i></span></th>
+                        <th style="width: 120px;" class="no-print">الإجراءات</th>
+                    </tr>
+                </thead>
+                <tbody id="tableBody">
+                    {% for product in products %}
+                    <tr class="main-product-row" data-product-id="{{ product.id }}" data-main-barcode="{{ product.main_barcode|default:'' }}" data-product-name="{{ product.product_name }}" data-stock="{{ product.current_stock_quantity }}" data-serials-count="{{ product.active_barcodes|length }}">
+                        <td class="hide-mobile no-print">{{ forloop.counter }}</td>
+                        <td>
+                            {% if product.product_image %}
+                                <img src="{{ product.product_image.url }}" class="img-thumb" alt="{{ product.product_name }}">
+                            {% else %}
+                                <div class="no-img-icon"><i class="fas fa-box-open"></i></div>
+                            {% endif %}
+                        </td>
+                        <td class="product-name-cell" data-print-field="col-product">{{ product.product_name }}</td>
+                        
+                        <td data-print-field="col-stock">
+                            {% if product.current_stock_quantity <= 10 %}
+                                <span class="badge-sm bg-low">{{ product.current_stock_quantity }}</span>
+                            {% elif product.current_stock_quantity <= 50 %}
+                                <span class="badge-sm bg-med">{{ product.current_stock_quantity }}</span>
+                            {% else %}
+                                <span class="badge-sm bg-high">{{ product.current_stock_quantity }}</span>
+                            {% endif %}
+                        </td>
+                        
+                        <td data-print-field="col-serials">
+                            {% if product.active_barcodes %}
+                                <div class="serial-toggle-wrapper" title="اضغط لعرض/إخفاء السيريالات">
+                                    <span class="badge-sm bg-info-soft">
+                                        {{ product.active_barcodes|length }} سيريال
+                                    </span>
+                                    <i class="fas fa-chevron-down serial-toggle-icon"></i>
+                                </div>
+                            {% else %}
+                                <span style="color:#ced4da; font-size:0.85rem;">-</span>
+                            {% endif %}
+                        </td>
+
+                        <td data-print-field="col-barcode">
+                            {% if product.main_barcode %}
+                                <div class="barcode-wrapper">
+                                    <span class="main-barcode-cell">
+                                        <i class="fas fa-barcode fa-xs" style="margin-left:4px;"></i>{{ product.main_barcode }}
+                                    </span>
+                                    <button class="btn-copy-code no-print" data-code="{{ product.main_barcode }}" title="نسخ الباركود">
+                                        <i class="fas fa-copy"></i>
+                                    </button>
+                                </div>
+                            {% else %}
+                                <span style="color:#ced4da; font-size:0.85rem;">-</span>
+                            {% endif %}
+                        </td>
+                        
+                        <td class="actions-cell no-print">
+                            <a href="{% url 'invoice:product_detail' slug=product.slug %}" class="btn-icon-sm text-primary" title="عرض التفاصيل"><i class="fas fa-eye"></i></a>
+                            <a href="{% url 'invoice:product_edit' slug=product.slug %}" class="btn-icon-sm text-warning" title="تعديل المادة"><i class="fas fa-pen"></i></a>
+                            <a href="{% url 'invoice:product_delete' slug=product.slug %}" class="btn-icon-sm text-danger btn-delete-product" title="حذف المادة"><i class="fas fa-trash-alt"></i></a>
+                        </td>
+                    </tr>
+                    
+                    {% if product.active_barcodes %}
+                    <tr id="accordion-{{ product.id }}" class="accordion-row">
+                        <td colspan="7" style="padding:0; border:none;">
+                            <div class="accordion-content" data-print-field="serials-detail">
+                                <div style="margin-bottom: 0.5rem; color:#6c757d; font-weight:600; font-size:0.85rem;">السيريالات المسجلة:</div>
+                                {% for barcode in product.active_barcodes %}
+                                    <span class="barcode-tag {% if barcode.is_primary %}primary{% endif %}" data-barcode-value="{{ barcode.barcode_in }}">
+                                        {% if barcode.is_primary %}<i class="fas fa-star fa-xs" style="color:#f1c40f;"></i> {% endif %}
+                                        {{ barcode.barcode_in }}
+                                        <button class="btn-copy-code no-print" data-code="{{ barcode.barcode_in }}" title="نسخ السيريال">
+                                            <i class="fas fa-copy"></i>
+                                        </button>
+                                    </span>
+                                {% endfor %}
+                            </div>
+                        </td>
+                    </tr>
+                    {% endif %}
+                    
+                    {% empty %}
+                    <tr class="empty-row">
+                        <td colspan="7">
+                            <i class="fas fa-boxes-stacked"></i>
+                            <div style="font-size: 1.1rem; font-weight: 600;">لا توجد مواد بعد</div>
+                            <div style="font-size: 0.9rem;">ابدأ بإضافة مواد جديدة للمخزونك</div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- ===== كود نظام الطباعة الموحد (HTML) ===== -->
+    <div class="print-header-area no-print" id="printHeaderArea">
+        <table style="width:100%; border-collapse:collapse;">
+            <tr>
+                <td style="width:80px; text-align:center; vertical-align:middle;">
+                    <img src="" alt="شعار" class="ph-logo" id="phLogoImg" style="display:none;">
+                    <span id="phLogoPlaceholder" style="font-size:8pt; color:#999;">بدون شعار</span>
+                </td>
+                <td style="text-align:center; vertical-align:middle;">
+                    <div class="ph-company" id="phCompanyName">شركة تجريبية</div>
+                    <div class="ph-details" id="phCompanyDetails"></div>
+                </td>
+                <td style="width:80px;"></td>
+            </tr>
+        </table>
+    </div>
+
+    <div class="print-footer-area no-print" id="printFooterArea">
+        <div class="print-footer-main">
+            <div class="footer-content"><span id="phFooterText"></span></div>
+        </div>
+    </div>
+
+    <div class="print-watermark" id="watermarkText">شركة تجريبية</div>
+
+    <button class="print-fab no-print" id="openPrintModalBtn">
+        <i class="fas fa-print"></i> طباعة
+    </button>
+
+    <div class="modal-overlay no-print" id="printModal" style="display:none;">
+        <div class="modal-box">
+            <div class="modal-header-custom">
+                <h3><i class="fas fa-cog"></i> إعدادات الطباعة</h3>
+                <button class="modal-close" id="closeModalBtn"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="modal-body-custom">
+                <div class="section-title">هيدر وفوتر صفحة الطباعة</div>
+                <div class="company-info-box">
+                    <i class="fas fa-info-circle"></i>
+                    <span><strong>ملاحظة:</strong> بيانات الشركة مأخوذة تلقائياً. الملاحظات ستظهر في آخر صفحة فقط.</span>
+                </div>
+                <div class="header-footer-inputs">
+                    <div class="hf-input-group">
+                        <label><i class="fas fa-image"></i> شعار الشركة</label>
+                        <div class="hf-preview-box" id="logoPreviewBox">
+                            <img id="logoPreviewImg" src="" alt="شعار" style="max-height:65px; display:none;">
+                            <span id="logoPreviewPlaceholder" style="font-size:0.8rem; color:#999;">لا يوجد شعار</span>
+                        </div>
+                    </div>
+                    <div class="hf-input-group">
+                        <label><i class="fas fa-building"></i> اسم الشركة</label>
+                        <input type="text" id="companyNameInput" readonly>
+                    </div>
+                    <div class="hf-input-group" style="grid-column: 1 / -1;">
+                        <label><i class="fas fa-align-right"></i> بيانات إضافية</label>
+                        <input type="text" id="companyDetailsInput" readonly>
+                    </div>
+                    <div class="hf-input-group" style="grid-column: 1 / -1;">
+                        <label><i class="fas fa-pen"></i> ملاحظات إضافية للطباعة <span style="font-size:0.65rem; color:#999;">(تظهر في آخر صفحة فقط مع دعم الأسطر المتعددة)</span></label>
+                        <textarea id="printNotes" rows="4" placeholder="أضف ملاحظاتك هنا..."></textarea>
+                    </div>
+                </div>
+
+                <div class="section-title">حجم الورق والهوامش</div>
+                <div class="btn-group-print" id="paperSizeGroup">
+                    <button class="btn-opt active" data-value="a4">A4</button>
+                    <button class="btn-opt" data-value="a5">A5</button>
+                    <button class="btn-opt" data-value="thermal">حراري</button>
+                </div>
+                <div class="btn-group-print" id="marginGroup" style="margin-top: 0.5rem;">
+                    <button class="btn-opt" data-value="minimal">أقل</button>
+                    <button class="btn-opt active" data-value="normal">عادي</button>
+                    <button class="btn-opt" data-value="wide">واسع</button>
+                </div>
+
+                <div class="section-title">تنسيق المحتوى</div>
+                <div class="btn-group-print" id="formatGroup">
+                    <button class="btn-opt active" data-value="standard">قياسي</button>
+                    <button class="btn-opt" data-value="compact">مضغوط</button>
+                    <button class="btn-opt" data-value="detailed">مفصل</button>
+                </div>
+                <div class="btn-group-print" id="logoSizeGroup" style="margin-top: 0.5rem;">
+                    <button class="btn-opt" data-value="small">شعار صغير</button>
+                    <button class="btn-opt" data-value="medium">شعار متوسط</button>
+                    <button class="btn-opt active" data-value="large">شعار كبير</button>
+                </div>
+
+                <div class="section-title">أعمدة الجدول</div>
+                <div class="field-grid" id="tableColumnsGrid"></div>
+
+                <div class="section-title">خيارات إضافية</div>
+                <div class="toggle-row">
+                    <label>طباعة بالألوان</label>
+                    <label class="toggle-switch"><input type="checkbox" id="printColors" checked><span class="toggle-slider"></span></label>
+                </div>
+                <div class="toggle-row">
+                    <label>إظهار خطوط فاصلة</label>
+                    <label class="toggle-switch"><input type="checkbox" id="printLines" checked><span class="toggle-slider"></span></label>
+                </div>
+                <div class="toggle-row">
+                    <label>إظهار رقم الصف</label>
+                    <label class="toggle-switch"><input type="checkbox" id="showIndex" checked><span class="toggle-slider"></span></label>
+                </div>
+                <div class="toggle-row">
+                    <label>إظهار علامة مائية</label>
+                    <label class="toggle-switch"><input type="checkbox" id="showWatermark" checked><span class="toggle-slider"></span></label>
+                </div>
+            </div>
+            <div class="modal-footer-custom">
+                <div class="btn-group-actions" style="display:flex; gap:0.35rem; flex-wrap:wrap;">
+                    <button class="btn btn-secondary-print" id="selectAllBtn"><i class="fas fa-check-double"></i> تحديد الكل</button>
+                    <button class="btn btn-secondary-print" id="deselectAllBtn"><i class="fas fa-times"></i> إلغاء الكل</button>
+                    <button class="btn btn-secondary-print" id="saveSettingsBtn"><i class="fas fa-save"></i> حفظ</button>
+                    <button class="btn btn-secondary-print" id="resetSettingsBtn"><i class="fas fa-undo"></i> استعادة</button>
+                </div>
+                <div style="display:flex; gap:0.5rem; flex-wrap:wrap;">
+                    <button class="btn btn-secondary-print" id="exportPdfBtn"><i class="fas fa-file-pdf"></i> PDF</button>
+                    <button class="btn btn-primary-print" id="executePrintBtn"><i class="fas fa-print"></i> طباعة الآن</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay no-print" id="pdfExportModal" style="display:none;">
+        <div class="modal-box" style="width: 500px;">
+            <div class="modal-header-custom">
+                <h3><i class="fas fa-file-pdf"></i> تصدير كملف PDF</h3>
+                <button class="modal-close" id="closePdfModalBtn"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="modal-body-custom">
+                <div class="pdf-export-instructions" style="text-align: center; padding: 1rem;">
+                    <div class="icon" style="font-size: 3rem; color: var(--primary-4); margin-bottom: 1rem;"><i class="fas fa-file-arrow-down"></i></div>
+                    <h4 style="font-size: 1.1rem; color: var(--text-dark); margin-bottom: 0.5rem;">جاهز لتصدير المستند</h4>
+                    <p style="font-size: 0.85rem; color: #555; margin-bottom: 1.5rem; line-height: 1.6;">لضمان الحفاظ على روابط الأحرف العربية وجودة النصوص، يعتمد النظام على محرك الطباعة المتقدم.</p>
+                    <ul class="pdf-steps" style="text-align: right; background: #f8f9fa; padding: 1rem; border-radius: 8px; margin-bottom: 1rem; list-style: none; padding-right: 2rem;">
+                        <li style="margin-bottom: 0.5rem; font-size: 0.85rem; color: #444;">1. سيتم فتح نافذة الطباعة الخاصة بمتصفحك.</li>
+                        <li style="margin-bottom: 0.5rem; font-size: 0.85rem; color: #444;">2. من قائمة "الطابعة" (Printer)، اختر <strong>حفظ كـ PDF (Save as PDF)</strong>.</li>
+                        <li style="margin-bottom: 0.5rem; font-size: 0.85rem; color: #444;">3. اضغط على <strong>حفظ (Save)</strong> لتنزيل الملف.</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="modal-footer-custom" style="justify-content: center;">
+                <button class="btn btn-primary-print" id="confirmPdfExportBtn" style="padding: 0.6rem 2rem; font-size: 0.9rem;">
+                    <i class="fas fa-print"></i> فتح نافذة الحفظ
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div class="toast no-print" id="toast"></div>
+</div>
+
+<script nonce="{{ csp_nonce }}">
+// ===== دوال الجدول الأساسية =====
+document.addEventListener('DOMContentLoaded', function() {
+    var tableBody = document.getElementById('tableBody');
+    var searchInput = document.getElementById('searchInput');
+    var table = document.getElementById('productTable');
+    var headers = table.querySelectorAll('thead th[data-sort]');
+    var toggleAllBtn = document.getElementById('toggleAllSerialsBtn');
+    var isAllExpanded = false;
+
+    var currentSort = { column: null, direction: 'asc' };
+
+    function sortTable(column, direction) {
+        var rows = Array.from(tableBody.querySelectorAll('tr.main-product-row'));
+        var emptyRow = tableBody.querySelector('.empty-row');
+        
+        function getSortValue(row) {
+            switch(column) {
+                case 'index': return parseInt(row.querySelector('td:first-child')?.textContent || '0');
+                case 'name': return row.getAttribute('data-product-name') || '';
+                case 'stock': return parseInt(row.getAttribute('data-stock') || '0');
+                case 'serials': return parseInt(row.getAttribute('data-serials-count') || '0');
+                case 'barcode': return row.getAttribute('data-main-barcode') || '';
+                default: return '';
+            }
+        }
+
+        rows.sort(function(a, b) {
+            var valA = getSortValue(a);
+            var valB = getSortValue(b);
+            if (column === 'index' || column === 'stock' || column === 'serials') {
+                valA = parseFloat(valA) || 0; valB = parseFloat(valB) || 0;
+                return direction === 'asc' ? valA - valB : valB - valA;
+            }
+            if (typeof valA === 'string') valA = valA.toLowerCase();
+            if (typeof valB === 'string') valB = valB.toLowerCase();
+            if (valA < valB) return direction === 'asc' ? -1 : 1;
+            if (valA > valB) return direction === 'asc' ? 1 : -1;
+            return 0;
+        });
+
+        var rowOrder = [];
+        rows.forEach(function(row) {
+            rowOrder.push(row);
+            var accordionRow = row.nextElementSibling;
+            if (accordionRow && accordionRow.classList.contains('accordion-row')) rowOrder.push(accordionRow);
+        });
+        if (emptyRow) rowOrder.push(emptyRow);
+        rowOrder.forEach(function(row) { tableBody.appendChild(row); });
+    }
+
+    headers.forEach(function(header) {
+        header.addEventListener('click', function(e) {
+            e.stopPropagation();
+            var column = this.getAttribute('data-sort');
+            var direction = 'asc';
+            if (currentSort.column === column && currentSort.direction === 'asc') direction = 'desc';
+            else if (currentSort.column === column && currentSort.direction === 'desc') direction = 'asc';
+            currentSort.column = column; currentSort.direction = direction;
+            headers.forEach(function(th) {
+                th.classList.remove('active-sort');
+                var icon = th.querySelector('.sort-icon i');
+                if (icon) icon.className = 'fas fa-sort';
+            });
+            this.classList.add('active-sort');
+            var icon = this.querySelector('.sort-icon i');
+            if (icon) icon.className = direction === 'asc' ? 'fas fa-sort-up' : 'fas fa-sort-down';
+            sortTable(column, direction);
+            if (searchInput && searchInput.value.trim() !== '') applyFilter(searchInput.value.toLowerCase());
+        });
+    });
+
+    function applyFilter(filter) {
+        var rows = tableBody.querySelectorAll('tr.main-product-row');
+        rows.forEach(function(row) {
+            var name = row.getAttribute('data-product-name') || '';
+            var mainBarcode = row.getAttribute('data-main-barcode') || '';
+            var accordionRow = row.nextElementSibling;
+            var showRow = false;
+            if (name.toLowerCase().includes(filter) || mainBarcode.includes(filter)) showRow = true;
+            if (!showRow && accordionRow && accordionRow.classList.contains('accordion-row')) {
+                var barcodeTags = accordionRow.querySelectorAll('.barcode-tag');
+                barcodeTags.forEach(function(tag) {
+                    var barcodeValue = tag.getAttribute('data-barcode-value') || '';
+                    if (barcodeValue.includes(filter)) showRow = true;
+                });
+            }
+            if (showRow) {
+                row.style.display = '';
+                if (accordionRow && accordionRow.classList.contains('accordion-row')) {
+                    accordionRow.style.display = '';
+                    if (filter.length > 0) {
+                        var content = accordionRow.querySelector('.accordion-content');
+                        if (content) {
+                            content.classList.add('show');
+                            row.classList.add('expanded');
+                        }
+                    }
+                }
+            } else {
+                row.style.display = 'none';
+                if (accordionRow && accordionRow.classList.contains('accordion-row')) accordionRow.style.display = 'none';
+            }
+        });
+    }
+
+    function toggleSingleRow(row) {
+        var productId = row.getAttribute('data-product-id');
+        var accordionRow = document.getElementById('accordion-' + productId);
+        if (accordionRow) {
+            var content = accordionRow.querySelector('.accordion-content');
+            if (content) {
+                var isShown = content.classList.toggle('show');
+                row.classList.toggle('expanded', isShown);
+                return isShown;
+            }
+        }
+        return false;
+    }
+
+    var mainRows = tableBody.querySelectorAll('.main-product-row');
+    mainRows.forEach(function(row) {
+        row.addEventListener('click', function(e) {
+            if (e.target.closest('.actions-cell') || e.target.closest('.btn-copy-code') || e.target.closest('thead')) return;
+            toggleSingleRow(this);
+        });
+    });
+
+    // ===== منطق زر إظهار/إخفاء الكل =====
+    if (toggleAllBtn) {
+        toggleAllBtn.addEventListener('click', function() {
+            isAllExpanded = !isAllExpanded;
+            var rows = tableBody.querySelectorAll('tr.main-product-row');
+            rows.forEach(function(row) {
+                var productId = row.getAttribute('data-product-id');
+                var accordionRow = document.getElementById('accordion-' + productId);
+                if (accordionRow) {
+                    var content = accordionRow.querySelector('.accordion-content');
+                    if (content) {
+                        if (isAllExpanded) {
+                            content.classList.add('show');
+                            row.classList.add('expanded');
+                        } else {
+                            content.classList.remove('show');
+                            row.classList.remove('expanded');
+                        }
+                    }
+                }
+            });
+
+            // تحديث نص الزر
+            var btnText = toggleAllBtn.querySelector('.btn-text');
+            var btnIcon = toggleAllBtn.querySelector('i');
+            if (isAllExpanded) {
+                toggleAllBtn.classList.add('expanded');
+                btnText.textContent = 'إخفاء كل السيريالات';
+                btnIcon.className = 'fas fa-chevron-circle-up';
+            } else {
+                toggleAllBtn.classList.remove('expanded');
+                btnText.textContent = 'إظهار كل السيريالات';
+                btnIcon.className = 'fas fa-chevron-circle-down';
+            }
+        });
+    }
+
+    tableBody.addEventListener('click', function(e) {
+        var copyBtn = e.target.closest('.btn-copy-code');
+        if (copyBtn) {
+            e.stopPropagation();
+            var codeToCopy = copyBtn.getAttribute('data-code');
+            if (codeToCopy) {
+                navigator.clipboard.writeText(codeToCopy).then(function() {
+                    var icon = copyBtn.querySelector('i');
+                    icon.classList.remove('fa-copy'); icon.classList.add('fa-check');
+                    copyBtn.classList.add('copied');
+                    setTimeout(function() {
+                        icon.classList.remove('fa-check'); icon.classList.add('fa-copy');
+                        copyBtn.classList.remove('copied');
+                    }, 1500);
+                }).catch(function(err) { console.error('فشل النسخ: ', err); });
+            }
+        }
+    });
+
+    var deleteBtns = tableBody.querySelectorAll('.btn-delete-product');
+    deleteBtns.forEach(function(btn) {
+        btn.addEventListener('click', function(e) {
+            if (!confirm('هل أنت متأكد من حذف هذه المادة؟')) { e.preventDefault(); e.stopPropagation(); } else { e.stopPropagation(); }
+        });
+    });
+
+    var actionsCells = tableBody.querySelectorAll('.actions-cell a');
+    actionsCells.forEach(function(link) { link.addEventListener('click', function(e) { e.stopPropagation(); }); });
+
+    if (searchInput) {
+        searchInput.addEventListener('keyup', function() { applyFilter(this.value.toLowerCase().trim()); });
+    }
+});
+</script>
+
+{% endblock %}
+
+{% block extra_js %}
+<!-- ===== كود نظام الطباعة الموحد (JS) ===== -->
+<script nonce="{{ csp_nonce }}">
+document.addEventListener('DOMContentLoaded', function() {
+    function generateTableColumns() {
+        const grid = document.getElementById('tableColumnsGrid');
+        if (!grid) return;
+        grid.innerHTML = ''; 
+        const headers = document.querySelectorAll('#printableArea th[data-print-field]');
+        if (headers.length === 0) {
+            grid.innerHTML = '<div style="grid-column: 1 / -1; text-align: center; color: #999; font-size: 0.8rem; padding: 0.5rem;">لا توجد أعمدة قابلة للطباعة</div>';
+            return;
+        }
+        headers.forEach(th => {
+            const target = th.getAttribute('data-print-field');
+            const clone = th.cloneNode(true);
+            const sortIcon = clone.querySelector('.sort-icon');
+            if(sortIcon) sortIcon.remove();
+            const label = clone.textContent.trim();
+            const labelEl = document.createElement('label');
+            labelEl.className = 'field-check';
+            const input = document.createElement('input');
+            input.type = 'checkbox';
+            input.checked = true;
+            input.setAttribute('data-target', target);
+            const labelText = document.createTextNode(' ' + label + ' ');
+            const keySpan = document.createElement('span');
+            keySpan.className = 'field-key';
+            keySpan.textContent = target.replace('col-', '');
+            labelEl.appendChild(input);
+            labelEl.appendChild(labelText);
+            labelEl.appendChild(keySpan);
+            grid.appendChild(labelEl);
+        });
+    }
+    generateTableColumns();
+
+    function getCompanySettings() {
+        try {
+            const scriptTag = document.getElementById('companyData');
+            if (scriptTag) {
+                const data = JSON.parse(scriptTag.textContent);
+                if (!data.logo_url || data.logo_url === '' || data.logo_url === 'None') data.logo_url = '';
+                if (data.logo_url && !data.logo_url.startsWith('/media/') && !data.logo_url.startsWith('http://') && !data.logo_url.startsWith('https://')) {
+                    data.logo_url = '/media/company_logos/' + data.logo_url;
+                }
+                return data;
+            }
+        } catch (e) { console.warn('❌ خطأ في قراءة بيانات الشركة:', e); }
+        return { name: 'شركة تجريبية', logo_url: '', phone: '0591234567', address: 'دمشق - سوريا', footer_text: 'شكراً لتعاملكم معنا' };
+    }
+
+    function populatePrintHeaderFooter() {
+        const company = getCompanySettings();
+        document.getElementById('phCompanyName').textContent = company.name;
+        document.getElementById('watermarkText').textContent = company.name;
+        let details = [];
+        if (company.phone) details.push('📞 ' + company.phone);
+        if (company.address) details.push('📍 ' + company.address);
+        document.getElementById('phCompanyDetails').textContent = details.join(' | ');
+        document.getElementById('phFooterText').textContent = company.footer_text;
+        
+        const img = document.getElementById('phLogoImg');
+        const placeholder = document.getElementById('phLogoPlaceholder');
+        const previewImg = document.getElementById('logoPreviewImg');
+        const previewPlaceholder = document.getElementById('logoPreviewPlaceholder');
+        const hasLogo = company.logo_url && company.logo_url !== '' && company.logo_url !== 'None';
+
+        if (hasLogo) {
+            img.src = company.logo_url; img.style.display = 'block'; placeholder.style.display = 'none';
+            previewImg.src = company.logo_url; previewImg.style.display = 'block'; previewPlaceholder.style.display = 'none';
+        } else {
+            img.style.display = 'none'; placeholder.style.display = 'inline'; 
+            previewImg.style.display = 'none'; previewPlaceholder.style.display = 'inline';
+        }
+        document.getElementById('companyNameInput').value = company.name;
+        let detailsText = [];
+        if (company.phone) detailsText.push('هاتف: ' + company.phone);
+        if (company.address) detailsText.push('عنوان: ' + company.address);
+        document.getElementById('companyDetailsInput').value = detailsText.join(' | ');
+    }
+    populatePrintHeaderFooter();
+
+    var defaultState = { 
+        paperSize: 'a4', marginSize: 'normal', format: 'standard', logoSize: 'large', 
+        printColors: true, printLines: true, showIndex: true, showWatermark: true, notes: '' 
+    };
+    var printState = { ...defaultState };
+    var printModal = document.getElementById('printModal');
+    var pdfExportModal = document.getElementById('pdfExportModal');
+    var toastEl = document.getElementById('toast');
+    var toastTimeout = null;
+
+    function applyLogoSize(size) {
+        var previewImg = document.getElementById('logoPreviewImg');
+        var headerImg = document.getElementById('phLogoImg');
+        if (!previewImg) return;
+        if (size === 'small') { previewImg.style.maxHeight = '30px'; if (headerImg) headerImg.style.maxHeight = '20px'; }
+        else if (size === 'medium') { previewImg.style.maxHeight = '45px'; if (headerImg) headerImg.style.maxHeight = '35px'; }
+        else if (size === 'large') { previewImg.style.maxHeight = '65px'; if (headerImg) headerImg.style.maxHeight = '50px'; }
+    }
+
+    function showToast(msg, type, duration) {
+        duration = duration || 2500; type = type || 'info';
+        if (!toastEl) return;
+        toastEl.textContent = msg;
+        toastEl.className = 'toast toast-' + type + ' show';
+        toastEl.style.display = 'block';
+        if (toastTimeout) clearTimeout(toastTimeout);
+        toastTimeout = setTimeout(function() { 
+            toastEl.classList.remove('show'); 
+            setTimeout(function() { toastEl.style.display = 'none'; }, 500); 
+        }, duration);
+    }
+
+    function savePrintSettings() {
+        const settings = {
+            paperSize: printState.paperSize, marginSize: printState.marginSize, format: printState.format, logoSize: printState.logoSize,
+            printColors: document.getElementById('printColors').checked, printLines: document.getElementById('printLines').checked,
+            showIndex: document.getElementById('showIndex').checked, showWatermark: document.getElementById('showWatermark').checked,
+            notes: document.getElementById('printNotes').value || ''
+        };
+        localStorage.setItem('print_settings', JSON.stringify(settings));
+        showToast('✅ تم حفظ الإعدادات بنجاح', 'success', 1500);
+        closeModal('printModal');
+    }
+
+    function resetPrintSettings() {
+        localStorage.removeItem('print_settings');
+        printState = { ...defaultState };
+        document.querySelectorAll('#paperSizeGroup .btn-opt').forEach(btn => btn.classList.toggle('active', btn.dataset.value === 'a4'));
+        document.querySelectorAll('#marginGroup .btn-opt').forEach(btn => btn.classList.toggle('active', btn.dataset.value === 'normal'));
+        document.querySelectorAll('#formatGroup .btn-opt').forEach(btn => btn.classList.toggle('active', btn.dataset.value === 'standard'));
+        document.querySelectorAll('#logoSizeGroup .btn-opt').forEach(btn => btn.classList.toggle('active', btn.dataset.value === 'large'));
+        document.querySelectorAll('#printModal input[type="checkbox"][data-target]').forEach(cb => cb.checked = true);
+        document.getElementById('printColors').checked = true;
+        document.getElementById('printLines').checked = true;
+        document.getElementById('showIndex').checked = true;
+        document.getElementById('showWatermark').checked = true;
+        document.getElementById('printNotes').value = '';
+        applyLogoSize('large');
+        showToast('🔄 تم استعادة الإعدادات الافتراضية', 'info', 1500);
+    }
+
+    function loadPrintSettings() {
+        const saved = localStorage.getItem('print_settings');
+        if (saved) {
+            try {
+                const settings = JSON.parse(saved);
+                printState.paperSize = settings.paperSize || 'a4';
+                printState.marginSize = settings.marginSize || 'normal';
+                printState.format = settings.format || 'standard';
+                printState.logoSize = settings.logoSize || 'large';
+                document.querySelectorAll('#paperSizeGroup .btn-opt').forEach(btn => btn.classList.toggle('active', btn.dataset.value === printState.paperSize));
+                document.querySelectorAll('#marginGroup .btn-opt').forEach(btn => btn.classList.toggle('active', btn.dataset.value === printState.marginSize));
+                document.querySelectorAll('#formatGroup .btn-opt').forEach(btn => btn.classList.toggle('active', btn.dataset.value === printState.format));
+                document.querySelectorAll('#logoSizeGroup .btn-opt').forEach(btn => btn.classList.toggle('active', btn.dataset.value === printState.logoSize));
+                document.getElementById('printColors').checked = settings.printColors !== undefined ? settings.printColors : true;
+                document.getElementById('printLines').checked = settings.printLines !== undefined ? settings.printLines : true;
+                document.getElementById('showIndex').checked = settings.showIndex !== undefined ? settings.showIndex : true;
+                document.getElementById('showWatermark').checked = settings.showWatermark !== undefined ? settings.showWatermark : true;
+                document.getElementById('printNotes').value = settings.notes || '';
+                applyLogoSize(printState.logoSize);
+            } catch (e) { console.error("Error loading settings:", e); }
+        } else { applyLogoSize('large'); }
+    }
+
+    function changePrintPage() {
+        var existing = document.getElementById('dynamic-page-style');
+        if (existing) existing.remove();
+        var style = document.createElement('style');
+        style.id = 'dynamic-page-style';
+        var margin = '10mm', size = '';
+        if (printState.marginSize === 'minimal') margin = '3mm';
+        else if (printState.marginSize === 'normal') margin = '8mm';
+        else if (printState.marginSize === 'wide') margin = '15mm';
+        if (printState.paperSize === 'thermal') { margin = '2mm'; size = 'size: 80mm auto;'; }
+        style.textContent = '@page { margin: ' + margin + '; ' + size + ' }';
+        document.head.appendChild(style);
+    }
+
+    var hiddenElements = [];
+    function hideBaseElements() {
+        ['nav', 'aside', '.navbar', '.sidebar', 'footer', '.footer'].forEach(sel => {
+            document.querySelectorAll(sel).forEach(el => {
+                if (el.closest('.invoice-print-area') || el.closest('.modal-overlay') || el.closest('.print-fab')) return;
+                hiddenElements.push({ el, display: el.style.display });
+                el.style.display = 'none';
+            });
+        });
+    }
+    function showBaseElements() {
+        hiddenElements.forEach(item => item.el.style.display = item.display);
+        hiddenElements = [];
+    }
+
+    function closeModal(modalId) {
+        var modal = document.getElementById(modalId);
+        if (modal) { modal.classList.remove('active'); modal.style.display = 'none'; }
+    }
+    function openModal(modalId) {
+        var modal = document.getElementById(modalId);
+        if (modal) { modal.style.display = 'flex'; modal.classList.add('active'); }
+    }
+
+    function preparePrintSettings() {
+        const company = getCompanySettings();
+        document.getElementById('phCompanyName').textContent = company.name;
+        let details = [];
+        if (company.phone) details.push('📞 ' + company.phone);
+        if (company.address) details.push('📍 ' + company.address);
+        document.getElementById('phCompanyDetails').textContent = details.join(' | ');
+        
+        var notes = document.getElementById('printNotes').value.trim();
+        var printableArea = document.getElementById('printableArea');
+        
+        var lastPageNotes = document.getElementById('lastPageNotes');
+        if (!lastPageNotes) {
+            lastPageNotes = document.createElement('div');
+            lastPageNotes.id = 'lastPageNotes';
+            lastPageNotes.className = 'print-last-page-notes';
+            printableArea.appendChild(lastPageNotes);
+        }
+        if (notes) {
+            lastPageNotes.innerHTML = '<div class="notes-label">📝 ملاحظات:</div><div class="notes-content">' + notes.replace(/\n/g, '<br>') + '</div>';
+            lastPageNotes.style.display = 'block';
+        } else {
+            lastPageNotes.innerHTML = '';
+            lastPageNotes.style.display = 'none';
+        }
+        
+        const phLogoImg = document.getElementById('phLogoImg');
+        const phLogoPlaceholder = document.getElementById('phLogoPlaceholder');
+        const hasLogo = company.logo_url && company.logo_url !== '' && company.logo_url !== 'None';
+        if (hasLogo) { phLogoImg.src = company.logo_url; phLogoImg.style.display = 'block'; phLogoPlaceholder.style.display = 'none'; }
+        else { phLogoImg.style.display = 'none'; phLogoPlaceholder.style.display = 'inline'; }
+        
+        document.querySelectorAll('#printModal input[type="checkbox"][data-target]').forEach(cb => {
+            printableArea.querySelectorAll('[data-print-field="' + cb.dataset.target + '"]').forEach(el => {
+                el.setAttribute('data-print-hidden', cb.checked ? 'false' : 'true');
+            });
+        });
+        
+        var showIndex = document.getElementById('showIndex');
+        printableArea.querySelectorAll('table thead th:first-child, table tbody td:first-child').forEach(el => {
+            el.setAttribute('data-print-hidden', showIndex.checked ? 'false' : 'true');
+        });
+        
+        printableArea.classList.toggle('print-grayscale', !document.getElementById('printColors').checked);
+        printableArea.classList.toggle('print-no-lines', !document.getElementById('printLines').checked);
+        printableArea.classList.remove('print-compact', 'print-detailed');
+        if (printState.format === 'compact') printableArea.classList.add('print-compact');
+        else if (printState.format === 'detailed') printableArea.classList.add('print-detailed');
+        
+        document.getElementById('printHeaderArea').classList.remove('print-logo-small', 'print-logo-medium', 'print-logo-large');
+        document.getElementById('printHeaderArea').classList.add('print-logo-' + printState.logoSize);
+        
+        document.getElementById('watermarkText').classList.toggle('show-watermark', document.getElementById('showWatermark').checked);
+        
+        changePrintPage();
+    }
+
+    function executePrint(direct) {
+        var header = document.getElementById('printHeaderArea');
+        var footer = document.getElementById('printFooterArea');
+        var printBtn = document.getElementById('executePrintBtn');
+        
+        if (!direct) {
+            printBtn.disabled = true;
+            printBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري التجهيز...';
+        }
+        
+        preparePrintSettings();
+        header.style.display = 'block'; header.classList.remove('no-print');
+        footer.style.display = 'block'; footer.classList.remove('no-print');
+        hideBaseElements(); 
+        
+        closeModal('printModal');
+        closeModal('pdfExportModal');
+        
+        setTimeout(function() {
+            window.print();
+            
+            header.style.display = 'none'; header.classList.add('no-print');
+            footer.style.display = 'none'; footer.classList.add('no-print');
+            
+            const printableArea = document.getElementById('printableArea');
+            printableArea.querySelectorAll('[data-print-field]').forEach(el => el.removeAttribute('data-print-hidden'));
+            printableArea.querySelectorAll('table thead th:first-child, table tbody td:first-child').forEach(el => el.removeAttribute('data-print-hidden'));
+            printableArea.classList.remove('print-grayscale', 'print-no-lines', 'print-compact', 'print-detailed');
+            
+            document.getElementById('printHeaderArea').classList.remove('print-logo-small', 'print-logo-medium', 'print-logo-large');
+            document.getElementById('watermarkText').classList.remove('show-watermark');
+            
+            var lastPageNotes = document.getElementById('lastPageNotes');
+            if (lastPageNotes) {
+                lastPageNotes.innerHTML = '';
+                lastPageNotes.style.display = 'none';
+            }
+            
+            showBaseElements();
+            var dynStyle = document.getElementById('dynamic-page-style');
+            if (dynStyle) dynStyle.remove();
+            
+            if (!direct) {
+                printBtn.disabled = false;
+                printBtn.innerHTML = '<i class="fas fa-print"></i> طباعة الآن';
+            }
+            showToast('✅ تم تجهيز الملف بنجاح', 'success', 2500);
+        }, 300);
+    }
+
+    function executePrintDirectly() { preparePrintSettings(); executePrint(true); }
+
+    document.getElementById('openPrintModalBtn').addEventListener('click', function(e) {
+        e.preventDefault(); e.stopPropagation(); openModal('printModal'); loadPrintSettings();
+    });
+    document.getElementById('closeModalBtn').addEventListener('click', function(e) {
+        e.preventDefault(); e.stopPropagation(); closeModal('printModal');
+    });
+    printModal.addEventListener('click', function(e) { if (e.target === printModal) closeModal('printModal'); });
+    document.getElementById('closePdfModalBtn').addEventListener('click', function(e) {
+        e.preventDefault(); e.stopPropagation(); closeModal('pdfExportModal');
+    });
+    pdfExportModal.addEventListener('click', function(e) { if (e.target === pdfExportModal) closeModal('pdfExportModal'); });
+    document.getElementById('selectAllBtn').addEventListener('click', function(e) {
+        e.preventDefault(); document.querySelectorAll('#printModal input[type="checkbox"][data-target]').forEach(cb => cb.checked = true); showToast('✅ تم تحديد جميع الحقول', 'success', 1500);
+    });
+    document.getElementById('deselectAllBtn').addEventListener('click', function(e) {
+        e.preventDefault(); document.querySelectorAll('#printModal input[type="checkbox"][data-target]').forEach(cb => cb.checked = false); showToast('✅ تم إلغاء تحديد جميع الحقول', 'success', 1500);
+    });
+    document.getElementById('saveSettingsBtn').addEventListener('click', function(e) { e.preventDefault(); savePrintSettings(); });
+    document.getElementById('resetSettingsBtn').addEventListener('click', function(e) { e.preventDefault(); resetPrintSettings(); });
+    document.getElementById('exportPdfBtn').addEventListener('click', function(e) {
+        e.preventDefault(); closeModal('printModal'); setTimeout(function() { openModal('pdfExportModal'); }, 300);
+    });
+    document.getElementById('confirmPdfExportBtn').addEventListener('click', function(e) {
+        e.preventDefault(); closeModal('pdfExportModal'); setTimeout(function() { executePrintDirectly(); }, 300);
+    });
+    document.querySelectorAll('.btn-group-print').forEach(function(group) {
+        group.querySelectorAll('.btn-opt').forEach(function(btn) {
+            btn.addEventListener('click', function() {
+                group.querySelectorAll('.btn-opt').forEach(b => b.classList.remove('active'));
+                this.classList.add('active');
+                if (group.id === 'paperSizeGroup') printState.paperSize = this.dataset.value;
+                if (group.id === 'marginGroup') printState.marginSize = this.dataset.value;
+                if (group.id === 'formatGroup') printState.format = this.dataset.value;
+                if (group.id === 'logoSizeGroup') { printState.logoSize = this.dataset.value; applyLogoSize(printState.logoSize); }
+            });
+        });
+    });
+    document.querySelectorAll('.toggle-switch').forEach(function(sw) {
+        sw.addEventListener('click', function(e) { 
+            e.stopPropagation(); 
+            var input = this.querySelector('input'); 
+            if (input) input.checked = !input.checked; 
+        });
+    });
+    document.getElementById('executePrintBtn').addEventListener('click', function(e) { e.preventDefault(); executePrint(false); });
+});
+</script>
+{% endblock %}

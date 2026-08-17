@@ -1,0 +1,923 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}تفاصيل فاتورة المبيعات - {{ sale.uniqueId }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    :root {
+        --aqua-1: #e0f7fa;
+        --aqua-2: #b2ebf2;
+        --aqua-3: #4dd0e1;
+        --aqua-4: #0097a7;
+        --text-dark: #006064;
+        --text-light: #ffffff;
+        --shadow-sm: 0 2px 8px rgba(0, 150, 167, 0.08);
+        --shadow-md: 0 4px 12px rgba(0, 150, 167, 0.12);
+    }
+
+    .badge-paid { background: #d1fae5; color: #065f46; }
+    .badge-pending { background: #fff3cd; color: #856404; }
+    
+    .print-fab {
+        position: fixed;
+        bottom: 1.5rem;
+        right: 1.5rem;
+        z-index: 1050;
+        padding: 0.6rem 1.2rem;
+        border-radius: 50px;
+        box-shadow: 0 4px 15px rgba(0, 150, 167, 0.35);
+        font-size: 0.85rem;
+        font-weight: 600;
+    }
+
+    .info-strip {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+        gap: 0;
+        border-bottom: 1px solid var(--aqua-2);
+        font-size: 0.8rem;
+    }
+    .info-cell {
+        padding: 0.45rem 0.75rem;
+        border-left: 1px solid var(--aqua-1);
+    }
+    .info-cell:last-child { border-left: none; }
+    .info-cell-label {
+        font-size: 0.65rem;
+        color: var(--aqua-4);
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.3px;
+        margin-bottom: 0.05rem;
+    }
+    .info-cell-value {
+        font-weight: 600;
+        color: var(--text-dark);
+        white-space: normal;
+        word-wrap: break-word;
+        word-break: break-word;
+        overflow-wrap: break-word;
+        line-height: 1.4;
+    }
+
+    .notes-bar {
+        padding: 0.4rem 0.85rem;
+        background: #fffbeb;
+        border-bottom: 1px solid #fde68a;
+        font-size: 0.78rem;
+        color: #92400e;
+        display: flex;
+        align-items: center;
+        gap: 0.4rem;
+    }
+
+    .thumb {
+        width: 30px;
+        height: 30px;
+        border-radius: 4px;
+        object-fit: cover;
+        border: 1px solid var(--aqua-2);
+    }
+    .thumb-placeholder {
+        width: 30px;
+        height: 30px;
+        background: var(--aqua-1);
+        border-radius: 4px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--aqua-2);
+        font-size: 0.7rem;
+    }
+
+    .barcode-row td {
+        padding: 0.25rem 0.5rem !important;
+        background: var(--aqua-1) !important;
+        border-bottom: 1px dashed var(--aqua-2) !important;
+    }
+    .barcodes-wrapper {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        flex-wrap: wrap;
+    }
+    .barcodes-label {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        color: var(--aqua-4);
+        font-size: 0.65rem;
+        font-weight: 600;
+        background: white;
+        padding: 2px 8px;
+        border-radius: 9999px;
+        border: 1px solid var(--aqua-2);
+        flex-shrink: 0;
+    }
+    .barcodes-list { display: flex; flex-wrap: wrap; gap: 5px; }
+    
+    .barcode-item {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        background: white;
+        border: 1px solid var(--aqua-3);
+        border-radius: 9999px;
+        padding: 2px 10px;
+        font-family: 'Courier New', monospace;
+        font-size: 0.68rem;
+        font-weight: 600;
+        color: var(--text-dark);
+        box-shadow: var(--shadow-sm);
+        white-space: nowrap;
+        text-decoration: none;
+    }
+    .barcode-item .barcode-icon { font-size: 0.6rem; color: var(--aqua-4); }
+    .copy-barcode-btn {
+        background: none; border: none; padding: 0; margin: 0;
+        cursor: pointer; color: #9ca3af; transition: color 0.2s; display: flex; align-items: center;
+    }
+    .copy-barcode-btn:hover { color: var(--aqua-4); }
+    .copy-barcode-btn.copied { color: #10b981; }
+    .no-barcodes {
+        display: inline-flex; align-items: center; gap: 4px; color: #9ca3af;
+        font-size: 0.65rem; background: white; padding: 2px 8px;
+        border-radius: 9999px; border: 1px dashed #d1d5db;
+    }
+
+    .barcode-item.sold {
+        background-color: #ffebee;
+        color: #b71c1c;
+        border-color: #ef9a9a;
+        opacity: 0.95;
+    }
+    .barcode-item.sold .barcode-icon { color: #b71c1c; }
+    .barcode-item.sold .sold-badge {
+        font-size: 0.6rem;
+        font-family: 'Tajawal', sans-serif;
+        font-weight: 700;
+        background: #b71c1c;
+        color: white;
+        padding: 1px 6px;
+        border-radius: 4px;
+        margin-right: 2px;
+    }
+
+    .barcode-item.returned {
+        background-color: #fff3e0;
+        color: #ef6c00;
+        border-color: #ffcc80;
+    }
+    .barcode-item.returned .barcode-icon { color: #ef6c00; }
+    .barcode-item.returned .returned-badge {
+        font-size: 0.6rem;
+        font-family: 'Tajawal', sans-serif;
+        font-weight: 700;
+        background: #ef6c00;
+        color: white;
+        padding: 1px 6px;
+        border-radius: 4px;
+        margin-right: 2px;
+    }
+
+    .finance-section {
+        border-top: 2px solid var(--aqua-2);
+        padding: 0.85rem 1rem;
+        background: linear-gradient(180deg, #ffffff 0%, #f0fdfa 100%);
+    }
+    .finance-layout {
+        display: flex;
+        gap: 1.25rem;
+        align-items: flex-start;
+    }
+    .finance-image-col { flex-shrink: 0; width: 85px; text-align: center; }
+    .finance-thumb {
+        width: 85px; height: 85px; object-fit: cover; border-radius: 8px;
+        border: 2px solid var(--aqua-2); cursor: pointer; transition: all 0.25s; box-shadow: var(--shadow-sm);
+    }
+    .finance-thumb:hover { transform: scale(1.06); box-shadow: var(--shadow-md); border-color: var(--aqua-3); }
+    .finance-thumb-placeholder {
+        width: 85px; height: 85px; background: var(--aqua-1); border: 2px dashed var(--aqua-2);
+        border-radius: 8px; display: flex; flex-direction: column; align-items: center;
+        justify-content: center; color: var(--aqua-2); font-size: 1.3rem; gap: 0.2rem;
+    }
+    .finance-thumb-placeholder span { font-size: 0.6rem; font-weight: 600; }
+    .finance-thumb-hint { display: block; margin-top: 0.3rem; font-size: 0.6rem; color: var(--aqua-4); font-weight: 600; }
+    .finance-fields-col { flex: 1; min-width: 0; }
+    .finance-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.45rem; }
+    .fin-item {
+        display: flex; justify-content: space-between; align-items: center;
+        background: white; border-radius: 5px; padding: 0.4rem 0.65rem;
+        border-left: 3px solid var(--aqua-3); box-shadow: 0 1px 3px rgba(0,0,0,0.04); transition: box-shadow 0.2s;
+    }
+    .fin-item:hover { box-shadow: 0 2px 6px rgba(0,0,0,0.08); }
+    .fin-label { font-size: 0.72rem; color: var(--aqua-4); font-weight: 500; }
+    .fin-value { font-weight: 700; font-size: 0.85rem; color: var(--text-dark); white-space: nowrap; }
+    .fin-value.green { color: #059669; }
+    .fin-value.red { color: #dc2626; }
+    .fin-total {
+        margin-top: 0.6rem; background: linear-gradient(135deg, var(--aqua-4) 0%, #006064 100%);
+        color: white; padding: 0.65rem 1.1rem; border-radius: 8px;
+        display: flex; justify-content: space-between; align-items: center;
+        font-size: 1.05rem; box-shadow: 0 4px 12px rgba(0, 150, 167, 0.25);
+    }
+    .fin-total strong { font-size: 1.2rem; letter-spacing: 0.3px; }
+    .fin-words {
+        margin-top: 0.45rem; font-size: 0.78rem; color: var(--aqua-4); text-align: center;
+        font-style: italic; padding: 0.4rem 0.6rem; background: white;
+        border-radius: 5px; border: 1px dashed var(--aqua-2);
+    }
+
+    .lightbox-overlay {
+        position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 99999;
+        display: flex; align-items: center; justify-content: center; cursor: pointer;
+        backdrop-filter: blur(4px); animation: lbIn 0.2s ease;
+    }
+    .lightbox-overlay img { max-width: 92vw; max-height: 92vh; border-radius: 8px; box-shadow: 0 10px 40px rgba(0,0,0,0.5); }
+    @keyframes lbIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
+
+    .cell-product-name { font-weight: 700; color: #1f2937; font-size: 0.78rem; display: block; line-height: 1.3; }
+    .product-meta { font-size: 0.6rem; color: #9ca3af; display: flex; gap: 0.3rem; margin-top: 2px; }
+    .qty-badge { background: var(--aqua-1); color: var(--aqua-4); padding: 1px 4px; border-radius: 4px; font-size: 0.58rem; }
+    .cell-notes { font-size: 0.72rem; color: #6b7280; font-style: italic; max-width: 160px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .cell-notes-wrapper { position: relative; }
+    .cell-notes-wrapper:hover .cell-notes-tooltip { display: block; }
+    .cell-notes-tooltip {
+        display: none; position: absolute; bottom: 100%; left: 50%; transform: translateX(-50%);
+        background: #1f2937; color: white; padding: 0.35rem 0.6rem; border-radius: 5px;
+        font-size: 0.72rem; font-style: normal; white-space: normal; min-width: 160px; max-width: 280px;
+        text-align: right; z-index: 100; box-shadow: 0 4px 12px rgba(0,0,0,0.2); margin-bottom: 4px;
+        line-height: 1.5;
+    }
+    .cell-notes-tooltip::after {
+        content: ''; position: absolute; top: 100%; left: 50%; transform: translateX(-50%);
+        border: 5px solid transparent; border-top-color: #1f2937;
+    }
+    .cell-notes-empty { color: #d1d5db; font-size: 0.7rem; }
+
+    .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 9999; justify-content: center; align-items: center; backdrop-filter: blur(3px); }
+    .modal-overlay.active { display: flex; }
+    .modal-box { background: white; border-radius: 8px; width: 600px; max-width: 95vw; max-height: 90vh; overflow-y: auto; box-shadow: 0 20px 60px rgba(0,0,0,0.2); animation: modalIn 0.25s ease; }
+    @keyframes modalIn { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+    .modal-close { width: 30px; height: 30px; border: none; background: var(--aqua-1); border-radius: 4px; cursor: pointer; font-size: 1rem; color: var(--text-dark); display: flex; align-items: center; justify-content: center; transition: all 0.2s; }
+    .modal-close:hover { background: var(--aqua-2); }
+    .section-title { font-size: 0.75rem; font-weight: 700; color: var(--text-dark); text-transform: uppercase; letter-spacing: 0.5px; margin: 1rem 0 0.5rem; padding-bottom: 0.3rem; border-bottom: 1px dashed var(--aqua-2); }
+    .section-title:first-child { margin-top: 0; }
+    .field-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.25rem; }
+    .field-check { display: flex; align-items: center; gap: 0.4rem; padding: 0.3rem 0.4rem; border-radius: 4px; cursor: pointer; transition: background 0.15s; font-size: 0.8rem; }
+    .field-check:hover { background: var(--aqua-1); }
+    .field-check input[type="checkbox"] { width: 15px; height: 15px; accent-color: var(--aqua-4); cursor: pointer; }
+    .field-key { color: var(--aqua-4); font-size: 0.65rem; font-family: monospace; background: var(--aqua-1); padding: 0.05rem 0.3rem; border-radius: 3px; margin-right: auto; }
+    .btn-group { display: flex; gap: 0.25rem; background: var(--aqua-1); padding: 0.2rem; border-radius: 4px; }
+    .btn-opt { flex: 1; padding: 0.3rem; border: none; background: transparent; border-radius: 4px; font-size: 0.78rem; cursor: pointer; font-family: 'Tajawal', sans-serif; color: var(--aqua-4); font-weight: 600; transition: all 0.2s; text-align: center; }
+    .btn-opt.active { background: white; color: var(--text-dark); box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+    .toggle-row { display: flex; align-items: center; justify-content: space-between; padding: 0.4rem 0; }
+    .toggle-row label { font-size: 0.8rem; }
+    .toggle-switch { position: relative; width: 38px; height: 20px; cursor: pointer; }
+    .toggle-switch input { display: none; }
+    .toggle-slider { position: absolute; inset: 0; background: var(--aqua-2); border-radius: 10px; transition: 0.2s; }
+    .toggle-slider::before { content: ''; position: absolute; width: 16px; height: 16px; background: white; border-radius: 50%; top: 2px; left: 2px; transition: 0.2s; }
+    .toggle-switch input:checked + .toggle-slider { background: var(--aqua-4); }
+    .toggle-switch input:checked + .toggle-slider::before { left: 20px; }
+    .header-footer-inputs { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; }
+    .hf-input-group label { display: block; font-size: 0.75rem; font-weight: 600; color: var(--text-dark); margin-bottom: 0.2rem; }
+    .hf-input-group input, .hf-input-group textarea { width: 100%; border: 1px solid var(--aqua-2); border-radius: 4px; padding: 0.35rem 0.5rem; font-size: 0.8rem; font-family: 'Tajawal', sans-serif; transition: all 0.2s; }
+    .hf-input-group input:focus, .hf-input-group textarea:focus { border-color: var(--aqua-3); box-shadow: 0 0 0 2px rgba(77, 208, 225, 0.2); outline: none; }
+    .hf-preview-box { background: var(--aqua-1); border: 1px dashed var(--aqua-2); border-radius: 4px; padding: 0.5rem; text-align: center; margin-top: 0.3rem; cursor: pointer; }
+    .hf-preview-box img { max-height: 50px; border-radius: 4px; }
+    .toast { position: fixed; bottom: 1.5rem; left: 50%; transform: translateX(-50%) translateY(80px); background: var(--text-dark); color: white; padding: 0.6rem 1.2rem; border-radius: 4px; font-size: 0.82rem; z-index: 99999; opacity: 0; transition: all 0.3s; pointer-events: none; }
+    .toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
+
+    /* Utility Classes */
+    .d-none { display: none !important; }
+    .grid-col-span-2 { grid-column: 1 / -1; }
+
+    @media (max-width: 992px) {
+        .info-strip { grid-template-columns: repeat(3, 1fr); }
+    }
+    @media (max-width: 768px) {
+        .info-strip { grid-template-columns: repeat(2, 1fr); }
+        .finance-layout { flex-direction: column; align-items: center; gap: 0.75rem; }
+        .finance-image-col { width: 75px; }
+        .finance-thumb { width: 75px; height: 75px; }
+        .finance-thumb-placeholder { width: 75px; height: 75px; }
+        .finance-grid { grid-template-columns: repeat(2, 1fr); }
+        .field-grid { grid-template-columns: 1fr; }
+        .header-footer-inputs { grid-template-columns: 1fr; }
+        .barcodes-wrapper { flex-direction: column; align-items: flex-start; }
+        .cell-notes { max-width: 100px; }
+    }
+    @media (max-width: 480px) {
+        .info-strip { grid-template-columns: 1fr; }
+        .finance-grid { grid-template-columns: 1fr; gap: 0.3rem; }
+        .fin-item { padding: 0.3rem 0.45rem; }
+        .fin-label { font-size: 0.65rem; }
+        .fin-value { font-size: 0.78rem; }
+        .fin-total { padding: 0.5rem 0.8rem; font-size: 0.92rem; }
+        .fin-total strong { font-size: 1.05rem; }
+        .cell-notes { max-width: 80px; font-size: 0.65rem; }
+        .cell-notes-tooltip { min-width: 140px; max-width: 220px; font-size: 0.65rem; }
+    }
+
+    @media print {
+        * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+        body { background: white !important; font-size: 11pt !important; color: #000 !important; padding: 0 !important; }
+        .no-print { display: none !important; }
+        .main-wrapper { max-width: 100% !important; padding: 0 !important; margin: 0 !important; }
+        .card { box-shadow: none !important; border-radius: 0 !important; border: none !important; }
+        .print-header-area { display: block !important; position: fixed !important; top: 0 !important; left: 0 !important; right: 0 !important; padding: 6pt 10mm !important; border-bottom: 1.5pt solid #333 !important; background: white !important; z-index: 10000 !important; text-align: center !important; }
+        .print-header-area .ph-logo { max-height: 30pt !important; vertical-align: middle !important; }
+        .print-header-area .ph-company { font-size: 12pt !important; font-weight: 700 !important; color: #000 !important; display: inline-block !important; vertical-align: middle !important; }
+        .print-header-area .ph-details { font-size: 8pt !important; color: #444 !important; }
+        .print-footer-area { display: block !important; position: fixed !important; bottom: 0 !important; left: 0 !important; right: 0 !important; padding: 4pt 10mm !important; border-top: 1pt solid #999 !important; background: white !important; z-index: 10000 !important; text-align: center !important; font-size: 7pt !important; color: #666 !important; }
+        .invoice-print-area { padding-top: 45pt !important; padding-bottom: 25pt !important; }
+        [data-print-hidden="true"] { display: none !important; }
+        .card-header-print { padding: 4pt 0 !important; border-bottom: 1pt solid #333 !important; font-size: 12pt !important; font-weight: 700 !important; margin-bottom: 4pt !important; }
+        .header-meta { font-size: 8pt !important; }
+        .badge-print { font-size: 7pt !important; }
+        .info-strip { border-bottom: 0.5pt solid #ccc !important; font-size: 8pt !important; }
+        .info-cell { padding: 3pt 6pt !important; border-left: 0.3pt solid #ddd !important; }
+        .info-cell-label { font-size: 6pt !important; }
+        .notes-bar { padding: 2pt 6pt !important; border-bottom: 0.3pt solid #ccc !important; font-size: 7pt !important; }
+        .table { font-size: 8pt !important; }
+        .table thead th { padding: 3pt 4pt !important; font-size: 7pt !important; background: #e0e0e0 !important; color: #000 !important; }
+        .table tbody td { padding: 2pt 4pt !important; border-bottom: 0.3pt solid #ddd !important; }
+        .cell-product-name { font-size: 7pt !important; }
+        .cell-notes { font-size: 6.5pt !important; font-style: normal !important; max-width: none !important; white-space: normal !important; }
+        .cell-notes-tooltip { display: none !important; }
+        .barcode-row td { padding: 2pt 4pt !important; }
+        .barcode-item { font-size: 6pt !important; padding: 1pt 5pt !important; }
+        .barcodes-label { font-size: 5.5pt !important; }
+        .thumb { width: 22pt !important; height: 22pt !important; }
+        .qty-badge { font-size: 5pt !important; }
+        .product-meta { font-size: 5pt !important; }
+        .finance-section { border-top: 1pt solid #333 !important; padding: 4pt 0 !important; background: white !important; }
+        .finance-layout { gap: 6pt !important; }
+        .finance-image-col { width: 50pt !important; }
+        .finance-thumb { width: 50pt !important; height: 50pt !important; border-radius: 3pt !important; }
+        .finance-thumb-hint { display: none !important; }
+        .finance-grid { grid-template-columns: repeat(3, 1fr) !important; gap: 2pt 8pt !important; }
+        .fin-item { padding: 2pt 5pt !important; border-left-width: 1.5pt !important; background: #f8f8f8 !important; }
+        .fin-label { font-size: 6pt !important; }
+        .fin-value { font-size: 8pt !important; }
+        .fin-total { padding: 4pt 8pt !important; font-size: 10pt !important; margin-top: 3pt !important; border-radius: 3pt !important; }
+        .fin-total strong { font-size: 11pt !important; }
+        .fin-words { font-size: 6.5pt !important; margin-top: 2pt !important; border: none !important; background: transparent !important; }
+        .print-thermal .info-strip { font-size: 7pt !important; }
+        .print-thermal .table { font-size: 7pt !important; }
+        .print-thermal .table thead th { font-size: 6pt !important; }
+        .print-thermal .finance-grid { grid-template-columns: repeat(2, 1fr) !important; }
+        .print-thermal .fin-total { font-size: 8pt !important; }
+        .print-thermal .finance-image-col { display: none !important; }
+        .print-a5 .card-header-print { font-size: 10pt !important; }
+        .print-a5 .info-strip { font-size: 7pt !important; }
+        .print-a5 .table { font-size: 7pt !important; }
+        .print-a5 .finance-grid { grid-template-columns: repeat(2, 1fr) !important; }
+        .table tr { page-break-inside: avoid; }
+        .info-strip { page-break-inside: avoid; }
+        .finance-section { page-break-inside: avoid; }
+        .print-grayscale * { filter: grayscale(100%) !important; }
+        .print-no-lines .table td, .print-no-lines .table th { border: none !important; }
+        
+        .barcode-item.sold { 
+            background-color: #f0f0f0 !important; 
+            color: #333 !important; 
+            border: 0.5pt solid #999 !important; 
+        }
+        .barcode-item.returned { 
+            background-color: #f9f9f9 !important; 
+            color: #333 !important; 
+            border: 0.5pt dashed #999 !important; 
+        }
+        .sold-badge, .returned-badge { display: none !important; }
+    }
+    @page { margin: 10mm; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="main-wrapper">
+
+    <button class="btn btn-primary print-fab no-print" id="openPrintModalBtn">
+        <i class="fas fa-print"></i> طباعة الفاتورة
+    </button>
+
+    <div class="card invoice-print-area" id="invoiceCard">
+
+        <div class="print-header-area no-print d-none" id="printHeaderArea">
+            <table class="w-100" style="border-collapse:collapse;">
+                <tr>
+                    <td style="width:60px; vertical-align:middle;">
+                        <img src="" alt="شعار" class="ph-logo d-none" id="phLogoImg">
+                        <span id="phLogoPlaceholder" style="font-size:8pt; color:#999;">بدون شعار</span>
+                    </td>
+                    <td style="vertical-align:middle; text-align:center;">
+                        <div class="ph-company" id="phCompanyName">اسم الشركة</div>
+                        <div class="ph-details" id="phCompanyDetails"></div>
+                    </td>
+                    <td style="width:60px;"></td>
+                </tr>
+            </table>
+        </div>
+
+        <div class="print-footer-area no-print d-none" id="printFooterArea">
+            <span id="phFooterText"></span>
+        </div>
+
+        <div class="card-header card-header-print" id="printableHeaderStrip">
+            <div class="d-flex align-items-center gap-2 flex-wrap">
+                <i class="fas fa-file-invoice-dollar no-print"></i>
+                <span>فاتورة مبيعات #{{ sale.uniqueId }}</span>
+                <div class="ms-auto"></div>
+                <span class="header-meta" style="font-size:0.8rem; opacity:0.8;">
+                    <i class="far fa-calendar-alt"></i> {{ sale.date_created|date:"Y-m-d"|default:"---" }}
+                </span>
+                <span class="badge-print {% if sale.is_paid %}badge-paid{% else %}badge-pending{% endif %}" data-print-field="status" style="font-size:0.7rem; padding:0.15rem 0.5rem; border-radius:12px;">
+                    {{ sale.is_paid|yesno:"مدفوعة,معلقة" }}
+                </span>
+            </div>
+        </div>
+
+        <div class="no-print d-flex gap-2 p-2 border-bottom" style="border-color: var(--aqua-1) !important;">
+            {% if request.user.is_superuser or sale.created_by == request.user %}
+            <a class="btn btn-warning" data-href="{% url 'invoice:sale_edit' slug=sale.slug %}">
+                <i class="fas fa-pen"></i> تعديل
+            </a>
+            <a class="btn btn-success" data-href="{% url 'invoice:sale_return_create' sale_slug=sale.slug %}">
+                <i class="fas fa-undo-alt"></i> مرتجع
+            </a>
+            {% endif %}
+            <a class="btn btn-secondary" data-href="{% url 'invoice:sale_list' %}">
+                <i class="fas fa-arrow-right"></i> العودة للقائمة
+            </a>
+        </div>
+
+        <div class="info-strip" data-print-field="info-strip">
+            <div class="info-cell" data-print-field="customer-name">
+                <div class="info-cell-label">العميل</div>
+                <div class="info-cell-value">
+                    {% if sale.sale_customer %}
+                        {{ sale.sale_customer.get_full_name|default:sale.sale_customer.username }}
+                    {% else %} عميل نقدي {% endif %}
+                </div>
+            </div>
+            <div class="info-cell" data-print-field="customer-phone">
+                <div class="info-cell-label">الهاتف</div>
+                <div class="info-cell-value">{{ sale.sale_customer_phone|default:"---" }}</div>
+            </div>
+            <div class="info-cell" data-print-field="shipping-company">
+                <div class="info-cell-label">شركة الشحن</div>
+                <div class="info-cell-value">{{ sale.sale_shipping_company.name|default:"---" }}</div>
+            </div>
+            <div class="info-cell" data-print-field="shipping-num">
+                <div class="info-cell-label">رقم الشحنة</div>
+                <div class="info-cell-value">{{ sale.sale_shipping_num|default:"---" }}</div>
+            </div>
+            <div class="info-cell" data-print-field="sale-status">
+                <div class="info-cell-label">حالة البيع</div>
+                <div class="info-cell-value">{{ sale.sale_status.name|default:"---" }}</div>
+            </div>
+            <div class="info-cell" data-print-field="payment-method">
+                <div class="info-cell-label">طريقة الدفع</div>
+                <div class="info-cell-value">{{ sale.sale_payment_method.name|default:"---" }}</div>
+            </div>
+            <div class="info-cell" data-print-field="currency">
+                <div class="info-cell-label">العملة</div>
+                <div class="info-cell-value">{{ sale.sale_currency.name_ar|default:"ل.س" }}</div>
+            </div>
+            <div class="info-cell" data-print-field="user">
+                <div class="info-cell-label">المستخدم</div>
+                <div class="info-cell-value">{{ sale.created_by.get_full_name|default:sale.created_by.username }}</div>
+            </div>
+        </div>
+
+        {% if sale.sale_notes %}
+        <div class="notes-bar" data-print-field="notes">
+            <i class="fas fa-comment-alt"></i>
+            <span>{{ sale.sale_notes }}</span>
+        </div>
+        {% endif %}
+
+        <div class="card-body p-2" style="overflow-x:auto;">
+            <table class="table table-bordered mb-0">
+                <thead>
+                    <tr>
+                        <th class="text-center" style="width:30px;" data-print-field="col-index">#</th>
+                        <th style="width:180px;" data-print-field="col-product">المادة</th>
+                        <th class="text-center" style="width:65px;" data-print-field="col-qty">الكمية</th>
+                        <th class="text-center" style="width:75px;" data-print-field="col-price">السعر</th>
+                        <th class="text-center" style="width:85px;" data-print-field="col-total">الإجمالي</th>
+                        <th style="width:140px;" data-print-field="col-notes">ملاحظات</th>
+                        <th class="text-center" style="width:40px;" data-print-field="col-image">صورة</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for ib in items_with_barcodes %}
+                    <tr class="item-row">
+                        <td class="text-muted text-center" data-print-field="col-index">{{ forloop.counter }}</td>
+                        <td data-print-field="col-product">
+                            <span class="cell-product-name">{{ ib.item.item_name }}</span>
+                            <span class="product-meta">
+                                {% if ib.item.product %}
+                                <span class="qty-badge"><i class="fas fa-barcode"></i> {{ ib.item.product.product_code }}</span>
+                                {% endif %}
+                            </span>
+                        </td>
+                        <td class="fw-semibold text-center" style="color:var(--aqua-4);" data-print-field="col-qty">{{ ib.item.sold_quantity }}</td>
+                        <td class="fw-semibold text-center" style="color:var(--aqua-4);" data-print-field="col-price">{{ ib.item.unit_price|floatformat:2 }}</td>
+                        <td class="fw-bold text-center" data-print-field="col-total">{{ ib.item.sale_total|floatformat:2 }}</td>
+                        <td data-print-field="col-notes">
+                            {% if ib.item.notes %}
+                            <div class="cell-notes-wrapper">
+                                <span class="cell-notes">{{ ib.item.notes }}</span>
+                                <div class="cell-notes-tooltip no-print">{{ ib.item.notes }}</div>
+                            </div>
+                            {% else %}
+                            <span class="cell-notes-empty no-print">—</span>
+                            {% endif %}
+                        </td>
+                        <td class="text-center" data-print-field="col-image">
+                            {% if ib.item.sale_item_image %}
+                            <img src="{{ ib.item.sale_item_image.url }}" class="thumb" alt="">
+                            {% else %}
+                            <div class="thumb-placeholder no-print"><i class="fas fa-image"></i></div>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    
+                    <tr class="barcode-row" data-print-field="col-barcodes">
+                        <td colspan="7">
+                            <div class="barcodes-wrapper">
+                                <span class="barcodes-label"><i class="fas fa-qrcode"></i> الباركودات:</span>
+                                <div class="barcodes-list">
+                                    {% for barcode in ib.barcodes %}
+                                        {% with barcode_value=barcode.code %}
+                                            {% if "(مباع)" in barcode_value %}
+                                            <span class="barcode-item sold">
+                                                <span class="sold-badge">مباع</span>
+                                                <i class="fas fa-qrcode barcode-icon"></i>
+                                                <span class="barcode-text">{{ barcode_value }}</span>
+                                            </span>
+                                            {% elif "(returned)" in barcode_value %}
+                                            <span class="barcode-item returned">
+                                                <span class="returned-badge">مرتجع</span>
+                                                <i class="fas fa-qrcode barcode-icon"></i>
+                                                <span class="barcode-text">{{ barcode_value }}</span>
+                                            </span>
+                                            {% else %}
+                                            <span class="barcode-item">
+                                                <i class="fas fa-qrcode barcode-icon"></i>
+                                                <span class="barcode-text">{{ barcode_value }}</span>
+                                                <button type="button" class="copy-barcode-btn no-print" data-barcode-value="{{ barcode_value }}" title="نسخ الرقم">
+                                                    <i class="far fa-copy"></i>
+                                                </button>
+                                            </span>
+                                            {% endif %}
+                                        {% endwith %}
+                                    {% empty %}
+                                    <span class="no-barcodes"><i class="fas fa-times-circle"></i> لا يوجد باركودات</span>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="7" class="text-center text-secondary p-4">
+                            <i class="fas fa-inbox" style="font-size:1.5rem;"></i><br>لا توجد بنود
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <div class="finance-section">
+            <div class="finance-layout">
+                <div class="finance-image-col" data-print-field="invoice-image">
+                    {% if sale.sale_image %}
+                    <img src="{{ sale.sale_image.url }}" alt="صورة الفاتورة" class="finance-thumb" id="invoiceThumb">
+                    <span class="finance-thumb-hint no-print"><i class="fas fa-expand"></i> تكبير</span>
+                    {% else %}
+                    <div class="finance-thumb-placeholder no-print">
+                        <i class="fas fa-image"></i>
+                        <span>لا توجد صورة</span>
+                    </div>
+                    {% endif %}
+                </div>
+                <div class="finance-fields-col">
+                    <div class="finance-grid">
+                        <div class="fin-item" data-print-field="subtotal">
+                            <span class="fin-label">إجمالي البنود</span>
+                            <span class="fin-value">{{ sale.sale_subtotal|floatformat:2 }}</span>
+                        </div>
+                        <div class="fin-item" data-print-field="tax">
+                            <span class="fin-label">الضريبة ({{ sale.sale_tax_percentage|default:"0" }}%)</span>
+                            <span class="fin-value">{{ sale.sale_tax_amount|floatformat:2 }}</span>
+                        </div>
+                        <div class="fin-item" data-print-field="discount">
+                            <span class="fin-label">الخصم</span>
+                            <span class="fin-value red">- {{ sale.sale_discount|floatformat:2 }}</span>
+                        </div>
+                        <div class="fin-item" data-print-field="addition">
+                            <span class="fin-label">الإضافة</span>
+                            <span class="fin-value green">+ {{ sale.sale_addition|floatformat:2 }}</span>
+                        </div>
+                        <div class="fin-item" data-print-field="paid">
+                            <span class="fin-label">المدفوع</span>
+                            <span class="fin-value green">{{ sale.paid_amount|floatformat:2 }}</span>
+                        </div>
+                        <div class="fin-item" data-print-field="balance">
+                            <span class="fin-label">المتبقي</span>
+                            <span class="fin-value red">{{ sale.balance_due|floatformat:2 }}</span>
+                        </div>
+                    </div>
+                    <div class="fin-total" data-print-field="final-total">
+                        <span>الإجمالي النهائي ({{ sale.sale_currency.name_ar|default:"ل.س" }})</span>
+                        <strong>{{ sale.sale_final_total|floatformat:2 }}</strong>
+                    </div>
+                    {% if sale.total_in_words %}
+                    <div class="fin-words" data-print-field="amount-words">{{ sale.total_in_words }}</div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<div class="modal-overlay" id="printModal">
+    <div class="modal-box">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <span class="d-flex align-items-center gap-2"><i class="fas fa-cog"></i> إعدادات الطباعة</span>
+            <button class="modal-close" id="closeModalBtn">&times;</button>
+        </div>
+        <div class="card-body">
+            <div class="section-title">هيدر وفوتر صفحة الطباعة</div>
+            <p class="mb-2" style="font-size:0.75rem; color:var(--aqua-4);">
+                <i class="fas fa-info-circle"></i> تظهر فقط عند الطباعة وتتكرر مع كل صفحة.
+            </p>
+            <div class="header-footer-inputs">
+                <div class="hf-input-group">
+                    <label><i class="fas fa-image"></i> شعار الشركة</label>
+                    <input type="file" id="logoInput" accept="image/*" class="d-none">
+                    <div class="hf-preview-box" id="logoPreviewBox">
+                        <span id="logoPlaceholderText" style="font-size:0.75rem; color:var(--aqua-4);">اضغط لرفع الشعار</span>
+                        <img id="logoPreviewImg" src="" alt="" class="d-none">
+                    </div>
+                </div>
+                <div class="hf-input-group">
+                    <label><i class="fas fa-building"></i> اسم الشركة</label>
+                    <input type="text" id="companyNameInput" placeholder="مثال: مؤسسة الأزوردي">
+                </div>
+                <div class="hf-input-group grid-col-span-2">
+                    <label><i class="fas fa-align-right"></i> بيانات إضافية</label>
+                    <textarea id="companyDetailsInput" rows="2" placeholder="هاتف: 011xxx | عنوان: دمشق"></textarea>
+                </div>
+                <div class="hf-input-group grid-col-span-2">
+                    <label><i class="fas fa-shoe-prints"></i> نص الفوتر المتكرر</label>
+                    <input type="text" id="footerTextInput" placeholder="شكراً لتعاملكم معنا">
+                </div>
+            </div>
+
+            <div class="section-title">حجم الورق</div>
+            <div class="btn-group" id="paperSizeGroup">
+                <button class="btn-opt active" data-value="a4">A4</button>
+                <button class="btn-opt" data-value="a5">A5</button>
+                <button class="btn-opt" data-value="thermal">حراري 80mm</button>
+                <button class="btn-opt" data-value="half-a4">نصف A4</button>
+            </div>
+            <div class="section-title">الهوامش</div>
+            <div class="btn-group" id="marginGroup">
+                <button class="btn-opt" data-value="minimal">أقل</button>
+                <button class="btn-opt active" data-value="normal">عادي</button>
+                <button class="btn-opt" data-value="wide">واسع</button>
+            </div>
+
+            <div class="section-title">معلومات الفاتورة</div>
+            <div class="field-grid">
+                <label class="field-check"><input type="checkbox" checked data-target="customer-name"> العميل <span class="field-key">عميل</span></label>
+                <label class="field-check"><input type="checkbox" checked data-target="customer-phone"> الهاتف <span class="field-key">هاتف</span></label>
+                <label class="field-check"><input type="checkbox" checked data-target="shipping-company"> شركة الشحن <span class="field-key">شحن</span></label>
+                <label class="field-check"><input type="checkbox" checked data-target="shipping-num"> رقم الشحن <span class="field-key">رقم شحن</span></label>
+                <label class="field-check"><input type="checkbox" checked data-target="sale-status"> حالة البيع <span class="field-key">حالة</span></label>
+                <label class="field-check"><input type="checkbox" checked data-target="payment-method"> طريقة الدفع <span class="field-key">دفع</span></label>
+                <label class="field-check"><input type="checkbox" checked data-target="currency"> العملة <span class="field-key">عملة</span></label>
+                <label class="field-check"><input type="checkbox" checked data-target="user"> المستخدم <span class="field-key">مستخدم</span></label>
+                <label class="field-check"><input type="checkbox" checked data-target="status"> شارة الدفع <span class="field-key">مدفوعة</span></label>
+                <label class="field-check"><input type="checkbox" checked data-target="notes"> الملاحظات <span class="field-key">ملاحظات</span></label>
+            </div>
+
+            <div class="section-title">أعمدة جدول البنود</div>
+            <div class="field-grid">
+                <label class="field-check"><input type="checkbox" checked data-target="col-index"> الترقيم <span class="field-key">#</span></label>
+                <label class="field-check"><input type="checkbox" checked data-target="col-product"> المادة <span class="field-key">اسم</span></label>
+                <label class="field-check"><input type="checkbox" checked data-target="col-qty"> الكمية <span class="field-key">كم</span></label>
+                <label class="field-check"><input type="checkbox" checked data-target="col-price"> السعر <span class="field-key">سعر</span></label>
+                <label class="field-check"><input type="checkbox" checked data-target="col-total"> الإجمالي <span class="field-key">مجموع</span></label>
+                <label class="field-check"><input type="checkbox" checked data-target="col-notes"> ملاحظات البند <span class="field-key">ملاحظات</span></label>
+                <label class="field-check"><input type="checkbox" checked data-target="col-image"> صورة المنتج <span class="field-key">صورة</span></label>
+                <label class="field-check"><input type="checkbox" checked data-target="col-barcodes"> صف الباركودات <span class="field-key">باركود</span></label>
+            </div>
+
+            <div class="section-title">القسم المالي</div>
+            <div class="field-grid">
+                <label class="field-check"><input type="checkbox" checked data-target="subtotal"> إجمالي البنود <span class="field-key">فرعي</span></label>
+                <label class="field-check"><input type="checkbox" checked data-target="tax"> الضريبة <span class="field-key">ضريبة</span></label>
+                <label class="field-check"><input type="checkbox" checked data-target="discount"> الخصم <span class="field-key">خصم</span></label>
+                <label class="field-check"><input type="checkbox" checked data-target="addition"> الإضافة <span class="field-key">إضافة</span></label>
+                <label class="field-check"><input type="checkbox" checked data-target="paid"> المدفوع <span class="field-key">مدفوع</span></label>
+                <label class="field-check"><input type="checkbox" checked data-target="balance"> المتبقي <span class="field-key">متبقي</span></label>
+                <label class="field-check"><input type="checkbox" checked data-target="final-total"> الإجمالي النهائي <span class="field-key">نهائي</span></label>
+                <label class="field-check"><input type="checkbox" checked data-target="amount-words"> المبلغ كتابةً <span class="field-key">كتابة</span></label>
+                <label class="field-check"><input type="checkbox" checked data-target="invoice-image"> صورة الفاتورة <span class="field-key">صورة فات</span></label>
+            </div>
+
+            <div class="section-title">خيارات إضافية</div>
+            <div class="toggle-row">
+                <label>طباعة بالألوان</label>
+                <label class="toggle-switch"><input type="checkbox" id="printColors" checked><span class="toggle-slider"></span></label>
+            </div>
+            <div class="toggle-row">
+                <label>إظهار خطوط فاصلة بين الصفوف</label>
+                <label class="toggle-switch"><input type="checkbox" id="printLines" checked><span class="toggle-slider"></span></label>
+            </div>
+        </div>
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <div class="d-flex gap-2">
+                <button class="btn btn-secondary" id="selectAllBtn"><i class="fas fa-check-double"></i> تحديد الكل</button>
+                <button class="btn btn-secondary" id="deselectAllBtn"><i class="fas fa-times"></i> إلغاء الكل</button>
+            </div>
+            <button class="btn btn-primary" id="executePrintBtn" style="padding:0.45rem 1.5rem;">
+                <i class="fas fa-print"></i> طباعة الآن
+            </button>
+        </div>
+    </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script nonce="{{ csp_nonce }}">
+    var printState = { paperSize: 'a4', marginSize: 'normal', logoDataUrl: '' };
+    var printModal = document.getElementById('printModal');
+    var invoiceCard = document.getElementById('invoiceCard');
+    var toastEl = document.getElementById('toast');
+
+    document.querySelectorAll('.copy-barcode-btn').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+            var text = this.getAttribute('data-barcode-value');
+            var tempInput = document.createElement('input');
+            tempInput.value = text;
+            document.body.appendChild(tempInput);
+            tempInput.select();
+            document.execCommand('copy');
+            document.body.removeChild(tempInput);
+            var icon = this.querySelector('i');
+            icon.classList.remove('fa-copy'); icon.classList.add('fa-check');
+            this.classList.add('copied');
+            var self = this;
+            setTimeout(function() { icon.classList.remove('fa-check'); icon.classList.add('fa-copy'); self.classList.remove('copied'); }, 2000);
+        });
+    });
+
+    var invoiceThumb = document.getElementById('invoiceThumb');
+    if (invoiceThumb) {
+        invoiceThumb.addEventListener('click', function() {
+            var overlay = document.createElement('div');
+            overlay.className = 'lightbox-overlay';
+            var img = document.createElement('img');
+            img.src = this.src; img.alt = 'صورة الفاتورة';
+            overlay.appendChild(img);
+            overlay.addEventListener('click', function() { this.remove(); });
+            var closeHandler = function(e) { if (e.key === 'Escape') { overlay.remove(); document.removeEventListener('keydown', closeHandler); } };
+            document.addEventListener('keydown', closeHandler);
+            document.body.appendChild(overlay);
+        });
+    }
+
+    document.getElementById('openPrintModalBtn').addEventListener('click', function() { printModal.classList.add('active'); });
+    document.getElementById('closeModalBtn').addEventListener('click', function() { printModal.classList.remove('active'); });
+    printModal.addEventListener('click', function(e) { if (e.target === printModal) printModal.classList.remove('active'); });
+    document.addEventListener('keydown', function(e) { if (e.key === 'Escape') printModal.classList.remove('active'); });
+
+    document.querySelectorAll('[data-href]').forEach(function(link) {
+        link.addEventListener('click', function(e) { e.preventDefault(); var href = this.getAttribute('data-href'); if (href) window.location.href = href; });
+    });
+
+    document.querySelectorAll('.btn-group').forEach(function(group) {
+        group.querySelectorAll('.btn-opt').forEach(function(btn) {
+            btn.addEventListener('click', function() {
+                group.querySelectorAll('.btn-opt').forEach(function(b) { b.classList.remove('active'); });
+                this.classList.add('active');
+                if (group.id === 'paperSizeGroup') printState.paperSize = this.dataset.value;
+                if (group.id === 'marginGroup') printState.marginSize = this.dataset.value;
+            });
+        });
+    });
+
+    document.getElementById('selectAllBtn').addEventListener('click', function() {
+        printModal.querySelectorAll('input[type="checkbox"][data-target]').forEach(function(cb) { cb.checked = true; });
+        showToast('تم تحديد جميع الحقول');
+    });
+    document.getElementById('deselectAllBtn').addEventListener('click', function() {
+        printModal.querySelectorAll('input[type="checkbox"][data-target]').forEach(function(cb) { cb.checked = false; });
+        showToast('تم إلغاء تحديد جميع الحقول');
+    });
+
+    var logoInput = document.getElementById('logoInput');
+    var logoPreviewImg = document.getElementById('logoPreviewImg');
+    var logoPlaceholderText = document.getElementById('logoPlaceholderText');
+    document.getElementById('logoPreviewBox').addEventListener('click', function() { logoInput.click(); });
+    logoInput.addEventListener('change', function() {
+        if (this.files && this.files[0]) {
+            var reader = new FileReader();
+            reader.onload = function(e) { printState.logoDataUrl = e.target.result; logoPreviewImg.src = e.target.result; logoPreviewImg.classList.remove('d-none'); logoPlaceholderText.classList.add('d-none'); };
+            reader.readAsDataURL(this.files[0]);
+        }
+    });
+
+    function showToast(msg) { toastEl.textContent = msg; toastEl.classList.add('show'); setTimeout(function() { toastEl.classList.remove('show'); }, 2000); }
+
+    function changePrintPage() {
+        var existingStyle = document.getElementById('dynamic-page-style');
+        if (existingStyle) existingStyle.remove();
+        var style = document.createElement('style'); style.id = 'dynamic-page-style';
+        var marginValue = '10mm', sizeValue = '';
+        if (printState.marginSize === 'minimal') marginValue = '3mm';
+        else if (printState.marginSize === 'normal') marginValue = '8mm';
+        else if (printState.marginSize === 'wide') marginValue = '15mm';
+        if (printState.paperSize === 'thermal') { marginValue = '2mm'; sizeValue = 'size: 80mm auto;'; }
+        else if (printState.paperSize === 'half-a4') { marginValue = '8mm'; sizeValue = 'size: A4 landscape;'; }
+        style.textContent = '@page { margin: ' + marginValue + '; ' + sizeValue + ' }';
+        document.head.appendChild(style);
+    }
+
+    var hiddenBaseElements = [];
+    function hideBaseElements() {
+        var selectors = ['nav', 'aside', '.navbar', '.sidebar', '.side-bar', '.breadcrumb', '.breadcrumbs', 'footer', '.footer', '.top-bar', '.topbar', '.header-area', '[role="navigation"]'];
+        selectors.forEach(function(sel) {
+            document.querySelectorAll(sel).forEach(function(el) {
+                if (el.closest('.invoice-print-area') || el.closest('.modal-overlay') || el.closest('.print-fab')) return;
+                hiddenBaseElements.push({ el: el, display: el.style.display }); el.style.display = 'none';
+            });
+        });
+    }
+    function showBaseElements() { hiddenBaseElements.forEach(function(item) { item.el.style.display = item.display; }); hiddenBaseElements = []; }
+
+    document.getElementById('executePrintBtn').addEventListener('click', function() {
+        var headerArea = document.getElementById('printHeaderArea');
+        var footerArea = document.getElementById('printFooterArea');
+        document.getElementById('phCompanyName').textContent = document.getElementById('companyNameInput').value || 'اسم الشركة';
+        document.getElementById('phCompanyDetails').textContent = document.getElementById('companyDetailsInput').value || '';
+        document.getElementById('phFooterText').textContent = document.getElementById('footerTextInput').value || '';
+        
+        if (printState.logoDataUrl) { 
+            document.getElementById('phLogoImg').src = printState.logoDataUrl; 
+            document.getElementById('phLogoImg').classList.remove('d-none'); 
+            document.getElementById('phLogoPlaceholder').classList.add('d-none'); 
+        } else { 
+            document.getElementById('phLogoImg').classList.add('d-none'); 
+            document.getElementById('phLogoPlaceholder').classList.remove('d-none'); 
+        }
+        
+        headerArea.classList.remove('d-none', 'no-print'); 
+        footerArea.classList.remove('d-none', 'no-print'); 
+        
+        printModal.querySelectorAll('input[type="checkbox"][data-target]').forEach(function(cb) {
+            var target = cb.dataset.target;
+            invoiceCard.querySelectorAll('[data-print-field="' + target + '"]').forEach(function(el) { el.setAttribute('data-print-hidden', cb.checked ? 'false' : 'true'); });
+        });
+        var anyInfoVisible = false;
+        invoiceCard.querySelectorAll('.info-cell').forEach(function(cell) { if (cell.getAttribute('data-print-hidden') !== 'true') anyInfoVisible = true; });
+        var infoStrip = invoiceCard.querySelector('[data-print-field="info-strip"]');
+        if (infoStrip) infoStrip.setAttribute('data-print-hidden', anyInfoVisible ? 'false' : 'true');
+        
+        if (!document.getElementById('printColors').checked) invoiceCard.classList.add('print-grayscale'); else invoiceCard.classList.remove('print-grayscale');
+        if (!document.getElementById('printLines').checked) invoiceCard.classList.add('print-no-lines'); else invoiceCard.classList.remove('print-no-lines');
+        
+        invoiceCard.classList.remove('print-a4', 'print-a5', 'print-thermal', 'print-half-a4');
+        invoiceCard.classList.add('print-' + printState.paperSize);
+        
+        changePrintPage(); hideBaseElements();
+        printModal.classList.remove('active'); showToast('جارٍ الطباعة...');
+        
+        setTimeout(function() {
+            window.print();
+            setTimeout(function() {
+                headerArea.classList.add('d-none', 'no-print'); 
+                footerArea.classList.add('d-none', 'no-print'); 
+                invoiceCard.querySelectorAll('[data-print-field]').forEach(function(el) { el.removeAttribute('data-print-hidden'); });
+                invoiceCard.classList.remove('print-a4', 'print-a5', 'print-thermal', 'print-half-a4', 'print-grayscale', 'print-no-lines');
+                showBaseElements();
+                var dynStyle = document.getElementById('dynamic-page-style'); if (dynStyle) dynStyle.remove();
+            }, 500);
+        }, 300);
+    });
+
+    document.addEventListener('keydown', function(e) { if ((e.ctrlKey || e.metaKey) && e.key === 'p') { e.preventDefault(); printModal.classList.add('active'); } });
+</script>
+{% endblock %}88888

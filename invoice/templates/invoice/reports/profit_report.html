@@ -1,0 +1,105 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <div class="card shadow">
+        <div class="card-header bg-primary text-white">
+            <h5 class="mb-0"><i class="fas fa-chart-line ml-2"></i> تقرير الأرباح والخسائر</h5>
+        </div>
+        <div class="card-body">
+            <!-- نموذج اختيار الفترة -->
+            <form method="GET" class="row g-3 mb-4">
+                <div class="col-md-3">
+                    <label class="form-label">من تاريخ</label>
+                    <input type="date" name="start_date" class="form-control" value="{{ start_date }}" required>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">إلى تاريخ</label>
+                    <input type="date" name="end_date" class="form-control" value="{{ end_date }}" required>
+                </div>
+                <div class="col-md-3 d-flex align-items-end">
+                    <button type="submit" class="btn btn-success">
+                        <i class="fas fa-calculator ml-1"></i> حساب الأرباح
+                    </button>
+                </div>
+            </form>
+
+            {% if show_results %}
+            <hr>
+            <h6 class="text-muted mb-3">النتائج للفترة من <b>{{ start_date }}</b> إلى <b>{{ end_date }}</b></h6>
+            
+            <div class="row">
+                <!-- قسم المبيعات وتكلفة البضاعة -->
+                <div class="col-lg-6 mb-4">
+                    <div class="card bg-light h-100">
+                        <div class="card-header fw-bold">المبيعات وتكلفة البضاعة</div>
+                        <ul class="list-group list-group-flush">
+                            <li class="list-group-item d-flex justify-content-between">
+                                <span>إجمالي المبيعات:</span>
+                                <strong>{{ total_sales|floatformat:2 }}</strong>
+                            </li>
+                            <li class="list-group-item d-flex justify-content-between">
+                                <span>(-) الخصومات الممنوحة:</span>
+                                <strong class="text-danger">({{ total_sales_discount|floatformat:2 }})</strong>
+                            </li>
+                            <li class="list-group-item d-flex justify-content-between">
+                                <span>(-) مرتجع المبيعات:</span>
+                                <strong class="text-danger">({{ total_sales_returns|floatformat:2 }})</strong>
+                            </li>
+                            <li class="list-group-item d-flex justify-content-between list-group-item-info">
+                                <span><b>صافي المبيعات:</b></span>
+                                <b>{{ net_sales|floatformat:2 }}</b>
+                            </li>
+                            <li class="list-group-item d-flex justify-content-between">
+                                <span>(-) تكلفة البضائع المباعة:</span>
+                                <strong class="text-danger">({{ total_cost|floatformat:2 }})</strong>
+                            </li>
+                            <li class="list-group-item d-flex justify-content-between list-group-item-success">
+                                <span><b>مجمل الربح:</b></span>
+                                <b class="fs-5">{{ gross_profit|floatformat:2 }}</b>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- قسم المصاريف والأرباح الصافية -->
+                <div class="col-lg-6 mb-4">
+                    <div class="card bg-light h-100">
+                        <div class="card-header fw-bold">المصاريف والأرباح الصافية</div>
+                        <ul class="list-group list-group-flush">
+                            <li class="list-group-item d-flex justify-content-between">
+                                <span>(-) المصاريف التشغيلية:</span>
+                                <strong class="text-danger">({{ total_expenses|floatformat:2 }})</strong>
+                            </li>
+                            <li class="list-group-item d-flex justify-content-between list-group-item-info">
+                                <span><b>صافي الربح التشغيلي:</b></span>
+                                <b>{{ net_operating_profit|floatformat:2 }}</b>
+                            </li>
+                            <li class="list-group-item d-flex justify-content-between">
+                                <span>(-) السحوبات الشخصية:</span>
+                                <strong class="text-warning">({{ total_withdrawals|floatformat:2 }})</strong>
+                            </li>
+                            <li class="list-group-item d-flex justify-content-between {% if net_profit >= 0 %}list-group-item-success{% else %}list-group-item-danger{% endif %}">
+                                <span><b>صافي الربح / الخسارة النهائية:</b></span>
+                                <h4 class="mb-0">{{ net_profit|floatformat:2 }}</h4>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <!-- قسم ملاحظات المحاسبة -->
+            <div class="alert alert-secondary mt-3 small">
+                <i class="fas fa-info-circle"></i> <b>ملاحظة محاسبية:</b> 
+                تم حساب التكلفة بناءً على (متوسط تكلفة الشراء) للمواد المباعة. 
+                السحوبات الشخصية لا تعتبر مصروفاً تشغيلياً تقلل من ربحية النشاط، بل هي توزيع للأرباق، لذلك تم خصمها بعد حساب صافي الربح التشغيلي.
+            </div>
+
+            {% elif request.GET.start_date %}
+                <div class="alert alert-warning mt-3">لا توجد بيانات في هذه الفترة.</div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

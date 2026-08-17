@@ -1,0 +1,221 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    :root {
+        --danger: #ef476f;
+        --danger-light: #fee2e2;
+        --dark: #1e293b;
+        --gray: #64748b;
+        --light: #f1f5f9;
+        --white: #ffffff;
+        --shadow: 0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -1px rgba(0,0,0,0.06);
+        --shadow-lg: 0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -2px rgba(0,0,0,0.05);
+        --radius: 16px;
+    }
+
+    body {
+        background: linear-gradient(135deg, #f8faff 0%, #f0f4ff 100%);
+        min-height: 100vh;
+        font-family: 'Cairo', sans-serif;
+    }
+
+    .delete-container {
+        max-width: 500px;
+        margin: 5rem auto;
+        padding: 0 1.5rem;
+    }
+
+    .delete-card {
+        background: var(--white);
+        border-radius: var(--radius);
+        box-shadow: var(--shadow-lg);
+        overflow: hidden;
+        animation: slideIn 0.3s ease;
+    }
+
+    @keyframes slideIn {
+        from {
+            opacity: 0;
+            transform: translateY(-30px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .delete-header {
+        background: linear-gradient(135deg, var(--danger), #ff6b6b);
+        padding: 2rem;
+        text-align: center;
+        color: var(--white);
+    }
+
+    .delete-header i {
+        font-size: 4rem;
+        margin-bottom: 1rem;
+        animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+        0% { transform: scale(1); }
+        50% { transform: scale(1.1); }
+        100% { transform: scale(1); }
+    }
+
+    .delete-header h2 {
+        font-size: 1.8rem;
+        font-weight: 700;
+        margin: 0;
+    }
+
+    .delete-body {
+        padding: 2rem;
+        text-align: center;
+    }
+
+    .warning-message {
+        background: var(--danger-light);
+        border-right: 4px solid var(--danger);
+        padding: 1rem;
+        border-radius: 10px;
+        margin-bottom: 2rem;
+        text-align: right;
+    }
+
+    .warning-message p {
+        margin: 0;
+        color: #b91c1c;
+        font-weight: 600;
+    }
+
+    .info-box {
+        background: var(--light);
+        padding: 1.5rem;
+        border-radius: 10px;
+        margin-bottom: 2rem;
+    }
+
+    .info-row {
+        display: flex;
+        justify-content: space-between;
+        padding: 0.75rem 0;
+        border-bottom: 1px dashed var(--gray);
+    }
+
+    .info-row:last-child {
+        border-bottom: none;
+    }
+
+    .info-label {
+        color: var(--gray);
+        font-weight: 500;
+    }
+
+    .info-value {
+        font-weight: 700;
+        color: var(--dark);
+    }
+
+    .info-value.danger {
+        color: var(--danger);
+    }
+
+    .action-buttons {
+        display: flex;
+        gap: 1rem;
+        justify-content: center;
+    }
+
+    .btn-modern {
+        padding: 0.8rem 2rem;
+        border-radius: 40px;
+        text-decoration: none;
+        font-weight: 600;
+        transition: all 0.3s;
+        border: none;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-size: 1rem;
+        box-shadow: var(--shadow);
+    }
+
+    .btn-modern:hover {
+        transform: translateY(-3px);
+        box-shadow: var(--shadow-lg);
+    }
+
+    .btn-danger {
+        background: linear-gradient(135deg, var(--danger), #ff6b6b);
+        color: var(--white);
+    }
+
+    .btn-secondary {
+        background: var(--light);
+        color: var(--dark);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="delete-container">
+    <div class="delete-card">
+        <div class="delete-header">
+            <i class="fas fa-exclamation-triangle"></i>
+            <h2>تأكيد الحذف</h2>
+        </div>
+        
+        <div class="delete-body">
+            <div class="warning-message">
+                <p>
+                    <i class="fas fa-info-circle ms-2"></i>
+                    هذا الإجراء لا يمكن التراجع عنه
+                </p>
+            </div>
+
+            <div class="info-box">
+                <div class="info-row">
+                    <span class="info-label">رقم المرتجع</span>
+                    <span class="info-value">{{ purchase_return.uniqueId }}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">تاريخ المرتجع</span>
+                    <span class="info-value">{{ purchase_return.return_date|date:"Y/m/d" }}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">فاتورة الشراء</span>
+                    <span class="info-value">{{ purchase_return.original_purchase.uniqueId|default:"-" }}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">الإجمالي</span>
+                    <span class="info-value danger">{{ purchase_return.return_final_total }} {{ purchase_return.purch_currency.name|default:"" }}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">عدد البنود</span>
+                    <span class="info-value">{{ purchase_return.return_items.count }}</span>
+                </div>
+            </div>
+
+            <form method="post">
+                {% csrf_token %}
+                <div class="action-buttons">
+                    <button type="submit" class="btn-modern btn-danger">
+                        <i class="fas fa-trash"></i>
+                        نعم، قم بالحذف
+                    </button>
+                    <a href="{% url 'invoice:purchase_return_detail' purchase_return.slug %}" class="btn-modern btn-secondary">
+                        <i class="fas fa-times"></i>
+                        إلغاء
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

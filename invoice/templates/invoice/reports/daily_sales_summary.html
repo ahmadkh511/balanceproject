@@ -1,0 +1,76 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <div class="card shadow">
+        <div class="card-header bg-success text-white">
+            <h5 class="mb-0"><i class="fas fa-calendar-day ml-2"></i> ملخص المبيعات اليومي</h5>
+        </div>
+        <div class="card-body">
+            <!-- اختيار التاريخ -->
+            <form method="GET" class="mb-4">
+                <div class="row align-items-center">
+                    <div class="col-md-3">
+                        <input type="date" name="date" class="form-control" value="{{ selected_date|date:'Y-m-d' }}">
+                    </div>
+                    <div class="col-md-2">
+                        <button type="submit" class="btn btn-success">عرض الملخص</button>
+                    </div>
+                    <div class="col-md-7 text-right">
+                        <a href="{% url 'invoice:daily_sales_summary' %}" class="btn btn-outline-light">اليوم</a>
+                    </div>
+                </div>
+            </form>
+
+            <hr>
+            <h4 class="text-center mb-4">تقرير يوم: <span class="text-primary">{{ selected_date }}</span></h4>
+
+            <div class="row text-center">
+                <!-- بطاقة المبيعات -->
+                <div class="col-md-4 mb-3">
+                    <div class="card border-primary h-100">
+                        <div class="card-header bg-primary text-white">المبيعات</div>
+                        <div class="card-body">
+                            <h1>{{ total_sales|floatformat:2 }}</h1>
+                            <p class="text-muted">عدد الفواتير: {{ invoices_count }}</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- بطاقة النقدية -->
+                <div class="col-md-4 mb-3">
+                    <div class="card border-info h-100">
+                        <div class="card-header bg-info text-white">النقدية</div>
+                        <div class="card-body">
+                            <h1>{{ cash_received|floatformat:2 }}</h1>
+                            <p class="text-muted">المقبوض اليوم</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- بطاقة المصروفات -->
+                <div class="col-md-4 mb-3">
+                    <div class="card border-danger h-100">
+                        <div class="card-header bg-danger text-white">المصروفات</div>
+                        <div class="card-body">
+                            <h1>{{ total_expenses|floatformat:2 }}</h1>
+                            <p class="text-muted">إجمالي المصروفات</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- النتيجة النهائية -->
+            <div class="alert {% if net_cash >= 0 %}alert-success{% else %}alert-danger{% endif %} mt-4 text-center">
+                <h3>
+                    صافي الصندوق اليوم:
+                    <strong>{{ net_cash|floatformat:2 }}</strong>
+                </h3>
+                <small>(المقبوض - المصروفات)</small>
+            </div>
+
+        </div>
+    </div>
+</div>
+{% endblock %}

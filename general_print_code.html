@@ -1,0 +1,776 @@
+# نظام الطباعة الموحد (Unified Print System)
+
+## 📋 نظرة عامة
+
+نظام طباعة متكامل يعمل عبر 3 ملفات منفصلة (CSS, JS, HTML) يمكن تضمينها في أي قالب Django بسهولة. تم تصميم النظام ليكون مرناً وقابلاً للتطوير، مع الحفاظ على تجربة مستخدم موحدة في جميع أنحاء المشروع.
+
+---
+
+## 🏗️ معمارية النظام
+
+### 1. ملف CSS (`static/css/print_system.css`)
+- تنسيقات المودال (نافذة إعدادات الطباعة)
+- تنسيقات الهيدر والفوتر للطباعة
+- زر الطباعة العائم
+- قواعد `@media print` للتحكم في مظهر الصفحة المطبوعة
+- تنسيقات الـ Toast (الإشعارات)
+- تنسيقات الأزرار والمفاتيح
+
+### 2. ملف HTML (`templates/includes/print_system.html`)
+- يحتوي على المودال، الهيدر، الفوتر، وزر الطباعة العائم
+- يتم استدعاؤه في أي قالب عبر `{% include 'includes/print_system.html' %}`
+- يحتوي على `div#tableColumnsGrid` فارغ يُملأ ديناميكياً بواسطة JavaScript
+- يحتوي على `script#companyData` الذي يمرر بيانات الشركة من Django إلى JavaScript
+
+### 3. ملف JS (`static/js/print_system.js`)
+- `generateTableColumns()`: تقرأ وسوم `<th data-print-field="col-xxx">` وتولد Checkboxes
+- `getCompanySettings()`: تقرأ بيانات الشركة من `script#companyData`
+- `populatePrintHeaderFooter()`: تعبئة الهيدر والفوتر بالبيانات
+- `savePrintSettings()` / `loadPrintSettings()`: حفظ واستعادة الإعدادات في LocalStorage
+- `preparePrintSettings()`: تجهيز الإعدادات قبل الطباعة
+- `executePrint()`: تنفيذ الطباعة
+
+---
+
+## ⚠️ تنبيهات مهمة جداً - تم حل المشاكل
+
+### 🔴 المشكلة 1: ظهور صورة 22.png بشكل خاطئ
+
+**الوصف:**
+كان النظام يفرض صورة `22.png` كشعار افتراضي للشركة عند عدم وجود شعار، مما تسبب في ظهور صورة غير صحيحة عند الطباعة حتى بعد رفع شعار جديد.
+
+**السبب:**
+في دالة `getCompanySettings()` داخل `print_system.js`، كان هناك شرط يفرض استخدام `'/media/company_logos/22.png'` عندما تكون `logo_url` فارغة.
+
+**الحل:**
+تم إزالة القيمة الافتراضية `22.png` من الدالة `getCompanySettings()`، والآن عندما لا توجد صورة، يتم عرض رسالة "بدون شعار" بدلاً من صورة `22.png`.
+
+**الكود المعدل:**
+```javascript
+// ❌ الكود القديم (الخاطئ)
+if (!data.logo_url || data.logo_url === '') {
+    data.logo_url = '/media/company_logos/22.png';  // ← يفرض 22.png
+}
+
+// ✅ الكود الجديد (الصحيح)
+if (!data.logo_url || data.logo_url === '' || data.logo_url === 'None') {
+    data.logo_url = '';  // ← يتركها فارغة، لا يفرض أي صورة
+}
+
+
+ هيكل القالب القياسي (Golden Template)
+إليك كيف يبدو القالب القياسي الذي يتم تطبيق النظام عليه
+
+
+{% extends "base.html" %}
+{% load static %}
+
+{% block extra_css %}
+    <link rel="stylesheet" href="{% static 'css/print_system.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid invoice-print-area" id="printableArea">
+    
+    <!-- ===== عناصر لا تطبع ===== -->
+    <div class="d-flex justify-content-between mb-4 no-print">
+        <h2>عنوان الصفحة</h2>
+        <a href="#" class="btn btn-primary no-print">إضافة جديد</a>
+    </div>
+
+    <!-- ===== المحتوى القابل للطباعة ===== -->
+    <div class="card">
+        <div class="card-body">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th data-print-field="col-name">الاسم</th>
+                        <th data-print-field="col-price">السعر</th>
+                        <th class="no-print">إجراء</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in items %}
+                    <tr>
+                        <td>{{ forloop.counter }}</td>
+                        <td data-print-field="col-name">{{ item.name }}</td>
+                        <td data-print-field="col-price">{{ item.price }}</td>
+                        <td class="no-print">
+                            <button class="btn btn-sm btn-danger no-print">حذف</button>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- ===== استدعاء نظام الطباعة ===== -->
+    {% include 'includes/print_system.html' %}
+
+</div>
+{% endblock %}
+
+{% block extra_js %}
+    <script src="{% static 'js/print_system.js' %}"></script>
+{% endblock %}
+
+
+static/css/print_system.css
+
+/* ===== نظام الطباعة الموحد ===== */
+@import url('https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;600;700;800&display=swap');
+
+:root {
+    --primary-1: #e0f7fa;
+    --primary-2: #b2ebf2;
+    --primary-3: #4dd0e1;
+    --primary-4: #0097a7;
+    --primary-dark: #006064;
+    --text-dark: #006064;
+    --radius: 8px;
+    --radius-sm: 4px;
+    --radius-lg: 12px;
+    --ease: cubic-bezier(0.4, 0, 0.2, 1);
+    --print-margin: 10mm;
+    --transition-speed: 0.3s;
+}
+
+body, .invoice-print-area {
+    font-family: 'Tajawal', sans-serif !important;
+    direction: rtl;
+    unicode-bidi: plaintext;
+}
+
+.print-fab {
+    position: fixed; bottom: 1.5rem; left: 1.5rem; z-index: 1050; padding: 0.6rem 1.2rem;
+    border-radius: 50px; box-shadow: 0 4px 15px rgba(0, 150, 167, 0.35); font-size: 0.85rem;
+    font-weight: 600; background: linear-gradient(135deg, var(--primary-4) 0%, var(--primary-dark) 100%);
+    color: white; border: none; cursor: pointer; transition: all var(--transition-speed) var(--ease);
+    display: inline-flex; align-items: center; gap: 0.5rem;
+}
+.print-fab:hover { transform: scale(1.05) translateY(-2px); box-shadow: 0 6px 25px rgba(0, 150, 167, 0.5); }
+.print-fab i { font-size: 1rem; }
+
+.modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0, 0, 0, 0.5); z-index: 9999; justify-content: center; align-items: center; backdrop-filter: blur(3px); animation: modalOverlayIn 0.3s var(--ease); }
+.modal-overlay.active { display: flex; }
+@keyframes modalOverlayIn { from { opacity: 0; } to { opacity: 1; } }
+
+.modal-box { background: white; border-radius: var(--radius-lg); width: 720px; max-width: 95vw; max-height: 90vh; overflow-y: auto; box-shadow: 0 20px 60px rgba(0, 0, 0, 0.25); animation: modalBoxIn 0.3s var(--ease); }
+@keyframes modalBoxIn { from { transform: translateY(30px) scale(0.95); opacity: 0; } to { transform: translateY(0) scale(1); opacity: 1; } }
+
+.modal-close { width: 32px; height: 32px; border: none; background: var(--primary-1); border-radius: 50%; cursor: pointer; font-size: 1.2rem; color: var(--text-dark); display: flex; align-items: center; justify-content: center; transition: all 0.2s var(--ease); }
+.modal-close:hover { background: var(--primary-2); transform: rotate(90deg); }
+
+.print-header-area { display: none; padding: 6pt 10mm; border-bottom: 1.5pt solid #333; background: white; text-align: center; }
+.print-logo-small .ph-logo { max-height: 20pt !important; max-width: 35pt !important; }
+.print-logo-medium .ph-logo { max-height: 30pt !important; max-width: 50pt !important; }
+.print-logo-large .ph-logo { max-height: 45pt !important; max-width: 70pt !important; }
+.print-header-area .ph-logo { vertical-align: middle; object-fit: contain; }
+.print-header-area .ph-company { font-size: 12pt; font-weight: 700; color: #000; }
+.print-header-area .ph-details { font-size: 8pt; color: #444; }
+
+.print-footer-area { display: none; padding: 4pt 10mm; background: white; text-align: center; }
+.print-notes-section { padding: 4pt 0 2pt 0; border-bottom: 1pt solid #999; margin-bottom: 3pt; font-size: 8pt; color: #333; font-weight: 500; }
+.print-notes-section .notes-label { font-weight: 700; color: #000; margin-left: 5px; }
+.print-notes-section .notes-content { color: #444; }
+.print-footer-main { padding-top: 3pt; font-size: 7pt; color: #666; }
+.print-footer-main .footer-content { display: flex; justify-content: center; align-items: center; flex-wrap: wrap; gap: 5px; }
+
+.toast { position: fixed; bottom: 2rem; left: 50%; transform: translateX(-50%) translateY(80px); background: linear-gradient(135deg, #1a252f, #2c3e50); color: white; padding: 0.8rem 1.8rem; border-radius: 50px; font-size: 0.9rem; z-index: 100000; opacity: 0; transition: all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55); pointer-events: none; box-shadow: 0 8px 30px rgba(0, 0, 0, 0.2); font-weight: 600; letter-spacing: 0.3px; white-space: nowrap; direction: rtl; font-family: 'Tajawal', sans-serif; display: none; }
+.toast.show { display: block; transform: translateX(-50%) translateY(0); opacity: 1; }
+.toast-success { background: linear-gradient(135deg, #059669, #047857); }
+.toast-error { background: linear-gradient(135deg, #dc2626, #b91c1c); }
+.toast-info { background: linear-gradient(135deg, #2563eb, #1d4ed8); }
+
+.modal-header-custom { display: flex; justify-content: space-between; align-items: center; padding: 14px 20px; background: linear-gradient(135deg, var(--primary-4), var(--primary-dark)); color: white; border-radius: var(--radius-lg) var(--radius-lg) 0 0; }
+.modal-header-custom h3 { font-size: 1rem; font-weight: 700; margin: 0; display: flex; align-items: center; gap: 0.5rem; }
+.modal-header-custom .modal-close { background: rgba(255, 255, 255, 0.2); color: white; }
+.modal-header-custom .modal-close:hover { background: rgba(255, 255, 255, 0.3); }
+
+.modal-body-custom { padding: 18px 22px; }
+.modal-footer-custom { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem; padding: 10px 18px; background: var(--primary-1); border-radius: 0 0 var(--radius-lg) var(--radius-lg); border-top: 1px solid var(--primary-2); }
+
+.section-title { font-size: 0.75rem; font-weight: 700; color: var(--text-dark); text-transform: uppercase; letter-spacing: 0.5px; margin: 1.2rem 0 0.6rem; padding-bottom: 0.3rem; border-bottom: 2px solid var(--primary-2); }
+.section-title:first-child { margin-top: 0; }
+
+.field-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.25rem; }
+.field-check { display: flex; align-items: center; gap: 0.4rem; padding: 0.3rem 0.5rem; border-radius: var(--radius-sm); cursor: pointer; transition: background 0.15s var(--ease); font-size: 0.8rem; }
+.field-check:hover { background: var(--primary-1); }
+.field-check input[type="checkbox"] { width: 16px; height: 16px; accent-color: var(--primary-4); cursor: pointer; flex-shrink: 0; }
+.field-key { color: var(--primary-4); font-size: 0.6rem; font-family: monospace; background: var(--primary-1); padding: 0.05rem 0.3rem; border-radius: 3px; margin-right: auto; }
+
+.btn-group-print { display: flex; gap: 0.25rem; background: var(--primary-1); padding: 0.2rem; border-radius: var(--radius-sm); flex-wrap: wrap; }
+.btn-opt { flex: 1; padding: 0.3rem 0.5rem; border: none; background: transparent; border-radius: var(--radius-sm); font-size: 0.78rem; cursor: pointer; font-family: 'Tajawal', sans-serif; color: var(--primary-4); font-weight: 600; transition: all 0.2s var(--ease); text-align: center; min-width: 55px; }
+.btn-opt:hover { background: rgba(255, 255, 255, 0.5); }
+.btn-opt.active { background: white; color: var(--text-dark); box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1); }
+
+.toggle-row { display: flex; align-items: center; justify-content: space-between; padding: 0.4rem 0; }
+.toggle-row label { font-size: 0.8rem; margin: 0; cursor: pointer; }
+.toggle-switch { position: relative; width: 40px; height: 22px; cursor: pointer; flex-shrink: 0; }
+.toggle-switch input { display: none; }
+.toggle-slider { position: absolute; inset: 0; background: var(--primary-2); border-radius: 11px; transition: 0.25s var(--ease); }
+.toggle-slider::before { content: ''; position: absolute; width: 16px; height: 16px; background: white; border-radius: 50%; top: 3px; left: 3px; transition: 0.25s var(--ease); box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15); }
+.toggle-switch input:checked + .toggle-slider { background: var(--primary-4); }
+.toggle-switch input:checked + .toggle-slider::before { left: 21px; }
+
+.header-footer-inputs { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; }
+.hf-input-group label { display: block; font-size: 0.75rem; font-weight: 600; color: var(--text-dark); margin-bottom: 0.2rem; }
+.hf-input-group input, .hf-input-group textarea { width: 100%; border: 1px solid var(--primary-2); border-radius: var(--radius-sm); padding: 0.35rem 0.5rem; font-size: 0.8rem; font-family: 'Tajawal', sans-serif; transition: all 0.2s var(--ease); background: white; }
+.hf-input-group input:focus, .hf-input-group textarea:focus { border-color: var(--primary-3); box-shadow: 0 0 0 3px rgba(77, 208, 225, 0.2); outline: none; }
+.hf-input-group input:read-only, .hf-input-group textarea:read-only { background: #f5f5f5; cursor: default; }
+.hf-preview-box { background: var(--primary-1); border: 2px dashed var(--primary-2); border-radius: var(--radius-sm); padding: 0.5rem; text-align: center; margin-top: 0.3rem; cursor: default; min-height: 80px; display: flex; align-items: center; justify-content: center; }
+.hf-preview-box img { border-radius: var(--radius-sm); object-fit: contain; transition: max-height 0.3s ease; }
+
+.btn { padding: 0.4rem 0.9rem; border-radius: var(--radius-sm); font-size: 0.8rem; font-weight: 600; border: none; cursor: pointer; transition: all 0.25s var(--ease); font-family: 'Tajawal', sans-serif; display: inline-flex; align-items: center; gap: 0.4rem; text-decoration: none; }
+.btn-primary-print { background: linear-gradient(135deg, var(--primary-4), var(--primary-dark)); color: white; box-shadow: 0 3px 12px rgba(0, 150, 167, 0.3); }
+.btn-primary-print:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(0, 150, 167, 0.4); color: white; }
+.btn-secondary-print { background: linear-gradient(135deg, #78909c, #546e7a); color: white; }
+.btn-secondary-print:hover { transform: translateY(-2px); box-shadow: 0 4px 15px rgba(120, 144, 156, 0.3); color: white; }
+
+.company-info-box { margin: 10px 0; padding: 10px 14px; background: #e8f5e9; border-radius: var(--radius-sm); border-right: 3px solid #4caf50; font-size: 0.8rem; color: #1b5e20; }
+.company-info-box i { color: #2e7d32; }
+.print-watermark { display: none; }
+
+@media print {
+    * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+    body { background: white !important; font-size: 10pt !important; color: #000 !important; padding: 0 !important; margin: 0 !important; font-family: 'Tajawal', sans-serif !important; }
+    .no-print { display: none !important; }
+    .print-watermark { display: block; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%) rotate(-45deg); opacity: 0.06; font-size: 48pt; font-weight: 700; color: #000; pointer-events: none; z-index: 9999; white-space: nowrap; }
+    .print-header-area { display: block !important; position: fixed !important; top: 0 !important; left: 0 !important; right: 0 !important; z-index: 10000 !important; }
+    .print-footer-area { display: block !important; position: fixed !important; bottom: 0 !important; left: 0 !important; right: 0 !important; z-index: 10000 !important; }
+    .invoice-print-area { padding-top: 40pt !important; padding-bottom: 55pt !important; }
+    [data-print-hidden="true"] { display: none !important; }
+    .print-grayscale * { filter: grayscale(100%) !important; }
+    .print-no-lines .table td, .print-no-lines .table th { border: none !important; }
+    .print-compact .table td, .print-compact .table th { padding: 2pt 4pt !important; font-size: 8pt !important; }
+    .print-detailed .table td, .print-detailed .table th { padding: 8pt 12pt !important; font-size: 11pt !important; }
+    .toast { display: none !important; }
+    .card { box-shadow: none !important; border: 1px solid #ddd !important; border-radius: 0 !important; }
+    .pagination { display: none !important; }
+    .btn-group .btn { display: none !important; }
+}
+
+@media (max-width: 768px) {
+    .field-grid { grid-template-columns: 1fr; }
+    .header-footer-inputs { grid-template-columns: 1fr; }
+    .modal-box { width: 98vw; max-height: 95vh; }
+    .modal-footer-custom { flex-direction: column; align-items: stretch; }
+}
+
+
+
+templates/includes/print_system.html
+<!-- ============================================================
+     نظام الطباعة الموحد - HTML
+     ============================================================
+     هذا الملف يتم تضمينه في أي قالب باستخدام:
+     {% include 'includes/print_system.html' %}
+     
+     المكونات:
+     1. script#companyData: بيانات الشركة المقروءة من Django
+     2. div#printHeaderArea: الهيدر الذي يظهر في الطباعة
+     3. div#printFooterArea: الفوتر الذي يظهر في الطباعة
+     4. button.print-fab: زر الطباعة العائم
+     5. div#printModal: مودال إعدادات الطباعة
+     6. div#pdfExportModal: مودال تصدير PDF
+     7. div#toast: إشعارات النظام
+     ============================================================ -->
+
+<!-- ============================================================
+     ⚠️ تنبيه مهم للمطورين:
+     يجب أن يكون اسم الحقل company_logo وليس logo
+     يجب أن يكون اسم الحقل contact_phone وليس phone
+     يجب أن يكون اسم الحقل contact_address وليس address
+     يجب أن يكون اسم الحقل footer_copyright_text وليس footer_text
+     ============================================================ -->
+
+<!-- بيانات الشركة - تُقرأ بواسطة JavaScript -->
+<script id="companyData" type="application/json">
+{
+    "name": "{{ company_settings.company_name|default:'شركة تجريبية' }}",
+    "logo_url": "{% if company_settings.company_logo %}{{ company_settings.company_logo.url }}{% else %}{% endif %}",
+    "phone": "{{ company_settings.contact_phone|default:'0591234567' }}",
+    "address": "{{ company_settings.contact_address|default:'دمشق - سوريا' }}",
+    "footer_text": "{{ company_settings.footer_copyright_text|default:'شكراً لتعاملكم معنا' }}"
+}
+</script>
+
+<!-- ============================================================
+     الهيدر (للطباعة)
+     ============================================================ -->
+<div class="print-header-area no-print" id="printHeaderArea">
+    <table style="width:100%; border-collapse:collapse;">
+        <tr>
+            <td style="width:80px; text-align:center; vertical-align:middle;">
+                <img src="" alt="شعار" class="ph-logo" id="phLogoImg" style="display:none;">
+                <span id="phLogoPlaceholder" style="font-size:8pt; color:#999;">بدون شعار</span>
+            </td>
+            <td style="text-align:center; vertical-align:middle;">
+                <div class="ph-company" id="phCompanyName">شركة تجريبية</div>
+                <div class="ph-details" id="phCompanyDetails"></div>
+            </td>
+            <td style="width:80px;"></td>
+        </tr>
+    </table>
+</div>
+
+<!-- ============================================================
+     الفوتر (للطباعة)
+     ============================================================ -->
+<div class="print-footer-area no-print" id="printFooterArea">
+    <div class="print-notes-section" id="printNotesSection">
+        <span class="notes-label">📝 ملاحظات:</span>
+        <span class="notes-content" id="phNotesContent"></span>
+    </div>
+    <div class="print-footer-main">
+        <div class="footer-content"><span id="phFooterText">شكراً لتعاملكم معنا</span></div>
+    </div>
+</div>
+
+<!-- ============================================================
+     علامة مائية
+     ============================================================ -->
+<div class="print-watermark" id="watermarkText">شركة تجريبية</div>
+
+<!-- ============================================================
+     زر الطباعة العائم
+     ============================================================ -->
+<button class="print-fab no-print" id="openPrintModalBtn">
+    <i class="fas fa-print"></i> طباعة
+</button>
+
+<!-- ============================================================
+     مودال إعدادات الطباعة
+     ============================================================ -->
+<div class="modal-overlay" id="printModal">
+    <div class="modal-box">
+        <div class="modal-header-custom">
+            <h3><i class="fas fa-cog"></i> إعدادات الطباعة</h3>
+            <button class="modal-close" id="closeModalBtn"><i class="fas fa-times"></i></button>
+        </div>
+        <div class="modal-body-custom">
+            <!-- ===== هيدر وفوتر ===== -->
+            <div class="section-title">هيدر وفوتر صفحة الطباعة</div>
+            <div class="company-info-box">
+                <i class="fas fa-info-circle"></i>
+                <span><strong>ملاحظة:</strong> بيانات الشركة مأخوذة تلقائياً.</span>
+            </div>
+            <div class="header-footer-inputs">
+                <div class="hf-input-group">
+                    <label><i class="fas fa-image"></i> شعار الشركة</label>
+                    <div class="hf-preview-box" id="logoPreviewBox">
+                        <img id="logoPreviewImg" src="" alt="شعار" style="max-height:45px; display:none;">
+                        <span id="logoPreviewPlaceholder" style="font-size:0.8rem; color:#999;">لا يوجد شعار</span>
+                    </div>
+                </div>
+                <div class="hf-input-group">
+                    <label><i class="fas fa-building"></i> اسم الشركة</label>
+                    <input type="text" id="companyNameInput" readonly>
+                </div>
+                <div class="hf-input-group" style="grid-column: 1 / -1;">
+                    <label><i class="fas fa-align-right"></i> بيانات إضافية</label>
+                    <input type="text" id="companyDetailsInput" readonly>
+                </div>
+                <div class="hf-input-group" style="grid-column: 1 / -1;">
+                    <label><i class="fas fa-pen"></i> ملاحظات إضافية للطباعة <span style="font-size:0.65rem; color:#999;">(تظهر فوق خط الفوتر)</span></label>
+                    <textarea id="printNotes" rows="2" placeholder="أضف ملاحظات تظهر في أعلى الفوتر (فوق الخط)..."></textarea>
+                </div>
+            </div>
+
+            <!-- ===== حجم الورق ===== -->
+            <div class="section-title">حجم الورق والهوامش</div>
+            <div class="btn-group-print" id="paperSizeGroup">
+                <button class="btn-opt active" data-value="a4">A4</button>
+                <button class="btn-opt" data-value="a5">A5</button>
+                <button class="btn-opt" data-value="thermal">حراري</button>
+            </div>
+            <div class="btn-group-print" id="marginGroup" style="margin-top: 0.5rem;">
+                <button class="btn-opt" data-value="minimal">أقل</button>
+                <button class="btn-opt active" data-value="normal">عادي</button>
+                <button class="btn-opt" data-value="wide">واسع</button>
+            </div>
+
+            <!-- ===== تنسيق المحتوى ===== -->
+            <div class="section-title">تنسيق المحتوى</div>
+            <div class="btn-group-print" id="formatGroup">
+                <button class="btn-opt active" data-value="standard">قياسي</button>
+                <button class="btn-opt" data-value="compact">مضغوط</button>
+                <button class="btn-opt" data-value="detailed">مفصل</button>
+            </div>
+            <div class="btn-group-print" id="logoSizeGroup" style="margin-top: 0.5rem;">
+                <button class="btn-opt" data-value="small">شعار صغير</button>
+                <button class="btn-opt active" data-value="medium">شعار متوسط</button>
+                <button class="btn-opt" data-value="large">شعار كبير</button>
+            </div>
+
+            <!-- ===== أعمدة الجدول (تُملأ تلقائياً) ===== -->
+            <div class="section-title">أعمدة الجدول</div>
+            <div class="field-grid" id="tableColumnsGrid"></div>
+
+            <!-- ===== خيارات إضافية ===== -->
+            <div class="section-title">خيارات إضافية</div>
+            <div class="toggle-row">
+                <label>طباعة بالألوان</label>
+                <label class="toggle-switch"><input type="checkbox" id="printColors" checked><span class="toggle-slider"></span></label>
+            </div>
+            <div class="toggle-row">
+                <label>إظهار خطوط فاصلة</label>
+                <label class="toggle-switch"><input type="checkbox" id="printLines" checked><span class="toggle-slider"></span></label>
+            </div>
+            <div class="toggle-row">
+                <label>إظهار رقم الصف</label>
+                <label class="toggle-switch"><input type="checkbox" id="showIndex" checked><span class="toggle-slider"></span></label>
+            </div>
+            <div class="toggle-row">
+                <label>إظهار علامة مائية</label>
+                <label class="toggle-switch"><input type="checkbox" id="showWatermark" checked><span class="toggle-slider"></span></label>
+            </div>
+        </div>
+        <div class="modal-footer-custom">
+            <div class="btn-group-actions" style="display:flex; gap:0.35rem; flex-wrap:wrap;">
+                <button class="btn btn-secondary-print" id="selectAllBtn"><i class="fas fa-check-double"></i> تحديد الكل</button>
+                <button class="btn btn-secondary-print" id="deselectAllBtn"><i class="fas fa-times"></i> إلغاء الكل</button>
+                <button class="btn btn-secondary-print" id="saveSettingsBtn"><i class="fas fa-save"></i> حفظ</button>
+                <button class="btn btn-secondary-print" id="resetSettingsBtn"><i class="fas fa-undo"></i> استعادة</button>
+            </div>
+            <div style="display:flex; gap:0.5rem; flex-wrap:wrap;">
+                <button class="btn btn-secondary-print" id="exportPdfBtn"><i class="fas fa-file-pdf"></i> PDF</button>
+                <button class="btn btn-primary-print" id="executePrintBtn"><i class="fas fa-print"></i> طباعة الآن</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ============================================================
+     مودال تصدير PDF
+     ============================================================ -->
+<div class="modal-overlay" id="pdfExportModal">
+    <div class="modal-box" style="width: 500px;">
+        <div class="modal-header-custom">
+            <h3><i class="fas fa-file-pdf"></i> تصدير كملف PDF</h3>
+            <button class="modal-close" id="closePdfModalBtn"><i class="fas fa-times"></i></button>
+        </div>
+        <div class="modal-body-custom">
+            <div class="pdf-export-instructions" style="text-align: center; padding: 1rem;">
+                <div class="icon" style="font-size: 3rem; color: var(--primary-4); margin-bottom: 1rem;"><i class="fas fa-file-arrow-down"></i></div>
+                <h4 style="font-size: 1.1rem; color: var(--text-dark); margin-bottom: 0.5rem;">جاهز لتصدير المستند</h4>
+                <p style="font-size: 0.85rem; color: #555; margin-bottom: 1.5rem; line-height: 1.6;">لضمان الحفاظ على روابط الأحرف العربية وجودة النصوص، يعتمد النظام على محرك الطباعة المتقدم.</p>
+                <ul class="pdf-steps" style="text-align: right; background: #f8f9fa; padding: 1rem; border-radius: 8px; margin-bottom: 1rem; list-style: none; padding-right: 2rem;">
+                    <li style="margin-bottom: 0.5rem; font-size: 0.85rem; color: #444;">1. سيتم فتح نافذة الطباعة الخاصة بمتصفحك.</li>
+                    <li style="margin-bottom: 0.5rem; font-size: 0.85rem; color: #444;">2. من قائمة "الطابعة" (Printer)، اختر <strong>حفظ كـ PDF (Save as PDF)</strong>.</li>
+                    <li style="margin-bottom: 0.5rem; font-size: 0.85rem; color: #444;">3. اضغط على <strong>حفظ (Save)</strong> لتنزيل الملف.</li>
+                </ul>
+            </div>
+        </div>
+        <div class="modal-footer-custom" style="justify-content: center;">
+            <button class="btn btn-primary-print" id="confirmPdfExportBtn" style="padding: 0.6rem 2rem; font-size: 0.9rem;">
+                <i class="fas fa-print"></i> فتح نافذة الحفظ
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- ============================================================
+     Toast للإشعارات
+     ============================================================ -->
+<div class="toast" id="toast"></div>
+
+<!-- ============================================================
+     أنماط إضافية مضمّنة
+     ============================================================ -->
+<style>
+    .toggle-slider::before {
+        content: '';
+        position: absolute;
+        width: 16px;
+        height: 16px;
+        background: white;
+        border-radius: 50%;
+        top: 3px;
+        left: 3px;
+        transition: 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
+    }
+    .toggle-switch input:checked + .toggle-slider {
+        background: #0097a7;
+    }
+    .toggle-switch input:checked + .toggle-slider::before {
+        left: 21px;
+    }
+    .btn-opt.active {
+        background: white;
+        color: #006064;
+        box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
+    }
+</style>
+
+
+
+
+
+static/js/print_system.js
+
+/**
+ * ================================================================
+ * نظام الطباعة الموحد - JavaScript
+ * ================================================================
+ * 
+ * هذا الملف يحتوي على جميع وظائف نظام الطباعة:
+ * 
+ * 1. generateTableColumns(): توليد خيارات الأعمدة تلقائياً من الجدول
+ * 2. getCompanySettings(): قراءة بيانات الشركة من الـ HTML
+ * 3. populatePrintHeaderFooter(): تعبئة الهيدر والفوتر بالبيانات
+ * 4. savePrintSettings() / loadPrintSettings(): حفظ واستعادة الإعدادات
+ * 5. preparePrintSettings(): تجهيز الإعدادات قبل الطباعة
+ * 6. executePrint(): تنفيذ الطباعة
+ * 7. ربط الأحداث (Event Listeners)
+ * ================================================================
+ * 
+ * ⚠️ تنبيه مهم جداً - المشكلة التي تم حلها:
+ * ================================================================
+ * 
+ * المشكلة: كانت الدالة getCompanySettings() تفرض صورة 22.png
+ * كشعار افتراضي للشركة، مما تسبب في ظهور صورة غير صحيحة
+ * عند الطباعة حتى بعد رفع شعار جديد.
+ * 
+ * الحل: تم إزالة القيمة الافتراضية 22.png وتم تعديل الدالة
+ * لتعيد logo_url فارغاً عندما لا توجد صورة، مما يؤدي إلى
+ * عرض رسالة "بدون شعار" بدلاً من صورة 22.png.
+ * 
+ * هذا الحل يضمن أن الصورة التي تظهر هي الصورة الحقيقية
+ * للشركة أو لا تظهر صورة على الإطلاق إذا لم تكن موجودة.
+ * ================================================================
+ */
+
+document.addEventListener('DOMContentLoaded', function() {
+    
+    // ================================================================
+    // 1. دالة توليد أعمدة الجدول تلقائياً
+    // ================================================================
+    // تقرأ وسوم <th data-print-field="col-xxx"> من الجدول
+    // وتولد Checkboxes في المودال للتحكم بإظهار/إخفاء الأعمدة
+    // ================================================================
+    function generateTableColumns() {
+        const grid = document.getElementById('tableColumnsGrid');
+        if (!grid) return;
+        grid.innerHTML = ''; 
+
+        const headers = document.querySelectorAll('#printableArea th[data-print-field]');
+        
+        if (headers.length === 0) {
+            const emptyMsg = document.createElement('div');
+            emptyMsg.style.cssText = 'grid-column: 1 / -1; text-align: center; color: #999; font-size: 0.8rem; padding: 0.5rem;';
+            emptyMsg.textContent = 'لا توجد أعمدة قابلة للطباعة';
+            grid.appendChild(emptyMsg);
+            return;
+        }
+        
+        headers.forEach(th => {
+            const target = th.getAttribute('data-print-field');
+            const clone = th.cloneNode(true);
+            const sortIcon = clone.querySelector('.sort-icon');
+            if(sortIcon) sortIcon.remove();
+            const label = clone.textContent.trim();
+            
+            const labelEl = document.createElement('label');
+            labelEl.className = 'field-check';
+            
+            const input = document.createElement('input');
+            input.type = 'checkbox';
+            input.checked = true;
+            input.setAttribute('data-target', target);
+            
+            const keySpan = document.createElement('span');
+            keySpan.className = 'field-key';
+            keySpan.textContent = target.replace('col-', '');
+            
+            labelEl.appendChild(input);
+            labelEl.appendChild(document.createTextNode(' ' + label + ' '));
+            labelEl.appendChild(keySpan);
+            grid.appendChild(labelEl);
+        });
+    }
+
+    generateTableColumns();
+
+    // ================================================================
+    // 2. قراءة بيانات الشركة - المعدلة لحل مشكلة 22.png
+    // ================================================================
+    // ⚠️ تنبيه: هذه الدالة تم تعديلها لحل المشكلة
+    // لم تعد تفرض صورة 22.png كقيمة افتراضية
+    // ================================================================
+    function getCompanySettings() {
+        try {
+            const scriptTag = document.getElementById('companyData');
+            if (scriptTag) {
+                const data = JSON.parse(scriptTag.textContent);
+                
+                // ★★★★★ الحل النهائي لمشكلة 22.png ★★★★★
+                // إذا كانت logo_url فارغة أو None، نتركها فارغة
+                // ولا نضع أي قيمة افتراضية
+                if (!data.logo_url || data.logo_url === '' || data.logo_url === 'None') {
+                    data.logo_url = '';
+                }
+                
+                // إذا كان المسار لا يبدأ بـ /media/ أو http، أضف المسار الكامل
+                if (data.logo_url && !data.logo_url.startsWith('/media/') && 
+                    !data.logo_url.startsWith('http://') && !data.logo_url.startsWith('https://')) {
+                    data.logo_url = '/media/company_logos/' + data.logo_url;
+                }
+                
+                return data;
+            }
+        } catch (e) {
+            console.warn('❌ خطأ في قراءة بيانات الشركة:', e);
+        }
+        
+        // ★★★★★ القيم الافتراضية بدون أي صورة ★★★★★
+        return { 
+            name: 'شركة تجريبية', 
+            logo_url: '',  // ← فارغة، بدون صورة افتراضية
+            phone: '0591234567', 
+            address: 'دمشق - سوريا', 
+            footer_text: 'شكراً لتعاملكم معنا' 
+        };
+    }
+
+    // ================================================================
+    // 3. تعبئة حقول المودال بالبيانات تلقائياً
+    // ================================================================
+    function populatePrintHeaderFooter() {
+        const company = getCompanySettings();
+        document.getElementById('phCompanyName').textContent = company.name;
+        document.getElementById('watermarkText').textContent = company.name;
+        
+        let details = [];
+        if (company.phone) details.push('📞 ' + company.phone);
+        if (company.address) details.push('📍 ' + company.address);
+        document.getElementById('phCompanyDetails').textContent = details.join(' | ');
+        document.getElementById('phFooterText').textContent = company.footer_text;
+        
+        const img = document.getElementById('phLogoImg');
+        const placeholder = document.getElementById('phLogoPlaceholder');
+        const previewImg = document.getElementById('logoPreviewImg');
+        const previewPlaceholder = document.getElementById('logoPreviewPlaceholder');
+        
+        // التحقق من وجود صورة
+        const hasLogo = company.logo_url && company.logo_url !== '' && company.logo_url !== 'None';
+        
+        if (hasLogo) {
+            img.src = company.logo_url; 
+            img.style.display = 'block'; 
+            placeholder.style.display = 'none';
+            previewImg.src = company.logo_url; 
+            previewImg.style.display = 'block';
+            previewPlaceholder.style.display = 'none';
+            
+            img.onerror = function() {
+                img.style.display = 'none'; 
+                placeholder.style.display = 'inline'; 
+                previewImg.style.display = 'none';
+                previewPlaceholder.style.display = 'inline';
+                console.warn('⚠️ فشل تحميل الصورة:', company.logo_url);
+            };
+            previewImg.onerror = function() {
+                previewImg.style.display = 'none';
+                previewPlaceholder.style.display = 'inline';
+            };
+        } else {
+            img.style.display = 'none'; 
+            placeholder.style.display = 'inline'; 
+            previewImg.style.display = 'none';
+            previewPlaceholder.style.display = 'inline';
+        }
+        
+        document.getElementById('companyNameInput').value = company.name;
+        let detailsText = [];
+        if (company.phone) detailsText.push('هاتف: ' + company.phone);
+        if (company.address) detailsText.push('عنوان: ' + company.address);
+        document.getElementById('companyDetailsInput').value = detailsText.join(' | ');
+    }
+
+    populatePrintHeaderFooter();
+
+    // ================================================================
+    // 4. باقي الدوال (دون تغيير)
+    // ================================================================
+    // ... (جميع الدوال التالية كما هي بدون تغيير)
+    // ================================================================
+
+    // ================================================================
+    // 5. دالة تجهيز الإعدادات قبل الطباعة - المعدلة
+    // ================================================================
+    function preparePrintSettings() {
+        const company = getCompanySettings();
+        document.getElementById('phCompanyName').textContent = company.name;
+        let details = [];
+        if (company.phone) details.push('📞 ' + company.phone);
+        if (company.address) details.push('📍 ' + company.address);
+        document.getElementById('phCompanyDetails').textContent = details.join(' | ');
+        
+        var notes = document.getElementById('printNotes').value.trim();
+        var notesContentEl = document.getElementById('phNotesContent');
+        var notesSectionEl = document.getElementById('printNotesSection');
+        
+        if (notes) {
+            notesContentEl.textContent = notes;
+            notesSectionEl.style.display = 'block';
+        } else {
+            notesSectionEl.style.display = 'none';
+        }
+        
+        document.getElementById('phFooterText').textContent = company.footer_text;
+        
+        const phLogoImg = document.getElementById('phLogoImg');
+        const phLogoPlaceholder = document.getElementById('phLogoPlaceholder');
+        
+        // التحقق من وجود صورة قبل الطباعة
+        const hasLogo = company.logo_url && company.logo_url !== '' && company.logo_url !== 'None';
+        
+        if (hasLogo) {
+            phLogoImg.src = company.logo_url; 
+            phLogoImg.style.display = 'block'; 
+            phLogoPlaceholder.style.display = 'none';
+            phLogoImg.onerror = function() {
+                phLogoImg.style.display = 'none'; 
+                phLogoPlaceholder.style.display = 'inline';
+                console.warn('⚠️ فشل تحميل الصورة في الطباعة:', company.logo_url);
+            };
+        } else {
+            phLogoImg.style.display = 'none'; 
+            phLogoPlaceholder.style.display = 'inline';
+        }
+        
+        const printableArea = document.getElementById('printableArea');
+        
+        document.querySelectorAll('#printModal input[type="checkbox"][data-target]').forEach(cb => {
+            printableArea.querySelectorAll('[data-print-field="' + cb.dataset.target + '"]').forEach(el => {
+                el.setAttribute('data-print-hidden', cb.checked ? 'false' : 'true');
+            });
+        });
+        
+        var showIndex = document.getElementById('showIndex');
+        printableArea.querySelectorAll('table thead th:first-child, table tbody td:first-child').forEach(el => {
+            el.setAttribute('data-print-hidden', showIndex.checked ? 'false' : 'true');
+        });
+        
+        printableArea.classList.toggle('print-grayscale', !document.getElementById('printColors').checked);
+        printableArea.classList.toggle('print-no-lines', !document.getElementById('printLines').checked);
+        printableArea.classList.remove('print-compact', 'print-detailed');
+        if (printState.format === 'compact') printableArea.classList.add('print-compact');
+        else if (printState.format === 'detailed') printableArea.classList.add('print-detailed');
+        
+        document.getElementById('printHeaderArea').classList.remove('print-logo-small', 'print-logo-medium', 'print-logo-large');
+        document.getElementById('printHeaderArea').classList.add('print-logo-' + printState.logoSize);
+        
+        document.getElementById('watermarkText').style.display = document.getElementById('showWatermark').checked ? 'block' : 'none';
+        changePrintPage();
+    }
+
+    // ================================================================
+    // باقي الكود كما هو (تم حذفه للاختصار)
+    // ================================================================
+    // ... 
+});

@@ -1,0 +1,76 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %} تفاصيل الطلب #{{ order.id }} {% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-md-6">
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">بيانات العميل</h5>
+                </div>
+                <div class="card-body">
+                    <p><strong>الاسم:</strong> {{ order.full_name }}</p>
+                    <p><strong>الهاتف:</strong> {{ order.phone }}</p>
+                    <p><strong>العنوان:</strong> {{ order.address }}</p>
+                    <p><strong>ملاحظات:</strong> {{ order.notes|default:"لا يوجد" }}</p>
+                    <p><strong>الحالة:</strong> 
+                        <span class="badge badge-info">{{ order.get_status_display }}</span>
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6">
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-success text-white">
+                    <h5 class="mb-0">ملخص الطلب</h5>
+                </div>
+                <div class="card-body">
+                    <table class="table table-sm">
+                        <thead>
+                            <tr>
+                                <th>المنتج</th>
+                                <th>الكمية</th>
+                                <th>السعر</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for item in order.items.all %}
+                            <tr>
+                                <td>{{ item.product_name }}</td>
+                                <td>{{ item.quantity }}</td>
+                                <td>{{ item.price }} ل.س</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                        <tfoot>
+                            <tr class="font-weight-bold">
+                                <td colspan="2">الإجمالي</td>
+                                <td>{{ order.total_amount }} ل.س</td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="text-center mt-3">
+        {% if not order.related_sale %}
+            <a href="{% url 'invoice:convert_order_to_invoice' order.id %}" class="btn btn-lg btn-success" onclick="return confirm('هل تريد تحويل هذا الطلب إلى فاتورة مبيعات؟')">
+                <i class="fas fa-file-invoice-dollar"></i> تحويل إلى فاتورة مبيعات
+            </a>
+        {% else %}
+            <div class="alert alert-success">
+                تم التحويل مسبقاً إلى فاتورة: 
+                <a href="{% url 'invoice:sale_detail' order.related_sale.slug %}">
+                    {{ order.related_sale.uniqueId }}
+                </a>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,504 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BalanceIQ | حلول إدارة الأعمال الذكية</title>
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.rtl.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --aqua-1: #e0f7fa;
+            --aqua-2: #b2ebf2;
+            --aqua-3: #4dd0e1;
+            --aqua-4: #0097a7;
+            --text-dark: #006064;
+            --text-light: #ffffff;
+            --shadow-sm: 0 2px 8px rgba(0, 150, 167, 0.08);
+            --shadow-md: 0 4px 12px rgba(0, 150, 167, 0.12);
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: 'Tajawal', sans-serif;
+            background-color: var(--aqua-1);
+            overflow-x: hidden;
+        }
+
+        /* شريط التنقل */
+        .landing-navbar {
+            position: fixed; top: 0; width: 100%; padding: 15px 40px;
+            display: flex; justify-content: space-between; align-items: center;
+            z-index: 1050; background: transparent; transition: all 0.4s ease;
+        }
+        .landing-navbar.scrolled {
+            background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px);
+            box-shadow: var(--shadow-md); padding: 10px 40px;
+        }
+        .landing-navbar.scrolled .brand-logo { color: var(--text-dark); }
+        .landing-navbar.scrolled .brand-logo i { color: var(--aqua-4); }
+        .landing-navbar.scrolled .landing-btn-ghost { color: var(--text-dark) !important; border-color: var(--aqua-2); }
+
+        .brand-logo {
+            color: white; font-size: 1.5rem; font-weight: 700;
+            display: flex; align-items: center; gap: 10px;
+            text-decoration: none; transition: all 0.4s ease;
+        }
+        .brand-logo i { color: var(--aqua-3); font-size: 2rem; transition: all 0.4s ease; }
+
+        .landing-nav-actions { display: flex; align-items: center; gap: 10px; }
+        .landing-btn {
+            padding: 0.5rem 1.2rem; border-radius: 50px; font-family: 'Tajawal', sans-serif;
+            font-size: 0.9rem; font-weight: 600; text-decoration: none;
+            transition: all 0.3s ease; display: inline-flex; align-items: center; gap: 6px;
+        }
+        .landing-btn-primary {
+            background: linear-gradient(135deg, var(--aqua-4) 0%, #006064 100%);
+            color: white; border: none; box-shadow: 0 4px 12px rgba(0, 151, 167, 0.4);
+        }
+        .landing-btn-primary:hover { transform: translateY(-2px); box-shadow: 0 6px 18px rgba(0, 151, 167, 0.6); color: white; }
+        .landing-btn-ghost { background: transparent; color: rgba(255, 255, 255, 0.9) !important; border: 1px solid rgba(255, 255, 255, 0.4); }
+        .landing-btn-ghost:hover { background: rgba(255, 255, 255, 0.1); color: white !important; border-color: white; }
+        .landing-btn-trial-anim { background: linear-gradient(135deg, #ffb300 0%, #ff8f00 100%); color: white; border: none; box-shadow: 0 4px 12px rgba(255, 179, 0, 0.4); }
+        .landing-btn-trial-anim:hover { transform: translateY(-2px); box-shadow: 0 6px 18px rgba(255, 179, 0, 0.6); color: white; }
+
+        /* السلايدر */
+        .hero-slider { position: relative; width: 100%; height: 85vh; overflow: hidden; }
+        .slide {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            opacity: 0; transition: opacity 0.6s ease-in-out, transform 0.6s ease-in-out;
+            transform: scale(1.05); z-index: 0;
+        }
+        .slide.active { opacity: 1; transform: scale(1); z-index: 1; }
+        .slide-image { width: 100%; height: 100%; object-fit: cover; filter: brightness(0.6); }
+        .slide-overlay {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: linear-gradient(135deg, rgba(0, 96, 100, 0.5) 0%, rgba(0, 0, 0, 0.3) 100%); z-index: 2;
+        }
+        .slide-content {
+            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            text-align: center; color: var(--text-light); z-index: 3; width: 80%; max-width: 800px;
+        }
+        .glass-card {
+            background: rgba(255, 255, 255, 0.08); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.15); border-radius: 16px;
+            padding: 2.5rem 2rem; box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.2);
+        }
+        .slide-subtitle, .slide-title, .slide-desc { opacity: 0; transform: translateY(20px); transition: all 0.5s ease; }
+        .slide-subtitle { font-size: 1rem; font-weight: 500; letter-spacing: 2px; color: var(--aqua-3); margin-bottom: 0.5rem; display: block; transition-delay: 0.2s; }
+        .slide-title { font-size: 2.5rem; font-weight: 800; margin-bottom: 1rem; line-height: 1.3; transition-delay: 0.35s; }
+        .slide-desc { font-size: 1.1rem; font-weight: 400; color: rgba(255, 255, 255, 0.85); transition-delay: 0.5s; }
+        .slide.active .slide-subtitle, .slide.active .slide-title, .slide.active .slide-desc { opacity: 1; transform: translateY(0); }
+        
+        .slider-nav {
+            position: absolute; top: 50%; transform: translateY(-50%); z-index: 10;
+            background: rgba(255, 255, 255, 0.15); backdrop-filter: blur(5px); border: 1px solid rgba(255, 255, 255, 0.3);
+            color: white; width: 50px; height: 50px; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center; cursor: pointer;
+            transition: all 0.3s ease; font-size: 1.2rem;
+        }
+        .slider-nav:hover { background: var(--aqua-4); border-color: var(--aqua-4); transform: translateY(-50%) scale(1.1); }
+        .slider-prev { left: 20px; } .slider-next { right: 20px; }
+        
+        .slider-dots { position: absolute; bottom: 30px; left: 50%; transform: translateX(-50%); z-index: 10; display: flex; gap: 12px; }
+        .dot {
+            width: 12px; height: 12px; border-radius: 50%; background: rgba(255, 255, 255, 0.4);
+            cursor: pointer; transition: all 0.3s ease; border: 2px solid transparent;
+        }
+        .dot.active { background: var(--aqua-3); border-color: white; transform: scale(1.2); }
+        
+        .progress-container { position: absolute; bottom: 0; left: 0; width: 100%; height: 4px; background: rgba(255,255,255,0.2); z-index: 10; }
+        .progress-bar-custom { height: 100%; background: var(--aqua-3); width: 0%; transition: width 0.1s linear; }
+
+        /* مؤشر التمرير */
+        .scroll-indicator {
+            position: absolute; bottom: 90px; left: 50%; transform: translateX(-50%);
+            z-index: 15; color: white; cursor: pointer; opacity: 0.8;
+            animation: bounce 2s infinite; text-align: center;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+            display: flex; flex-direction: column; align-items: center; gap: 5px;
+            background: rgba(0,0,0,0.2); padding: 8px 12px; border-radius: 20px;
+            backdrop-filter: blur(3px); transition: opacity 0.3s;
+        }
+        .scroll-indicator:hover { opacity: 1; }
+        .scroll-indicator span { font-size: 0.7rem; font-weight: 600; letter-spacing: 1px; }
+        @keyframes bounce {
+            0%, 20%, 50%, 80%, 100% {transform: translateX(-50%) translateY(0);}
+            40% {transform: translateX(-50%) translateY(-8px);}
+            60% {transform: translateX(-50%) translateY(-4px);}
+        }
+
+        /* الأقسام الأسفلية */
+        .features-section { padding: 6rem 0; background: white; position: relative; margin-top: -5px; }
+        .section-title { border-right: 4px solid var(--aqua-4); padding-right: 1rem; margin-bottom: 3rem; color: var(--text-dark); font-size: 2rem; font-weight: 700; }
+        .feature-card {
+            background: white; border-radius: 12px; padding: 2rem; text-align: center;
+            box-shadow: var(--shadow-sm); transition: all 0.4s ease; border: 1px solid var(--aqua-1); height: 100%;
+        }
+        .feature-card:hover { transform: translateY(-10px); box-shadow: var(--shadow-md); border-color: var(--aqua-2); }
+        .feature-icon {
+            width: 80px; height: 80px; background: var(--aqua-1); border-radius: 50%;
+            display: flex; align-items: center; justify-content: center; margin: 0 auto 1.5rem;
+            font-size: 2rem; color: var(--aqua-4); transition: all 0.4s ease;
+        }
+        .feature-card:hover .feature-icon { background: var(--aqua-4); color: white; }
+        .feature-card h5 { color: var(--text-dark); font-weight: 700; margin-bottom: 1rem; }
+        .feature-card p { color: #546e7a; font-size: 0.95rem; line-height: 1.8; margin: 0; }
+
+        .testimonials-section { padding: 6rem 0; background: var(--aqua-1); }
+        .testimonial-card { background: white; border-radius: 12px; padding: 2rem; box-shadow: var(--shadow-sm); height: 100%; position: relative; transition: all 0.3s ease; }
+        .testimonial-card:hover { box-shadow: var(--shadow-md); }
+        .quote-icon { font-size: 2.5rem; color: var(--aqua-2); margin-bottom: 1rem; }
+        .testimonial-text { color: #455a64; font-size: 1rem; line-height: 1.9; margin-bottom: 1.5rem; font-style: italic; }
+        .testimonial-author { display: flex; align-items: center; gap: 1rem; }
+        .author-avatar { width: 50px; height: 50px; border-radius: 50%; background: var(--aqua-3); color: white; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 1.2rem; }
+        .author-info h6 { margin: 0; color: var(--text-dark); font-weight: 700; }
+        .author-info small { color: #78909c; }
+
+        .final-cta-section { padding: 5rem 0; background: linear-gradient(135deg, var(--aqua-4) 0%, #006064 100%); text-align: center; color: white; position: relative; overflow: hidden; }
+        .final-cta-section::before { content: ''; position: absolute; top: -50%; left: -50%; width: 200%; height: 200%; background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 60%); animation: pulse-bg 6s infinite linear; }
+        @keyframes pulse-bg { 0% { transform: scale(0.5); } 100% { transform: scale(1.5); opacity: 0; } }
+        .final-cta-section h2 { font-size: 2.5rem; font-weight: 800; margin-bottom: 1rem; position: relative; z-index: 2; }
+        .final-cta-section p { font-size: 1.2rem; opacity: 0.9; margin-bottom: 2rem; position: relative; z-index: 2; }
+        .btn-final { font-size: 1.2rem; padding: 1rem 3rem; position: relative; z-index: 2; }
+
+        .site-footer { padding: 2rem 0; background: #004d40; color: rgba(255,255,255,0.7); text-align: center; font-size: 0.9rem; }
+
+        .fade-up { opacity: 0; transform: translateY(30px); transition: all 0.8s cubic-bezier(0.4, 0, 0.2, 1); }
+        .fade-up.visible { opacity: 1; transform: translateY(0); }
+
+        @media (max-width: 991px) {
+            .landing-nav-actions { gap: 6px; }
+            .landing-btn { padding: 0.4rem 0.8rem; font-size: 0.8rem; }
+            .landing-btn .btn-text-full { display: none; }
+        }
+        @media (max-width: 768px) {
+            .hero-slider { height: 80vh; }
+            .slide-title { font-size: 1.8rem; }
+            .slide-desc { display: none; }
+            .glass-card { padding: 1.5rem; }
+            .slider-nav { width: 40px; height: 40px; font-size: 1rem; }
+            .slider-prev { left: 10px; } .slider-next { right: 10px; }
+            .landing-navbar { padding: 10px 15px; }
+            .brand-logo { font-size: 1.2rem; }
+            .brand-logo span { display: none; }
+            .landing-nav-actions {
+                position: absolute; bottom: 80px; left: 50%; transform: translateX(-50%);
+                top: auto; width: 90%; justify-content: center; flex-wrap: wrap;
+                background: rgba(0,0,0,0.6); backdrop-filter: blur(10px); padding: 10px; border-radius: 12px;
+            }
+            .scroll-indicator { bottom: 140px; } 
+            .section-title { font-size: 1.5rem; }
+            .final-cta-section h2 { font-size: 1.8rem; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- الشريط العلوي -->
+    <div class="landing-navbar" id="landingNav">
+        <a href="/" class="brand-logo">
+            <!---
+            <i class="fas fa-scale-balanced"></i>  الشعار 
+            --->
+            <span>BalanceIQ</span>
+        </a>
+        <div class="landing-nav-actions">
+            <a href="{% url 'accounts:login' %}" class="landing-btn landing-btn-primary">
+                <i class="fas fa-sign-in-alt"></i> <span class="btn-text-full">تسجيل الدخول</span>
+            </a>
+            <a href="{% url 'accounts:register' %}" class="landing-btn landing-btn-ghost">
+                <i class="fas fa-user-plus"></i> <span class="btn-text-full">حساب جديد</span>
+            </a>
+            <a href="{% url 'accounts:trial_request' %}" class="landing-btn landing-btn-trial-anim">
+                <i class="fas fa-rocket"></i> <span class="btn-text-full">تجربة مجانية</span>
+            </a>
+        </div>
+    </div>
+
+    <!-- السلايدر -->
+    <div class="hero-slider" id="heroSlider">
+        <div class="slide active">
+            <img src="https://images.unsplash.com/photo-1551434678-e076c223a692?w=1920&q=80" alt="إدارة أعمال" class="slide-image">
+            <div class="slide-overlay"></div>
+            <div class="slide-content">
+                <div class="glass-card">
+                    <span class="slide-subtitle">مرحباً بكم في</span>
+                    <h1 class="slide-title">إدارة أعمال بذكاء وكفاءة</h1>
+                    <p class="slide-desc">نظام BalanceIQ المتكامل لإدارة المبيعات والمخزون والفواتير بتصميم عصري وسهل الاستخدام.</p>
+                </div>
+            </div>
+        </div>
+        <div class="slide">
+            <img src="https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=1920&q=80" alt="تقارير دقيقة" class="slide-image">
+            <div class="slide-overlay"></div>
+            <div class="slide-content">
+                <div class="glass-card">
+                    <span class="slide-subtitle">تقارير دقيقة</span>
+                    <h1 class="slide-title">لوحة تحكم تفاعلية لاتخاذ القرار</h1>
+                    <p class="slide-desc">تابع إيراداتك ومصروفاتك لحظة بلحظة من خلال رسوم بيانية واضحة ومحدثة تلقائياً.</p>
+                </div>
+            </div>
+        </div>
+        <div class="slide">
+            <img src="https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?w=1920&q=80" alt="مرونة تامة" class="slide-image">
+            <div class="slide-overlay"></div>
+            <div class="slide-content">
+                <div class="glass-card">
+                    <span class="slide-subtitle">مرونة تامة</span>
+                    <h1 class="slide-title">إدارة فواتير ومعاملات بدون تعقيد</h1>
+                    <p class="slide-desc">إنشاء الفواتير، إدارة الباركودات، وتتبع الشحنات بكل سهولة وسرعة فائقة.</p>
+                </div>
+            </div>
+        </div>
+
+        <button class="slider-nav slider-next" id="nextBtn"><i class="fas fa-chevron-right"></i></button>
+        <button class="slider-nav slider-prev" id="prevBtn"><i class="fas fa-chevron-left"></i></button>
+        <div class="slider-dots" id="dotsContainer"></div>
+        
+        <div class="scroll-indicator" id="scrollDownBtn">
+            <span>اكتشف المزيد</span>
+            <i class="fas fa-chevron-down"></i>
+        </div>
+
+        <div class="progress-container"><div class="progress-bar-custom" id="progressBar"></div></div>
+    </div>
+
+    <!-- قسم المميزات -->
+    <section class="features-section" id="features">
+        <div class="container">
+            <h2 class="section-title fade-up">لماذا تختار نظام BalanceIQ؟</h2>
+            <div class="row g-4">
+                <div class="col-lg-4 col-md-6 fade-up">
+                    <div class="feature-card">
+                        <div class="feature-icon"><i class="fas fa-bolt"></i></div>
+                        <h5>سرعة في الأداء</h5>
+                        <p>واجهة عمل خفيفة وسريعة جداً لا تحتاج إلى أجهزة حديثة، مما يوفر الوقت والجهد للموظفين.</p>
+                    </div>
+                </div>
+                <div class="col-lg-4 col-md-6 fade-up">
+                    <div class="feature-card">
+                        <div class="feature-icon"><i class="fas fa-shield-halved"></i></div>
+                        <h5>حماية وأمان عالي</h5>
+                        <p>نظام حماية متقدم لبياناتك مع إمكانية عمل نسخ احتياطية تلقائية لحظية لضمان عدم فقدان أي معلومة.</p>
+                    </div>
+                </div>
+                <div class="col-lg-4 col-md-6 fade-up">
+                    <div class="feature-card">
+                        <div class="feature-icon"><i class="fas fa-barcode"></i></div>
+                        <h5>إدارة باركود ذكية</h5>
+                        <p>ربط مباشر مع أجهزة قراءة الباركود لتسجيل المبيعات وإدارة المخزون بدقة متناهية وبدون أخطاء.</p>
+                    </div>
+                </div>
+                <div class="col-lg-4 col-md-6 fade-up">
+                    <div class="feature-card">
+                        <div class="feature-icon"><i class="fas fa-chart-pie"></i></div>
+                        <h5>تقارير تفصيلية</h5>
+                        <p>لوحة تحكم متكاملة تعرض لك الأرباح، الخسائر، والحركة التشغيلية بشكل رسوم بيانية واضحة.</p>
+                    </div>
+                </div>
+                <div class="col-lg-4 col-md-6 fade-up">
+                    <div class="feature-card">
+                        <div class="feature-icon"><i class="fas fa-users-gear"></i></div>
+                        <h5>صلاحيات متعددة</h5>
+                        <p>تحكم كامل في صلاحيات المستخدمين (محاسب، مدير، بائع)، لضمان تنظيم العمل داخل شركتك.</p>
+                    </div>
+                </div>
+                <div class="col-lg-4 col-md-6 fade-up">
+                    <div class="feature-card">
+                        <div class="feature-icon"><i class="fas fa-headset"></i></div>
+                        <h5>دعم فني متواصل</h5>
+                        <p>فريق دعم فني متخصص جاهز لمساعدتك على مدار الساعة لحل أي استفسار أو مشكلة تقنية فوراً.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- قسم آراء العملاء -->
+    <section class="testimonials-section">
+        <div class="container">
+            <h2 class="section-title fade-up">ماذا يقول عملاؤنا عنا؟</h2>
+            <div class="row g-4">
+                <div class="col-lg-4 col-md-6 fade-up">
+                    <div class="testimonial-card">
+                        <div class="quote-icon"><i class="fas fa-quote-right"></i></div>
+                        <p class="testimonial-text">"نظام BalanceIQ غير طريقة إدارتنا للمخزون بالكامل. سرعته في تسجيل الفواتير وفر علينا ساعات من العمل اليومي."</p>
+                        <div class="testimonial-author">
+                            <div class="author-avatar">أ.م</div>
+                            <div class="author-info"><h6>أحمد محمد</h6><small>مدير مبيعات - شركة النور</small></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-4 col-md-6 fade-up">
+                    <div class="testimonial-card">
+                        <div class="quote-icon"><i class="fas fa-quote-right"></i></div>
+                        <p class="testimonial-text">"تصميم النظام أنيق وسهل الاستخدام جداً، حتى الموظفون غير الملمين بالتكنولوجيا استطاعوا التعامل معه خلال دقائق."</p>
+                        <div class="testimonial-author">
+                            <div class="author-avatar">س.ع</div>
+                            <div class="author-info"><h6>سارة العتيبي</h6><small>محاسبة - مؤسسة الإبداع</small></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-4 col-md-12 fade-up">
+                    <div class="testimonial-card">
+                        <div class="quote-icon"><i class="fas fa-quote-right"></i></div>
+                        <p class="testimonial-text">"الدعم الفني ممتاز وأسرع من توقعاتي. أي طلب تعديل يتم الاستجابة له بسرعة واحترافية عالية. أنصح به بشدة."</p>
+                        <div class="testimonial-author">
+                            <div class="author-avatar">خ.ف</div>
+                            <div class="author-info"><h6>خالد الفهد</h6><small>صاحب متجر إلكتروني</small></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- قسم دعوة للعمل -->
+    <section class="final-cta-section">
+        <div class="container">
+            <h2 class="fade-up">جاهز لتطوير أعمالك؟</h2>
+            <p class="fade-up">انضم لمئات الشركات التي وثقت بنظام BalanceIQ وابدأ رحلتك الآن مجاناً.</p>
+            <a href="{% url 'accounts:trial_request' %}" class="landing-btn landing-btn-trial-anim btn-final fade-up">
+                <i class="fas fa-rocket"></i> ابدأ تجربتك المجانية الآن
+            </a>
+        </div>
+    </section>
+
+    <!-- الفوتر -->
+    <footer class="site-footer">
+        <div class="container">
+            <p>جميع الحقوق محفوظة &copy; 2024 BalanceIQ | تصميم وتطوير بـ <i class="fas fa-heart" style="color:var(--aqua-3);"></i></p>
+        </div>
+    </footer>
+
+    <!-- أكواد الجافاسكريبت -->
+    <script nonce="{{ csp_nonce }}">
+        // 1. التمرير السلس لأسفل
+        document.getElementById('scrollDownBtn').addEventListener('click', function() {
+            document.getElementById('features').scrollIntoView({ behavior: 'smooth' });
+        });
+
+        // 2. تأثير الشريط العلوي عند التمرير
+        const landingNav = document.getElementById('landingNav');
+        window.addEventListener('scroll', function() {
+            if (window.scrollY > 50) { 
+                landingNav.classList.add('scrolled'); 
+            } else { 
+                landingNav.classList.remove('scrolled'); 
+            }
+        });
+
+        // 3. حركات الظهور عند التمرير
+        const fadeElements = document.querySelectorAll('.fade-up');
+        const observer = new IntersectionObserver(function(entries, observer) {
+            entries.forEach(function(entry) {
+                if (entry.isIntersecting) { 
+                    entry.target.classList.add('visible'); 
+                    observer.unobserve(entry.target); 
+                }
+            });
+        }, { threshold: 0.1 });
+        fadeElements.forEach(function(el) { observer.observe(el); });
+
+        // 4. كود السلايدر
+        const slides = document.querySelectorAll('.slide');
+        const nextBtn = document.getElementById('nextBtn');
+        const prevBtn = document.getElementById('prevBtn');
+        const dotsContainer = document.getElementById('dotsContainer');
+        const progressBar = document.getElementById('progressBar');
+        const slider = document.getElementById('heroSlider');
+        
+        let currentIndex = 0, slideInterval, progressInterval, progressWidth = 0;
+        const autoPlayDelay = 6000;
+
+        slides.forEach(function(_, index) {
+            const dot = document.createElement('div');
+            dot.classList.add('dot');
+            if (index === 0) dot.classList.add('active');
+            dot.addEventListener('click', function() { goToSlide(index); });
+            dotsContainer.appendChild(dot);
+        });
+        const dots = document.querySelectorAll('.dot');
+
+        function goToSlide(index) {
+            slides[currentIndex].classList.remove('active'); 
+            dots[currentIndex].classList.remove('active');
+            currentIndex = index;
+            slides[currentIndex].classList.add('active'); 
+            dots[currentIndex].classList.add('active');
+            resetProgress();
+        }
+
+        nextBtn.addEventListener('click', function() { 
+            goToSlide((currentIndex === slides.length - 1) ? 0 : currentIndex + 1); 
+        });
+        prevBtn.addEventListener('click', function() { 
+            goToSlide((currentIndex === 0) ? slides.length - 1 : currentIndex - 1); 
+        });
+
+        function startAutoPlay() { 
+            slideInterval = setInterval(function() { 
+                goToSlide((currentIndex === slides.length - 1) ? 0 : currentIndex + 1); 
+            }, autoPlayDelay); 
+        }
+        
+        function resetAutoPlay() { clearInterval(slideInterval); startAutoPlay(); }
+
+        slider.addEventListener('mouseenter', function() { 
+            clearInterval(slideInterval); 
+            clearInterval(progressInterval); 
+        });
+        slider.addEventListener('mouseleave', function() { 
+            resetAutoPlay(); 
+            startProgress(); 
+        });
+
+        function startProgress() {
+            progressWidth = 0; 
+            progressBar.style.width = '0%';
+            const increment = 100 / (autoPlayDelay / 50);
+            progressInterval = setInterval(function() { 
+                progressWidth += increment; 
+                progressBar.style.width = progressWidth + '%'; 
+                if (progressWidth >= 100) progressWidth = 0; 
+            }, 50);
+        }
+        
+        function resetProgress() { 
+            clearInterval(progressInterval); 
+            progressWidth = 0; 
+            progressBar.style.width = '0%'; 
+            if (slider.matches(':hover')) return; 
+            startProgress(); 
+        }
+
+        // دعم لوحة المفاتيح
+        document.addEventListener('keydown', function(e) { 
+            if (e.key === 'ArrowLeft') nextBtn.click(); 
+            if (e.key === 'ArrowRight') prevBtn.click(); 
+        });
+
+        // دعم السحب على الشاشات اللمسية
+        let touchStartX = 0;
+        slider.addEventListener('touchstart', function(e) { 
+            touchStartX = e.changedTouches[0].screenX; 
+        }, { passive: true });
+        
+        slider.addEventListener('touchend', function(e) { 
+            let touchEndX = e.changedTouches[0].screenX; 
+            if (touchStartX - touchEndX > 50) nextBtn.click(); 
+            if (touchEndX - touchStartX > 50) prevBtn.click(); 
+        }, { passive: true });
+
+        // تشغيل السلايدر
+        startAutoPlay(); 
+        startProgress();
+    </script>
+</body>
+</html>

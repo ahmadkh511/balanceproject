@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html dir="rtl" lang="ar">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>تسجيل الخروج |  أسم شركتك</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.rtl.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --aqua-1:#e0f7fa;--aqua-2:#b2ebf2;--aqua-3:#4dd0e1;--aqua-4:#0097a7;
+            --text-dark:#006064;--text-light:#ffffff;
+            --shadow-xl:0 20px 60px rgba(0,96,100,0.22);
+            --radius-sm:6px;--radius-md:10px;--radius-xl:24px;
+        }
+        *{box-sizing:border-box;margin:0;padding:0}
+        body{font-family:'Tajawal',sans-serif;background-color:var(--aqua-1);min-height:100vh;overflow-x:hidden}
+
+        .auth-page-bg{position:fixed;top:0;left:0;width:100%;height:100%;background:linear-gradient(160deg,#e0f7fa 0%,#b2ebf2 30%,#80deea 60%,#4dd0e1 100%);z-index:0;overflow:hidden}
+        .auth-page-bg::before{content:'';position:absolute;top:-20%;right:-10%;width:500px;height:500px;background:radial-gradient(circle,rgba(255,255,255,0.25) 0%,transparent 70%);border-radius:50%;animation:fb1 18s ease-in-out infinite}
+        .auth-page-bg::after{content:'';position:absolute;bottom:-15%;left:-5%;width:400px;height:400px;background:radial-gradient(circle,rgba(0,150,167,0.12) 0%,transparent 70%);border-radius:50%;animation:fb2 22s ease-in-out infinite}
+        @keyframes fb1{0%,100%{transform:translate(0,0) scale(1)} 50%{transform:translate(-30px,20px) scale(1.08)}}
+        @keyframes fb2{0%,100%{transform:translate(0,0)} 50%{transform:translate(20px,-30px) scale(1.05)}}
+        .bubble{position:absolute;border-radius:50%;background:rgba(255,255,255,0.15);border:1px solid rgba(255,255,255,0.2);animation:rise linear infinite;pointer-events:none}
+        .bubble:nth-child(1){width:20px;height:20px;left:10%;bottom:-20px;animation-duration:12s}
+        .bubble:nth-child(2){width:35px;height:35px;left:35%;bottom:-35px;animation-duration:16s;animation-delay:2s}
+        .bubble:nth-child(3){width:15px;height:15px;left:65%;bottom:-15px;animation-duration:10s;animation-delay:4s}
+        @keyframes rise{0%{transform:translateY(0);opacity:0}10%{opacity:1}90%{opacity:0.6}100%{transform:translateY(-110vh);opacity:0}}
+
+        .auth-wrapper{position:relative;z-index:10;display:flex;justify-content:center;align-items:center;min-height:100vh;padding:2rem 1rem}
+        .auth-card{background:rgba(255,255,255,0.92);backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);border-radius:var(--radius-xl);box-shadow:var(--shadow-xl);width:100%;max-width:440px;overflow:hidden;border:1px solid rgba(255,255,255,0.6);animation:cardEntrance 0.7s cubic-bezier(0.22,1,0.36,1) both}
+        @keyframes cardEntrance{from{opacity:0;transform:translateY(40px) scale(0.96)}to{opacity:1;transform:translateY(0) scale(1)}}
+
+        .auth-card-header{background:linear-gradient(135deg,var(--aqua-4) 0%,var(--text-dark) 100%);color:var(--text-light);padding:2.5rem 2rem 2rem;text-align:center;position:relative;overflow:hidden}
+        .auth-card-header::before{content:'';position:absolute;top:-60%;right:-30%;width:200%;height:200%;background:radial-gradient(circle,rgba(255,255,255,0.07) 0%,transparent 60%);animation:headerGlow 25s linear infinite}
+        @keyframes headerGlow{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
+        .auth-icon-wrap{width:72px;height:72px;background:rgba(255,255,255,0.15);border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 1rem;border:2px solid rgba(255,255,255,0.25);position:relative;z-index:1;animation:iconPulse 3s ease-in-out infinite}
+        @keyframes iconPulse{0%,100%{transform:scale(1)}50%{transform:scale(1.05)}}
+        .auth-icon-wrap i{font-size:1.8rem}
+        .auth-card-header h2{font-weight:700;font-size:1.5rem;margin-bottom:0.3rem;position:relative;z-index:1}
+        .auth-card-header p{margin:0;opacity:0.85;font-size:0.9rem;position:relative;z-index:1}
+        .auth-card-body{padding:2rem;text-align:center}
+
+        .logout-success-icon{width:90px;height:90px;border-radius:50%;background:linear-gradient(135deg,var(--aqua-1) 0%,var(--aqua-2) 100%);display:flex;align-items:center;justify-content:center;margin:0 auto 1.5rem;position:relative}
+        .logout-success-icon i{font-size:2.2rem;color:var(--aqua-4);animation:checkPop 0.6s cubic-bezier(0.68,-0.55,0.265,1.55) 0.3s both}
+        .logout-success-icon::after{content:'';position:absolute;width:100%;height:100%;border-radius:50%;border:2px solid var(--aqua-3);animation:ringExpand 1s ease-out 0.5s both}
+        @keyframes checkPop{from{transform:scale(0);opacity:0}to{transform:scale(1);opacity:1}}
+        @keyframes ringExpand{from{transform:scale(1);opacity:0.6}to{transform:scale(1.5);opacity:0}}
+
+        .logout-actions{display:flex;gap:0.75rem;justify-content:center;flex-wrap:wrap;margin-top:1.75rem}
+        .auth-btn{display:flex;align-items:center;justify-content:center;gap:0.5rem;padding:0.65rem 1.5rem;border-radius:var(--radius-sm);font-family:'Tajawal',sans-serif;font-weight:700;font-size:0.95rem;border:none;cursor:pointer;transition:all 0.25s ease;text-decoration:none;position:relative;overflow:hidden}
+        .auth-btn-primary{background:linear-gradient(135deg,var(--aqua-4) 0%,var(--text-dark) 100%);color:var(--text-light);box-shadow:0 4px 14px rgba(0,150,167,0.3)}
+        .auth-btn-primary:hover{transform:translateY(-2px);box-shadow:0 6px 20px rgba(0,150,167,0.4)}
+        .auth-btn-secondary{background:#f1f5f9;color:#475569;border:1.5px solid #e2e8f0}
+        .auth-btn-secondary:hover{background:#e2e8f0;color:#334155}
+
+        .auth-topbar{position:fixed;top:0;left:0;right:0;height:50px;background:rgba(255,255,255,0.8);backdrop-filter:blur(12px);border-bottom:1px solid rgba(0,150,167,0.1);display:flex;align-items:center;justify-content:space-between;padding:0 1.5rem;z-index:1000}
+        .auth-topbar-brand{display:flex;align-items:center;gap:0.5rem;color:var(--text-dark);font-weight:700;font-size:1rem;text-decoration:none}
+        .auth-topbar-brand i{color:var(--aqua-4);font-size:1.2rem}
+        .auth-topbar-time{font-size:0.8rem;color:#64748b;display:flex;align-items:center;gap:0.4rem}
+        .auth-wrapper{padding-top:calc(50px + 2rem)}
+
+        @media(max-width:480px){.auth-card{max-width:100%;border-radius:var(--radius-md)}.auth-card-header{padding:2rem 1.5rem 1.5rem}.auth-card-body{padding:1.5rem}.logout-actions{flex-direction:column}.logout-actions .auth-btn{width:100%}.auth-topbar-time{display:none}}
+        @media(prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:0.01ms!important;transition-duration:0.01ms!important}}
+    </style>
+</head>
+<body>
+
+    <div class="auth-page-bg">
+        <div class="bubble"></div><div class="bubble"></div><div class="bubble"></div>
+    </div>
+
+    <nav class="auth-topbar">
+        <a href="#" class="auth-topbar-brand"><i class="fas fa-cube"></i>   أسم شركتك</a>
+        <div class="auth-topbar-time"><i class="far fa-clock"></i> <span id="topbar-clock"></span></div>
+    </nav>
+
+    <div class="auth-wrapper">
+        <div class="auth-card">
+            <div class="auth-card-header">
+                <div class="auth-icon-wrap"><i class="fas fa-door-open"></i></div>
+                <h2>تسجيل الخروج</h2>
+                <p>لقد تم تسجيل خروجك بنجاح</p>
+            </div>
+            <div class="auth-card-body">
+                <div class="logout-success-icon">
+                    <i class="fas fa-check-circle"></i>
+                </div>
+
+                <h4 style="color:var(--text-dark);font-weight:700;margin-bottom:0.5rem;">تم تسجيل الخروج بنجاح</h4>
+
+                {% if user.is_authenticated %}
+                <p style="color:#64748b;font-size:0.9rem;margin-bottom:0.5rem;">مرحباً {{ user.username }}، لقد تم تسجيل خروجك من النظام.</p>
+                {% else %}
+                <p style="color:#64748b;font-size:0.9rem;margin-bottom:0.5rem;">لقد تم تسجيل خروجك من النظام.</p>
+                {% endif %}
+
+                <div style="background:var(--aqua-1);border-radius:var(--radius-sm);padding:0.75rem 1rem;margin:1.25rem 0;display:flex;align-items:center;gap:0.5rem;justify-content:center;">
+                    <i class="fas fa-clock" style="color:var(--aqua-4);"></i>
+                    <span style="font-size:0.82rem;color:var(--text-dark);" id="logout-time"></span>
+                </div>
+
+                <div class="logout-actions">
+                    <a href="{% url 'accounts:login' %}" class="auth-btn auth-btn-primary">
+                        <i class="fas fa-sign-in-alt"></i><span>تسجيل الدخول مرة أخرى</span>
+                    </a>
+                    <a href="{% url 'accounts:home' %}" class="auth-btn auth-btn-secondary">
+                        <i class="fas fa-home"></i><span>الصفحة الرئيسية</span>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script nonce="{{ csp_nonce }}">
+        // وقت تسجيل الخروج
+        const el = document.getElementById('logout-time');
+        if (el) {
+            const now = new Date();
+            el.textContent = 'آخر نشاط: ' + now.toLocaleTimeString('ar-SA', {hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:true});
+        }
+
+        // الساعة
+        function updateClock() {
+            const el = document.getElementById('topbar-clock');
+            if (el) el.textContent = new Date().toLocaleDateString('ar-SA',{weekday:'long',hour:'2-digit',minute:'2-digit',hour12:true});
+        }
+        updateClock(); setInterval(updateClock, 30000);
+    </script>
+</body>
+</html>

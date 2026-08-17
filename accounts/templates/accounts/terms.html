@@ -1,0 +1,302 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<style>
+    .terms-container {
+        min-height: 100vh;
+        background: linear-gradient(135deg, #f5f9ff 0%, #eef7ff 100%);
+        padding: 3rem 0;
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+    
+    .terms-card {
+        border: none;
+        border-radius: 15px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        overflow: hidden;
+        transition: transform 0.3s ease;
+    }
+    
+    .terms-card:hover {
+        transform: translateY(-5px);
+    }
+    
+    .terms-header {
+        background: linear-gradient(135deg, #1a73e8 0%, #0d47a1 100%);
+        color: white;
+        padding: 2rem;
+        text-align: center;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .terms-header::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 320"><path fill="%23ffffff" fill-opacity="0.1" d="M0,96L48,112C96,128,192,160,288,160C384,160,480,128,576,122.7C672,117,768,139,864,138.7C960,139,1056,117,1152,112C1248,107,1344,117,1392,122.7L1440,128L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z"></path></svg>') no-repeat bottom;
+        background-size: cover;
+    }
+    
+    .terms-body {
+        padding: 2.5rem;
+        background: white;
+        max-height: 70vh;
+        overflow-y: auto;
+    }
+    
+    .terms-body::-webkit-scrollbar {
+        width: 8px;
+    }
+    
+    .terms-body::-webkit-scrollbar-track {
+        background: #f1f1f1;
+        border-radius: 10px;
+    }
+    
+    .terms-body::-webkit-scrollbar-thumb {
+        background: #1a73e8;
+        border-radius: 10px;
+    }
+    
+    .terms-title {
+        color: #1a73e8;
+        border-bottom: 2px solid #e8f0fe;
+        padding-bottom: 10px;
+        margin-bottom: 20px;
+        font-weight: 600;
+    }
+    
+    .terms-section {
+        margin-bottom: 2rem;
+        position: relative;
+        padding-left: 20px;
+    }
+    
+    .terms-section::before {
+        content: "";
+        position: absolute;
+        left: 0;
+        top: 0;
+        height: 100%;
+        width: 3px;
+        background: linear-gradient(to bottom, #1a73e8, #0d47a1);
+        border-radius: 3px;
+    }
+    
+    .terms-section h4 {
+        color: #1a73e8;
+        margin-bottom: 15px;
+        font-weight: 600;
+    }
+    
+    .terms-section ul {
+        padding-right: 20px;
+    }
+    
+    .terms-section li {
+        margin-bottom: 12px;
+        position: relative;
+        line-height: 1.6;
+    }
+    
+    .terms-section li::before {
+        content: "•";
+        color: #1a73e8;
+        font-weight: bold;
+        display: inline-block;
+        width: 1em;
+        margin-right: -1em;
+    }
+    
+    .btn-terms {
+        background: linear-gradient(135deg, #1a73e8 0%, #0d47a1 100%);
+        border: none;
+        padding: 12px 30px;
+        font-weight: 600;
+        color: white;
+        transition: all 0.3s ease;
+        border-radius: 50px;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .btn-terms::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: rgba(255, 255, 255, 0.2);
+        transition: left 0.5s ease;
+    }
+    
+    .btn-terms:hover::before {
+        left: 100%;
+    }
+    
+    .btn-terms:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 6px 15px rgba(26, 115, 232, 0.4);
+    }
+    
+    .highlight-box {
+        background: #f8f9ff;
+        border-left: 4px solid #1a73e8;
+        padding: 15px;
+        margin: 20px 0;
+        border-radius: 0 8px 8px 0;
+    }
+    
+    .last-updated {
+        font-size: 0.9rem;
+        color: #6c757d;
+        font-style: italic;
+    }
+</style>
+
+<div class="terms-container">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-lg-8">
+                <div class="terms-card">
+                    <div class="terms-header">
+                        <h2><i class="bi bi-file-earmark-text-fill me-2"></i> اتفاقية الاستخدام وسياسة الخصوصية</h2>
+                        <p class="mb-0">آخر تحديث: {% now "Y-m-d" %}</p>
+                    </div>
+                    
+                    <div class="terms-body">
+                        <div class="terms-section">
+                            <h3 class="terms-title">مقدمة</h3>
+                            <p>مرحبًا بك في نظامنا. يرجى قراءة هذه الاتفاقية بعناية قبل استخدام المنصة. باستخدامك للخدمات، فإنك توافق على الالتزام بهذه الشروط والأحكام. إذا كنت لا توافق على هذه الشروط، يرجى عدم استخدام المنصة.</p>
+                            
+                            <div class="highlight-box">
+                                <p><strong>ملاحظة هامة:</strong> هذه الاتفاقية تشمل شروط الاستخدام وسياسة الخصوصية، وتعتبر جزءاً لا يتجزأ من عقد الاستخدام بينك وبين المنصة.</p>
+                            </div>
+                        </div>
+                        
+                        <div class="terms-section">
+                            <h4>1. التعريفات</h4>
+                            <ul>
+                                <li><strong>المنصة:</strong> هي النظام الإلكتروني الذي تقدمه شركتنا لتقديم الخدمات المحددة.</li>
+                                <li><strong>المستخدم:</strong> هو أي شخص يقوم بالتسجيل في المنصة أو يستخدمها بأي شكل من الأشكال.</li>
+                                <li><strong>الحساب:</strong> هو الحساب الشخصي الذي ينشئه المستخدم للوصول إلى خدمات المنصة.</li>
+                                <li><strong>البيانات الشخصية:</strong> هي أي معلومات تتعلق بشخص طبيعي محدد يمكن التعرف عليه.</li>
+                            </ul>
+                        </div>
+                        
+                        <div class="terms-section">
+                            <h4>2. الاستخدام المسموح به</h4>
+                            <ul>
+                                <li>يسمح باستخدام المنصة للأغراض الشخصية أو التجارية المشروعة فقط.</li>
+                                <li>يجب ألا تستخدم المنصة بأي طريقة تنتهك أي قوانين أو لوائح محلية أو وطنية أو دولية.</li>
+                                <li>يمنع استخدام المنصة لنشر أو نقل أي مواد مسيئة أو تشهيرية أو فاحشة أو غير لائقة.</li>
+                                <li>يحظر بشكل صارم استخدام المنصة لأغراض الاحتيال أو التصيد الاحتيالي أو أي أنشطة غير قانونية أخرى.</li>
+                                <li>يجب احترام حقوق الملكية الفكرية وعدم انتهاك حقوق الطبع والنشر أو العلامات التجارية.</li>
+                            </ul>
+                        </div>
+                        
+                        <div class="terms-section">
+                            <h4>3. الحسابات والمعلومات</h4>
+                            <ul>
+                                <li>أنت مسؤول عن الحفاظ على سرية معلومات حسابك وكلمة المرور.</li>
+                                <li>توافق على تزويدنا بمعلومات دقيقة وكاملة وحديثة عند التسجيل وعند تحديث بياناتك.</li>
+                                <li>نحتفظ بالحق في تعليق أو إنهاء حسابك إذا اكتشفنا أي انتهاك لهذه الاتفاقية.</li>
+                                <li>يجب إبلاغنا فوراً بأي استخدام غير مصرح به لحسابك.</li>
+                                <li>لا يجوز لك نقل حسابك أو بياناتك لأي طرف ثالث دون موافقتنا الخطية.</li>
+                            </ul>
+                        </div>
+                        
+                        <div class="terms-section">
+                            <h4>4. الخصوصية وحماية البيانات</h4>
+                            <ul>
+                                <li>نحن نحترم خصوصيتك ونلتزم بحماية بياناتك الشخصية وفقاً للقوانين المعمول بها.</li>
+                                <li>سيتم استخدام معلوماتك وفقًا لسياسة الخصوصية الخاصة بنا المرفقة بهذه الاتفاقية.</li>
+                                <li>نحن نستخدم تقنيات الأمان المناسبة لحماية بياناتك من الوصول غير المصرح به أو التغيير أو الكشف.</li>
+                                <li>لن نبيع أو نتاجر أو نؤجر بياناتك الشخصية لأطراف ثالثة دون موافقتك الصريحة، باستثناء الحالات المنصوص عليها في القانون.</li>
+                                <li>يحق لك الوصول إلى بياناتك الشخصية وتصحيحها أو حذفها وفقاً للقوانين المعمول بها.</li>
+                            </ul>
+                        </div>
+                        
+                        <div class="terms-section">
+                            <h4>5. الملكية الفكرية</h4>
+                            <ul>
+                                <li>جميع المحتويات والعلامات التجارية والشعارات والرسوم البيانية في المنصة هي ملك لنا أو لمزودي المحتوى.</li>
+                                <li>يحظر نسخ أو توزيع أو إعادة إنتاج أي جزء من المنصة دون موافقتنا الخطية.</li>
+                                <li>يحتفظ المستخدم بملكية المحتوى الذي ينشئه، ولكن يمنحنا ترخيصاً لاستخدامه وتوفيره ضمن المنصة.</li>
+                                <li>أنت تقر بأنك تملك جميع الحقوق اللازمة لأي محتوى ترفعه إلى المنصة.</li>
+                            </ul>
+                        </div>
+                        
+                        <div class="terms-section">
+                            <h4>6. التعديلات على الاتفاقية</h4>
+                            <ul>
+                                <li>نحتفظ بالحق في تعديل هذه الاتفاقية أو أي جزء منها في أي وقت.</li>
+                                <li>سيتم نشر أي تغييرات على هذه الصفحة وسيصبح تاريخ التحديث في الأعلى.</li>
+                                <li>في حالة التغييرات الجوهرية، سنقوم بإشعار المستخدمين عبر البريد الإلكتروني أو إشعارات المنصة.</li>
+                                <li>استمرارك في استخدام المنصة بعد 30 يوماً من نشر التعديلات يعني موافقتك على الشروط المعدلة.</li>
+                            </ul>
+                        </div>
+                        
+                        <div class="terms-section">
+                            <h4>7. المسؤولية والتعويض</h4>
+                            <ul>
+                                <li>نحن لا نتحمل مسؤولية أي أضرار مباشرة أو غير مباشرة ناتجة عن استخدام المنصة.</li>
+                                <li>نحن لا نضمن أن المنصة ستكون خالية من الأخطاء أو أن الوصول إليها سيكون دون انقطاع.</li>
+                                <li>أنت توافق على تعويضنا وحمايتنا من أي مطالبات أو أضرار ناتجة عن انتهاكك لهذه الاتفاقية.</li>
+                                <li>في أقصى الحالات، تقتصر مسؤوليتنا على المبلغ الذي دفعته للخدمات خلال الأشهر الـ 12 الماضية.</li>
+                            </ul>
+                        </div>
+                        
+                        <div class="terms-section">
+                            <h4>8. إنهاء الخدمة</h4>
+                            <ul>
+                                <li>يحق لك إنهاء حسابك في أي وقت من خلال إعدادات الحساب أو التواصل معنا.</li>
+                                <li>نحتفظ بالحق في تعليق أو إنهاء حسابك فوراً دون سابق إنذار في حالة انتهاك هذه الاتفاقية.</li>
+                                <li>عند إنهاء الحساب، قد نحتفظ ببعض معلوماتك وفقاً للقوانين المعمول بها وسياسة الخصوصية.</li>
+                                <li>بعد إنهاء الحساب، تفقد حق الوصول إلى جميع الخدمات والمحتوى المرتبط بحسابك.</li>
+                            </ul>
+                        </div>
+                        
+                        <div class="terms-section">
+                            <h4>9. القانون الواجب التطبيق</h4>
+                            <ul>
+                                <li>تخضع هذه الاتفاقية لقوانين الدولة التي يقع فيها مقر شركتنا الرئيسي.</li>
+                                <li>أي نزاع ينشأ عن هذه الاتفاقية سيتم حله عبر المحاكم المختصة في تلك الدولة.</li>
+                                <li>في حال تم اعتبار أي بند من هذه الاتفاقية باطلاً أو غير قابل للتنفيذ، تبقى البنود الأخرى سارية المفعول.</li>
+                            </ul>
+                        </div>
+                        
+                        <div class="terms-section">
+                            <h4>10. التواصل معنا</h4>
+                            <ul>
+                                <li>لأي استفسارات أو شكاوى تتعلق بهذه الاتفاقية، يمكنك التواصل معنا عبر:</li>
+                                <li>البريد الإلكتروني: support@example.com</li>
+                                <li>رقم الهاتف: +966 12 345 6789</li>
+                                <li>نموذج التواصل المتاح في المنصة</li>
+                            </ul>
+                        </div>
+                        
+                        <div class="text-center mt-5">
+                            <a href="javascript:history.back()" class="btn btn-terms me-3">
+                                <i class="bi bi-arrow-right me-2"></i> العودة للتسجيل
+                            </a>
+                            <a href="{% url 'accounts:login' %}" class="btn btn-terms">
+                                <i class="bi bi-box-arrow-in-right me-2"></i> صفحة الدخول
+                            </a>
+                        </div>
+                        
+                        <p class="text-center mt-4 last-updated">آخر تحديث: {% now "Y-m-d" %}</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.8.0/font/bootstrap-icons.css">
+{% endblock %}

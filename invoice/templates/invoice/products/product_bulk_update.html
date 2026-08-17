@@ -1,0 +1,511 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* السماح بالتمرير الأفقي على مستوى الصفحة بالكامل */
+    body { overflow-x: auto !important; }
+    
+    :root { --aqua-1: #e0f7fa; --aqua-2: #b2ebf2; --aqua-3: #4dd0e1; --aqua-4: #0097a7; --text-dark: #006064; --text-light: #ffffff; --shadow-sm: 0 2px 8px rgba(0, 150, 167, 0.08); --shadow-md: 0 4px 12px rgba(0, 150, 167, 0.12); }
+    body { background-color: var(--aqua-1); font-family: 'Tajawal', sans-serif; font-size: 0.85rem; }
+    .container-fluid { padding: 0.75rem; min-width: 900px; /* يضمن عدم انهيار الجدول على الشاشات الصغيرة */ }
+    .card { border: none; border-radius: 8px; box-shadow: var(--shadow-sm); margin-bottom: 1rem; overflow: visible; background: #fff; }
+    .card-header { background: linear-gradient(135deg, var(--aqua-4) 0%, #006064 100%); color: var(--text-light); padding: 0.6rem 1rem; font-weight: 600; font-size: 0.9rem; display: flex; align-items: center; gap: 0.5rem; border-bottom: none; }
+    .card-body { padding: 1rem; }
+    .form-control, .form-select { border-radius: 4px; border: 1px solid var(--aqua-2); padding: 0.35rem 0.5rem; font-size: 0.8rem; transition: all 0.2s; background: #fff; }
+    .form-control:focus, .form-select:focus { border-color: var(--aqua-3); box-shadow: 0 0 0 2px rgba(77, 208, 225, 0.2); }
+    .form-control.input-error { border-color: #e53935 !important; box-shadow: 0 0 0 2px rgba(229, 57, 53, 0.2) !important; background-color: #ffebee !important; }
+    .form-label { font-weight: 500; font-size: 0.75rem; margin-bottom: 0.2rem; color: var(--text-dark); display: block; }
+    .btn { border-radius: 4px; padding: 0.35rem 0.7rem; font-weight: 600; font-size: 0.8rem; border: none; transition: all 0.2s; display: inline-flex; align-items: center; gap: 0.3rem; }
+    .btn-primary { background: linear-gradient(135deg, var(--aqua-4) 0%, #006064 100%); color: white; }
+    .btn-success { background: linear-gradient(135deg, #00897b 0%, #00695c 100%); color: white; }
+    .btn-danger { background: linear-gradient(135deg, #e53935 0%, #b71c1c 100%); color: white; }
+    .btn-light { background: #fff; color: var(--text-dark); border: 1px solid var(--aqua-2); }
+    .btn:hover { transform: translateY(-1px); box-shadow: var(--shadow-md); color: #fff; }
+    
+    /* لوحة التحكم المجمّدة */
+    .control-panel { 
+        position: sticky; 
+        top: 0; 
+        z-index: 1050; 
+        background: #fff;
+        border-left: 5px solid var(--aqua-4);
+        border-radius: 0 0 8px 8px;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    }
+    
+    /* إزالة التمرير الداخلي للجدول نهائياً */
+    .pricing-table-wrapper { position: relative; overflow: visible; }
+    
+    .pricing-table { width: 100%; border-collapse: separate; border-spacing: 0; table-layout: fixed; min-width: 800px; }
+    
+    /* تجميد رأس الجدول */
+    .pricing-table thead th { 
+        background: linear-gradient(135deg, var(--aqua-3) 0%, var(--aqua-4) 100%); 
+        color: white; font-weight: 600; text-align: center; padding: 0.5rem; 
+        border-bottom: 2px solid var(--aqua-2); 
+        position: sticky; 
+        z-index: 1040; 
+        font-size: 0.8rem; white-space: nowrap; cursor: pointer; user-select: none; 
+    }
+    
+    /* تجميد خلية رأس العمود الأول (الزاوية) */
+    .pricing-table thead th:first-child {
+        position: sticky;
+        left: 0;
+        z-index: 1051; /* أعلى زاوية لضمان عدم مرور أعمدة تحتها */
+        background: linear-gradient(135deg, #00838f 0%, #004d40 100%);
+    }
+    
+    .pricing-table thead th:hover { background: linear-gradient(135deg, #00838f 0%, #004d40 100%); }
+    .sort-icon { margin-right: 5px; font-size: 0.7rem; opacity: 0.5; }
+    .sort-icon.active { opacity: 1; }
+    
+    .pricing-table tbody td { padding: 0.2rem; vertical-align: middle; border-bottom: 1px solid var(--aqua-1); background: #fff; }
+    .pricing-table tbody tr:hover td { background-color: var(--aqua-1); }
+    
+    /* تجميد عمود اسم المادة عند التمرير الأفقي */
+    .product-name-cell { 
+        font-weight: 600; color: var(--text-dark); border-right: 3px solid var(--aqua-4); 
+        padding-right: 0.5rem !important; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 0.85rem;
+        position: sticky;
+        left: 0;
+        z-index: 1030;
+        background: #fff; /* خلفية مصمتة لاخفاء الأعمدة المتحركة خلفه */
+    }
+    .pricing-table tbody tr:hover .product-name-cell { background-color: var(--aqua-1); }
+
+    .stock-badge { background-color: #e8f5e9; color: #2e7d32; padding: 0.2rem 0.5rem; border-radius: 12px; font-weight: bold; font-size: 0.75rem; border: 1px solid #c8e6c9; display: inline-block; }
+    .cell-input { width: 100%; border: 1px solid var(--aqua-2); border-radius: 4px; padding: 0.4rem; text-align: center; font-weight: 600; font-size: 0.85rem; color: var(--text-dark); background: #fff; transition: all 0.2s; direction: ltr; }
+    .cell-input:focus { border-color: var(--aqua-3); box-shadow: 0 0 0 2px rgba(77, 208, 225, 0.15); outline: none; }
+    .cell-input.input-error { border-color: #e53935 !important; box-shadow: 0 0 0 2px rgba(229, 57, 53, 0.2) !important; background-color: #ffebee !important; }
+    .cell-input[data-manual-override="true"] { border-left: 5px solid #ff9800 !important; background-color: #fff9c4 !important; }
+    .cell-input-readonly { background-color: #f5f5f5; color: #6c757d; cursor: not-allowed; border: 1px dashed var(--aqua-2); }
+    .usd-label { display: block; font-size: 0.65rem; color: #00897b; margin-top: 2px; font-weight: bold; direction: ltr; text-align: center; min-height: 1em; }
+    .tier-input { border-right: 4px solid #36b9cc; }
+    .tier-box { position: relative; }
+    .btn-delete-tier { position: absolute; top: -6px; left: -6px; background: #e53935; color: white; border: 2px solid #fff; border-radius: 50%; width: 20px; height: 20px; font-size: 10px; display: none; align-items: center; justify-content: center; cursor: pointer; box-shadow: 0 2px 4px rgba(0,0,0,0.2); }
+    .tier-box:hover .btn-delete-tier { display: flex; }
+    #toast-container { position: fixed; bottom: 25px; left: 25px; z-index: 9999; }
+    .custom-toast { min-width: 280px; padding: 12px 20px; border-radius: 8px; color: #fff; font-weight: 600; font-size: 0.85rem; box-shadow: 0 5px 15px rgba(0,0,0,0.2); display: flex; align-items: center; opacity: 0; transform: translateY(20px); transition: all 0.4s cubic-bezier(0.68, -0.55, 0.27, 1.55); margin-bottom: 0.5rem; }
+    .custom-toast.show { opacity: 1; transform: translateY(0); }
+    .toast-success { background: linear-gradient(135deg, #00897b 0%, #00695c 100%); }
+    .toast-saving { background: linear-gradient(135deg, var(--aqua-4) 0%, #006064 100%); }
+    .toast-error { background: linear-gradient(135deg, #e53935 0%, #b71c1c 100%); }
+    .toast-info { background: linear-gradient(135deg, #5c6bc0 0%, #3949ab 100%); }
+    .modal-content { border: none; border-radius: 8px; overflow: hidden; }
+    .modal-header { background: linear-gradient(135deg, var(--aqua-4) 0%, #006064 100%); color: #fff; }
+    
+    .unsaved-banner { background: linear-gradient(135deg, #ff6f00 0%, #e65100 100%); color: white; padding: 0.6rem 1.2rem; border-radius: 8px; display: none; align-items: center; gap: 0.7rem; margin-bottom: 1rem; font-weight: 600; font-size: 0.9rem; box-shadow: 0 4px 15px rgba(230, 81, 0, 0.3); animation: bannerPulse 2s ease-in-out infinite; }
+    .unsaved-banner.active { display: flex; }
+    @keyframes bannerPulse { 0%, 100% { box-shadow: 0 4px 15px rgba(230, 81, 0, 0.3); } 50% { box-shadow: 0 4px 25px rgba(230, 81, 0, 0.5); } }
+    .unsaved-banner i { font-size: 1.1rem; animation: iconBounce 1s ease-in-out infinite; }
+    @keyframes iconBounce { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-3px); } }
+    .unsaved-dot { display: none; width: 10px; height: 10px; background: #e53935; border-radius: 50%; margin-right: 0.3rem; animation: dotBlink 1s ease-in-out infinite; }
+    .unsaved-dot.active { display: inline-block; }
+    @keyframes dotBlink { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
+    .cell-input.modified { border-color: #ff9800 !important; background-color: #fff8e1 !important; box-shadow: 0 0 0 2px rgba(255, 152, 0, 0.15); }
+    .cell-input[data-manual-override="true"].modified { background-color: #fff9c4 !important; }
+    .changes-counter { background: #e53935; color: white; font-size: 0.65rem; font-weight: 800; min-width: 18px; height: 18px; border-radius: 9px; display: none; align-items: center; justify-content: center; padding: 0 4px; }
+    .changes-counter.active { display: inline-flex; }
+    .pagination-wrapper { display: flex; justify-content: space-between; align-items: center; margin-top: 1rem; padding: 0.5rem 0; }
+    .pagination-info { font-size: 0.8rem; color: var(--text-dark); font-weight: 500; }
+    .pagination .page-link { color: var(--aqua-4); border-color: var(--aqua-2); font-size: 0.8rem; padding: 0.25rem 0.6rem; border-radius: 4px; margin: 0 2px; font-weight: 600; }
+    .pagination .page-item.active .page-link { background: linear-gradient(135deg, var(--aqua-4) 0%, #006064 100%); border-color: var(--aqua-4); color: white; }
+    .pagination .page-link:hover { background-color: var(--aqua-1); color: var(--text-dark); border-color: var(--aqua-3); }
+    .pagination .page-item.disabled .page-link { color: #b0bec5; background-color: #f5f5f5; border-color: #e0e0e0; }
+    .table-loading-overlay { position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: rgba(255, 255, 255, 0.85); display: flex; align-items: center; justify-content: center; z-index: 50; border-radius: 8px; }
+    .table-loading-overlay i { font-size: 2rem; color: var(--aqua-4); animation: spin 1s linear infinite; }
+    @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    .reset-warning-list { text-align: right; font-size: 0.8rem; margin: 0.8rem 0; padding: 0; list-style: none; }
+    .reset-warning-list li { padding: 0.3rem 0; padding-right: 1.2rem; position: relative; color: #b71c1c; font-weight: 500; }
+    .reset-warning-list li:before { content: '\f00d'; font-family: 'Font Awesome 6 Free'; font-weight: 900; position: absolute; right: 0; top: 0.35rem; font-size: 0.7rem; }
+    .reset-warning-box { background: #fff3e0; border: 1px solid #ffb74d; border-radius: 6px; padding: 0.6rem 0.8rem; margin-bottom: 0.8rem; }
+
+    /* ===== زر الطباعة ===== */
+    .btn-print {
+        background: linear-gradient(135deg, #5c6bc0 0%, #3949ab 100%);
+        color: white;
+    }
+    .btn-print:hover {
+        background: linear-gradient(135deg, #3f51b5 0%, #283593 100%);
+        color: white;
+    }
+    
+    .print-watermark {
+        display: none;
+    }
+
+    /* ===== إعدادات الطباعة ===== */
+    @media print {
+        /* إخفاء العناصر غير المرغوب فيها */
+        .control-panel,
+        .unsaved-banner,
+        .pagination-wrapper,
+        .btn-print,
+        .btn-delete-tier,
+        .no-print,
+        #btnPrint,
+        .btn-light,
+        .modal,
+        .modal-backdrop,
+        #toast-container {
+            display: none !important;
+        }
+        
+        /* إظهار الجدول بالكامل */
+        body {
+            overflow: visible !important;
+            background: white !important;
+            padding: 20px !important;
+        }
+        .container-fluid {
+            min-width: 100% !important;
+            padding: 0 !important;
+            overflow: visible !important;
+        }
+        .pricing-table-wrapper {
+            overflow: visible !important;
+        }
+        .pricing-table {
+            min-width: 100% !important;
+            border-collapse: collapse !important;
+            width: 100% !important;
+        }
+        .pricing-table thead th {
+            position: static !important;
+            background: #0097a7 !important;
+            color: white !important;
+            border: 1px solid #006064 !important;
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+        }
+        .pricing-table tbody td {
+            border: 1px solid #b2ebf2 !important;
+            background: white !important;
+        }
+        .product-name-cell {
+            position: static !important;
+            background: white !important;
+            border-right: 2px solid #0097a7 !important;
+        }
+        .pricing-table tbody tr:hover td {
+            background: white !important;
+        }
+        .pricing-table tbody tr:hover .product-name-cell {
+            background: white !important;
+        }
+        
+        /* إزالة بعض الأنماط الزائدة */
+        .cell-input {
+            border: 1px solid #b2ebf2 !important;
+            background: white !important;
+            box-shadow: none !important;
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+        }
+        .cell-input.modified {
+            border-color: #b2ebf2 !important;
+            background: white !important;
+        }
+        .cell-input[data-manual-override="true"] {
+            border-left: 3px solid #ff9800 !important;
+            background: white !important;
+        }
+        .stock-badge {
+            background: #e8f5e9 !important;
+            border: 1px solid #c8e6c9 !important;
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+        }
+        
+        /* إظهار جميع الصفوف */
+        #productsTableBody tr {
+            display: table-row !important;
+        }
+        
+        .card {
+            box-shadow: none !important;
+            border: 1px solid #e0e0e0 !important;
+            margin-bottom: 0 !important;
+        }
+        .card-header {
+            background: #0097a7 !important;
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+            color: white !important;
+        }
+        
+        /* إظهار رأس الجدول */
+        .pricing-table thead {
+            display: table-header-group;
+        }
+        
+        /* إضافة علامة مائية */
+        .print-watermark {
+            display: block !important;
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            opacity: 0.1;
+            font-size: 12px;
+            color: #0097a7;
+            font-weight: bold;
+            z-index: 9999;
+            transform: rotate(-30deg);
+            pointer-events: none;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+        <h1 class="h4 mb-0 text-dark font-weight-bold"><i class="fas fa-tags me-2"></i>{{ title }}</h1>
+        <div class="d-flex gap-2">
+            <button class="btn btn-print shadow-sm" id="btnPrint">
+                <i class="fas fa-print me-1"></i> طباعة
+            </button>
+            <a href="{% url 'invoice:product_list' %}" class="btn btn-light shadow-sm"><i class="fas fa-arrow-right ms-2"></i>العودة للقائمة</a>
+        </div>
+    </div>
+    
+    <div class="unsaved-banner" id="unsavedBanner">
+        <i class="fas fa-exclamation-triangle"></i>
+        <span>لديك تغييرات غير محفوظة - استخدم زر "حفظ التغييرات" أعلاه!</span>
+        <span class="changes-counter" id="changesCounter">0</span>
+    </div>
+    
+    <div class="card control-panel mb-3">
+        <div class="card-header py-2">
+            <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 w-100">
+                <div class="d-flex align-items-center">
+                    <i class="fas fa-sliders-h"></i>
+                    <span class="m-0">لوحة التحكم بالتسعير</span>
+                    <span class="unsaved-dot" id="unsavedDot"></span>
+                </div>
+                <div class="d-flex align-items-center gap-2">
+                    <button class="btn btn-sm btn-primary" id="btnAddTier"><i class="fas fa-layer-group me-1"></i> إضافة مستوى</button>
+                    <div class="d-flex gap-2">
+                        <button class="btn btn-danger" id="btnResetRequest"><i class="fas fa-undo me-1"></i> إعادة ضبط</button>
+                        <button class="btn btn-success" id="btnSaveRequest">
+                            <i class="fas fa-save me-1"></i> حفظ التغييرات
+                            <span class="changes-counter" id="changesCounterBtn">0</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="card-body py-2">
+            <form id="calculatorForm">
+                {% csrf_token %}
+                <div class="row g-2 align-items-end" id="tiersInputsRow">
+                    <div class="col-lg-2 col-md-4">
+                        <label class="form-label">نسبة الربح (%)</label>
+                        <input type="number" step="0.1" class="form-control text-center fw-bold" id="profit_margin" value="{{ settings.profit_margin|floatformat:'-2' }}">
+                    </div>
+                    <div class="col-lg-2 col-md-4">
+                        <label class="form-label">سعر الصرف ($)</label>
+                        <input type="number" step="0.01" class="form-control text-center fw-bold" id="conversion_factor" value="{{ settings.conversion_factor|floatformat:'-2' }}">
+                    </div>
+                    <div class="col-lg-3 col-md-4">
+                        <label class="form-label">بحث عن مادة</label>
+                        <div class="input-group">
+                            <input type="text" id="productSearch" class="form-control" placeholder="اسم المادة...">
+                            <button class="btn btn-outline-secondary" type="button" id="btnClearSearch" style="display:none;"><i class="fas fa-times"></i></button>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <div class="card" style="position: relative; overflow: visible;">
+        <div class="pricing-table-wrapper">
+            <table class="pricing-table">
+                <thead>
+                    <tr id="headersRow">
+                        <th style="width: 20%" data-sort="name">المادة <i class="fas fa-sort sort-icon"></i></th>
+                        <th style="width: 7%" data-sort="stock">الكمية <i class="fas fa-sort sort-icon"></i></th>
+                        <th style="width: 10%" data-sort="cost">التكلفة <i class="fas fa-sort sort-icon"></i></th>
+                        <th style="width: 12%" data-sort="wholesale">سعر الجملة <i class="fas fa-sort sort-icon"></i></th>
+                    </tr>
+                </thead>
+                <tbody id="productsTableBody"></tbody>
+            </table>
+        </div>
+        <div class="table-loading-overlay" id="tableLoading" style="display: none;"><i class="fas fa-spinner"></i></div>
+    </div>
+    <div class="pagination-wrapper" id="paginationWrapper">
+        <div class="pagination-info" id="paginationInfo"></div>
+        <nav><ul class="pagination pagination-sm mb-0" id="paginationContainer"></ul></nav>
+    </div>
+</div>
+
+<!-- علامة مائية للطباعة -->
+<div class="print-watermark">
+    {{ title }} - تم إنشاؤه بواسطة نظام الفواتير
+</div>
+
+<div class="modal fade" id="passwordModal" tabindex="-1" aria-hidden="true"><div class="modal-dialog modal-dialog-centered modal-sm"><div class="modal-content"><div class="modal-header"><h5 class="modal-title"><i class="fas fa-shield-alt me-2"></i><span id="modalTitle">تأكيد</span></h5><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button></div><div class="modal-body text-center py-4"><div id="modalBodyText" class="text-muted mb-3">يرجى إدخال كلمة المرور.</div><input type="password" id="confirmPassword" class="form-control form-control-lg text-center" placeholder="كلمة المرور"><div id="passwordError" class="text-danger mt-2 small fw-bold" style="display:none;"></div></div><div class="modal-footer border-top-0 justify-content-center"><button type="button" class="btn btn-light" data-bs-dismiss="modal">إلغاء</button><button type="button" class="btn btn-primary px-4" id="btnModalConfirm">تأكيد</button></div></div></div></div>
+<div class="modal fade" id="addTierModal" tabindex="-1" aria-hidden="true"><div class="modal-dialog modal-dialog-centered modal-sm"><div class="modal-content"><div class="modal-header"><h5 class="modal-title"><i class="fas fa-layer-group me-2"></i>إضافة مستوى تسعير</h5><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button></div><div class="modal-body py-4"><label class="form-label">اسم المستوى الجديد</label><input type="text" id="newTierName" class="form-control text-center fw-bold" placeholder="مثال: مميز"><div id="addTierError" class="text-danger mt-2 small fw-bold text-center" style="display:none;"></div></div><div class="modal-footer border-top-0 justify-content-center"><button type="button" class="btn btn-light" data-bs-dismiss="modal">إلغاء</button><button type="button" class="btn btn-primary px-4" id="btnAddTierConfirm">إضافة</button></div></div></div></div>
+<div class="modal fade" id="deleteTierModal" tabindex="-1" aria-hidden="true"><div class="modal-dialog modal-dialog-centered modal-sm"><div class="modal-content"><div class="modal-header bg-danger"><h5 class="modal-title text-white"><i class="fas fa-trash-alt me-2"></i>تأكيد الحذف</h5><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button></div><div class="modal-body text-center py-4"><i class="fas fa-exclamation-triangle text-danger" style="font-size: 2rem;"></i><p class="fw-bold mt-2 mb-0">هل أنت متأكد من حذف هذا المستوى؟</p><p class="text-muted small mt-1 mb-0">سيتم حذف جميع الأسعار المرتبطة به في كامل المنتجات.</p></div><div class="modal-footer border-top-0 justify-content-center"><button type="button" class="btn btn-light" data-bs-dismiss="modal">إلغاء</button><button type="button" class="btn btn-danger px-4" id="btnDeleteTierConfirm">تأكيد الحذف</button></div></div></div></div>
+<div class="modal fade" id="resetModal" tabindex="-1" aria-hidden="true"><div class="modal-dialog modal-dialog-centered"><div class="modal-content"><div class="modal-header bg-danger"><h5 class="modal-title text-white"><i class="fas fa-skull-crossbones me-2"></i>إعادة ضبط كاملة للنظام</h5><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button></div><div class="modal-body py-4"><div class="text-center mb-3"><i class="fas fa-exclamation-triangle text-danger" style="font-size: 3rem;"></i><h5 class="text-danger fw-bold mt-2">هذا الإجراء لا يمكن التراجع عنه!</h5></div><div class="reset-warning-box"><div class="fw-bold text-dark mb-2"><i class="fas fa-list me-1"></i> سيحدث الآتي:</div><ul class="reset-warning-list"><li>تصفير سعر الجملة لكل المنتجات إلى سعر التكلفة</li><li>حذف كل أسعار المستويات من قاعدة البيانات</li><li>حذف جميع مستويات التسعير (الأعمدة الديناميكية) بالكامل</li><li>تصفير نسبة الربح وسعر الصرف إلى 0</li></ul></div><div class="text-center"><span class="badge bg-danger fs-6 px-3 py-2" id="resetStats"></span></div></div><div class="modal-footer border-top justify-content-center gap-2"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal"><i class="fas fa-arrow-right me-1"></i>إلغاء والعودة</button><button type="button" class="btn btn-danger px-4" id="btnResetConfirm"><i class="fas fa-skull-crossbones me-1"></i>متأكد - نفذ الإعادة</button></div></div></div></div>
+<div class="modal fade" id="leaveModal" tabindex="-1" aria-hidden="true"><div class="modal-dialog modal-dialog-centered modal-sm"><div class="modal-content"><div class="modal-header bg-warning text-dark"><h5 class="modal-title"><i class="fas fa-exclamation-triangle me-2"></i>تغييرات معاينة</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body text-center py-4"><p class="fw-bold mb-0" id="leaveModalMainText">لديك تغييرات معاينة لم تُحفظ!</p><p class="text-muted small mt-2" id="leaveModalSubText">إذا غادرت الآن، ستضيع جميع التعديلات.</p></div><div class="modal-footer border-top-0 justify-content-center gap-2"><button type="button" class="btn btn-warning" id="btnLeaveSave"><i class="fas fa-save me-1"></i>حفظ ثم تنقل</button><button type="button" class="btn btn-outline-secondary" id="btnLeaveDiscard"><i class="fas fa-forward me-1"></i>تجاهل والتنقل</button><button type="button" class="btn btn-secondary" data-bs-dismiss="modal"><i class="fas fa-hand-point-right me-1"></i>البقاء</button></div></div></div></div>
+
+<div id="toast-container"></div>
+{{ tiers|json_script:"tiers-data" }}
+{{ products|json_script:"products-data" }}
+{{ pagination_info|json_script:"pagination-data" }}
+{% endblock %}
+
+{% block extra_js %}
+<script nonce="{{ csp_nonce }}">
+document.addEventListener('DOMContentLoaded', function() {
+    var tiersData = JSON.parse(document.getElementById('tiers-data').textContent);
+    var productsData = JSON.parse(document.getElementById('products-data').textContent);
+    var paginationData = JSON.parse(document.getElementById('pagination-data').textContent);
+    var csrftoken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+    var toastContainer = document.getElementById('toast-container');
+    var currentAction = 'save';
+    var isBulkSaving = false;
+    var isLoadingPage = false;
+    var hasUnsavedChanges = false;
+    var unsavedChangesCount = 0;
+    var currentPage = paginationData.current_page;
+    var totalPages = paginationData.total_pages;
+    var totalProducts = paginationData.total_products;
+    var saveThenGoToPage = null;
+    var pendingLeaveUrl = null;
+    var pendingLeaveAction = null;
+    var pendingTargetPage = null;
+    var pendingDeleteTierId = null;
+    var currentSortCol = null;
+    var currentSortAsc = true;
+
+    var passwordModal = new bootstrap.Modal(document.getElementById('passwordModal'));
+    var resetModal = new bootstrap.Modal(document.getElementById('resetModal'));
+    var leaveModal = new bootstrap.Modal(document.getElementById('leaveModal'));
+    var addTierModal = new bootstrap.Modal(document.getElementById('addTierModal'), { backdrop: 'static' });
+    var deleteTierModal = new bootstrap.Modal(document.getElementById('deleteTierModal'), { backdrop: 'static' });
+    var passwordInput = document.getElementById('confirmPassword');
+    var passwordError = document.getElementById('passwordError');
+
+    // تحديث موقع الهيدر ليلتصق أسفل اللوحة المجمدة مباشرة
+    function updateStickyPositions() {
+        var cpHeight = document.querySelector('.control-panel').offsetHeight;
+        document.querySelectorAll('.pricing-table thead th').forEach(function(th) {
+            th.style.top = cpHeight + 'px';
+        });
+    }
+    updateStickyPositions();
+    window.addEventListener('resize', updateStickyPositions);
+
+    function escapeHtml(text) { var div = document.createElement('div'); div.appendChild(document.createTextNode(text)); return div.innerHTML; }
+    function cleanNumber(num) { if (num === null || num === undefined || num === '') return ''; var parsed = parseFloat(String(num).trim()); return isNaN(parsed) ? '' : parsed.toString(); }
+    function updateUsdLabel(el, conv) { var v = parseFloat(el.value) || 0; var l = el.parentElement.querySelector('.usd-label'); if(l){ if(v>0 && conv>0) l.textContent = '~ ' + (v/conv).toFixed(2) + ' $'; else l.textContent = ''; } }
+    function createToast(msg, type) { var t = document.createElement('div'); t.className = 'custom-toast toast-' + (type||'success'); var ic = type==='saving'?'fa-spinner fa-spin':type==='error'?'fa-exclamation-triangle':type==='info'?'fa-info-circle':'fa-check-circle'; t.innerHTML = '<i class="fas '+ic+' me-2"></i>'+escapeHtml(msg); toastContainer.appendChild(t); setTimeout(function(){t.classList.add('show')},10); setTimeout(function(){t.classList.remove('show'); setTimeout(function(){t.remove()},500)},4000); }
+    function clearAllErrors() { var e=document.querySelectorAll('.input-error'); for(var i=0;i<e.length;i++) e[i].classList.remove('input-error'); }
+    function highlightErrorField(fid) { clearAllErrors(); if(!fid) return; if(fid==='profit_margin'){document.getElementById('profit_margin').classList.add('input-error'); document.getElementById('profit_margin').focus(); return;} if(fid==='conversion_factor'){document.getElementById('conversion_factor').classList.add('input-error'); document.getElementById('conversion_factor').focus(); return;} if(fid==='tier_id'){createToast('خطأ في بيانات المستويات','error'); return;} if(fid.indexOf('tier_percent_')===0){var t=fid.replace('tier_percent_',''); var inp=document.querySelector('.tier-percent[data-tier-id="'+t+'"]'); if(inp){inp.classList.add('input-error'); inp.focus();} return;} if(fid.indexOf('wholesale_')===0){var pid=fid.replace('wholesale_',''); var r=document.querySelector('tr[data-product-id="'+pid+'"]'); if(r){var wi=r.querySelector('[data-field="wholesale_price"]'); if(wi){wi.classList.add('input-error'); wi.focus();}} return;} if(fid.indexOf('tier_')===0 && fid.lastIndexOf('_')>4){var lu=fid.lastIndexOf('_'); var tId=fid.substring(5,lu); var pId=fid.substring(lu+1); var ti=document.querySelector('tr[data-product-id="'+pId+'"] .tier-input[data-tier-id="'+tId+'"]'); if(ti){ti.classList.add('input-error'); ti.focus();} } }
+    function updateUnsavedIndicator() { var b=document.getElementById('unsavedBanner'), d=document.getElementById('unsavedDot'), c=document.getElementById('changesCounter'), cb=document.getElementById('changesCounterBtn'); if(hasUnsavedChanges){b.classList.add('active'); d.classList.add('active'); c.classList.add('active'); cb.classList.add('active'); c.textContent=unsavedChangesCount; cb.textContent=unsavedChangesCount;} else{b.classList.remove('active'); d.classList.remove('active'); c.classList.remove('active'); cb.classList.remove('active');} }
+    function markFieldModified(el) { if(!el.dataset.originalValue) return; if(el.dataset.originalValue!==el.value){ if(!el.classList.contains('modified')){el.classList.add('modified'); unsavedChangesCount++; hasUnsavedChanges=true; updateUnsavedIndicator();} } else { if(el.classList.contains('modified')){el.classList.remove('modified'); unsavedChangesCount=Math.max(0,unsavedChangesCount-1); if(unsavedChangesCount===0) hasUnsavedChanges=false; updateUnsavedIndicator();} } }
+    function markAllFieldsModified() { var inp=document.querySelectorAll('.cell-input:not(.cell-input-readonly)'); var n=0; for(var i=0;i<inp.length;i++){if(!inp[i].dataset.originalValue) continue; if(inp[i].dataset.originalValue!==inp[i].value){ if(!inp[i].classList.contains('modified')){inp[i].classList.add('modified'); n++;} } } if(n>0){unsavedChangesCount+=n; hasUnsavedChanges=true; updateUnsavedIndicator();} }
+    function clearAllModified() { var inp=document.querySelectorAll('.cell-input.modified'); for(var i=0;i<inp.length;i++){inp[i].classList.remove('modified'); inp[i].dataset.originalValue=inp[i].value;} unsavedChangesCount=0; hasUnsavedChanges=false; updateUnsavedIndicator(); }
+
+    function buildBaseTable() { var tb=document.getElementById('productsTableBody'); tb.innerHTML=''; for(var i=0;i<productsData.length;i++){var p=productsData[i]; var tr=document.createElement('tr'); tr.dataset.productId=p.id; tr.dataset.baseCost=p.cost; tr.dataset.tierPrices=JSON.stringify(p.tier_prices||{}); tr.innerHTML='<td class="product-name-cell" title="'+escapeHtml(p.name)+'">'+escapeHtml(p.name)+'</td><td class="text-center"><span class="stock-badge">'+escapeHtml(p.stock)+'</span></td><td><input type="text" class="cell-input cell-input-readonly" value="'+cleanNumber(p.cost)+'" readonly></td><td><input type="number" step="0.01" class="cell-input" value="'+cleanNumber(p.wholesale)+'" data-field="wholesale_price" data-original-value="'+cleanNumber(p.wholesale)+'"><span class="usd-label"></span></td>'; tb.appendChild(tr);} }
+    function rebuildTable() { var tb=document.getElementById('productsTableBody'); tb.innerHTML=''; for(var i=0;i<productsData.length;i++){var p=productsData[i]; var tr=document.createElement('tr'); tr.dataset.productId=p.id; tr.dataset.baseCost=p.cost; tr.dataset.tierPrices=JSON.stringify(p.tier_prices||{}); tr.innerHTML='<td class="product-name-cell" title="'+escapeHtml(p.name)+'">'+escapeHtml(p.name)+'</td><td class="text-center"><span class="stock-badge">'+escapeHtml(p.stock)+'</span></td><td><input type="text" class="cell-input cell-input-readonly" value="'+cleanNumber(p.cost)+'" readonly></td><td><input type="number" step="0.01" class="cell-input" value="'+cleanNumber(p.wholesale)+'" data-field="wholesale_price" data-original-value="'+cleanNumber(p.wholesale)+'"><span class="usd-label"></span></td>'; for(var t=0;t<tiersData.length;t++){var tier=tiersData[t]; var tp=p.tier_prices||{}; var ep=tp[String(tier.id)]||''; var ps=cleanNumber(ep); var td=document.createElement('td'); td.className='dynamic-tier-cell'; td.innerHTML='<input type="number" step="0.01" class="cell-input tier-input" data-tier-id="'+tier.id+'" value="'+ps+'" data-original-value="'+ps+'"><span class="usd-label"></span>'; tr.appendChild(td);} tb.appendChild(tr);} }
+    function renderInitialTiers() { for(var t=0;t<tiersData.length;t++) addTierToUI(tiersData[t]); applyUsdToAllInputs(); }
+    function addTierToUI(tier) { var ir=document.getElementById('tiersInputsRow'); var cd=document.createElement('div'); cd.className='col-lg-2 col-md-4 tier-box'; cd.innerHTML='<button class="btn-delete-tier" data-id="'+tier.id+'"><i class="fas fa-times"></i></button><label class="form-label">'+escapeHtml(tier.name)+' (%)</label><input type="number" class="form-control text-center fw-bold tier-percent" data-tier-id="'+tier.id+'" placeholder="%" value="'+(tier.percent||0)+'">'; ir.appendChild(cd); var th=document.createElement('th'); th.className='text-center'; th.style.width='12%'; th.dataset.tierId=tier.id; th.dataset.sort='tier_'+tier.id; th.innerHTML=escapeHtml(tier.name)+' <i class="fas fa-sort sort-icon"></i>'; document.getElementById('headersRow').appendChild(th); updateStickyPositions(); var rows=document.querySelectorAll('#productsTableBody tr'); for(var r=0;r<rows.length;r++){var row=rows[r]; var tp=JSON.parse(row.dataset.tierPrices||'{}'); var ep=tp[String(tier.id)]||''; var ps=cleanNumber(ep); var td=document.createElement('td'); td.className='dynamic-tier-cell'; td.innerHTML='<input type="number" step="0.01" class="cell-input tier-input" data-tier-id="'+tier.id+'" value="'+ps+'" data-original-value="'+ps+'"><span class="usd-label"></span>'; row.appendChild(td);} }
+    function removeTierFromUI(tid) { var inp=document.querySelector('.tier-percent[data-tier-id="'+tid+'"]'); if(inp) inp.closest('.tier-box').remove(); var th=document.querySelector('#headersRow th[data-tier-id="'+tid+'"]'); if(th) th.remove(); updateStickyPositions(); var cells=document.querySelectorAll('.tier-input[data-tier-id="'+tid+'"]'); for(var i=0;i<cells.length;i++) cells[i].closest('td.dynamic-tier-cell').remove(); }
+    function applyUsdToAllInputs() { var c=parseFloat(document.getElementById('conversion_factor').value)||0; var inp=document.querySelectorAll('.cell-input:not(.cell-input-readonly)'); for(var i=0;i<inp.length;i++) updateUsdLabel(inp[i],c); }
+    function renderPagination() { var ct=document.getElementById('paginationContainer'), inf=document.getElementById('paginationInfo'); ct.innerHTML=''; if(totalPages<=1){document.getElementById('paginationWrapper').style.display='none'; return;} document.getElementById('paginationWrapper').style.display='flex'; var si=(currentPage-1)*30+1, ei=Math.min(currentPage*30,totalProducts); inf.textContent='عرض '+si+' - '+ei+' من '+totalProducts+' منتج'; if(currentPage>1) ct.appendChild(cpi('السابق',currentPage-1)); var sp=Math.max(1,currentPage-2), ep=Math.min(totalPages,currentPage+2); if(sp>1){ct.appendChild(cpi('1',1)); if(sp>2){var d=document.createElement('li'); d.className='page-item disabled'; d.innerHTML='<span class="page-link">...</span>'; ct.appendChild(d);}} for(var i=sp;i<=ep;i++) ct.appendChild(cpi(String(i),i,false,i===currentPage)); if(ep<totalPages){if(ep<totalPages-1){var d2=document.createElement('li'); d2.className='page-item disabled'; d2.innerHTML='<span class="page-link">...</span>'; ct.appendChild(d2);} ct.appendChild(cpi(String(totalPages),totalPages));} if(currentPage<totalPages) ct.appendChild(cpi('التالي',currentPage+1)); }
+    function cpi(l,pn,d,a) { var li=document.createElement('li'); li.className='page-item'+(d?' disabled':'')+(a?' active':''); var lk=document.createElement('a'); lk.className='page-link'; lk.href='#'; lk.textContent=l; if(!d) lk.addEventListener('click',function(e){e.preventDefault(); loadPage(pn);}); li.appendChild(lk); return li; }
+    function loadPage(pn) { if(isLoadingPage||isBulkSaving) return; if(pn<1||pn>totalPages) return; if(hasUnsavedChanges){pendingTargetPage=pn; pendingLeaveAction='page_navigation'; document.getElementById('leaveModalMainText').textContent='لديك '+unsavedChangesCount+' تغييرات غير محفوظة!'; document.getElementById('leaveModalSubText').textContent='هل تريد حفظها قبل التنقل للصفحة '+pn+'؟'; leaveModal.show(); return;} fetchPage(pn); }
+    function fetchPage(pn) { isLoadingPage=true; document.getElementById('tableLoading').style.display='flex'; document.getElementById('productSearch').value=''; fetch("{% url 'invoice:product_bulk_update' %}",{method:'POST',headers:{'Content-Type':'application/json','X-CSRFToken':csrftoken},body:JSON.stringify({get_page:true,page:pn})}).then(function(r){return r.json();}).then(function(d){isLoadingPage=false; document.getElementById('tableLoading').style.display='none'; if(d.success){productsData=d.products; currentPage=d.current_page; totalPages=d.total_pages; totalProducts=d.total_products; rebuildTable(); renderPagination(); clearAllModified(); applyUsdToAllInputs(); window.scrollTo({top:0,behavior:'smooth'});} else createToast(d.message||'خطأ','error');}).catch(function(){isLoadingPage=false; document.getElementById('tableLoading').style.display='none'; createToast('خطأ في الاتصال','error');}); }
+
+    buildBaseTable(); renderInitialTiers(); renderPagination();
+
+    function handleManualOverride(target) { if(target.classList.contains('tier-input')||target.dataset.field==='wholesale_price'){ applyUsdToAllInputs(); markFieldModified(target); if(target.value.trim()!=='') target.setAttribute('data-manual-override','true'); else target.removeAttribute('data-manual-override'); } }
+    document.addEventListener('input', function(e) { if(isBulkSaving||isLoadingPage) return; if(e.target.classList.contains('input-error')) e.target.classList.remove('input-error'); handleManualOverride(e.target); });
+    document.addEventListener('change', function(e) { if(isBulkSaving||isLoadingPage) return; handleManualOverride(e.target); });
+
+    document.getElementById('btnAddTier').addEventListener('click',function(e){e.stopPropagation(); document.getElementById('newTierName').value=''; document.getElementById('addTierError').style.display='none'; addTierModal.show();});
+    document.getElementById('btnAddTierConfirm').addEventListener('click',function(){var n=document.getElementById('newTierName').value.trim(); if(!n){document.getElementById('addTierError').textContent='الرجاء إدخال اسم المستوى'; document.getElementById('addTierError').style.display='block'; return;} fetch("{% url 'invoice:product_bulk_update' %}",{method:'POST',headers:{'Content-Type':'application/json','X-CSRFToken':csrftoken},body:JSON.stringify({add_tier:true,tier_name:n})}).then(function(r){return r.json();}).then(function(d){if(d.success){var nt={id:d.tier_id,name:d.tier_name,percent:0}; tiersData.push(nt); addTierToUI(nt); applyUsdToAllInputs(); createToast('تم إضافة المستوى بنجاح'); document.getElementById('btnAddTierConfirm').blur(); addTierModal.hide();}else{document.getElementById('addTierError').textContent=d.message||'خطأ'; document.getElementById('addTierError').style.display='block';}}).catch(function(){document.getElementById('addTierError').textContent='خطأ بالخادم'; document.getElementById('addTierError').style.display='block';});});
+    document.addEventListener('click',function(e){if(e.target.closest('.btn-delete-tier')){e.stopPropagation(); e.preventDefault(); pendingDeleteTierId=e.target.closest('.btn-delete-tier').dataset.id; deleteTierModal.show();}});
+    document.getElementById('btnDeleteTierConfirm').addEventListener('click',function(){if(!pendingDeleteTierId) return; fetch("{% url 'invoice:product_bulk_update' %}",{method:'POST',headers:{'Content-Type':'application/json','X-CSRFToken':csrftoken},body:JSON.stringify({delete_tier:true,tier_id:pendingDeleteTierId})}).then(function(r){return r.json();}).then(function(d){if(d.success){tiersData=tiersData.filter(function(t){return t.id!=pendingDeleteTierId;}); removeTierFromUI(pendingDeleteTierId); createToast('تم حذف المستوى','success'); document.getElementById('btnDeleteTierConfirm').blur(); deleteTierModal.hide(); pendingDeleteTierId=null;}else createToast(d.message||'خطأ','error');}).catch(function(){createToast('خطأ','error');});});
+    
+    var searchInput = document.getElementById('productSearch');
+    var clearBtn = document.getElementById('btnClearSearch');
+    searchInput.addEventListener('keyup', function(){
+        var st = this.value.toLowerCase();
+        clearBtn.style.display = st ? 'block' : 'none';
+        var rows = document.querySelectorAll('#productsTableBody tr');
+        for(var i=0; i<rows.length; i++){
+            var n = rows[i].querySelector('.product-name-cell').textContent.toLowerCase();
+            rows[i].style.display = n.includes(st) ? '' : 'none';
+        }
+    });
+    clearBtn.addEventListener('click', function(){
+        searchInput.value = '';
+        clearBtn.style.display = 'none';
+        var rows = document.querySelectorAll('#productsTableBody tr');
+        for(var i=0; i<rows.length; i++) rows[i].style.display = '';
+        searchInput.focus();
+    });
+
+    document.getElementById('calculatorForm').addEventListener('input',function(e){if(e.target.classList.contains('tier-percent')){var tid=e.target.dataset.tierId; for(var i=0;i<tiersData.length;i++){if(tiersData[i].id==tid){tiersData[i].percent=parseFloat(e.target.value)||0; break;}}} if(e.target.id==='profit_margin'||e.target.id==='conversion_factor'||e.target.classList.contains('tier-percent')) calculatePreview();});
+
+    function calculatePreview() { var m=parseFloat(document.getElementById('profit_margin').value)||0, c=parseFloat(document.getElementById('conversion_factor').value)||0, rows=document.querySelectorAll('#productsTableBody tr'); for(var i=0;i<rows.length;i++){var row=rows[i], bc=parseFloat(row.dataset.baseCost)||0, cw=bc*(1+m/100), wi=row.querySelector('[data-field="wholesale_price"]'); if(!wi) continue; var bwt=cw, imo=wi.hasAttribute('data-manual-override'); if(imo){bwt=parseFloat(wi.value)||0; updateUsdLabel(wi,c);} else{wi.value=cleanNumber(cw.toFixed(2)); updateUsdLabel(wi,c);} for(var j=0;j<tiersData.length;j++){var tier=tiersData[j], inp=row.querySelector('.tier-input[data-tier-id="'+tier.id+'"]'); if(!inp) continue; if(!inp.hasAttribute('data-manual-override')){var pr=tier.percent>0?bwt*(1-tier.percent/100):0; inp.value=pr>0?cleanNumber(pr.toFixed(2)):''; updateUsdLabel(inp,c);}}} markAllFieldsModified(); }
+
+    document.getElementById('btnSaveRequest').addEventListener('click',function(){if(!hasUnsavedChanges||unsavedChangesCount===0){createToast('لا توجد تغييرات للحفظ','info'); return;} currentAction='save'; saveThenGoToPage=null; clearAllErrors(); document.getElementById('modalTitle').textContent="تأكيد الحفظ"; document.getElementById('modalBodyText').innerHTML="هل تريد حفظ التعديلات؟<br><small class='text-muted'>عدد التغييرات: "+unsavedChangesCount+"</small>"; passwordError.style.display='none'; passwordInput.value=''; passwordModal.show(); setTimeout(function(){ passwordInput.focus(); }, 500); });
+    document.getElementById('btnResetRequest').addEventListener('click',function(){document.getElementById('resetStats').textContent=totalProducts+' منتج سيتم تصفيرها'; resetModal.show();});
+    document.getElementById('btnResetConfirm').addEventListener('click',function(){resetModal.hide(); currentAction='reset'; saveThenGoToPage=null; document.getElementById('modalTitle').textContent="كلمة المرور للإعادة"; document.getElementById('modalBodyText').innerHTML="<span class='text-danger fw-bold'>أدخل كلمة المرور</span>"; passwordError.style.display='none'; passwordInput.value=''; passwordModal.show(); setTimeout(function(){ passwordInput.focus(); }, 500);});
+    document.getElementById('btnModalConfirm').addEventListener('click',function(){var pw=passwordInput.value; if(!pw){passwordError.textContent='أدخل كلمة المرور'; passwordError.style.display='block'; return;} if(currentAction==='save') perfSave(pw,null,'جاري الحفظ...'); else if(currentAction==='reset') perfReset(pw); else if(currentAction==='save_page'){var tp=saveThenGoToPage; perfSave(pw,function(){saveThenGoToPage=null; fetchPage(tp);},'جاري الحفظ ثم التنقل...');} else if(currentAction==='save_external') perfSave(pw,function(){if(pendingLeaveUrl){var u=pendingLeaveUrl; pendingLeaveUrl=null; pendingLeaveAction=null; setTimeout(function(){window.location.href=u;},500);}},'جاري الحفظ ثم المغادرة...');});
+    document.getElementById('passwordModal').addEventListener('hidden.bs.modal',function(){saveThenGoToPage=null; pendingTargetPage=null; passwordError.style.display='none';});
+
+    function collectData(){var bu={}; var rows=document.querySelectorAll('#productsTableBody tr'); for(var i=0;i<rows.length;i++){var row=rows[i], pid=row.dataset.productId, wi=row.querySelector('[data-field="wholesale_price"]'); var wv=wi.value.trim(); var pr={wholesale_price:wv===''?null:cleanNumber(wv)}; var ti=row.querySelectorAll('.tier-input'); for(var j=0;j<ti.length;j++){var tv=ti[j].value.trim(); pr['tier_'+ti[j].dataset.tierId]=tv===''?null:cleanNumber(tv);} bu[pid]=pr;} return bu;}
+    function collectTiers(){var r=[]; for(var i=0;i<tiersData.length;i++) r.push({id:tiersData[i].id,name:tiersData[i].name,percent:tiersData[i].percent}); return r;}
+
+    function perfSave(pw,cb,msg){isBulkSaving=true; var bu=collectData(); createToast(msg||'جاري الحفظ...','saving'); fetch("{% url 'invoice:product_bulk_update' %}",{method:'POST',headers:{'Content-Type':'application/json','X-CSRFToken':csrftoken},body:JSON.stringify({password:pw,bulk_updates:bu,profit_margin:parseFloat(document.getElementById('profit_margin').value)||0,conversion_factor:parseFloat(document.getElementById('conversion_factor').value)||0,tiers:collectTiers()})}).then(function(r){return r.json();}).then(function(d){isBulkSaving=false; if(d.success){passwordModal.hide(); clearAllModified(); clearAllErrors(); createToast(d.message||'تم الحفظ بنجاح','success'); if(cb) cb();} else{if(d.field) highlightErrorField(d.field); passwordError.textContent=d.message||'خطأ'; passwordError.style.display='block'; createToast(d.message||'فشل','error');}}).catch(function(){isBulkSaving=false; passwordError.textContent='خطأ اتصال'; passwordError.style.display='block'; createToast('خطأ اتصال','error');});}
+    function perfReset(pw){isBulkSaving=true; createToast('جاري الإعادة...','saving'); fetch("{% url 'invoice:product_bulk_update' %}",{method:'POST',headers:{'Content-Type':'application/json','X-CSRFToken':csrftoken},body:JSON.stringify({password:pw,reset_data:true})}).then(function(r){return r.json();}).then(function(d){isBulkSaving=false; if(d.success){hasUnsavedChanges=false; unsavedChangesCount=0; updateUnsavedIndicator(); clearAllModified(); clearAllErrors(); createToast(d.message,'success'); passwordModal.hide(); tiersData=[]; var tb=document.querySelectorAll('.tier-box'); for(var i=0;i<tb.length;i++) tb[i].remove(); var dh=document.querySelectorAll('#headersRow th[data-tier-id]'); for(var i=0;i<dh.length;i++) dh[i].remove(); var dc=document.querySelectorAll('.dynamic-tier-cell'); for(var i=0;i<dc.length;i++) dc[i].remove(); document.getElementById('profit_margin').value='0.00'; document.getElementById('conversion_factor').value='0.00'; var rows=document.querySelectorAll('#productsTableBody tr'); for(var i=0;i<rows.length;i++){var row=rows[i], bc=row.dataset.baseCost, wi=row.querySelector('[data-field="wholesale_price"]'); if(wi){wi.value=cleanNumber(bc); wi.dataset.originalValue=cleanNumber(bc); updateUsdLabel(wi,0);}}} else{passwordError.textContent=d.message||'خطأ'; passwordError.style.display='block'; createToast(d.message||'فشل','error');}}).catch(function(){isBulkSaving=false; passwordError.textContent='خطأ اتصال'; passwordError.style.display='block'; createToast('خطأ اتصال','error');});}
+
+    window.addEventListener('beforeunload',function(e){if(hasUnsavedChanges){e.preventDefault(); e.returnValue=''; return '';}});
+    document.addEventListener('click',function(e){var lk=e.target.closest('a[href]'); if(!lk||lk.target==='_blank'||lk.closest('#paginationContainer')) return; if(hasUnsavedChanges){e.preventDefault(); pendingLeaveUrl=lk.href; pendingLeaveAction='external_link'; document.getElementById('leaveModalMainText').textContent='لديك '+unsavedChangesCount+' تغييرات غير محفوظة!'; document.getElementById('leaveModalSubText').textContent='إذا غادرت الآن، ستضيع التعديلات.'; leaveModal.show();}});
+    document.getElementById('btnLeaveSave').addEventListener('click',function(){leaveModal.hide(); if(pendingLeaveAction==='page_navigation'){currentAction='save_page'; saveThenGoToPage=pendingTargetPage; document.getElementById('modalTitle').textContent="كلمة المرور للحفظ والتنقل"; document.getElementById('modalBodyText').innerHTML="حفظ ثم تنقل لصفحة "+pendingTargetPage;} else{currentAction='save_external'; document.getElementById('modalTitle').textContent="كلمة المرور للحفظ والمغادرة"; document.getElementById('modalBodyText').innerHTML="حفظ ثم مغادرة الصفحة";} passwordError.style.display='none'; passwordInput.value=''; passwordModal.show();});
+    document.getElementById('btnLeaveDiscard').addEventListener('click',function(){leaveModal.hide(); hasUnsavedChanges=false; unsavedChangesCount=0; updateUnsavedIndicator(); clearAllModified(); if(pendingLeaveAction==='page_navigation'&&pendingTargetPage){var tp=pendingTargetPage; pendingTargetPage=null; pendingLeaveAction=null; fetchPage(tp);} else if(pendingLeaveAction==='external_link'&&pendingLeaveUrl){var u=pendingLeaveUrl; pendingLeaveUrl=null; pendingLeaveAction=null; window.location.href=u;}});
+
+    document.getElementById('headersRow').addEventListener('click', function(e){
+        var th = e.target.closest('th');
+        if(!th || !th.dataset.sort) return;
+        var sortCol = th.dataset.sort;
+        if(currentSortCol === sortCol) currentSortAsc = !currentSortAsc;
+        else { currentSortCol = sortCol; currentSortAsc = true; }
+        document.querySelectorAll('#headersRow .sort-icon').forEach(function(icon){ icon.className = 'fas fa-sort sort-icon'; });
+        var icon = th.querySelector('.sort-icon');
+        icon.className = currentSortAsc ? 'fas fa-sort-up sort-icon active' : 'fas fa-sort-down sort-icon active';
+        productsData.sort(function(a, b) {
+            var valA, valB;
+            if(sortCol === 'name') { valA = a.name.toLowerCase(); valB = b.name.toLowerCase(); }
+            else if(sortCol === 'stock') { valA = parseFloat(a.stock)||0; valB = parseFloat(b.stock)||0; }
+            else if(sortCol === 'cost') { valA = parseFloat(a.cost)||0; valB = parseFloat(b.cost)||0; }
+            else if(sortCol === 'wholesale') { valA = parseFloat(a.wholesale)||0; valB = parseFloat(b.wholesale)||0; }
+            else if(sortCol.startsWith('tier_')) { var tierId = sortCol.replace('tier_', ''); valA = parseFloat((a.tier_prices||{})[tierId])||0; valB = parseFloat((b.tier_prices||{})[tierId])||0; }
+            if(valA < valB) return currentSortAsc ? -1 : 1;
+            if(valA > valB) return currentSortAsc ? 1 : -1;
+            return 0;
+        });
+        rebuildTable(); applyUsdToAllInputs();
+        var st = searchInput.value.toLowerCase();
+        if(st){ var rows = document.querySelectorAll('#productsTableBody tr'); for(var i=0; i<rows.length; i++){ var n = rows[i].querySelector('.product-name-cell').textContent.toLowerCase(); rows[i].style.display = n.includes(st) ? '' : 'none'; } }
+    });
+
+    // ===== زر الطباعة =====
+    document.getElementById('btnPrint').addEventListener('click', function() {
+        window.print();
+    });
+});
+</script>
+{% endblock %}

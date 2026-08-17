@@ -1,0 +1,619 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}إضافة حركة صندوق جديدة{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* أنماط عامة */
+    body {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        min-height: 100vh;
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+    
+    .card {
+        border: none;
+        border-radius: 15px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        transition: all 0.3s ease;
+    }
+    
+    .card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 15px 40px rgba(0, 0, 0, 0.2);
+    }
+    
+    /* أنماط مجموعات الحقول */
+    .field-group {
+        transition: all 0.3s ease !important;
+        opacity: 1 !important;
+        max-height: 500px !important;
+        overflow: hidden !important;
+        display: block !important;
+    }
+    
+    .field-group.hidden {
+        opacity: 0 !important;
+        max-height: 0 !important;
+        margin-bottom: 0 !important;
+        padding: 0 !important;
+        display: none !important;
+    }
+    
+    .field-group:not(.hidden) {
+        display: block !important;
+    }
+    
+    .field-container {
+        background: #f8f9fa;
+        border-radius: 10px;
+        padding: 15px;
+        margin-bottom: 15px;
+        border: 2px solid #e9ecef;
+        transition: all 0.3s ease;
+    }
+    
+    .field-container.active {
+        border-color: #007bff;
+        background: #e3f2fd;
+        box-shadow: 0 4px 12px rgba(0, 123, 255, 0.1);
+    }
+    
+    /* أنماط أزرار نوع العملية */
+    .transaction-type-btn {
+        width: 100%;
+        padding: 15px;
+        margin-bottom: 10px;
+        border: 2px solid #e9ecef;
+        border-radius: 10px;
+        background: white;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        text-align: right;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .transaction-type-btn::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(0, 123, 255, 0.1), transparent);
+        transition: left 0.5s ease;
+    }
+    
+    .transaction-type-btn:hover::before {
+        left: 100%;
+    }
+    
+    .transaction-type-btn:hover {
+        border-color: #007bff;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0, 123, 255, 0.15);
+    }
+    
+    .transaction-type-btn.active {
+        border-color: #007bff;
+        background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+        color: white;
+        transform: scale(1.02);
+    }
+    
+    .transaction-type-btn .icon {
+        font-size: 1.5rem;
+        margin-left: 10px;
+        transition: transform 0.3s ease;
+    }
+    
+    .transaction-type-btn:hover .icon {
+        transform: scale(1.1);
+    }
+    
+    /* أنماط حقول الإدخال */
+    .amount-input {
+        font-size: 1.2rem;
+        font-weight: bold;
+        text-align: center;
+        padding: 12px;
+        border: 2px solid #e9ecef;
+        border-radius: 8px;
+        transition: all 0.3s ease;
+    }
+    
+    .amount-input:focus {
+        border-color: #007bff;
+        box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1);
+    }
+    
+    /* أنماط الرسائل */
+    .alert-custom {
+        border-radius: 10px;
+        border: none;
+        padding: 15px;
+        margin-bottom: 20px;
+        animation: slideInDown 0.5s ease;
+    }
+    
+    @keyframes slideInDown {
+        from {
+            transform: translateY(-20px);
+            opacity: 0;
+        }
+        to {
+            transform: translateY(0);
+            opacity: 1;
+        }
+    }
+    
+    .alert-success-custom {
+        background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%);
+        color: #155724;
+        border-left: 5px solid #28a745;
+    }
+    
+    .alert-danger-custom {
+        background: linear-gradient(135deg, #f8d7da 0%, #f5c6cb 100%);
+        color: #721c24;
+        border-left: 5px solid #dc3545;
+    }
+    
+    .alert-warning-custom {
+        background: linear-gradient(135deg, #fff3cd 0%, #ffeeba 100%);
+        color: #856404;
+        border-left: 5px solid #ffc107;
+    }
+    
+    /* أنماط الأزرار */
+    .btn {
+        border-radius: 8px;
+        font-weight: 600;
+        padding: 12px 30px;
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .btn::before {
+        content: '';
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        width: 0;
+        height: 0;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.5);
+        transform: translate(-50%, -50%);
+        transition: width 0.6s, height 0.6s;
+    }
+    
+    .btn:hover::before {
+        width: 300px;
+        height: 300px;
+    }
+    
+    .btn-primary {
+        background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+        border: none;
+        color: white;
+    }
+    
+    .btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(0, 123, 255, 0.3);
+    }
+    
+    .btn-secondary {
+        background: linear-gradient(135deg, #6c757d 0%, #545b62 100%);
+        border: none;
+        color: white;
+    }
+    
+    .btn-secondary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(108, 117, 125, 0.3);
+    }
+    
+    .btn:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+        transform: none !important;
+    }
+    
+    /* أنماط التسميات */
+    .form-label {
+        font-weight: 600;
+        color: #495057;
+        margin-bottom: 8px;
+        display: block;
+    }
+    
+    /* تأثيرات خاصة */
+    .pulse {
+        animation: pulse 2s infinite;
+    }
+    
+    @keyframes pulse {
+        0% {
+            box-shadow: 0 0 0 0 rgba(0, 123, 255, 0.7);
+        }
+        70% {
+            box-shadow: 0 0 0 10px rgba(0, 123, 255, 0);
+        }
+        100% {
+            box-shadow: 0 0 0 0 rgba(0, 123, 255, 0);
+        }
+    }
+    
+    /* تصميم متجاوب */
+    @media (max-width: 768px) {
+        .transaction-type-btn {
+            padding: 12px;
+            font-size: 0.9rem;
+        }
+        
+        .field-container {
+            padding: 12px;
+        }
+        
+        .btn {
+            padding: 10px 20px;
+            font-size: 0.9rem;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">
+                        إضافة حركة صندوق جديدة
+                    </h5>
+                    <!-- عرض رصيد الصندوق الحالي -->
+                    <div class="text-start">
+                        <span class="badge bg-primary fs-6">
+                            الرصيد الحالي: {{ current_balance|floatformat:2 }}
+                        </span>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <!-- رسائل التوضيح -->
+                    <div id="message-container"></div>
+                    
+                    <!-- اختيار نوع العملية -->
+                    <div class="mb-4">
+                        <label class="form-label">
+                            اختر نوع العملية:
+                        </label>
+                        <div class="row">
+                            <div class="col-md-4 mb-2">
+                                <button type="button" class="transaction-type-btn" data-type="deposit">
+                                    <span class="icon">↓</span>
+                                    <span>إيداع في الصندوق</span>
+                                </button>
+                            </div>
+                            <div class="col-md-4 mb-2">
+                                <button type="button" class="transaction-type-btn" data-type="withdrawal">
+                                    <span class="icon">↑</span>
+                                    <span>سحب من الصندوق</span>
+                                </button>
+                            </div>
+                            <div class="col-md-4 mb-2">
+                                <button type="button" class="transaction-type-btn" data-type="expense">
+                                    <span class="icon">🧾</span>
+                                    <span>مصروفات</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <form method="post" id="transaction-form">
+                        {% csrf_token %}
+                        
+                        <!-- الحقول المخفية لنوع العملية -->
+                        <input type="hidden" name="transaction_type" id="transaction_type" value="">
+                        
+                        <!-- حقل المبلغ الداخل -->
+                        <div class="field-group hidden" id="amount_in_group">
+                            <div class="field-container" id="amount_in_container">
+                                <label for="{{ form.amount_in.id_for_label }}" class="form-label">
+                                    المبلغ الداخل (إيداع)
+                                </label>
+                                {{ form.amount_in }}
+                                {% if form.amount_in.errors %}
+                                <div class="alert alert-danger-custom mt-2">
+                                    {{ form.amount_in.errors }}
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <!-- حقل المبلغ الخارج -->
+                        <div class="field-group hidden" id="amount_out_group">
+                            <div class="field-container" id="amount_out_container">
+                                <label for="{{ form.amount_out.id_for_label }}" class="form-label">
+                                    المبلغ الخارج (سحب/مصروف)
+                                </label>
+                                {{ form.amount_out }}
+                                {% if form.amount_out.errors %}
+                                <div class="alert alert-danger-custom mt-2">
+                                    {{ form.amount_out.errors }}
+                                </div>
+                                {% endif %}
+                                <small class="text-muted d-block mt-2">
+                                    ملاحظة: عمليات السحب والمصروفات تتم نقداً بشكل تلقائي
+                                </small>
+                            </div>
+                        </div>
+                        
+                        <!-- حقل الملاحظات -->
+                        <div class="field-group">
+                            <div class="field-container">
+                                <label for="{{ form.notes.id_for_label }}" class="form-label">
+                                    ملاحظات
+                                </label>
+                                {{ form.notes }}
+                                {% if form.notes.errors %}
+                                <div class="alert alert-danger-custom mt-2">
+                                    {{ form.notes.errors }}
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <!-- رسائل الخطأ العامة -->
+                        {% if form.non_field_errors %}
+                        <div class="alert alert-danger-custom">
+                            <strong>يوجد أخطاء:</strong>
+                            <ul class="mb-0 mt-2">
+                                {% for error in form.non_field_errors %}
+                                <li>{{ error }}</li>
+                                {% endfor %}
+                            </ul>
+                        </div>
+                        {% endif %}
+                        
+                        <!-- الأزرار -->
+                        <div class="d-grid gap-2 mt-4">
+                            <button type="submit" class="btn btn-primary" id="submit-btn" disabled>
+                                حفظ الحركة
+                            </button>
+                            <a href="{% url 'invoice:cash_transaction_list' %}" class="btn btn-secondary">
+                                إلغاء
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script nonce="{{ csp_nonce }}">
+// التأكد من تحميل الصفحة بالكامل
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('=== الصفحة محملة بالكامل ===');
+    
+    // الحصول على العناصر الأساسية
+    const elements = {
+        transactionTypeBtns: document.querySelectorAll('.transaction-type-btn'),
+        transactionTypeInput: document.getElementById('transaction_type'),
+        amountInGroup: document.getElementById('amount_in_group'),
+        amountOutGroup: document.getElementById('amount_out_group'),
+        submitBtn: document.getElementById('submit-btn'),
+        messageContainer: document.getElementById('message-container'),
+        form: document.getElementById('transaction-form')
+    };
+    
+    // التحقق من وجود العناصر
+    if (!elements.transactionTypeBtns.length) {
+        console.error('❌ أزرار نوع العملية غير موجودة!');
+        return;
+    }
+    
+    if (!elements.transactionTypeInput) {
+        console.error('❌ حقل نوع العملية غير موجود!');
+        return;
+    }
+    
+    // متغيرات الحالة
+    let selectedType = null;
+    let isSubmitting = false;
+    
+    // دالة إظهار الرسائل
+    function showMessage(message, type = 'success', duration = 5000) {
+        console.log(`📢 إظهار رسالة: ${message} (نوع: ${type})`);
+        
+        const alertClass = type === 'success' ? 'alert-success-custom' : 
+                           type === 'danger' ? 'alert-danger-custom' : 
+                           'alert-warning-custom';
+        
+        elements.messageContainer.innerHTML = `
+            <div class="alert-custom ${alertClass}">
+                ${message}
+            </div>
+        `;
+        
+        // إضافة تأثير الحركة
+        elements.messageContainer.style.animation = 'none';
+        setTimeout(() => {
+            elements.messageContainer.style.animation = 'slideInDown 0.5s ease';
+        }, 10);
+        
+        // إخفاء الرسالة تلقائياً
+        if (duration > 0) {
+            setTimeout(() => {
+                elements.messageContainer.innerHTML = '';
+            }, duration);
+        }
+    }
+    
+    // دالة تحديث الحقول المعروضة
+    function updateFieldsVisibility(type) {
+        console.log(`🔄 تحديث الحقول للنوع: ${type}`);
+        
+        // إخفاء جميع الحقول أولاً
+        hideAllFields();
+        
+        // إزالة الكلاس النشط من جميع الحاويات
+        document.querySelectorAll('.field-container').forEach(container => {
+            container.classList.remove('active');
+        });
+        
+        // إظهار الحقول المناسبة
+        switch(type) {
+            case 'deposit':
+                console.log('✅ إظهار حقول الإيداع');
+                showField(elements.amountInGroup, 'amount_in_container');
+                break;
+                
+            case 'withdrawal':
+                console.log('✅ إظهار حقول السحب');
+                showField(elements.amountOutGroup, 'amount_out_container');
+                break;
+                
+            case 'expense':
+                console.log('✅ إظهار حقول المصروفات');
+                showField(elements.amountOutGroup, 'amount_out_container');
+                break;
+        }
+    }
+    
+    // دالة إخفاء جميع الحقول
+    function hideAllFields() {
+        [elements.amountInGroup, elements.amountOutGroup].forEach(group => {
+            if (group) {
+                group.style.display = 'none';
+                group.classList.add('hidden');
+            }
+        });
+    }
+    
+    // دالة إظهار حقل معين
+    function showField(group, containerId) {
+        if (group) {
+            group.style.display = 'block';
+            group.classList.remove('hidden');
+            
+            const container = document.getElementById(containerId);
+            if (container) {
+                container.classList.add('active');
+            }
+        }
+    }
+    
+    // دالة الحصول على رسالة توضيحية
+    function getTypeMessage(type) {
+        const messages = {
+            'deposit': 'تم اختيار: إيداع في الصندوق. يرجى إدخال المبلغ المراد إيداعه.',
+            'withdrawal': 'تم اختيار: سحب من الصندوق. يرجى إدخال المبلغ المراد سحبه. العملية ستتم نقداً بشكل تلقائي.',
+            'expense': 'تم اختيار: مصروفات. يرجى إدخال المبلغ والملاحظات. العملية ستتم نقداً بشكل تلقائي.'
+        };
+        
+        return messages[type] || '';
+    }
+    
+    // دالة التحقق من صحة النموذج
+    function validateForm() {
+        console.log('🔍 التحقق من صحة النموذج');
+        
+        if (!selectedType) {
+            showMessage('يرجى اختيار نوع العملية أولاً', 'warning');
+            return false;
+        }
+        
+        const amountIn = elements.form.querySelector('#{{ form.amount_in.id_for_label }}').value;
+        const amountOut = elements.form.querySelector('#{{ form.amount_out.id_for_label }}').value;
+        
+        if (selectedType === 'deposit' && (!amountIn || parseFloat(amountIn) <= 0)) {
+            showMessage('يرجى إدخال مبلغ صحيح للإيداع', 'danger');
+            return false;
+        }
+        
+        if ((selectedType === 'withdrawal' || selectedType === 'expense') && (!amountOut || parseFloat(amountOut) <= 0)) {
+            showMessage('يرجى إدخال مبلغ صحيح للسحب/المصروفات', 'danger');
+            return false;
+        }
+        
+        return true;
+    }
+    
+    // دالة تعطيل زر الإرسال
+    function setSubmitButton(disabled, text = null) {
+        if (elements.submitBtn) {
+            elements.submitBtn.disabled = disabled;
+            if (text) {
+                elements.submitBtn.textContent = text;
+            }
+            
+            if (disabled) {
+                elements.submitBtn.classList.add('pulse');
+            } else {
+                elements.submitBtn.classList.remove('pulse');
+            }
+        }
+    }
+    
+    // معالجة النقر على أزرار نوع العملية
+    elements.transactionTypeBtns.forEach(btn => {
+        btn.addEventListener('click', function() {
+            if (isSubmitting) return;
+            
+            const type = this.getAttribute('data-type');
+            console.log(`🎯 تم اختيار: ${type}`);
+            
+            // إزالة الكلاس النشط من جميع الأزرار
+            elements.transactionTypeBtns.forEach(b => b.classList.remove('active'));
+            
+            // إضافة الكلاس النشط للزر المحدد
+            this.classList.add('active');
+            
+            // تعيين نوع العملية
+            selectedType = type;
+            elements.transactionTypeInput.value = type;
+            
+            // تحديث الحقول المعروضة
+            updateFieldsVisibility(type);
+            
+            // تفعيل زر الحفظ
+            setSubmitButton(false);
+            
+            // إظهار رسالة توضيحية
+            const msg = getTypeMessage(type);
+            showMessage(msg, 'success', 3000);
+        });
+    });
+    
+    // معالجة إرسال النموذج
+    if (elements.form) {
+        elements.form.addEventListener('submit', function(e) {
+            console.log('📤 محاولة إرسال النموذج');
+            
+            if (!validateForm()) {
+                e.preventDefault();
+                return false;
+            }
+            
+            // تعطيل زر الإرسال لمنع الإرسال المتعدد
+            setSubmitButton(true, 'جاري الحفظ...');
+            isSubmitting = true;
+            
+            // إظهار رسالة تحميل
+            showMessage('جاري حفظ الحركة، يرجى الانتظار...', 'warning', 0);
+        });
+    }
+    
+    console.log('=== انتهى التحميل والتحقق ===');
+});
+</script>
+اضافة حركة للصندوق 
+{% endblock %}

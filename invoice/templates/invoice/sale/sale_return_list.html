@@ -1,0 +1,366 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}قائمة مرتجعات المبيعات{% endblock %}
+
+{% block extra_css %}
+    <link rel="stylesheet" href="{% static 'css/print_system.css' %}">
+    <style>
+    /* ===== خصوصيات هذه الصفحة فقط — لا ألوان ثابتة ===== */
+
+    /* رقم المرتجع */
+    .return-id {
+        color: var(--aqua-4);
+        font-weight: 700;
+        font-size: 0.85rem;
+    }
+
+    /* رابط الفاتورة الأصلية */
+    .invoice-link {
+        color: var(--aqua-4);
+        text-decoration: none;
+        font-weight: 500;
+    }
+    .invoice-link:hover { color: var(--text-dark); }
+
+    /* خلية العميل */
+    .customer-cell {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.4rem;
+    }
+    .customer-avatar {
+        width: 26px; height: 26px;
+        background: var(--aqua-1);
+        border-radius: 50%;
+        display: flex; align-items: center; justify-content: center;
+        color: var(--aqua-4);
+        font-size: 0.65rem;
+        flex-shrink: 0;
+    }
+
+    /* شارات الحالة مبنية من ألوان النظام */
+    .badge-status {
+        padding: 0.2rem 0.6rem;
+        border-radius: 4px;
+        font-size: 0.7rem;
+        font-weight: 600;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.3rem;
+    }
+    .badge-status.badge-confirmed {
+        background: var(--aqua-1);
+        color: var(--text-dark);
+        border: 1px solid var(--aqua-2);
+    }
+    .badge-status.badge-pending {
+        background: var(--aqua-2);
+        color: var(--text-dark);
+    }
+    .badge-status.badge-other {
+        background: var(--aqua-1);
+        color: var(--aqua-4);
+    }
+
+    /* أزرار الإجراءات */
+    .action-btn {
+        width: 28px; height: 28px;
+        border-radius: 4px;
+        display: inline-flex;
+        align-items: center; justify-content: center;
+        color: white;
+        text-decoration: none;
+        font-size: 0.7rem;
+        transition: all 0.2s;
+    }
+    .action-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: var(--shadow-md);
+        color: white;
+    }
+
+    /* عداد في الرأس */
+    .header-count {
+        background: rgba(255, 255, 255, 0.2);
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        padding: 0.15rem 0.6rem;
+        border-radius: 4px;
+        font-size: 0.75rem;
+    }
+
+    /* ملاحظة مصغرة */
+    .mini-note {
+        font-size: 0.7rem;
+        color: var(--aqua-4);
+        opacity: 0.7;
+    }
+
+    /* حالة فارغة */
+    .empty-state {
+        text-align: center;
+        padding: 3rem 1rem;
+    }
+    .empty-state i {
+        font-size: 3rem;
+        color: var(--aqua-2);
+        margin-bottom: 1rem;
+    }
+    .empty-state h5 { color: #666; margin-bottom: 0.5rem; }
+
+    /* ترقيم الصفحات */
+    .return-pagination {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 0.3rem;
+        padding: 1rem;
+        border-top: 1px solid var(--aqua-2);
+    }
+    .return-pagination a,
+    .return-pagination span {
+        padding: 0.35rem 0.7rem;
+        background: white;
+        border: 1px solid var(--aqua-2);
+        border-radius: 4px;
+        color: var(--text-dark);
+        text-decoration: none;
+        font-size: 0.8rem;
+        transition: all 0.2s;
+    }
+    .return-pagination a:hover {
+        background: var(--aqua-1);
+        border-color: var(--aqua-3);
+    }
+    .return-pagination .active {
+        background: linear-gradient(135deg, var(--aqua-4) 0%, #006064 100%);
+        color: white;
+        border-color: transparent;
+    }
+
+    /* قسم الفلترة */
+    .filter-section {
+        background: #f8f9fa;
+        padding: 1rem;
+        border-bottom: 1px solid var(--aqua-2);
+    }
+    .filter-grid {
+        display: flex;
+        gap: 0.75rem;
+        flex-wrap: wrap;
+        align-items: flex-end;
+    }
+    .filter-group { flex: 1; min-width: 150px; }
+
+    @media (max-width: 768px) {
+        .filter-grid { flex-direction: column; }
+        .filter-group { min-width: 100%; }
+        .return-pagination { flex-wrap: wrap; }
+    }
+    </style>
+{% endblock %}
+
+{% block content %}
+
+<!-- ===== الخطوة 2: إضافة id="printableArea" و class="invoice-print-area" ===== -->
+<div class="container-fluid invoice-print-area" id="printableArea" style="padding: 0.75rem;">
+    <div class="card">
+        <!-- ===== رأس البطاقة — إضافة class="no-print" للأزرار ===== -->
+        <div class="card-header">
+            <div class="d-flex align-items-center gap-2">
+                <i class="fas fa-undo-alt"></i>
+                <span>قائمة مرتجعات المبيعات</span>
+            </div>
+            <!-- ===== الخطوة 3: إضافة class="no-print" لعناصر التحكم ===== -->
+            <div class="d-flex align-items-center gap-2 ms-auto no-print">
+                <span class="header-count">
+                    <i class="fas fa-chart-bar"></i>
+                    {{ page_obj.paginator.count }} مرتجع
+                </span>
+                <a href="{% url 'invoice:sale_list' %}" class="btn btn-sm btn-primary no-print">
+                    <i class="fas fa-arrow-right"></i> العودة للمبيعات
+                </a>
+            </div>
+        </div>
+
+        <div class="card-body" style="padding: 0;">
+            <!-- ===== قسم الفلترة - class="no-print" ===== -->
+            <div class="filter-section no-print">
+                <form method="get" class="filter-grid">
+                    <div class="filter-group" style="flex: 2; min-width: 200px;">
+                        <label class="form-label"><i class="fas fa-search"></i> بحث</label>
+                        <input type="text" name="q" class="form-control" placeholder="رقم المرتجع / الفاتورة / العميل..." value="{{ search_query|default:'' }}">
+                    </div>
+                    <div class="filter-group">
+                        <label class="form-label"><i class="fas fa-calendar-alt"></i> من تاريخ</label>
+                        <input type="date" name="start_date" class="form-control" value="{{ start_date|default:'' }}">
+                    </div>
+                    <div class="filter-group">
+                        <label class="form-label"><i class="fas fa-calendar-alt"></i> إلى تاريخ</label>
+                        <input type="date" name="end_date" class="form-control" value="{{ end_date|default:'' }}">
+                    </div>
+                    <div style="display: flex; gap: 0.5rem; flex-shrink: 0;">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-search"></i> بحث
+                        </button>
+                        <a href="{% url 'invoice:sale_return_list' %}" class="btn btn-secondary">
+                            <i class="fas fa-redo"></i> إعادة
+                        </a>
+                    </div>
+                </form>
+            </div>
+
+            <!-- ===== الجدول ===== -->
+            <div style="overflow-x: auto;">
+                <table class="table table-bordered" id="returnsTable">
+                    <thead>
+                        <tr>
+                            <!-- ===== الخطوة 4: إضافة data-print-field لأعمدة الجدول ===== -->
+                            <th data-print-field="col-index" style="width: 40px;">#</th>
+                            <th data-print-field="col-return-id">رقم المرتجع</th>
+                            <th data-print-field="col-original-invoice">الفاتورة الأصلية</th>
+                            <th data-print-field="col-customer">العميل</th>
+                            <th data-print-field="col-return-date">تاريخ المرتجع</th>
+                            <th data-print-field="col-items">عدد البنود</th>
+                            <th data-print-field="col-total">الإجمالي</th>
+                            <th data-print-field="col-refund">المبلغ المسترد</th>
+                            <th data-print-field="col-status">الحالة</th>
+                            <th data-print-field="col-created">تاريخ الإنشاء</th>
+                            <!-- ===== الخطوة 3: إضافة class="no-print" لعمود الإجراءات ===== -->
+                            <th data-print-field="col-actions" style="width: 80px;" class="no-print">الإجراءات</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for return in page_obj %}
+                        <tr>
+                            <!-- ===== الخطوة 5: تكرار data-print-field في الخلايا ===== -->
+                            <td data-print-field="col-index" class="text-center">{{ forloop.counter0|add:page_obj.start_index }}</td>
+                            <td data-print-field="col-return-id" class="text-center">
+                                <span class="return-id">{{ return.uniqueId }}</span>
+                                {% if return.return_notes %}
+                                <br><span class="mini-note">{{ return.return_notes|truncatechars:20 }}</span>
+                                {% endif %}
+                            </td>
+                            <td data-print-field="col-original-invoice" class="text-center">
+                                {% if return.original_sale %}
+                                <a href="{% url 'invoice:sale_detail' return.original_sale.slug %}" class="invoice-link no-print">
+                                    <i class="fas fa-external-link-alt" style="font-size: 0.65rem;"></i>
+                                    {{ return.original_sale.uniqueId }}
+                                </a>
+                                <span class="print-only" style="display:none;">{{ return.original_sale.uniqueId }}</span>
+                                {% else %}
+                                <span style="color: #999;">—</span>
+                                {% endif %}
+                            </td>
+                            <td data-print-field="col-customer" class="text-center">
+                                {% if return.original_sale and return.original_sale.sale_customer %}
+                                <div class="customer-cell">
+                                    <div class="customer-avatar"><i class="fas fa-user"></i></div>
+                                    <span>{{ return.original_sale.sale_customer.get_full_name|default:return.original_sale.sale_customer.username }}</span>
+                                </div>
+                                {% else %}
+                                <span style="color: #999;">غير محدد</span>
+                                {% endif %}
+                            </td>
+                            <td data-print-field="col-return-date" class="text-center">{{ return.return_date|date:"Y-m-d"|default:"—" }}</td>
+                            <td data-print-field="col-items" class="text-center">
+                                <span class="badge-status badge-other">
+                                    <i class="fas fa-box" style="font-size: 0.6rem;"></i>
+                                    {{ return.total_items_count }}
+                                </span>
+                            </td>
+                            <td data-print-field="col-total" class="text-center" style="font-family: 'Courier New', monospace; font-weight: 700;">
+                                {{ return.return_final_total|floatformat:2 }}
+                            </td>
+                            <td data-print-field="col-refund" class="text-center" style="font-family: 'Courier New', monospace; font-weight: 600;">
+                                {{ return.refund_amount|floatformat:2 }}
+                                {% if return.is_refunded %}
+                                <i class="fas fa-check-circle" style="color: var(--aqua-4); font-size: 0.65rem;"></i>
+                                {% endif %}
+                            </td>
+                            <td data-print-field="col-status" class="text-center">
+                                {% if return.return_status %}
+                                    <span class="badge-status
+                                        {% if return.return_status.name == 'مؤكد' %}badge-confirmed
+                                        {% elif return.return_status.name == 'معلق' %}badge-pending
+                                        {% else %}badge-other{% endif %}">
+                                        <i class="fas fa-circle" style="font-size: 0.35rem;"></i>
+                                        {{ return.return_status.name }}
+                                    </span>
+                                {% else %}
+                                    <span class="badge-status badge-pending">
+                                        <i class="fas fa-clock" style="font-size: 0.6rem;"></i>
+                                        قيد المعالجة
+                                    </span>
+                                {% endif %}
+                            </td>
+                            <td data-print-field="col-created" class="text-center" style="font-size: 0.8rem;">
+                                {{ return.date_created|date:"Y-m-d H:i"|default:"—" }}
+                            </td>
+                            <!-- ===== عمود الإجراءات - class="no-print" ===== -->
+                            <td data-print-field="col-actions" class="text-center no-print">
+                                <div class="d-flex gap-1 justify-content-center">
+                                    <a href="{% url 'invoice:sale_return_detail' return.slug %}" class="action-btn" style="background: var(--aqua-4);" title="عرض">
+                                        <i class="fas fa-eye"></i>
+                                    </a>
+                                    {% if request.user.is_superuser or return.created_by == request.user %}
+                                    <a href="{% url 'invoice:sale_return_update' return.slug %}" class="action-btn" style="background: linear-gradient(135deg, var(--aqua-3) 0%, var(--aqua-4) 100%);" title="تعديل">
+                                        <i class="fas fa-edit"></i>
+                                    </a>
+                                    {% endif %}
+                                </div>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <!-- تحديث عدد الأعمدة ليشمل عمود الإجراءات -->
+                            <td colspan="11">
+                                <div class="empty-state">
+                                    <i class="fas fa-undo-alt"></i>
+                                    <h5>لا توجد مرتجعات مبيعات</h5>
+                                    <p style="color: #999; font-size: 0.85rem;">يمكنك إنشاء مرتجع من داخل فاتورة البيع</p>
+                                    <a href="{% url 'invoice:sale_list' %}" class="btn btn-primary no-print">
+                                        <i class="fas fa-plus"></i> العودة لفواتير المبيعات
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- ===== ترقيم الصفحات - class="no-print" ===== -->
+            {% if page_obj.paginator.num_pages > 1 %}
+            <div class="return-pagination no-print">
+                {% if page_obj.has_previous %}
+                <a href="?page=1{% if search_query %}&q={{ search_query }}{% endif %}{% if start_date %}&start_date={{ start_date }}{% endif %}{% if end_date %}&end_date={{ end_date }}{% endif %}">&laquo;</a>
+                <a href="?page={{ page_obj.previous_page_number }}{% if search_query %}&q={{ search_query }}{% endif %}{% if start_date %}&start_date={{ start_date }}{% endif %}{% if end_date %}&end_date={{ end_date }}{% endif %}">
+                    <i class="fas fa-chevron-right" style="font-size: 0.65rem;"></i>
+                </a>
+                {% endif %}
+
+                <span class="active">{{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</span>
+
+                {% if page_obj.has_next %}
+                <a href="?page={{ page_obj.next_page_number }}{% if search_query %}&q={{ search_query }}{% endif %}{% if start_date %}&start_date={{ start_date }}{% endif %}{% if end_date %}&end_date={{ end_date }}{% endif %}">
+                    <i class="fas fa-chevron-left" style="font-size: 0.65rem;"></i>
+                </a>
+                <a href="?page={{ page_obj.paginator.num_pages }}{% if search_query %}&q={{ search_query }}{% endif %}{% if start_date %}&start_date={{ start_date }}{% endif %}{% if end_date %}&end_date={{ end_date }}{% endif %}">&raquo;</a>
+                {% endif %}
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- ===== الخطوة 6: استدعاء print_system.html ===== -->
+{% include 'includes/print_system.html' %}
+
+{% endblock %}
+
+{% block extra_js %}
+    <!-- ===== الخطوة 7: استدعاء print_system.js ===== -->
+    <script src="{% static 'js/print_system.js' %}"></script>
+{% endblock %}

@@ -1,0 +1,1252 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}إنشاء فاتورة شراء جديدة{% endblock %}
+
+{% block extra_css %}
+<style>
+/* ============================================
+   [CSS-01] إعدادات التصميم العامة بألوان الأزوردي
+   ============================================ */
+:root {
+  --aqua-1: #e0f7fa;
+  --aqua-2: #b2ebf2;
+  --aqua-3: #4dd0e1;
+  --aqua-4: #0097a7;
+  --text-dark: #006064;
+  --text-light: #ffffff;
+  --shadow-sm: 0 2px 8px rgba(0, 150, 167, 0.08);
+  --shadow-md: 0 4px 12px rgba(0, 150, 167, 0.12);
+}
+
+* { box-sizing: border-box; }
+
+body {
+  background-color: var(--aqua-1);
+  font-family: 'Tajawal', sans-serif;
+  font-size: 0.85rem;
+}
+
+.container-fluid { padding: 0.75rem; }
+
+.card {
+  border: none;
+  border-radius: 8px;
+  box-shadow: var(--shadow-sm);
+  margin-bottom: 1rem;
+  overflow: hidden;
+}
+
+.card-header {
+  background: linear-gradient(135deg, var(--aqua-4) 0%, #006064 100%);
+  color: var(--text-light);
+  padding: 0.6rem 1rem;
+  font-weight: 600;
+  font-size: 0.9rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  border-bottom: 1px solid var(--aqua-2);
+}
+
+.card-header i { font-size: 0.9rem; }
+.card-body { padding: 1rem; }
+
+.form-label {
+  font-weight: 500;
+  font-size: 0.75rem;
+  margin-bottom: 0.2rem;
+  color: var(--text-dark);
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+
+.form-control, .form-select {
+  border-radius: 4px;
+  border: 1px solid var(--aqua-2);
+  padding: 0.35rem 0.5rem;
+  font-size: 0.8rem;
+  transition: all 0.2s;
+}
+
+.form-control:focus, .form-select:focus {
+  border-color: var(--aqua-3);
+  box-shadow: 0 0 0 2px rgba(77, 208, 225, 0.2);
+}
+
+.form-control.is-invalid {
+  border-color: #dc3545;
+  box-shadow: 0 0 0 0.15rem rgba(220, 53, 69, 0.25);
+}
+
+.btn {
+  border-radius: 4px;
+  padding: 0.35rem 0.7rem;
+  font-weight: 600;
+  font-size: 0.8rem;
+  border: none;
+  transition: all 0.2s;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+
+.btn-sm { padding: 0.2rem 0.5rem; font-size: 0.7rem; }
+.btn-primary { background: linear-gradient(135deg, var(--aqua-4) 0%, #006064 100%); color: white; }
+.btn-success { background: linear-gradient(135deg, #00897b 0%, #00695c 100%); color: white; }
+.btn-warning { background: linear-gradient(135deg, #ffb300 0%, #ff8f00 100%); color: white; }
+.btn-danger { background: linear-gradient(135deg, #e53935 0%, #b71c1c 100%); color: white; }
+.required-field::after { content: " *"; color: #d32f2f; }
+.btn-success:disabled { opacity: 0.6; cursor: not-allowed; }
+
+.success-message, .error-message-backend {
+  padding: 0.6rem 1rem;
+  border-radius: 4px;
+  margin-bottom: 0.75rem;
+  font-size: 0.85rem;
+  display: none;
+}
+.success-message { background: linear-gradient(135deg, #00897b 0%, #00695c 100%); color: white; }
+.error-message-backend { background: linear-gradient(135deg, #e53935 0%, #b71c1c 100%); color: white; border-left: 4px solid #ff5252; }
+.error-message-backend ul { margin: 0; padding-right: 1.2rem; list-style-type: disc; }
+
+/* ============================================
+   [CSS-02] قسم معلومات الفاتورة الأساسية
+   ============================================ */
+.invoice-basic-info .row { margin-bottom: 0.5rem; }
+.supplier-search-icon, .product-search-icon { display: none !important; }
+#id_purch_notes { height: 2.4rem; resize: none; }
+
+.paid-amount-container { transition: all 0.3s ease; opacity: 0; max-height: 0; overflow: hidden; }
+.paid-amount-container.show { opacity: 1; max-height: 80px; margin-bottom: 0.5rem; }
+
+.cash-balance-info .alert {
+  padding: 0.4rem 0.8rem; margin-bottom: 0.5rem; border-radius: 4px;
+  font-size: 0.8rem; background: var(--aqua-1); border: 1px solid var(--aqua-2); color: var(--text-dark);
+}
+
+/* ============================================
+   [CSS-03] قسم بنود الفاتورة
+   ============================================ */
+.items-section { background: white; border-radius: 8px; box-shadow: var(--shadow-sm); margin-bottom: 1rem; }
+.items-header { background: linear-gradient(135deg, var(--aqua-4) 0%, #006064 100%); color: white; padding: 0.5rem 1rem; display: flex; justify-content: space-between; align-items: center; border-radius: 8px 8px 0 0; }
+.items-header h5 { margin: 0; font-size: 0.9rem; font-weight: 600; display: flex; align-items: center; gap: 0.5rem; }
+.items-controls { display: flex; gap: 0.75rem; align-items: center; }
+.items-count-container { background: rgba(255,255,255,0.15); padding: 0.2rem 0.5rem; border-radius: 4px; display: flex; align-items: center; gap: 0.3rem; font-size: 0.75rem; }
+.items-count-container input { width: 50px; border: none; border-radius: 3px; padding: 0.1rem 0.2rem; text-align: center; background: white; color: var(--text-dark); }
+.items-table-container { overflow-x: visible; overflow-y: visible; }
+.items-table { width: 100%; border-collapse: collapse; font-size: 0.75rem; table-layout: auto; }
+.items-table thead th { background: linear-gradient(135deg, var(--aqua-3) 0%, var(--aqua-4) 100%); color: white; font-weight: 600; text-align: center; padding: 0.4rem 0.2rem; white-space: nowrap; border-bottom: 2px solid var(--aqua-2); }
+.items-table tbody td { padding: 0.3rem 0.2rem; vertical-align: middle; border-bottom: 1px solid var(--aqua-1); position: relative; }
+.items-table .form-control { padding: 0.2rem 0.3rem; font-size: 0.7rem; height: auto; }
+
+.image-preview { width: 35px; height: 35px; border: 2px dashed var(--aqua-2); border-radius: 4px; display: flex; align-items: center; justify-content: center; cursor: pointer; background: var(--aqua-1); margin: 0 auto; overflow: hidden; }
+.image-preview i { font-size: 0.9rem; color: var(--aqua-4); }
+.image-preview img { width: 100%; height: 100%; object-fit: cover; border-radius: 3px; }
+
+.delete-btn { background: linear-gradient(135deg, #e53935 0%, #b71c1c 100%); color: white; border: none; border-radius: 3px; padding: 0.15rem 0.25rem; cursor: pointer; font-size: 0.6rem; width: 22px; height: 22px; display: inline-flex; align-items: center; justify-content: center; margin: 0 auto; }
+.item-total { background: var(--aqua-1); font-weight: 600; color: var(--text-dark); text-align: center; }
+
+.barcode-row { background-color: var(--aqua-1); }
+.barcode-row td { padding: 0 !important; border: none !important; }
+.barcode-field-container { padding: 0.2rem 0.5rem; }
+.barcode-fields-list { display: grid; grid-template-columns: repeat(7, 1fr); gap: 0.2rem; }
+.barcode-item { display: flex; align-items: center; background: white; border: 1px solid var(--aqua-2); border-radius: 3px; padding: 0.1rem; }
+.barcode-input { border: none; background: transparent; padding: 0.1rem; font-size: 0.65rem; font-family: monospace; width: 100%; transition: all 0.2s;}
+.barcode-remove-btn { background: none; border: none; color: #e53935; padding: 0 0.1rem; cursor: pointer; font-size: 0.6rem; }
+
+@media (max-width: 768px) { .barcode-fields-list { grid-template-columns: repeat(3, 1fr); } }
+@media (max-width: 480px) { .barcode-fields-list { grid-template-columns: repeat(2, 1fr); } }
+
+.table-footer-actions { padding: 0.5rem; text-align: right; background: #f8f9fa; border-top: 1px solid var(--aqua-2); }
+#add-single-item { background: linear-gradient(135deg, #00897b 0%, #00695c 100%); color: white; border: none; border-radius: 4px; padding: 0.3rem 0.8rem; font-size: 0.8rem; cursor: pointer; }
+
+/* ============================================
+   [CSS-04] أنظمة البحث التلقائي
+   ============================================ */
+.product-search-container, .supplier-search-container { position: relative; width: 100%; display: flex; flex-direction: column; }
+
+.autocomplete-dropdown {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  left: auto;
+  min-width: 300px; 
+  width: max-content;
+  max-width: 500px; 
+  background: white;
+  border: 1px solid var(--aqua-3);
+  border-radius: 0 0 4px 4px;
+  box-shadow: 0 6px 12px rgba(0,150,167,0.25);
+  max-height: 250px;
+  overflow-y: auto;
+  z-index: 1050;
+  display: none;
+}
+
+.autocomplete-dropdown.show { display: block; }
+.autocomplete-item { padding: 0.4rem 0.5rem; cursor: pointer; border-bottom: 1px solid var(--aqua-1); display: flex; align-items: center; gap: 0.5rem; font-size: 0.75rem; white-space: nowrap; text-overflow: ellipsis; }
+.autocomplete-item:hover { background-color: var(--aqua-1); }
+.autocomplete-item img { width: 30px; height: 30px; object-fit: cover; border-radius: 3px; flex-shrink: 0; }
+.autocomplete-item-title { font-weight: 600; color: var(--text-dark); }
+.autocomplete-item-details { display: flex; gap: 0.5rem; font-size: 0.65rem; color: #555; }
+.autocomplete-item-price { color: #00897b; font-weight: 600; }
+
+/* ============================================
+   [CSS-05] صورة الفاتورة - مع إضافة أزرار جديدة
+   ============================================ */
+.invoice-image-wrapper {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.invoice-image-preview { 
+    width: 120px; 
+    height: 120px; 
+    border-radius: 8px; 
+    border: 2px dashed var(--aqua-2); 
+    cursor: pointer; 
+    display: flex; 
+    flex-direction: column; 
+    align-items: center; 
+    justify-content: center; 
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%); 
+    color: var(--text-dark); 
+    overflow: hidden;
+    position: relative;
+}
+.invoice-image-preview i { font-size: 1.5rem; color: var(--aqua-4); }
+.invoice-image-preview small { font-size: 0.6rem; }
+.invoice-image-preview.has-image { border: 2px solid var(--aqua-4); background: white; }
+.invoice-image-preview.has-image img { width: 100%; height: 100%; object-fit: cover; border-radius: 6px; }
+
+.invoice-image-buttons {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+
+.invoice-image-buttons .btn {
+    font-size: 0.7rem;
+    padding: 0.25rem 0.6rem;
+}
+
+.hidden-file-input { display: none !important; }
+
+/* ============================================
+   [CSS-06] القسم المالي
+   ============================================ */
+.financial-content { display: flex; gap: 1rem; align-items: flex-start; }
+.financial-image { width: 120px; flex-shrink: 0; }
+.financial-calculations { flex: 1; }
+.financial-section { background: white; border-radius: 8px; padding: 0.75rem; border: 1px solid var(--aqua-2); }
+.financial-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; }
+.financial-column { display: flex; flex-direction: column; gap: 0.4rem; }
+.financial-row { display: flex; justify-content: space-between; align-items: center; background: var(--aqua-1); border-radius: 4px; padding: 0.3rem 0.5rem; border-left: 3px solid var(--aqua-3); font-size: 0.75rem; }
+.financial-row input { width: 80px; padding: 0.2rem; font-size: 0.75rem; border-radius: 3px; border: 1px solid var(--aqua-2); }
+.financial-label { font-weight: 600; color: var(--text-dark); display: flex; align-items: center; gap: 0.2rem; }
+.financial-value { font-weight: 700; color: var(--text-dark); }
+.grand-total { grid-column: 1 / -1; background: #fff3e0; border-left-color: #ff9800; font-size: 0.85rem; padding: 0.4rem 0.5rem; }
+.remaining-amount { grid-column: 1 / -1; background: #fff8e1; border-left-color: #f57c00; }
+.remaining-amount-in-words-container { grid-column: 1 / -1; background: white; border: 1px solid var(--aqua-2); border-radius: 4px; padding: 0.4rem; margin-top: 0.3rem; }
+.remaining-amount-in-words { display: flex; align-items: center; gap: 0.3rem; flex-wrap: wrap; }
+.remaining-words-label { font-weight: 600; color: var(--text-dark); font-size: 0.75rem; }
+.remaining-words-value { flex: 1; font-size: 0.8rem; background: var(--aqua-1); padding: 0.2rem 0.4rem; border-radius: 3px; min-height: 1.8rem; display: flex; align-items: center; }
+.refresh-remaining-words-btn { background: none; border: none; color: var(--aqua-4); cursor: pointer; font-size: 0.9rem; padding: 0 0.2rem; }
+
+@media (max-width: 992px) {
+  .financial-content { flex-direction: column; align-items: center; }
+  .financial-image { width: 100%; display: flex; justify-content: center; }
+  .financial-grid { grid-template-columns: 1fr; }
+}
+
+.form-actions { display: flex; gap: 0.75rem; margin-top: 1rem; }
+.btn-success, .btn-secondary { padding: 0.4rem 1rem; font-size: 0.85rem; }
+.item-name-field, .product-search-value, .product-image-url-field, .auto-image-field { display: none !important; }
+
+.loading-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 96, 100, 0.85); z-index: 99999; display: none; justify-content: center; align-items: center; flex-direction: column; }
+.loading-overlay.show { display: flex; }
+.loading-spinner { width: 60px; height: 60px; border: 6px solid rgba(255, 255, 255, 0.3); border-top-color: #ffffff; border-radius: 50%; animation: spin 1s linear infinite; }
+.loading-text { color: #ffffff; margin-top: 1rem; font-size: 1.2rem; font-weight: 600; font-family: 'Tajawal', sans-serif; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+</style>
+{% endblock %}
+
+{% block content %}
+<div id="loading-overlay" class="loading-overlay">
+    <div class="loading-spinner"></div>
+    <div class="loading-text"><i class="fas fa-save me-2"></i> جاري حفظ الفاتورة...</div>
+</div>
+
+<div id="system-messages-container"></div>
+
+<div class="container-fluid py-2">
+    <form method="post" enctype="multipart/form-data" id="purch-form">
+        {% csrf_token %}
+
+        <div class="card">
+            <div class="card-header">
+                <i class="fas fa-info-circle"></i> معلومات الفاتورة الشراء
+                <div class="ms-auto"></div>
+                <a href="{% url 'invoice:purch_list' %}" class="btn btn-sm btn-primary">
+                    <i class="fas fa-arrow-right"></i> رجوع
+                </a>
+            </div>
+            <div class="card-body invoice-basic-info">
+                <div class="row g-2">
+                    <div class="col-md-3">
+                        <label class="form-label required-field"><i class="fas fa-user-tie"></i> المورد</label>
+                        <div class="supplier-search-container">
+                            <input type="text" class="form-control supplier-search-input" id="supplier-search" placeholder="ابحث بالاسم..." autocomplete="off">
+                            <div class="autocomplete-dropdown" id="supplier-results"></div>
+                        </div>
+                        {{ form.purch_supplier }}
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label"><i class="fas fa-phone"></i> الهاتف</label>
+                        {{ form.purch_supplier_phone }}
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label"><i class="fas fa-map-marker-alt"></i> العنوان</label>
+                        {{ form.purch_address }}
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label"><i class="fas fa-file-invoice"></i> رقم فاتورة المورد</label>
+                        {{ form.supplier_invoice_number }}
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label"><i class="fas fa-calendar-alt"></i> التاريخ</label>
+                        {{ form.purch_date }}
+                    </div>
+                </div>
+
+                <div class="row g-2">
+                    <div class="col-md-3"><label class="form-label"><i class="fas fa-tasks"></i> حالة الفاتورة</label>{{ form.purch_status }}</div>
+                    <div class="col-md-3"><label class="form-label"><i class="fas fa-money-bill-wave"></i> العملة</label>{{ form.purch_currency }}</div>
+
+                    <div class="col-md-3">
+    <label class="form-label">
+        <i class="fas fa-credit-card"></i> طريقة الدفع
+        <i class="fas fa-question-circle text-info ms-1" 
+           data-bs-toggle="popover" 
+           data-bs-placement="top" 
+           data-bs-html="true" 
+           data-bs-content="<b>انتبه:</b><br>فقط عند اختيار طريقة الدفع نقداً سيظهر حقل في القسم المالي <b>المبلغ المدفوع</b><br>كي يتم تسجل دفعة العميل في حال أن العميل لن يسدد قيمة الفاتورة كاملة">
+        </i>
+    </label>
+    {{ form.purch_payment_method }}
+                    </div>
+
+                    <div class="col-md-3">
+                        <label class="form-label">
+                            <i class="fas fa-shipping-fast"></i> شركة الشحن
+                            <i class="fas fa-question-circle text-info ms-1" 
+                            data-bs-toggle="popover" 
+                            data-bs-placement="top" 
+                            data-bs-html="true" 
+                            data-bs-content="<b>انتبه:</b><br> عند اختيار شركة الشحن  <br>سيظهر حقل رقم ايصال الشحن تلقائيا     ">
+                            </i>
+                        </label>
+                        {{ form.purch_shipping_company }}
+                    </div>
+
+                
+                </div>
+
+                <div class="row g-2">
+                    <div class="col-12" id="notes-col">
+                        <label class="form-label"><i class="fas fa-sticky-note"></i>ملاحظات الفاتورة </label>
+                        {{ form.purch_notes }}
+                    </div>
+                    <div class="col-md-3 shipping-number-container d-none" id="shipping-num-col">
+                        <label class="form-label"><i class="fas fa-barcode"></i> رقم الشحنة</label>
+                        {{ form.purch_shipping_num }}
+                    </div>
+                </div>
+
+                <div class="cash-balance-info mt-2">
+                    <div class="alert alert-info d-flex align-items-center p-2">
+                        <i class="fas fa-wallet me-2"></i>
+                        <span><strong>رصيد الصندوق الحالي:</strong> <span id="current-cash-balance">0.00</span></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="items-section">
+            <div class="items-header">
+                <h5><i class="fas fa-list"></i> بنود الفاتورة</h5>
+                <div class="items-controls">
+                    <div class="items-count-container">
+                        <label for="items-count">عدد البنود:</label>
+                        <input type="number" id="items-count" class="form-control" min="1" max="50" value="1">
+                    </div>
+                    <button type="button" class="btn btn-warning btn-sm" id="toggle-barcodes-btn">
+                        <i class="fas fa-eye"></i> إظهار الباركودات
+                    </button>
+                </div>
+            </div>
+
+            {{ formset.management_form }}
+
+            <div class="items-table-container">
+                <table class="items-table">
+                    <thead>
+                        <tr>
+                            <th width="4%">#</th>
+                            <th width="28%">المادة</th>
+                            <th width="8%">الكمية</th>
+                            <th width="10%">السعر</th>
+                            <th width="10%">الإجمالي</th>
+                            <th width="15%">ملاحظات</th>
+                            <th width="6%">صورة</th>
+                            <th width="5%"></th>
+                        </tr>
+                    </thead>
+                    <tbody id="items-tbody">
+                        {% for form in formset %}
+                        <tr class="item-row" data-item-index="{{ forloop.counter0 }}" data-target-id="{{ forloop.counter0 }}">
+                            <td class="text-center fw-bold">{{ forloop.counter }}</td>
+                            <td>
+                                {% for hidden in form.hidden_fields %}{{ hidden }}{% endfor %}
+                                <input type="hidden" name="items-{{ forloop.counter0 }}-item_name" class="item-name-field" value="{% if form.item_name.value %}{{ form.item_name.value }}{% endif %}">
+                                <input type="hidden" name="items-{{ forloop.counter0 }}-product_search" class="product-search-value" value="{% if form.product.value %}{{ form.instance.product.product_name }}{% elif form.item_name.value %}{{ form.item_name.value }}{% endif %}">
+                                <input type="hidden" name="items-{{ forloop.counter0 }}-product_image_url" class="product-image-url-field" value="">
+                                <input type="hidden" name="items-{{ forloop.counter0 }}-is_auto_image" class="auto-image-field" value="">
+
+                                <div class="product-search-container">
+                                    <input type="text" class="form-control product-search-input" placeholder="ابحث بالاسم أو الباركود..." value="{% if form.product.value %}{{ form.instance.product.product_name }}{% elif form.item_name.value %}{{ form.item_name.value }}{% endif %}" autocomplete="off">
+                                    <div class="autocomplete-dropdown product-results"></div>
+
+                                </div>
+                                
+                            </td>
+
+                            <td>{{ form.purchased_quantity }}</td>
+                            <td>{{ form.unit_price }}</td>
+                            <td><input type="text" class="form-control item-total" readonly value="0.00"></td>
+                            <td>{{ form.notes }}</td>
+                            <td class="text-center">
+                                <div class="image-input-container">
+                                    <div id="product-image-preview-container-{{ forloop.counter0 }}" class="image-preview" title="اختر صورة"><i class="fas fa-camera"></i></div>
+                                    <input type="file" name="items-{{ forloop.counter0 }}-purch_item_image" class="hidden-file-input" accept="image/*" id="id_items-{{ forloop.counter0 }}-purch_item_image">
+                                </div>
+                            </td>
+                            <td class="text-center"><button type="button" class="delete-btn" title="حذف البند"><i class="fas fa-trash"></i></button></td>
+                        </tr>
+                        <tr class="barcode-row" data-item-index="{{ forloop.counter0 }}" style="display: none;">
+                            <td colspan="8"><div class="barcode-field-container"><div class="barcode-fields-list"></div></div></td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            <div class="table-footer-actions">
+                <button type="button" class="btn btn-success" id="add-single-item"><i class="fas fa-plus-circle"></i> إضافة بند جديد</button>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header"><i class="fas fa-calculator"></i> القسم المالي</div>
+            <div class="card-body">
+                <div class="financial-content">
+                    <div class="financial-image">
+                        <div class="invoice-image-wrapper">
+                            <div id="invoice-image-preview-container" class="invoice-image-preview" title="انقر لاختيار صورة الفاتورة">
+                                <i class="fas fa-camera"></i>
+                                <small>صورة الفاتورة</small>
+                            </div>
+                            <div class="invoice-image-buttons">
+                                <!-- زر اختيار ملف -->
+                                <button type="button" class="btn btn-primary btn-sm" id="btn-choose-file">
+                                    <i class="fas fa-folder-open"></i> اختيار ملف
+                                </button>
+                                <!-- زر الكاميرا الجديد -->
+                                <button type="button" class="btn btn-success btn-sm" id="btn-take-photo">
+                                    <i class="fas fa-camera"></i> التقط صورة
+                                </button>
+                                <!-- زر حذف الصورة -->
+                                <button type="button" class="btn btn-danger btn-sm" id="btn-remove-image">
+                                    <i class="fas fa-trash"></i> حذف
+                                </button>
+                            </div>
+                            {{ form.purch_image }}
+                        </div>
+                    </div>
+                    <div class="financial-calculations">
+                        <div class="financial-section">
+                            <div class="financial-grid">
+                                <div class="financial-column">
+                                    <div class="financial-row"><span class="financial-label"><i class="fas fa-receipt"></i> إجمالي البنود:</span><span class="financial-value" id="subtotal-amount">0.00</span></div>
+                                    <div class="financial-row"><span class="financial-label"><i class="fas fa-percentage"></i> الضريبة %:</span><input type="number" class="form-control" id="tax-percentage" name="purch_tax_percentage" value="0" min="0" max="100" step="0.01"></div>
+                                    <div class="financial-row"><span class="financial-label"><i class="fas fa-money-bill-wave"></i> قيمة الضريبة:</span><span class="financial-value" id="tax-amount">0.00</span></div>
+                                </div>
+                                <div class="financial-column">
+                                    <div class="financial-row"><span class="financial-label"><i class="fas fa-plus-circle"></i> الإضافة:</span><input type="number" class="form-control" id="invoice-addition" name="purch_addition" value="0" min="0" step="0.01"></div>
+                                    <div class="financial-row"><span class="financial-label"><i class="fas fa-minus-circle"></i> الخصم:</span><input type="number" class="form-control" id="invoice-discount" name="purch_discount" value="0" min="0" step="0.01"></div>
+                                    <div class="paid-amount-container" id="paid-amount-container">
+                                        <div class="financial-row"><span class="financial-label"><i class="fas fa-hand-holding-usd"></i> المبلغ المدفوع:</span><input type="number" class="form-control" id="paid-amount" name="paid_amount" value="0" min="0" step="0.01"></div>
+                                        <div class="alert alert-warning mt-2 d-none" id="cash-balance-warning"><i class="fas fa-exclamation-triangle"></i> المبلغ المدفوع يتجاوز رصيد الصندوق</div>
+                                    </div>
+                                </div>
+                                <div class="financial-row grand-total"><span class="financial-label"><i class="fas fa-file-invoice-dollar"></i> الإجمالي العام:</span><span class="financial-value" id="grand-total">0.00</span></div>
+                                <div class="financial-row remaining-amount"><span class="financial-label"><i class="fas fa-clock"></i> المبلغ المتبقي:</span><span class="financial-value" id="remaining-amount">0.00</span></div>
+                                <div class="remaining-amount-in-words-container">
+                                    <div class="remaining-amount-in-words">
+                                        <div class="remaining-words-label"><i class="fas fa-font"></i> كتابة:</div>
+                                        <div class="remaining-words-value" id="remaining-words-value"><div class="remaining-words-loading small">جاري التحويل...</div></div>
+                                        <button type="button" class="refresh-remaining-words-btn" id="refresh-remaining-words-btn" title="تحديث الكتابة"><i class="fas fa-redo"></i></button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="form-actions">
+            <button type="submit" class="btn btn-success" id="save-btn"><i class="fas fa-save"></i> حفظ الفاتورة</button>
+            <a href="{% url 'invoice:purch_list' %}" class="btn btn-secondary"><i class="fas fa-times"></i> إلغاء</a>
+        </div>
+    </form>
+</div>
+{% endblock %}
+
+
+
+{% block extra_js %}
+
+
+<script nonce="{{ csp_nonce }}">
+
+// ============================================
+// [JS-01] البيانات العامة وإعدادات الأمان
+// ============================================
+window.barcodeData = {};
+window.barcodesVisible = false;
+window.productsCache = {};
+window.suppliersCache = {};
+window.isPaymentMethodCash = false;
+window.paidAmountModified = false;
+window.initializationComplete = false;
+window.usedProductIds = new Set();
+window.CACHE_MAX_SIZE = 50;
+
+function sanitizeHTML(str) {
+    if (!str) return '';
+    const temp = document.createElement('div');
+    temp.textContent = str;
+    return temp.innerHTML;
+}
+
+function addToCache(cacheObj, key, data) {
+    const keys = Object.keys(cacheObj);
+    if (keys.length >= window.CACHE_MAX_SIZE) delete cacheObj[keys[0]];
+    cacheObj[key] = data;
+}
+
+// ============================================
+// [JS-02] دوال مساعدة
+// ============================================
+function fetchCashBalance() {
+    return fetch('/invoice/get-cash-balance/')
+        .then(response => response.json())
+        .then(data => {
+            const el = document.getElementById('current-cash-balance');
+            if (el) el.textContent = parseFloat(data.balance).toFixed(2);
+            return data.balance;
+        })
+        .catch(err => console.error('خطأ في جلب الرصيد', err));
+}
+
+function checkCashBalance(paidAmount) {
+    fetchCashBalance().then(balance => {
+        const warning = document.getElementById('cash-balance-warning');
+        if (warning) warning.classList.toggle('d-none', parseFloat(paidAmount) <= parseFloat(balance));
+    });
+}
+
+function checkPaymentMethod(value) {
+    const container = document.getElementById('paid-amount-container');
+    const input = document.getElementById('paid-amount');
+    if (value) {
+        fetch(`/invoice/get-payment-method/${value}/`)
+            .then(res => { if(!res.ok) throw new Error(); return res.json(); })
+            .then(data => {
+                if (data.is_cash) {
+                    container.classList.add('show');
+                    window.isPaymentMethodCash = true;
+                    setTimeout(() => { if(!window.paidAmountModified) copyGrandTotalToPaidAmount(); checkCashBalance(input.value); }, 50);
+                } else {
+                    container.classList.remove('show'); window.isPaymentMethodCash = false;
+                    if(input) input.value = '0'; window.paidAmountModified = false; updateRemainingAmount();
+                }
+            }).catch(err => console.error('خطأ في التحقق من طريقة الدفع', err));
+    } else {
+        container.classList.remove('show'); window.isPaymentMethodCash = false;
+    }
+}
+
+function copyGrandTotalToPaidAmount() {
+    if (!window.isPaymentMethodCash || window.paidAmountModified) return;
+    const totalEl = document.getElementById('grand-total'); const paidInput = document.getElementById('paid-amount');
+    if (totalEl && paidInput) { const total = parseFloat(totalEl.textContent) || 0; paidInput.value = total.toFixed(2); updateRemainingAmount(); checkCashBalance(total); }
+}
+
+function updateRemainingAmount() {
+    const totalEl = document.getElementById('grand-total'); const paidInput = document.getElementById('paid-amount'); const remainingEl = document.getElementById('remaining-amount');
+    if (totalEl && paidInput && remainingEl) {
+        const total = parseFloat(totalEl.textContent) || 0; const paid = parseFloat(paidInput.value) || 0;
+        remainingEl.textContent = Math.max(0, total - paid).toFixed(2);
+        document.dispatchEvent(new Event('remainingAmountUpdated'));
+    }
+}
+
+function setupImagePreview(previewEl, fileInputEl) {
+    if (!previewEl || !fileInputEl) return;
+    previewEl.addEventListener('click', () => fileInputEl.click());
+    fileInputEl.addEventListener('change', function() {
+        if(this.files && this.files[0]) {
+            const reader = new FileReader();
+            reader.onload = (e) => { previewEl.innerHTML = `<img src="${e.target.result}" alt="صورة">`; previewEl.classList.add('has-image'); };
+            reader.readAsDataURL(this.files[0]);
+        }
+    });
+}
+
+function showSuccessMessage(message) {
+    const old = document.querySelectorAll('.success-message'); old.forEach(m => m.remove());
+    const div = document.createElement('div'); div.className = 'success-message';
+    div.innerHTML = `<i class="fas fa-check-circle me-2"></i>${sanitizeHTML(message)}`;
+    div.style.display = 'block';
+    document.getElementById('system-messages-container').appendChild(div);
+    setTimeout(() => { div.style.opacity = '0'; setTimeout(() => div.remove(), 500); }, 3000);
+}
+
+function showErrorMessage(message) {
+    const alerts = document.querySelectorAll('.instant-error-alert'); alerts.forEach(a => a.remove());
+    const div = document.createElement('div'); div.className = 'alert alert-danger instant-error-alert';
+    div.style.cssText = 'position:fixed; top:20px; left:50%; transform:translateX(-50%); z-index:1050; min-width:300px; text-align:center; box-shadow:0 4px 8px rgba(0,0,0,0.2);';
+    div.innerHTML = `<i class="fas fa-exclamation-triangle me-2"></i>${sanitizeHTML(message)}`;
+    document.body.appendChild(div);
+    setTimeout(() => { div.style.opacity = '0'; setTimeout(() => div.remove(), 500); }, 4000);
+}
+
+function showBackendErrors(htmlResponse) {
+    const container = document.getElementById('system-messages-container'); container.innerHTML = '';
+    const tempDiv = document.createElement('div'); tempDiv.innerHTML = htmlResponse;
+    const messages = tempDiv.querySelectorAll('.alert, [role="alert"]');
+    if (messages.length > 0) {
+        messages.forEach(msg => { const errorDiv = document.createElement('div'); errorDiv.className = 'error-message-backend'; errorDiv.style.display = 'block'; errorDiv.innerHTML = msg.innerHTML; container.appendChild(errorDiv); });
+    } else {
+        const errorDiv = document.createElement('div'); errorDiv.className = 'error-message-backend'; errorDiv.style.display = 'block'; errorDiv.innerHTML = '<i class="fas fa-bug me-2"></i>حدث خطأ غير متوقع في البيانات المدخلة، يرجى مراجعة الحقول.'; container.appendChild(errorDiv);
+    }
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+// ============================================
+// [JS-03] تحويل المبلغ كتابة
+// ============================================
+let remainingAmountConverter = {
+    cache: {}, currentRemainingAmount: 0, currentCurrencyId: null, isLoading: false,
+    init() {
+        this.remainingElement = document.getElementById('remaining-amount');
+        this.currencySelect = document.getElementById('id_purch_currency');
+        this.displayElement = document.getElementById('remaining-words-value');
+        this.refreshBtn = document.getElementById('refresh-remaining-words-btn');
+        this.updateFromPage(); this.setupEventListeners(); this.convert();
+    },
+    updateFromPage() {
+        if(this.remainingElement) this.currentRemainingAmount = parseFloat(this.remainingElement.textContent.replace(/,/g, '')) || 0;
+        if(this.currencySelect) this.currentCurrencyId = this.currencySelect.value;
+    },
+    setupEventListeners() {
+        if(this.currencySelect) this.currencySelect.addEventListener('change', () => { this.updateFromPage(); this.convert(); });
+        if(this.refreshBtn) this.refreshBtn.addEventListener('click', () => this.convert());
+        document.addEventListener('financialCalculationsUpdated', () => { this.updateFromPage(); this.convert(); });
+        document.addEventListener('remainingAmountUpdated', () => { this.updateFromPage(); this.convert(); });
+    },
+    convert() {
+        if (this.currentRemainingAmount <= 0) { if(this.displayElement) this.displayElement.innerHTML = 'صفر'; return; }
+        if (this.isLoading) return;
+        const key = `${this.currentRemainingAmount.toFixed(2)}-${this.currentCurrencyId}`;
+        if (this.cache[key]) { this.updateDisplay(this.cache[key]); return; }
+        this.isLoading = true;
+        if(this.displayElement) this.displayElement.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+        fetch(`/invoice/api/convert-to-words/?amount=${this.currentRemainingAmount}&currency_id=${this.currentCurrencyId||''}`)
+            .then(res => res.json())
+            .then(data => { if(data.success){ addToCache(this.cache, key, data); this.updateDisplay(data); } })
+            .catch(err => { console.error('خطأ في التحويل', err); if(this.displayElement) this.displayElement.innerHTML = 'خطأ'; })
+            .finally(() => this.isLoading = false);
+    },
+    updateDisplay(data) { if(this.displayElement) this.displayElement.innerHTML = `${sanitizeHTML(data.amount_in_words)} (${sanitizeHTML(data.currency?.symbol || '')})`; }
+};
+
+// ============================================
+// [JS-04] تهيئة الصفحة
+// ============================================
+document.addEventListener('DOMContentLoaded', function() {
+    initializeSupplierAutocomplete();
+    initializeAllItems();
+    setupGlobalEvents();
+    setupAllImagePreviews();
+    setupItemsCountInput();
+    setupBarcodeToggle();
+    setupFinancialCalculations();
+    updateFinancialCalculations();
+    setupShippingCompanyEvent();
+    setupPaymentMethodEvent();
+    hideAllBarcodes();
+    // تهيئة أزرار صورة الفاتورة
+    setupInvoiceImageButtons();
+    setTimeout(() => remainingAmountConverter.init(), 1500);
+    setTimeout(() => { updateItemsCountInput(); window.initializationComplete = true; }, 500);
+});
+
+// ============================================
+// [JS-04.1] دوال أزرار صورة الفاتورة (الكاميرا والملف)
+// ============================================
+function setupInvoiceImageButtons() {
+    const previewContainer = document.getElementById('invoice-image-preview-container');
+    const fileInput = document.getElementById('id_purch_image');
+    const btnChooseFile = document.getElementById('btn-choose-file');
+    const btnTakePhoto = document.getElementById('btn-take-photo');
+    const btnRemove = document.getElementById('btn-remove-image');
+
+    // 1. زر اختيار ملف: يفتح نافذة اختيار الملف
+    if (btnChooseFile && fileInput) {
+        btnChooseFile.addEventListener('click', function(e) {
+            e.stopPropagation(); // منع التداخل مع حدث الـ preview
+            fileInput.click();
+        });
+    }
+
+    // 2. زر الكاميرا: يفتح الكاميرا ويلتقط صورة
+    if (btnTakePhoto) {
+        btnTakePhoto.addEventListener('click', function(e) {
+            e.stopPropagation();
+            openCameraAndCapture(previewContainer, fileInput);
+        });
+    }
+
+    // 3. زر حذف الصورة
+    if (btnRemove) {
+        btnRemove.addEventListener('click', function(e) {
+            e.stopPropagation();
+            // حذف الصورة من المعاينة ومن حقل الملف
+            previewContainer.innerHTML = '<i class="fas fa-camera"></i><small>صورة الفاتورة</small>';
+            previewContainer.classList.remove('has-image');
+            fileInput.value = ''; // مسح قيمة حقل الملف
+            // في حال كان هناك FileList, يتم تفريغه بهذه الطريقة
+            const dataTransfer = new DataTransfer();
+            fileInput.files = dataTransfer.files;
+            // إعادة تعيين الحدث change لتحديث الفورم
+            fileInput.dispatchEvent(new Event('change', { bubbles: true }));
+            showSuccessMessage('تم حذف الصورة');
+        });
+    }
+
+    // ربط حدث النقر على المعاينة نفسها لفتح الملف (للتوافق مع السلوك السابق)
+    if (previewContainer && fileInput) {
+        previewContainer.addEventListener('click', function(e) {
+            // فقط إذا لم يكن الضغط على زر من الأزرار الداخلية (لكن الأزرار خارج المعاينة)
+            fileInput.click();
+        });
+    }
+}
+
+// دالة فتح الكاميرا والتقاط الصورة
+function openCameraAndCapture(previewContainer, fileInput) {
+    // التحقق من دعم getUserMedia
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        showErrorMessage('المتصفح لا يدعم الكاميرا. يرجى استخدام متصفح حديث أو اختيار ملف.');
+        return;
+    }
+
+    // استخدام واجهة برمجة التطبيقات (API) المدمجة في المتصفح لفتح الكاميرا
+    // نفضل استخدام input[type="file"] مع capture لتبسيط العملية على الجوال
+    // لكننا سنستخدم getUserMedia للحصول على تحكم أفضل (معاينة مباشرة)
+    
+    // الطريقة الأبسط والأكثر توافقاً مع الجوال: استخدام input مع capture
+    // لكننا نريد التقاط الصورة مباشرة وعرضها في المعاينة
+    
+    // الطريقة المثلى: إنشاء عنصر فيديو مؤقت لعرض الكاميرا والتقاط صورة
+    // سنقوم بإنشاء modal بسيط لعرض الكاميرا
+    
+    // إنشاء نافذة منبثقة (modal) لعرض الكاميرا
+    const modalHTML = `
+        <div id="camera-modal" style="position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.9); z-index:10000; display:flex; flex-direction:column; align-items:center; justify-content:center;">
+            <video id="camera-video" autoplay playsinline style="max-width:100%; max-height:70vh; background:#000; border-radius:8px;"></video>
+            <div style="margin-top:15px; display:flex; gap:15px;">
+                <button id="capture-btn" style="padding:12px 30px; background:#4CAF50; color:white; border:none; border-radius:50px; font-size:18px; cursor:pointer;"><i class="fas fa-camera"></i> التقط الصورة</button>
+                <button id="close-camera-btn" style="padding:12px 30px; background:#e53935; color:white; border:none; border-radius:50px; font-size:18px; cursor:pointer;"><i class="fas fa-times"></i> إلغاء</button>
+            </div>
+        </div>
+    `;
+    
+    // إضافة الـ modal إلى الصفحة
+    const modalDiv = document.createElement('div');
+    modalDiv.innerHTML = modalHTML;
+    document.body.appendChild(modalDiv.firstElementChild);
+    
+    const modal = document.getElementById('camera-modal');
+    const video = document.getElementById('camera-video');
+    const captureBtn = document.getElementById('capture-btn');
+    const closeBtn = document.getElementById('close-camera-btn');
+    
+    let stream = null;
+    
+    // فتح الكاميرا
+    navigator.mediaDevices.getUserMedia({ 
+        video: { facingMode: 'environment', width: { ideal: 1280 }, height: { ideal: 720 } },
+        audio: false 
+    })
+    .then(function(mediaStream) {
+        stream = mediaStream;
+        video.srcObject = stream;
+        video.play();
+    })
+    .catch(function(err) {
+        console.error('خطأ في فتح الكاميرا:', err);
+        showErrorMessage('تعذر فتح الكاميرا. تأكد من منح الصلاحية أو استخدام كاميرا أخرى.');
+        modal.remove();
+    });
+    
+    // التقاط الصورة
+    captureBtn.addEventListener('click', function() {
+        if (!video.videoWidth || !video.videoHeight) {
+            showErrorMessage('الكاميرا غير جاهزة بعد، انتظر قليلاً.');
+            return;
+        }
+        
+        // إنشاء عنصر Canvas لالتقاط الإطار الحالي
+        const canvas = document.createElement('canvas');
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+        
+        // تحويل الصورة إلى Blob
+        canvas.toBlob(function(blob) {
+            if (!blob) {
+                showErrorMessage('فشل في معالجة الصورة');
+                return;
+            }
+            
+            // إنشاء ملف من الـ Blob
+            const file = new File([blob], `invoice_photo_${Date.now()}.jpg`, { type: 'image/jpeg' });
+            
+            // تعيين الملف في حقل input
+            const dataTransfer = new DataTransfer();
+            dataTransfer.items.add(file);
+            fileInput.files = dataTransfer.files;
+            
+            // عرض الصورة في المعاينة
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                previewContainer.innerHTML = `<img src="${e.target.result}" alt="صورة الفاتورة">`;
+                previewContainer.classList.add('has-image');
+            };
+            reader.readAsDataURL(file);
+            
+            // إغلاق الكاميرا
+            closeCamera(stream, modal);
+            showSuccessMessage('تم التقاط الصورة بنجاح');
+            
+        }, 'image/jpeg', 0.95);
+    });
+    
+    // إغلاق الكاميرا
+    closeBtn.addEventListener('click', function() {
+        closeCamera(stream, modal);
+    });
+    
+    // إغلاق الكاميرا عند الضغط خارجها (على الـ modal نفسه)
+    modal.addEventListener('click', function(e) {
+        if (e.target === modal) {
+            closeCamera(stream, modal);
+        }
+    });
+}
+
+function closeCamera(stream, modal) {
+    if (stream) {
+        stream.getTracks().forEach(track => track.stop());
+    }
+    if (modal) {
+        modal.remove();
+    }
+}
+
+// ============================================
+// [JS-05] البحث عن الموردين
+// ============================================
+function initializeSupplierAutocomplete() {
+    const searchInput = document.getElementById('supplier-search');
+    const resultsContainer = document.getElementById('supplier-results');
+    const supplierHidden = document.getElementById('id_purch_supplier');
+    const phoneInput = document.getElementById('id_purch_supplier_phone');
+    const addressInput = document.getElementById('id_purch_address');
+
+    if (!searchInput || !resultsContainer || !supplierHidden) return;
+    let searchTimeout; let currentQuery = '';
+
+    searchInput.addEventListener('input', function() {
+        clearTimeout(searchTimeout); const query = this.value.trim(); currentQuery = query;
+        if (query.length < 2) { resultsContainer.classList.remove('show'); supplierHidden.value = ''; if(phoneInput) phoneInput.value = ''; if(addressInput) addressInput.value = ''; return; }
+        resultsContainer.innerHTML = '<div class="autocomplete-item">جاري البحث...</div>'; resultsContainer.classList.add('show');
+        searchTimeout = setTimeout(() => {
+            if (window.suppliersCache[query]) { displaySupplierResults(window.suppliersCache[query], query); return; }
+            fetch(`/invoice/search-suppliers/?q=${encodeURIComponent(query)}`)
+                .then(res => res.json()).then(data => { addToCache(window.suppliersCache, query, data); displaySupplierResults(data, query); })
+                .catch(err => { console.error(err); resultsContainer.innerHTML = '<div class="autocomplete-item text-danger">خطأ في الاتصال</div>'; });
+        }, 400);
+    });
+
+    function displaySupplierResults(data, query) {
+        if (query !== currentQuery) return; resultsContainer.innerHTML = '';
+        if (!data.results || data.results.length === 0) { resultsContainer.innerHTML = '<div class="autocomplete-item text-muted">لا توجد نتائج</div>'; return; }
+        data.results.forEach(sup => {
+            const item = document.createElement('div'); item.className = 'autocomplete-item';
+            item.innerHTML = `<div class="autocomplete-item-content"><div class="autocomplete-item-title">${sanitizeHTML(sup.text)}</div><div class="autocomplete-item-details">${sup.phone ? `<span><i class="fas fa-phone me-1"></i>${sanitizeHTML(sup.phone)}</span>` : ''}${sup.address ? `<span class="ms-2"><i class="fas fa-map-marker-alt me-1"></i>${sanitizeHTML(sup.address)}</span>` : ''}</div></div>`;
+            item.addEventListener('click', function() {
+                searchInput.value = sup.text; supplierHidden.value = sup.id;
+                if(phoneInput) phoneInput.value = sup.phone || ''; if(addressInput) addressInput.value = sup.address || '';
+                resultsContainer.classList.remove('show'); showSuccessMessage('تم اختيار المورد');
+            });
+            resultsContainer.appendChild(item);
+        });
+    }
+    document.addEventListener('click', (e) => { if (!searchInput.contains(e.target) && !resultsContainer.contains(e.target)) resultsContainer.classList.remove('show'); });
+}
+
+// ============================================
+// [JS-06] البحث عن المنتجات
+// ============================================
+function initializeProductAutocomplete(searchInput, hiddenInput, priceInput, rowElement) {
+    const resultsContainer = searchInput.parentNode.querySelector('.product-results');
+    const searchValueInput = rowElement.querySelector('.product-search-value');
+    const itemNameField = rowElement.querySelector('.item-name-field');
+    let searchTimeout;
+
+    searchInput.addEventListener('input', function() {
+        clearTimeout(searchTimeout); const query = this.value.trim();
+        if(searchValueInput) searchValueInput.value = query; if(itemNameField) itemNameField.value = query;
+        if (query.length < 2) { resultsContainer.classList.remove('show'); return; }
+        resultsContainer.innerHTML = '<div class="autocomplete-item">جاري البحث...</div>';
+        const inputWidth = searchInput.offsetWidth; resultsContainer.style.minWidth = `${inputWidth}px`; resultsContainer.classList.add('show');
+        searchTimeout = setTimeout(() => {
+            if (window.productsCache[query]) { displayProductResults(window.productsCache[query], query, resultsContainer, rowElement); return; }
+            fetch(`/invoice/search-products/?q=${encodeURIComponent(query)}`)
+                .then(res => res.json()).then(data => { addToCache(window.productsCache, query, data); displayProductResults(data, query, resultsContainer, rowElement); })
+                .catch(err => { console.error(err); resultsContainer.innerHTML = '<div class="autocomplete-item text-danger">خطأ في الاتصال</div>'; });
+        }, 400);
+    });
+    searchInput.addEventListener('blur', () => { setTimeout(() => resultsContainer.classList.remove('show'), 200); });
+}
+
+function displayProductResults(data, query, resultsContainer, rowElement) {
+    resultsContainer.innerHTML = '';
+    if (!data.results || data.results.length === 0) { resultsContainer.innerHTML = '<div class="autocomplete-item text-muted">لا توجد نتائج</div>'; return; }
+    const searchInput = rowElement.querySelector('.product-search-input');
+    const hiddenInput = rowElement.querySelector('input[name$="-product"]');
+    const priceInput = rowElement.querySelector('input[name$="-unit_price"]');
+    const searchValueInput = rowElement.querySelector('.product-search-value');
+    const itemNameField = rowElement.querySelector('.item-name-field');
+
+    data.results.forEach(prod => {
+        const isUsed = window.usedProductIds.has(parseInt(prod.id));
+        const item = document.createElement('div'); item.className = 'autocomplete-item';
+        if (isUsed) item.style.backgroundColor = '#f8d7da';
+        
+        item.innerHTML = `<img src="${sanitizeHTML(prod.image_url || '')}" alt=""><div style="flex:1; overflow: hidden;"><div class="autocomplete-item-title">${sanitizeHTML(prod.text)} ${isUsed ? '(مستخدم)' : ''}</div><div class="autocomplete-item-details">${prod.code ? `<span><i class="fas fa-barcode"></i> ${sanitizeHTML(prod.code)}</span>` : ''}<span class="autocomplete-item-price">${prod.price || 0} ر.س</span></div></div>`;
+        
+        item.addEventListener('click', () => {
+            if (isUsed) { showErrorMessage('هذه المادة مستخدمة مسبقاً في هذه الفاتورة'); return; }
+            searchInput.value = prod.text; hiddenInput.value = prod.id; if(priceInput) priceInput.value = prod.price || 0;
+            if(searchValueInput) searchValueInput.value = prod.text; if(itemNameField) itemNameField.value = prod.text;
+            window.usedProductIds.add(parseInt(prod.id)); updateItemCalculations(rowElement); resultsContainer.classList.remove('show');
+            
+            const targetId = rowElement.getAttribute('data-target-id');
+            const previewContainer = document.getElementById(`product-image-preview-container-${targetId}`);
+            if (previewContainer && prod.image_url) {
+                previewContainer.innerHTML = `<img src="${sanitizeHTML(prod.image_url)}" alt="">`; previewContainer.classList.add('has-image');
+                let imageUrlField = rowElement.querySelector('.product-image-url-field');
+                if (!imageUrlField) { imageUrlField = document.createElement('input'); imageUrlField.type = 'hidden'; imageUrlField.className = 'product-image-url-field'; rowElement.appendChild(imageUrlField); }
+                imageUrlField.name = `items-${targetId}-product_image_url`; imageUrlField.value = prod.image_url;
+                let autoImageField = rowElement.querySelector('.auto-image-field');
+                if (!autoImageField) { autoImageField = document.createElement('input'); autoImageField.type = 'hidden'; autoImageField.className = 'auto-image-field'; rowElement.appendChild(autoImageField); }
+                autoImageField.name = `items-${targetId}-is_auto_image`; autoImageField.value = 'true';
+                createFileFromImageUrl(prod.image_url, prod.text, targetId);
+            }
+            if (prod.barcode && window.barcodesVisible) { const actualIndex = rowElement.getAttribute('data-item-index'); autoFillBarcode(actualIndex, prod.barcode); }
+        });
+        resultsContainer.appendChild(item);
+    });
+}
+
+async function createFileFromImageUrl(imageUrl, productName, itemIndex) {
+    try {
+        const response = await fetch(imageUrl, { mode: 'cors' });
+        if (!response.ok) throw new Error(`فشل تحميل الصورة`);
+        const blob = await response.blob();
+        const fileName = `auto_${productName.replace(/[^a-zA-Z0-9\u0600-\u06FF]/g, '_')}.jpg`;
+        const file = new File([blob], fileName, { type: blob.type || 'image/jpeg' });
+        const fileInput = document.getElementById(`id_items-${itemIndex}-purch_item_image`);
+        if (fileInput) { const dataTransfer = new DataTransfer(); dataTransfer.items.add(file); fileInput.files = dataTransfer.files; fileInput.dispatchEvent(new Event('change', { bubbles: true })); }
+    } catch (error) { console.warn(`⚠️ تعذر تحميل الصورة تلقائياً:`, error.message); }
+}
+
+// ============================================
+// [JS-07] إدارة البنود
+// ============================================
+function addNewItem() {
+    const tbody = document.getElementById('items-tbody'); const totalForms = document.getElementById('id_items-TOTAL_FORMS'); const formNum = parseInt(totalForms.value);
+    const newRow = document.createElement('tr'); newRow.className = 'item-row'; newRow.setAttribute('data-item-index', formNum); newRow.setAttribute('data-target-id', formNum);
+    newRow.innerHTML = `
+        <td class="text-center fw-bold">${formNum + 1}</td>
+        <td><input type="hidden" name="items-${formNum}-id"><input type="hidden" name="items-${formNum}-purch"><input type="hidden" name="items-${formNum}-item_name" class="item-name-field"><input type="hidden" name="items-${formNum}-product_search" class="product-search-value"><input type="hidden" name="items-${formNum}-product_image_url" class="product-image-url-field"><input type="hidden" name="items-${formNum}-is_auto_image" class="auto-image-field"><div class="product-search-container"><input type="text" class="form-control product-search-input" placeholder="ابحث عن مادة..." autocomplete="off"><div class="autocomplete-dropdown product-results"></div></div><input type="hidden" name="items-${formNum}-product" id="id_items-${formNum}-product"></td>
+        <td><input type="number" name="items-${formNum}-purchased_quantity" value="1" step="0.01" min="0.01" class="form-control"></td>
+        <td><input type="number" name="items-${formNum}-unit_price" value="0" step="0.01" min="0" class="form-control"></td>
+        <td><input type="text" class="form-control item-total" readonly value="0.00"></td>
+        <td><input type="text" name="items-${formNum}-notes" class="form-control"></td>
+        <td class="text-center"><div class="image-preview" id="product-image-preview-container-${formNum}"><i class="fas fa-camera"></i></div><input type="file" name="items-${formNum}-purch_item_image" class="hidden-file-input" accept="image/*" id="id_items-${formNum}-purch_item_image"></td>
+        <td class="text-center"><button type="button" class="delete-btn"><i class="fas fa-trash"></i></button></td>`;
+    const barcodeRow = document.createElement('tr'); barcodeRow.className = 'barcode-row'; barcodeRow.setAttribute('data-item-index', formNum); barcodeRow.style.display = window.barcodesVisible ? 'table-row' : 'none'; barcodeRow.innerHTML = `<td colspan="8"><div class="barcode-field-container"><div class="barcode-fields-list"></div></div></td>`;
+    tbody.appendChild(newRow); tbody.appendChild(barcodeRow); totalForms.value = formNum + 1; window.barcodeData[formNum] = [];
+    initializeProductAutocomplete(newRow.querySelector('.product-search-input'), newRow.querySelector(`input[name="items-${formNum}-product"]`), newRow.querySelector(`input[name="items-${formNum}-unit_price"]`), newRow);
+    setupImagePreview(newRow.querySelector('.image-preview'), newRow.querySelector('.hidden-file-input'));
+    setupItemEvents(newRow); updateItemsCountInput();
+}
+
+function initializeAllItems() {
+    document.querySelectorAll('.item-row').forEach((item) => {
+        const itemIndex = item.getAttribute('data-item-index');
+        if (!window.barcodeData[itemIndex]) window.barcodeData[itemIndex] = [];
+        const hiddenInput = item.querySelector('input[name$="-product"]');
+        if (hiddenInput && hiddenInput.value) window.usedProductIds.add(parseInt(hiddenInput.value));
+        initializeProductAutocomplete(item.querySelector('.product-search-input'), hiddenInput, item.querySelector('input[name$="-unit_price"]'), item);
+        setupItemEvents(item); updateItemCalculations(item);
+    });
+}
+
+function setupItemEvents(item) {
+    const qtyInput = item.querySelector('input[name$="-purchased_quantity"]'); const priceInput = item.querySelector('input[name$="-unit_price"]');
+    [qtyInput, priceInput].forEach(input => {
+        if (input) input.addEventListener('input', () => {
+            updateItemCalculations(item);
+            if (input === qtyInput) { const idx = item.getAttribute('data-item-index'); generateBarcodeFields(item, idx, parseInt(qtyInput.value) || 1); }
+        });
+    });
+    const delBtn = item.querySelector('.delete-btn');
+    if(delBtn) {
+        delBtn.addEventListener('click', () => {
+            const idx = item.getAttribute('data-item-index'); const hiddenP = item.querySelector('input[name$="-product"]');
+            if(hiddenP && hiddenP.value) window.usedProductIds.delete(parseInt(hiddenP.value));
+            delete window.barcodeData[idx]; document.querySelector(`.barcode-row[data-item-index="${idx}"]`)?.remove();
+            item.remove(); updateTotalForms(); updateItemsNumbers(); updateFinancialCalculations();
+        });
+    }
+}
+
+function setupAllImagePreviews() {
+    // معاينة صورة الفاتورة الرئيسية
+    const invoicePreview = document.getElementById('invoice-image-preview-container');
+    const invoiceFileInput = document.getElementById('id_purch_image');
+    setupImagePreview(invoicePreview, invoiceFileInput);
+
+    // معاينة صور بنود الفاتورة
+    document.querySelectorAll('.item-row').forEach(row => {
+        const rowPreview = row.querySelector('.image-preview');
+        const rowFileInput = row.querySelector('.hidden-file-input');
+        setupImagePreview(rowPreview, rowFileInput);
+    });
+}
+
+// ============================================
+// [JS-08] الباركودات
+// ============================================
+function checkBarcodeInstantly(inputElement) {
+    const val = inputElement.value.trim(); if (!val) return;
+    let count = 0;
+    document.querySelectorAll('.barcode-input').forEach(inp => { if (inp.value.trim() === val) count++; });
+    if (count > 1) { inputElement.style.borderColor = 'red'; inputElement.style.backgroundColor = '#fff0f0'; showErrorMessage(`الباركود "${sanitizeHTML(val)}" مكرر في الفاتورة!`); return; }
+    clearTimeout(inputElement.timer);
+    inputElement.timer = setTimeout(() => {
+        fetch(`/invoice/api/barcode/${encodeURIComponent(val)}/`)
+            .then(res => res.json())
+            .then(data => {
+                if (!data.error) { inputElement.style.borderColor = 'orange'; inputElement.style.backgroundColor = '#fffaf0'; showErrorMessage(`تحذير: الباركود "${sanitizeHTML(val)}" مستعمل سابقاً!`); }
+                else { inputElement.style.borderColor = '#28a745'; inputElement.style.backgroundColor = '#f0fff0'; }
+            })
+            .catch(err => console.error('خطأ في فحص الباركود', err));
+    }, 300);
+}
+
+function generateBarcodeFields(itemElement, itemIndex, quantity) {
+    const barcodeRow = document.querySelector(`.barcode-row[data-item-index="${itemIndex}"]`); if (!barcodeRow) return;
+    if (window.barcodesVisible) barcodeRow.style.display = 'table-row';
+    const list = barcodeRow.querySelector('.barcode-fields-list'); list.innerHTML = '';
+    if (!window.barcodeData[itemIndex]) window.barcodeData[itemIndex] = [];
+    while (window.barcodeData[itemIndex].length < quantity) window.barcodeData[itemIndex].push('');
+    window.barcodeData[itemIndex] = window.barcodeData[itemIndex].slice(0, quantity);
+    for (let i = 0; i < quantity; i++) {
+        const val = window.barcodeData[itemIndex][i] || '';
+        const div = document.createElement('div'); div.className = 'barcode-item';
+        div.innerHTML = `<input type="text" class="barcode-input" placeholder="باركود ${i+1}" value="${sanitizeHTML(val)}" data-barcode-index="${i}" data-item-index="${itemIndex}"><button type="button" class="barcode-remove-btn"><i class="fas fa-times"></i></button>`;
+        list.appendChild(div);
+    }
+    list.querySelectorAll('.barcode-input').forEach(inp => {
+        inp.addEventListener('input', function() { window.barcodeData[itemIndex][this.getAttribute('data-barcode-index')] = this.value.trim(); checkBarcodeInstantly(this); });
+    });
+}
+
+function autoFillBarcode(itemIndex, barcode) {
+    if (!window.barcodeData[itemIndex]) window.barcodeData[itemIndex] = [];
+    window.barcodeData[itemIndex][0] = barcode;
+    const inp = document.querySelector(`.barcode-row[data-item-index="${itemIndex}"] .barcode-input`);
+    if (inp) { inp.value = barcode; checkBarcodeInstantly(inp); }
+}
+
+function hideAllBarcodes() { document.querySelectorAll('.barcode-row').forEach(r => r.style.display = 'none'); }
+function showAllBarcodes() { document.querySelectorAll('.barcode-row').forEach(r => r.style.display = 'table-row'); document.querySelectorAll('.item-row').forEach(item => { const idx = item.getAttribute('data-item-index'); const qty = parseInt(item.querySelector('input[name$="-purchased_quantity"]')?.value) || 1; generateBarcodeFields(item, idx, qty); }); }
+
+// ============================================
+// [JS-09] الحسابات المالية
+// ============================================
+function updateFinancialCalculations() {
+    let subtotal = 0; document.querySelectorAll('.item-total').forEach(t => subtotal += parseFloat(t.value) || 0);
+    const tax = (parseFloat(document.getElementById('tax-percentage')?.value) || 0) * subtotal / 100;
+    const add = parseFloat(document.getElementById('invoice-addition')?.value) || 0; const disc = parseFloat(document.getElementById('invoice-discount')?.value) || 0;
+    const total = subtotal + tax + add - disc;
+    if(document.getElementById('subtotal-amount')) document.getElementById('subtotal-amount').textContent = subtotal.toFixed(2);
+    if(document.getElementById('tax-amount')) document.getElementById('tax-amount').textContent = tax.toFixed(2);
+    if(document.getElementById('grand-total')) document.getElementById('grand-total').textContent = total.toFixed(2);
+    copyGrandTotalToPaidAmount(); updateRemainingAmount(); document.dispatchEvent(new Event('financialCalculationsUpdated'));
+}
+
+function updateItemCalculations(item) {
+    if(!item) return;
+    const qty = parseFloat(item.querySelector('input[name$="-purchased_quantity"]')?.value) || 0;
+    const price = parseFloat(item.querySelector('input[name$="-unit_price"]')?.value) || 0;
+    const totalInput = item.querySelector('.item-total'); if(totalInput) totalInput.value = (qty * price).toFixed(2);
+    updateFinancialCalculations();
+}
+
+function setupFinancialCalculations() {
+    ['tax-percentage', 'invoice-addition', 'invoice-discount'].forEach(id => { const el = document.getElementById(id); if(el) el.addEventListener('input', updateFinancialCalculations); });
+    const paid = document.getElementById('paid-amount'); if(paid) paid.addEventListener('input', function() { window.paidAmountModified = true; updateRemainingAmount(); checkCashBalance(this.value); });
+}
+
+// ============================================
+// [JS-10] المعاملة الذرية (AJAX Submit) - [إصلاح]
+// ============================================
+function setupGlobalEvents() {
+    document.getElementById('add-single-item')?.addEventListener('click', addNewItem);
+    const form = document.getElementById('purch-form');
+    if (form) form.addEventListener('submit', handleFormSubmit);
+}
+
+function handleFormSubmit(e) {
+    e.preventDefault();
+    const form = e.target; const submitBtn = document.getElementById('save-btn'); const overlay = document.getElementById('loading-overlay');
+    const messagesContainer = document.getElementById('system-messages-container');
+    
+    messagesContainer.innerHTML = ''; document.querySelectorAll('.is-invalid').forEach(el => el.classList.remove('is-invalid'));
+
+    let hasLocalError = false;
+    document.querySelectorAll('.item-row').forEach(row => {
+        const nameField = row.querySelector('.item-name-field'); const searchInput = row.querySelector('.product-search-input');
+        if (searchInput && searchInput.value.trim()) { if(nameField) nameField.value = searchInput.value.trim(); searchInput.classList.remove('is-invalid'); }
+        else { hasLocalError = true; searchInput?.classList.add('is-invalid'); }
+    });
+
+    if (hasLocalError) { showErrorMessage('لا يمكن حفظ الفاتورة: يجب إدخال اسم المادة لجميع البنود.'); return; }
+
+    form.querySelectorAll('input.dynamic-barcode-field').forEach(el => el.remove());
+    Object.keys(window.barcodeData).forEach(idx => {
+        const barcodes = window.barcodeData[idx];
+        if (barcodes && barcodes.length > 0) {
+            barcodes.forEach(bc => {
+                if(bc && bc.trim()) { const inp = document.createElement('input'); inp.type = 'hidden'; inp.name = `item_${idx}_barcodes`; inp.value = bc; inp.className = 'dynamic-barcode-field'; form.appendChild(inp); }
+            });
+        }
+    });
+
+    submitBtn.disabled = true; overlay.classList.add('show');
+    const formData = new FormData(form);
+
+    fetch(form.action, { method: 'POST', body: formData, headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+    .then(response => {
+        if (response.redirected) {
+            window.location.href = response.url;
+            return null;
+        }
+
+        const contentType = response.headers.get('content-type') || '';
+        if (contentType.includes('application/json')) {
+            return response.json().then(data => ({ ok: response.ok, status: response.status, data }));
+        } else {
+            return response.text().then(html => ({ ok: false, status: response.status, html }));
+        }
+    })
+    .then(result => {
+        if (!result) return;
+
+        if (result.ok && result.data && result.data.redirect_url) {
+            window.location.href = result.data.redirect_url;
+        } else if (result.data && (result.data.error || result.data.message)) {
+            showBackendErrors(`<ul><li>${sanitizeHTML(result.data.error || result.data.message)}</li></ul>`);
+        } else if (result.html) {
+            showBackendErrors(result.html);
+        } else {
+            showBackendErrors('<ul><li>حدث خطأ غير متوقع.</li></ul>');
+        }
+    })
+    .catch(error => {
+        console.error('Fetch Error:', error);
+        showBackendErrors('<ul><li>خطأ في الاتصال بالخادم.</li></ul>');
+    })
+    .finally(() => { submitBtn.disabled = false; overlay.classList.remove('show'); });
+}
+
+// ============================================
+// [JS-11] أحداث عامة أخرى
+// ============================================
+function setupItemsCountInput() {
+    const inp = document.getElementById('items-count');
+    if(inp) inp.addEventListener('input', function() {
+        const target = parseInt(this.value) || 1; const current = document.querySelectorAll('.item-row').length;
+        if(target > current) for(let i=0; i<target-current; i++) addNewItem();
+        else if(target < current) { const items = Array.from(document.querySelectorAll('.item-row')).reverse(); for(let i=0; i<current-target; i++) { const item = items[i]; const idx = item.getAttribute('data-item-index'); const hid = item.querySelector('input[name$="-product"]'); if(hid && hid.value) window.usedProductIds.delete(parseInt(hid.value)); document.querySelector(`.barcode-row[data-item-index="${idx}"]`)?.remove(); item.remove(); } updateTotalForms(); updateItemsNumbers(); }
+        updateFinancialCalculations();
+    });
+}
+function setupBarcodeToggle() { const btn = document.getElementById('toggle-barcodes-btn'); if(btn) btn.addEventListener('click', () => { window.barcodesVisible = !window.barcodesVisible; if(window.barcodesVisible) { showAllBarcodes(); btn.innerHTML = '<i class="fas fa-eye-slash"></i> إخفاء'; } else { hideAllBarcodes(); btn.innerHTML = '<i class="fas fa-eye"></i> إظهار'; } }); }
+function setupShippingCompanyEvent() { const sel = document.getElementById('id_purch_shipping_company'); const col = document.getElementById('shipping-num-col'); const notes = document.getElementById('notes-col'); if(sel && col && notes) { sel.addEventListener('change', function() { if(this.value) { col.classList.remove('d-none'); notes.classList.replace('col-12', 'col-md-9'); } else { col.classList.add('d-none'); notes.classList.replace('col-md-9', 'col-12'); } }); } }
+function setupPaymentMethodEvent() { const sel = document.getElementById('id_purch_payment_method'); if(sel) { checkPaymentMethod(sel.value); sel.addEventListener('change', () => checkPaymentMethod(sel.value)); } }
+function updateItemsCountInput() { const inp = document.getElementById('items-count'); if(inp) inp.value = document.querySelectorAll('.item-row').length; }
+function updateTotalForms() { document.getElementById('id_items-TOTAL_FORMS').value = document.querySelectorAll('.item-row').length; }
+function updateItemsNumbers() { document.querySelectorAll('.item-row').forEach((r,i) => r.querySelector('td:first-child').textContent = i+1); }
+
+// ============================================
+// [JS-12] تفعيل Popover لعلامات الاستفهام
+// ============================================
+document.addEventListener('DOMContentLoaded', function () {
+    var popoverTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="popover"]'));
+    var popoverList = popoverTriggerList.map(function (popoverTriggerEl) {
+        return new bootstrap.Popover(popoverTriggerEl, {
+            trigger: 'hover'
+        });
+    });
+});
+</script>
+
+
+{% endblock %}

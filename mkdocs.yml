@@ -1,0 +1,39 @@
+site_name: نظام الأزوردي - دليل المستخدم
+site_url: http://localhost/docs/
+use_directory_urls: false  # ضروري جداً لكي تعمل الروابط داخل Django بدون خطأ 404
+
+# إعدادات القالب والمظهر
+theme:
+  name: material
+  custom_dir: overrides  # <---من اجل حذف حقوق الملكية لاضافة انشاء دليل المستخدم>
+  language: ar
+  direction: rtl
+  features:
+    - navigation.tabs       # قوائم علوية احترافية
+    - navigation.sections   # تقسيمات في القائمة الجانبية
+    - navigation.top        # زر العودة لأعلى الصفحة
+    - search.suggest        # اقتراحات البحث
+    - search.highlight      # تلوين كلمات البحث في النص
+  palette:
+    # الألوان الأساسية للقالب (قبل أن يقوم ملف CSS المخصص بتعديلها للتركواز)
+    - scheme: default
+      primary: teal         # أقرب لون للتركواز في القالب الافتراضي
+      accent: cyan
+
+# ربط ملف CSS المخصص (الذي أنشأناه سابقاً في docs/stylesheets/extra.css)
+extra_css:
+  - stylesheets/extra.css
+
+# قائمة الصفحات (روابط الدليل)
+nav:
+  - الرئيسية: index.md
+  - البدء السريع: getting-started.md
+  - الفواتير: invoices.md
+  - المنتجات: products.md
+  - المالية والنقد: cash-finance.md
+  - المتجر الإلكتروني: e-store.md
+  - التقارير: reports.md
+  - 🏠 العودة للتطبيق: /  # رابط العودة لصفحة Django الرئيسية
+
+
+copyright: "© 2026 <a href='/' target='_blank'>نظام الأزوردي</a> - جميع الحقوق محفوظة"

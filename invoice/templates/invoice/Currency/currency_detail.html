@@ -1,0 +1,103 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}تفاصيل العملة{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>تفاصيل العملة</h2>
+        <div>
+            <a href="{% url 'invoice:currency_edit' currency.pk %}" class="btn btn-primary">
+                <i class="fas fa-edit ms-1"></i>تعديل
+            </a>
+            <a href="{% url 'invoice:currency_list' %}" class="btn btn-secondary">
+                <i class="fas fa-arrow-right ms-1"></i>العودة للقائمة
+            </a>
+        </div>
+    </div>
+    
+    <div class="card">
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-6">
+                    <table class="table table-borderless">
+                        <tr>
+                            <th width="30%">الكود:</th>
+                            <td>{{ currency.code }}</td>
+                        </tr>
+                        <tr>
+                            <th>الرمز:</th>
+                            <td>{{ currency.symbol }}</td>
+                        </tr>
+                        <tr>
+                            <th>الاسم (إنجليزي):</th>
+                            <td>{{ currency.name }}</td>
+                        </tr>
+                        <tr>
+                            <th>الاسم (عربي):</th>
+                            <td>{{ currency.name_ar }}</td>
+                        </tr>
+                        <tr>
+                            <th>سعر الصرف:</th>
+                            <td>{{ currency.exchange_rate }}</td>
+                        </tr>
+                    </table>
+                </div>
+                <div class="col-md-6">
+                    <table class="table table-borderless">
+                        <tr>
+                            <th width="30%">المفرد (عربي):</th>
+                            <td>{{ currency.singular_ar }}</td>
+                        </tr>
+                        <tr>
+                            <th>المثنى (عربي):</th>
+                            <td>{{ currency.dual_ar }}</td>
+                        </tr>
+                        <tr>
+                            <th>الجمع (عربي):</th>
+                            <td>{{ currency.plural_ar }}</td>
+                        </tr>
+                        <tr>
+                            <th>اسم الكسر:</th>
+                            <td>{{ currency.fraction_name_ar }}</td>
+                        </tr>
+                        <tr>
+                            <th>مثنى الكسر:</th>
+                            <td>{{ currency.fraction_dual_ar }}</td>
+                        </tr>
+                        <tr>
+                            <th>جمع الكسر:</th>
+                            <td>{{ currency.fraction_plural_ar }}</td>
+                        </tr>
+                        <tr>
+                            <th>المنازل العشرية:</th>
+                            <td>{{ currency.decimals }}</td>
+                        </tr>
+                        <tr>
+                            <th>العملة الأساسية:</th>
+                            <td>
+                                {% if currency.is_default %}
+                                <span class="badge bg-success">نعم</span>
+                                {% else %}
+                                <span class="badge bg-secondary">لا</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        <tr>
+                            <th>نشط:</th>
+                            <td>
+                                {% if currency.is_active %}
+                                <span class="badge bg-success">نعم</span>
+                                {% else %}
+                                <span class="badge bg-danger">لا</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

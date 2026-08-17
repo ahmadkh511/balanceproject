@@ -1,0 +1,51 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}تفاصيل نوع السعر{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>تفاصيل نوع السعر</h2>
+        <div>
+            <a href="{% url 'invoice:price_type_edit' price_type.pk %}" class="btn btn-primary">
+                <i class="fas fa-edit ms-1"></i>تعديل
+            </a>
+            <a href="{% url 'invoice:price_type_list' %}" class="btn btn-secondary">
+                <i class="fas fa-arrow-right ms-1"></i>العودة للقائمة
+            </a>
+        </div>
+    </div>
+    
+    <div class="card">
+        <div class="card-body">
+            <table class="table table-borderless">
+                <tr>
+                    <th width="30%">الاسم:</th>
+                    <td>{{ price_type.name }}</td>
+                </tr>
+                <tr>
+                    <th>الوصف:</th>
+                    <td>{{ price_type.description|default:"-" }}</td>
+                </tr>
+                <tr>
+                    <th>الرقم المسلسل:</th>
+                    <td>{{ price_type.uniqueId }}</td>
+                </tr>
+                <tr>
+                    <th>Slug:</th>
+                    <td>{{ price_type.slug }}</td>
+                </tr>
+                <tr>
+                    <th>تاريخ الإنشاء:</th>
+                    <td>{{ price_type.date_created|date:"Y-m-d H:i" }}</td>
+                </tr>
+                <tr>
+                    <th>آخر تحديث:</th>
+                    <td>{{ price_type.last_updated|date:"Y-m-d H:i" }}</td>
+                </tr>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

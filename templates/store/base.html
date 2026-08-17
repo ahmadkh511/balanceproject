@@ -1,0 +1,222 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="utf-8">
+    <title>{% block title %}المتجر الإلكتروني{% endblock %}</title>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport">
+    
+    <!-- Google Web Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;500;600;700&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet"> 
+
+    <!-- Icon Font Stylesheet -->
+    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.15.4/css/all.css"/>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.4.1/font/bootstrap-icons.css" rel="stylesheet">
+
+    <!-- Libraries Stylesheet -->
+    <link href="{% static 'lib/animate/animate.min.css' %}" rel="stylesheet">
+    <link href="{% static 'lib/owlcarousel/assets/owl.carousel.min.css' %}" rel="stylesheet">
+
+    <!-- Customized Bootstrap Stylesheet -->
+    <link href="{% static 'css/bootstrap.min.css' %}" rel="stylesheet">
+
+    <!-- Template Stylesheet -->
+    <link href="{% static 'css/style.css' %}" rel="stylesheet">
+    
+    {% block extra_css %}{% endblock %}
+    <style>
+        /* تعديلات للتنسيق العربي RTL */
+        body { font-family: 'Open Sans', sans-serif; }
+        
+        /* تنسيق صورة الشعار المخصص */
+        .custom-badge-img {
+            position: absolute;
+            top: 10px;
+            left: 10px; 
+            z-index: 10;
+            width: 55px;
+            height: 55px;
+            border-radius: 50%;
+            border: 2px solid #fff;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            object-fit: contain;
+            background: #fff;
+        }
+        
+        /* لجعل القوائم تعمل بشكل صحيح */
+        .dropdown-menu { text-align: right; }
+    </style>
+</head>
+
+<body>
+
+    <!-- Spinner Start -->
+    <div id="spinner" class="show bg-white position-fixed translate-middle w-100 vh-100 top-50 start-50 d-flex align-items-center justify-content-center">
+        <div class="spinner-border text-primary" style="width: 3rem; height: 3rem;" role="status">
+            <span class="sr-only">Loading...</span>
+        </div>
+    </div>
+    <!-- Spinner End -->
+
+
+    <!-- Topbar Start -->
+    <div class="container-fluid px-5 d-none border-bottom d-lg-block">
+        <div class="row gx-0 align-items-center">
+            <div class="col-lg-4 text-center text-lg-start mb-lg-0">
+                <div class="d-inline-flex align-items-center" style="height: 45px;">
+                    <a href="#" class="text-muted me-2"> مساعدة</a><small> / </small>
+                    <a href="#" class="text-muted mx-2"> دعم فني</a><small> / </small>
+                    <a href="#" class="text-muted ms-2"> اتصل بنا</a>
+                </div>
+            </div>
+            <div class="col-lg-4 text-center d-flex align-items-center justify-content-center">
+                <small class="text-dark">اتصل بنا:</small>
+                <a href="#" class="text-muted">(+012) 1234 567890</a>
+            </div>
+
+            <div class="col-lg-4 text-center text-lg-end">
+                <div class="d-inline-flex align-items-center" style="height: 45px;">
+                    <div class="dropdown">
+                        <a href="#" class="dropdown-toggle text-muted me-2" data-bs-toggle="dropdown"><small> عملة</small></a>
+                        <div class="dropdown-menu rounded">
+                            <a href="#" class="dropdown-item"> ليرة سورية</a>
+                            <a href="#" class="dropdown-item"> دولار</a>
+                        </div>
+                    </div>
+                    <div class="dropdown">
+                        <a href="#" class="dropdown-toggle text-muted mx-2" data-bs-toggle="dropdown"><small> حسابي</small></a>
+                        <div class="dropdown-menu rounded">
+                            <a href="#" class="dropdown-item"> تسجيل الدخول</a>
+                            <a href="#" class="dropdown-item"> قائمة الرغبات</a>
+                            <a href="#" class="dropdown-item"> سلة المشتريات</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Logo & Search Start -->
+    <div class="container-fluid px-5 py-4 d-none d-lg-block">
+        <div class="row gx-0 align-items-center text-center">
+            <div class="col-md-4 col-lg-3 text-center text-lg-start">
+                <div class="d-inline-flex align-items-center">
+                    <a href="{}" class="navbar-brand p-0">
+                        <h1 class="display-5 text-primary m-0"><i class="fas fa-shopping-bag text-secondary me-2"></i>متجرك</h1>
+                    </a>
+                </div>
+            </div>
+            <div class="col-md-4 col-lg-6 text-center">
+                <div class="position-relative ps-4">
+                    <div class="d-flex border rounded-pill">
+                        <input class="form-control border-0 rounded-pill w-100 py-3" type="text" placeholder="ابحث عن منتج...">
+                        <button type="button" class="btn btn-primary rounded-pill py-3 px-5" style="border: 0;"><i class="fas fa-search"></i></button>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4 col-lg-3 text-center text-lg-end">
+                <div class="d-inline-flex align-items-center">
+                    <a href="#" class="text-muted d-flex align-items-center justify-content-center me-3"><span class="rounded-circle btn-md-square border"><i class="fas fa-random"></i></span></a>
+                    <a href="#" class="text-muted d-flex align-items-center justify-content-center me-3"><span class="rounded-circle btn-md-square border"><i class="fas fa-heart"></i></span></a>
+                    <a href="#" class="text-muted d-flex align-items-center justify-content-center"><span class="rounded-circle btn-md-square border"><i class="fas fa-shopping-cart"></i></span></a>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- Topbar End -->
+
+    <!-- Navbar Start -->
+    <div class="container-fluid nav-bar p-0">
+        <div class="row gx-0 bg-primary px-5 align-items-center">
+            <div class="col-lg-3 d-none d-lg-block">
+                 <h4 class="text-white m-0 py-3"><i class="fa fa-bars me-2"></i> الأقسام</h4>
+            </div>
+            <div class="col-12 col-lg-9">
+                <nav class="navbar navbar-expand-lg navbar-light bg-primary ">
+                    <button class="navbar-toggler ms-auto" type="button" data-bs-toggle="collapse" data-bs-target="#navbarCollapse">
+                        <span class="fa fa-bars fa-1x"></span>
+                    </button>
+                    <div class="collapse navbar-collapse" id="navbarCollapse">
+                        <div class="navbar-nav ms-auto py-0">
+                            <a href="{}" class="nav-item nav-link active">الرئيسية</a>
+                            <a href="#" class="nav-item nav-link">المتجر</a>
+                            <a href="#" class="nav-item nav-link">اتصل بنا</a>
+                        </div>
+                    </div>
+                </nav>
+            </div>
+        </div>
+    </div>
+    <!-- Navbar End -->
+
+    <!-- Content Area -->
+    <!-- هنا سيظهر محتوى الصفحات الأخرى (home.html) -->
+    {% block content %}{% endblock %}
+
+    <!-- Footer Start -->
+    <div class="container-fluid footer py-5 wow fadeIn" data-wow-delay="0.2s">
+        <div class="container py-5">
+            <div class="row g-5">
+                <div class="col-md-6 col-lg-6 col-xl-3">
+                    <div class="footer-item d-flex flex-column">
+                        <h4 class="text-primary mb-4">نظام المحاسبة</h4>
+                        <p class="text-white mb-3">نظام متكامل لإدارة الحسابات والمبيعات والمشتريات مع واجهة متجر إلكتروني متطورة.</p>
+                    </div>
+                </div>
+                <div class="col-md-6 col-lg-6 col-xl-3">
+                    <div class="footer-item d-flex flex-column">
+                        <h4 class="text-primary mb-4">روابط سريعة</h4>
+                        <a href="#" class=""><i class="fas fa-angle-left me-2"></i> عن الشركة</a>
+                        <a href="#" class=""><i class="fas fa-angle-left me-2"></i> سياسة الخصوصية</a>
+                        <a href="#" class=""><i class="fas fa-angle-left me-2"></i> الشروط والأحكام</a>
+                    </div>
+                </div>
+                <div class="col-md-6 col-lg-6 col-xl-3">
+                    <div class="footer-item d-flex flex-column">
+                        <h4 class="text-primary mb-4">خدمة العملاء</h4>
+                        <a href="#" class=""><i class="fas fa-angle-left me-2"></i> اتصل بنا</a>
+                        <a href="#" class=""><i class="fas fa-angle-left me-2"></i> الأسئلة الشائعة</a>
+                    </div>
+                </div>
+                <div class="col-md-6 col-lg-6 col-xl-3">
+                    <div class="footer-item d-flex flex-column">
+                        <h4 class="text-primary mb-4">معلومات التواصل</h4>
+                        <a href="#" class=""><i class="fas fa-home me-2"></i> دمشق، سوريا</a>
+                        <a href="#" class=""><i class="fas fa-envelope me-2"></i> info@example.com</a>
+                        <a href="#" class=""><i class="fas fa-phone me-2"></i> +012 345 67890</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- Footer End -->
+
+    <!-- Copyright Start -->
+    <div class="container-fluid copyright py-4">
+        <div class="container">
+            <div class="row g-4 align-items-center">
+                <div class="col-md-6 text-center text-md-start mb-md-0">
+                    <span class="text-white">جميع الحقوق محفوظة &copy; <a href="#" class="border-bottom text-white">نظام المحاسبة</a>, 2024.</span>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- Copyright End -->
+
+    <!-- Back to Top -->
+    <a href="#" class="btn btn-primary btn-lg-square back-to-top"><i class="fa fa-arrow-up"></i></a>   
+
+    
+    <!-- JavaScript Libraries -->
+    <script nonce="{{ csp_nonce }}" src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.4/jquery.min.js"></script>
+    <script nonce="{{ csp_nonce }}" src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script nonce="{{ csp_nonce }}" src="{% static 'lib/wow/wow.min.js' %}"></script>
+    <script nonce="{{ csp_nonce }}" src="{% static 'lib/owlcarousel/owl.carousel.min.js' %}"></script>
+    
+    <!-- Template Javascript -->
+    <script nonce="{{ csp_nonce }}" src="{% static 'js/main.js' %}"></script>
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

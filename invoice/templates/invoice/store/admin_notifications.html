@@ -1,0 +1,119 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}تنبيهات المخزون{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <h2 class="mb-4">تنبيهات توفر المواد <span class="badge bg-info">{{ notifications_stats|length }}</span></h2>
+
+    <div class="card">
+        <div class="card-body">
+            {% if notifications_stats %}
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle">
+                        <thead class="table-light">
+                            <tr>
+                                <th style="width: 50%">المنتج</th>
+                                <th class="text-center">عدد المنتظرين</th>
+                                <th class="text-center">إجراء</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for item in notifications_stats %}
+                            <tr>
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        <!-- استخدام image_url المجهزة مسبقاً -->
+                                        {% if item.image_url %}
+                                            <img src="{{ item.image_url }}" width="40" height="40" class="rounded me-2" style="object-fit: cover;">
+                                        {% else %}
+                                            <img src="{% static 'images/no-image.png' %}" width="40" height="40" class="rounded me-2" style="object-fit: cover;">
+                                        {% endif %}
+                                        <!-- استخدام الاسم المختصر -->
+                                        <strong>{{ item.name }}</strong>
+                                    </div>
+                                </td>
+                                <td class="text-center">
+                                    <span class="badge bg-warning text-dark">{{ item.waiting_count }}</span>
+                                </td>
+                                <td class="text-center">
+                                    <!-- إضافة data-id وتعيين كلاس للمعالجة بالجافاسكربت -->
+                                    <button data-id="{{ item.id }}" class="btn btn-sm btn-success btn-notify">
+                                        <i class="fas fa-paper-plane"></i> إرسال الإشعارات
+                                    </button>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <div class="text-center py-5 text-muted">
+                    <i class="fas fa-check-circle fa-3x mb-3"></i>
+                    <h4>لا توجد تنبيهات معلقة</h4>
+                    <p>الجميع سعداء بمنتجاتنا!</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<script nonce="{{ csp_nonce }}">
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+
+function sendNotify(productId, btn) {
+    if(!confirm('هل أنت متأكد من إرسال الإشعارات لهؤلاء العملاء؟ سيتم حذف السجلات بعد الإرسال.')) return;
+
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري الإرسال...';
+
+    fetch(`/invoice/stock-notifications/send/${productId}/`, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': getCookie('csrftoken')
+        }
+    })
+    .then(res => res.json())
+    .then(data => {
+        if(data.success) {
+            alert(data.message);
+            location.reload();
+        } else {
+            alert('خطأ: ' + data.message);
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fas fa-paper-plane"></i> إعادة المحاولة';
+        }
+    })
+    .catch(err => {
+        alert('خطأ في الاتصال');
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fas fa-paper-plane"></i> إعادة المحاولة';
+    });
+}
+
+// استخدام Event Delegation لتجنب مشاكل الـ Linter مع المتغيرات
+document.body.addEventListener('click', function(e) {
+    const btn = e.target.closest('.btn-notify');
+    if (btn) {
+        const productId = btn.dataset.id;
+        if (productId) {
+            sendNotify(productId, btn);
+        }
+    }
+});
+</script>
+{% endblock %}

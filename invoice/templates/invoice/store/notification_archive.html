@@ -1,0 +1,214 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}أرشيف الإشعارات{% endblock %}
+
+{% block extra_css %}
+    <link rel="stylesheet" href="{% static 'css/print_system.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4 invoice-print-area" id="printableArea">
+    
+    <h2 class="mb-4 no-print">
+        أرشيف إشعارات المخزون 
+        <i class="fas fa-archive text-muted"></i>
+    </h2>
+
+    <div class="card">
+        <div class="card-body">
+            {% if archive %}
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle">
+                        <thead class="table-light">
+                            <tr>
+                                <th style="width: 50px" data-print-field="col-image">صورة</th>
+                                <th data-print-field="col-product">المنتج</th>
+                                <th data-print-field="col-email">البريد الإلكتروني</th>
+                                <th data-print-field="col-created">تاريخ الطلب</th>
+                                <th data-print-field="col-sent">تاريخ الإرسال</th>
+                                <th class="text-center no-print">إجراءات</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for item in archive %}
+                            <tr id="row-{{ item.id }}">
+                                <td data-print-field="col-image">
+                                    {% if item.product.product_image %}
+                                        <img src="{{ item.product.product_image.url }}" width="40" height="40" class="rounded" style="object-fit: cover;">
+                                    {% else %}
+                                        <img src="{% static 'images/no-image.png' %}" width="40" height="40" class="rounded" style="object-fit: cover;">
+                                    {% endif %}
+                                </td>
+                                <td data-print-field="col-product">
+                                    <strong>{{ item.product.product_name }}</strong>
+                                    <div class="text-muted small">ID: {{ item.product_id }}</div>
+                                </td>
+                                <td data-print-field="col-email">{{ item.email }}</td>
+                                <td data-print-field="col-created">{{ item.created_at|date:"Y-m-d H:i" }}</td>
+                                <td data-print-field="col-sent"><span class="badge bg-success">{{ item.sent_at|date:"Y-m-d H:i" }}</span></td>
+                                <td class="text-center no-print">
+                                    <!-- زر إعادة التنبيه -->
+                                    <button class="btn btn-sm btn-warning btn-undo-notify" data-id="{{ item.id }}">
+                                        <i class="fas fa-undo"></i> إعادة للقائمة
+                                    </button>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <div class="text-center py-5 text-muted">
+                    <div class="mb-3">
+                        <i class="fas fa-folder-open fa-3x text-secondary"></i>
+                    </div>
+                    <h4>لا توجد سجلات في الأرشيف بعد.</h4>
+                    <p>السجلات المرسلة ستظهر هنا.</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    {% include 'includes/print_system.html' %}
+
+</div>
+
+<!-- ==========================================
+   Modal تأكيد إعادة الأرشيف (بديل لـ confirm)
+   ========================================== -->
+<div class="modal fade no-print" id="confirmUndoModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="fas fa-exclamation-triangle text-warning"></i> تأكيد الإعادة</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body text-center">
+                <i class="fas fa-undo-circle fa-3x text-info mb-3"></i>
+                <p class="mb-0">هل أنت متأكد من إعادة هذا التنبيه للقائمة المعلقة؟</p>
+                <small class="text-muted">سيتمكنك من إرسال إشعار جديد لهذا العميل.</small>
+            </div>
+            <div class="modal-footer justify-content-center">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إلغاء</button>
+                <button type="button" class="btn btn-warning" id="btnConfirmUndoAction">
+                    <i class="fas fa-check"></i> نعم، أعد للقائمة
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+    <script src="{% static 'js/print_system.js' %}"></script>
+    <script nonce="{{ csp_nonce }}">
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+
+    // متغيرات لحفظ الحالة الحالية
+    let currentUndoId = null;
+    let currentBtn = null;
+
+    // ==========================================
+    // منطق التفاعل (Event Listeners)
+    // ==========================================
+    document.body.addEventListener('click', function(e) {
+        const btn = e.target.closest('.btn-undo-notify');
+        
+        if (btn) {
+            // 1. حفظ البيانات
+            currentUndoId = btn.dataset.id;
+            currentBtn = btn;
+            
+            // 2. إظهار Modal بدلاً من confirm()
+            const myModal = new bootstrap.Modal(document.getElementById('confirmUndoModal'));
+            myModal.show();
+        }
+    });
+
+    // 3. عند الضغط على زر التأكيد داخل Modal
+    document.getElementById('btnConfirmUndoAction').addEventListener('click', function() {
+        // إخفاء Modal
+        const myModalEl = document.getElementById('confirmUndoModal');
+        const modalInstance = bootstrap.Modal.getInstance(myModalEl);
+        modalInstance.hide();
+
+        // استئناف عملية الإرسال
+        performUndoAction(currentUndoId, currentBtn);
+    });
+
+    function performUndoAction(notifId, btn) {
+        if (!notifId) return;
+
+        const originalText = btn.innerHTML;
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري...';
+
+        fetch('/invoice/notifications/undo/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            body: JSON.stringify({ id: notifId })
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                // استخدام نظام الإشعارات (Toast) الموجود في المشروع
+                if (typeof window.showToast === 'function') {
+                    window.showToast('تم بنجاح', data.message, 'success');
+                } else {
+                    // fallback بسيط
+                    alert(data.message); 
+                }
+                
+                // إخفاء الصف
+                const row = document.getElementById(`row-${notifId}`);
+                if (row) {
+                    row.style.transition = 'all 0.5s ease';
+                    row.style.opacity = '0';
+                    row.style.transform = 'translateX(50px)';
+                    setTimeout(() => row.remove(), 500);
+                }
+            } else {
+                // عرض خطأ في Toast
+                if (typeof window.showToast === 'function') {
+                    window.showToast('خطأ', data.message, 'error');
+                } else {
+                    alert('خطأ: ' + data.message);
+                }
+                
+                btn.disabled = false;
+                btn.innerHTML = originalText;
+            }
+        })
+        .catch(err => {
+            console.error(err);
+            
+            if (typeof window.showToast === 'function') {
+                window.showToast('خطأ', 'حدث خطأ أثناء الاتصال.', 'error');
+            } else {
+                alert('حدث خطأ أثناء الاتصال.');
+            }
+            
+            btn.disabled = false;
+            btn.innerHTML = originalText;
+        });
+    }
+    </script>
+{% endblock %}

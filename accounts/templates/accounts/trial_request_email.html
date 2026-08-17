@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html dir="rtl" lang="ar">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body { margin: 0; padding: 0; background-color: #f4f4f4; font-family: 'Tajawal', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        .email-container { max-width: 600px; margin: 20px auto; background-color: #ffffff; border-radius: 10px; overflow: hidden; border: 1px solid #e0e0e0; }
+        .email-header { background: linear-gradient(135deg, #0097a7 0%, #006064 100%); padding: 30px; text-align: center; color: white; }
+        .email-header h1 { margin: 0; font-size: 24px; }
+        .email-body { padding: 30px; color: #333333; line-height: 1.8; font-size: 16px; }
+        .email-body h2 { color: #006064; font-size: 20px; margin-bottom: 10px; }
+        .info-box { background-color: #e0f7fa; border-right: 4px solid #0097a7; padding: 15px; border-radius: 5px; margin: 20px 0; }
+        .info-box p { margin: 5px 0; }
+        .email-footer { background-color: #f9f9f9; padding: 20px; text-align: center; font-size: 12px; color: #999999; border-top: 1px solid #eeeeee; }
+    </style>
+</head>
+<body>
+    <div class="email-container">
+        <div class="email-header">
+            <h1>🚀 نظام الأزوردي</h1>
+        </div>
+        <div class="email-body">
+            <h2>مرحباً {{ trial.full_name }}،</h2>
+            <p>شكراً لاهتمامك بنظام الأزوردي! لقد تلقينا طلبك لتفعيل الفترة التجريبية بنجاح.</p>
+            
+            <div class="info-box">
+                <p><strong>ملخص طلبك:</strong></p>
+                <p>👤 الاسم: {{ trial.full_name }}</p>
+                <p>🏢 الشركة: {{ trial.company_name }}</p>
+                <p>📧 البريد: {{ trial.email }}</p>
+            </div>
+
+            <p>فريقنا يقوم بمراجعة الطلب الآن، وسيتواصل معك خلال الساعات القليلة القادمة على الرقم <strong>{{ trial.phone_number }}</strong> لتفعيل حسابك.</p>
+            
+            <p>نحن متحمسون لبدء رحلتك معنا!</p>
+            <p><strong>مع تحيات فريق الأزوردي</strong></p>
+        </div>
+        <div class="email-footer">
+            <p>© 2026 نظام الأزوردي. جميع الحقوق محفوظة.</p>
+            <p>تم إرسال هذه الرسالة تلقائياً، يرجى عدم الرد عليها مباشرة.</p>
+        </div>
+    </div>
+</body>
+</html>

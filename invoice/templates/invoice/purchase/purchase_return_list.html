@@ -1,0 +1,374 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}قائمة مرتجعات المشتريات{% endblock %}
+
+{% block extra_css %}
+    <link rel="stylesheet" href="{% static 'css/print_system.css' %}">
+    <style>
+    /* ===== خصوصيات هذه الصفحة فقط - لا ألوان ثابتة ولا إعادة تعريف ===== */
+
+    /* رقم المرتجع */
+    .return-id { color: var(--aqua-4); font-weight: 700; font-size: 0.85rem; }
+
+    /* رابط الفاتورة الأصلية */
+    .invoice-link { color: var(--aqua-4); text-decoration: none; font-weight: 500; }
+    .invoice-link:hover { color: var(--text-dark); }
+
+    /* خلية المورد */
+    .supplier-cell { display: flex; align-items: center; gap: 0.4rem; justify-content: center; }
+    .supplier-avatar {
+        width: 26px; height: 26px;
+        background: var(--aqua-1); border-radius: 50%;
+        display: flex; align-items: center; justify-content: center;
+        color: var(--aqua-4); font-size: 0.65rem; flex-shrink: 0;
+    }
+
+    /* شارات الحالة مبنية من ألوان النظام */
+    .badge-status {
+        padding: 0.2rem 0.6rem; border-radius: 4px;
+        font-size: 0.7rem; font-weight: 600;
+        display: inline-flex; align-items: center; gap: 0.3rem;
+    }
+    .badge-settled { background: var(--aqua-1); color: var(--text-dark); border: 1px solid var(--aqua-2); }
+    .badge-partial { background: var(--aqua-2); color: var(--text-dark); }
+    .badge-waiting { background: var(--aqua-1); color: var(--aqua-4); }
+
+    /* ملاحظة مصغرة */
+    .mini-note { font-size: 0.7rem; color: var(--aqua-4); opacity: 0.7; }
+
+    /* عداد في الرأس */
+    .header-count {
+        background: rgba(255, 255, 255, 0.2);
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        padding: 0.15rem 0.6rem; border-radius: 4px; font-size: 0.75rem;
+    }
+
+    /* قسم الفلترة الأساسي */
+    .filter-section {
+        background: #f8f9fa; padding: 1rem;
+        border-bottom: 1px solid var(--aqua-2);
+        margin: 0 -1rem 1rem -1rem;
+    }
+    .filter-grid {
+        display: flex; gap: 0.75rem;
+        flex-wrap: wrap; align-items: flex-end;
+    }
+    .filter-group { flex: 1; min-width: 150px; }
+
+    /* الفلاتر المتقدمة */
+    .advanced-filters {
+        display: none; margin-bottom: 1rem;
+        padding: 1rem; background: #f8f9fa; border-radius: 4px;
+        border: 1px solid var(--aqua-2);
+    }
+    .advanced-filters.show { display: block; }
+    .adv-filter-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+        gap: 0.75rem; align-items: end;
+    }
+
+    /* ترقيم الصفحات */
+    .return-pagination {
+        display: flex; justify-content: center; align-items: center;
+        gap: 0.3rem; padding: 1rem 0 0 0;
+        border-top: 1px solid var(--aqua-2); margin-top: 1rem;
+    }
+    .return-pagination a, .return-pagination span {
+        padding: 0.35rem 0.7rem; background: white;
+        border: 1px solid var(--aqua-2); border-radius: 4px;
+        color: var(--text-dark); text-decoration: none; font-size: 0.8rem;
+        transition: all 0.2s;
+    }
+    .return-pagination a:hover {
+        background: var(--aqua-1); border-color: var(--aqua-3);
+    }
+    .return-pagination .active {
+        background: linear-gradient(135deg, var(--aqua-4) 0%, #006064 100%);
+        color: white; border-color: transparent;
+    }
+
+    @media (max-width: 768px) {
+        .filter-grid { flex-direction: column; }
+        .filter-group { min-width: 100%; }
+        .return-pagination { flex-wrap: wrap; }
+    }
+    </style>
+{% endblock %}
+
+{% block content %}
+<!-- ===== الخطوة 2: إضافة id="printableArea" و class="invoice-print-area" ===== -->
+<div class="container-fluid invoice-print-area" id="printableArea" style="padding: 0.75rem;">
+    <div class="card">
+        <!-- ===== رأس البطاقة — إضافة class="no-print" للأزرار غير المرغوب طباعتها ===== -->
+        <div class="card-header no-print">
+            <div class="d-flex align-items-center gap-2">
+                <i class="fas fa-undo-alt"></i>
+                <span>مرتجعات المشتريات</span>
+            </div>
+            <div class="d-flex align-items-center gap-2 ms-auto">
+                <span class="header-count">
+                    <i class="fas fa-chart-bar"></i>
+                    {{ page_obj.paginator.count }} مرتجع
+                </span>
+                <a href="{% url 'invoice:purch_list' %}" class="btn btn-sm btn-primary no-print">
+                    <i class="fas fa-arrow-right"></i> فواتير الشراء
+                </a>
+            </div>
+        </div>
+
+        <div class="card-body">
+            <!-- ===== ملاحظة إرشادية - class="no-print" لأنها غير ضرورية في الطباعة ===== -->
+            <div class="no-print" style="background: var(--aqua-1); padding: 0.6rem 1rem; border-radius: 4px; border-right: 4px solid var(--aqua-4); margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;">
+                <i class="fas fa-lightbulb" style="color: var(--aqua-4);"></i>
+                <span style="font-size: 0.85rem; color: var(--text-dark);">يتم إنشاء المرتجعات من داخل فاتورة الشراء</span>
+            </div>
+
+            <!-- ===== الفلترة - class="no-print" لأنها غير ضرورية في الطباعة ===== -->
+            <div class="filter-section no-print">
+                <form method="get" class="filter-grid">
+                    <div class="filter-group" style="flex: 2;">
+                        <label class="form-label"><i class="fas fa-search"></i> بحث</label>
+                        <input type="text" name="search" class="form-control" placeholder="رقم المرتجع، المورد، أو رقم الفاتورة..." value="{{ search_query }}">
+                    </div>
+                    <div class="filter-group">
+                        <label class="form-label"><i class="fas fa-tag"></i> الحالة</label>
+                        <select name="status" class="form-select">
+                            <option value="">الكل</option>
+                            <option value="settled" {% if status_filter == 'settled' %}selected{% endif %}>مكتمل</option>
+                            <option value="partial" {% if status_filter == 'partial' %}selected{% endif %}>جزئي</option>
+                            <option value="pending" {% if status_filter == 'pending' %}selected{% endif %}>انتظار</option>
+                        </select>
+                    </div>
+                    <div style="display: flex; gap: 0.5rem; flex-shrink: 0;">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-search"></i> بحث
+                        </button>
+                        <button type="button" class="btn btn-secondary" onclick="toggleFilters()">
+                            <i class="fas fa-sliders-h"></i> متقدم
+                        </button>
+                        <a href="{% url 'invoice:purchase_return_list' %}" class="btn btn-secondary">
+                            <i class="fas fa-redo"></i>
+                        </a>
+                    </div>
+                </form>
+            </div>
+
+            <!-- ===== الفلاتر المتقدمة - class="no-print" ===== -->
+            <div id="advancedFilters" class="advanced-filters no-print {% if request.GET.supplier or request.GET.date_from or request.GET.date_to %}show{% endif %}">
+                <form method="get" class="adv-filter-grid">
+                    <div>
+                        <label class="form-label"><i class="fas fa-user"></i> المورد</label>
+                        <select name="supplier" class="form-select">
+                            <option value="">كل الموردين</option>
+                            {% for supplier in suppliers %}
+                            <option value="{{ supplier.id }}" {% if request.GET.supplier == supplier.id|stringformat:"s" %}selected{% endif %}>
+                                {{ supplier.get_full_name|default:supplier.username }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div>
+                        <label class="form-label"><i class="fas fa-calendar-alt"></i> من تاريخ</label>
+                        <input type="date" name="date_from" class="form-control" value="{{ request.GET.date_from }}">
+                    </div>
+                    <div>
+                        <label class="form-label"><i class="fas fa-calendar-alt"></i> إلى تاريخ</label>
+                        <input type="date" name="date_to" class="form-control" value="{{ request.GET.date_to }}">
+                    </div>
+                    <div style="display: flex; gap: 0.5rem;">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-filter"></i> تطبيق
+                        </button>
+                        <a href="{% url 'invoice:purchase_return_list' %}" class="btn btn-secondary">إعادة</a>
+                    </div>
+                    <input type="hidden" name="search" value="{{ search_query }}">
+                    <input type="hidden" name="status" value="{{ status_filter }}">
+                </form>
+            </div>
+
+            <!-- ===== الجدول - مع إضافة data-print-field للتحكم بالأعمدة ===== -->
+            <div style="overflow-x: auto;">
+                <table class="table table-bordered" id="returnsTable">
+                    <thead>
+                        <tr>
+                            <th style="cursor: pointer;" onclick="sortTable(0)">#</th>
+                            <!-- الخطوة 4: إضافة data-print-field لأعمدة الجدول -->
+                            <th data-print-field="col-return-id" style="cursor: pointer;" onclick="sortTable(1)">رقم المرتجع</th>
+                            <th data-print-field="col-return-date" style="cursor: pointer;" onclick="sortTable(2)">التاريخ</th>
+                            <th data-print-field="col-supplier" style="cursor: pointer;" onclick="sortTable(3)">المورد</th>
+                            <th data-print-field="col-invoice" style="cursor: pointer;" onclick="sortTable(4)">الفاتورة</th>
+                            <th data-print-field="col-items" style="cursor: pointer;" onclick="sortTable(5)">الأصناف</th>
+                            <th data-print-field="col-total" style="cursor: pointer;" onclick="sortTable(6)">الإجمالي</th>
+                            <th data-print-field="col-paid" style="cursor: pointer;" onclick="sortTable(7)">المستلم</th>
+                            <th data-print-field="col-status" style="cursor: pointer;" onclick="sortTable(8)">الحالة</th>
+                            <!-- الخطوة 3: إضافة class="no-print" لعمود الإجراءات -->
+                            <th class="no-print">الإجراءات</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for return in purchase_returns %}
+                        <tr>
+                            <td class="text-center">{{ forloop.counter }}</td>
+                            <!-- الخطوة 5: تكرار data-print-field في الخلايا المقابلة -->
+                            <td data-print-field="col-return-id" class="text-center">
+                                <span class="return-id">{{ return.uniqueId|default:return.slug|truncatechars:10 }}</span>
+                                {% if return.return_notes %}
+                                <br><span class="mini-note">{{ return.return_notes|truncatechars:20 }}</span>
+                                {% endif %}
+                            </td>
+                            <td data-print-field="col-return-date" class="text-center">{{ return.return_date|date:"Y-m-d"|default:"-" }}</td>
+                            <td data-print-field="col-supplier" class="text-center">
+                                {% if return.purch_supplier %}
+                                <div class="supplier-cell">
+                                    <div class="supplier-avatar"><i class="fas fa-user"></i></div>
+                                    <span>{{ return.purch_supplier.get_full_name|default:return.purch_supplier.username|truncatechars:12 }}</span>
+                                </div>
+                                {% else %}
+                                -
+                                {% endif %}
+                            </td>
+                            <td data-print-field="col-invoice" class="text-center">
+                                {% if return.original_purchase %}
+                                <a href="{% url 'invoice:purch_detail' return.original_purchase.slug %}" class="invoice-link">
+                                    <i class="fas fa-external-link-alt" style="font-size: 0.65rem;"></i>
+                                    {{ return.original_purchase.uniqueId }}
+                                </a>
+                                {% else %}
+                                -
+                                {% endif %}
+                            </td>
+                            <td data-print-field="col-items" class="text-center">
+                                <span class="badge-status badge-settled">
+                                    <i class="fas fa-box" style="font-size: 0.6rem;"></i>
+                                    {{ return.return_items.count }}
+                                </span>
+                            </td>
+                            <td data-print-field="col-total" class="text-center" style="font-family: 'Courier New', monospace; font-weight: 700;">
+                                {{ return.return_final_total|floatformat:2 }}
+                            </td>
+                            <td data-print-field="col-paid" class="text-center" style="font-family: 'Courier New', monospace; font-weight: 600;">
+                                {{ return.paid_amount|floatformat:2 }}
+                            </td>
+                            <td data-print-field="col-status" class="text-center">
+                                {% if return.settlement_status == 'settled' %}
+                                <span class="badge-status badge-settled">
+                                    <i class="fas fa-check-circle" style="font-size: 0.6rem;"></i> مكتمل
+                                </span>
+                                {% elif return.settlement_status == 'partial' %}
+                                <span class="badge-status badge-partial">
+                                    <i class="fas fa-adjust" style="font-size: 0.6rem;"></i> جزئي
+                                </span>
+                                {% else %}
+                                <span class="badge-status badge-waiting">
+                                    <i class="fas fa-clock" style="font-size: 0.6rem;"></i> انتظار
+                                </span>
+                                {% endif %}
+                            </td>
+                            <!-- الخطوة 3: إضافة class="no-print" لخلايا الإجراءات -->
+                            <td class="text-center no-print">
+                                <div class="d-flex gap-1 justify-content-center">
+                                    <a href="{% url 'invoice:purchase_return_detail' return.slug %}" class="btn btn-sm btn-primary" title="عرض">
+                                        <i class="fas fa-eye"></i>
+                                    </a>
+                                    
+                                    {% if request.user.is_superuser or return.created_by == request.user %}
+                                    <a href="{% url 'invoice:purchase_return_delete' return.slug %}" class="btn btn-sm btn-danger" title="حذف"
+                                       onclick="return confirm('هل أنت متأكد من حذف هذا المرتجع؟ لا يمكن التراجع عن هذا الإجراء.');">
+                                        <i class="fas fa-trash"></i>
+                                    </a>
+                                    {% endif %}
+                                </div>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <!-- تحديث عدد الأعمدة ليشمل عمود الإجراءات -->
+                            <td colspan="10" class="text-center" style="padding: 3rem;">
+                                <i class="fas fa-undo-alt" style="font-size: 3rem; color: var(--aqua-2); display: block; margin-bottom: 1rem;"></i>
+                                <h5 style="color: #666;">لا توجد مرتجعات</h5>
+                                <p style="color: #999; font-size: 0.85rem; margin-bottom: 1rem;">يمكنك إنشاء مرتجع من داخل فاتورة الشراء</p>
+                                <a href="{% url 'invoice:purch_list' %}" class="btn btn-primary no-print">
+                                    <i class="fas fa-arrow-left"></i> فواتير الشراء
+                                </a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- ===== ترقيم الصفحات - class="no-print" ===== -->
+            {% if page_obj.has_other_pages %}
+            <div class="return-pagination no-print">
+                {% if page_obj.has_previous %}
+                <a href="?page={{ page_obj.previous_page_number }}{% for key,value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">
+                    <i class="fas fa-chevron-right" style="font-size: 0.65rem;"></i>
+                </a>
+                {% endif %}
+
+                {% for i in page_obj.paginator.page_range %}
+                    {% if page_obj.number == i %}
+                    <span class="active">{{ i }}</span>
+                    {% elif i > page_obj.number|add:'-3' and i < page_obj.number|add:'3' %}
+                    <a href="?page={{ i }}{% for key,value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">{{ i }}</a>
+                    {% endif %}
+                {% endfor %}
+
+                {% if page_obj.has_next %}
+                <a href="?page={{ page_obj.next_page_number }}{% for key,value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">
+                    <i class="fas fa-chevron-left" style="font-size: 0.65rem;"></i>
+                </a>
+                {% endif %}
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- ===== الخطوة 6: استدعاء print_system.html في نهاية منطقة الطباعة ===== -->
+{% include 'includes/print_system.html' %}
+
+<!-- ===== JavaScript الخاص بالصفحة ===== -->
+<script nonce="{{ csp_nonce }}">
+// إظهار/إخفاء الفلاتر المتقدمة
+function toggleFilters() {
+    document.getElementById('advancedFilters').classList.toggle('show');
+}
+
+// فرز الجدول
+let sortDirection = {};
+function sortTable(columnIndex) {
+    const table = document.getElementById('returnsTable');
+    if (!table) return;
+    const tbody = table.tBodies[0];
+    const rows = Array.from(tbody.rows);
+    
+    sortDirection[columnIndex] = sortDirection[columnIndex] === 'asc' ? 'desc' : 'asc';
+    
+    rows.sort((a, b) => {
+        let aVal = a.cells[columnIndex].innerText.trim();
+        let bVal = b.cells[columnIndex].innerText.trim();
+        
+        if ([0, 5, 6, 7].includes(columnIndex)) {
+            aVal = parseFloat(aVal) || 0;
+            bVal = parseFloat(bVal) || 0;
+        } else if (columnIndex === 2) {
+            aVal = new Date(aVal) || 0;
+            bVal = new Date(bVal) || 0;
+        }
+        
+        if (sortDirection[columnIndex] === 'asc') return aVal > bVal ? 1 : -1;
+        return aVal < bVal ? 1 : -1;
+    });
+    
+    rows.forEach(row => tbody.appendChild(row));
+}
+</script>
+{% endblock %}
+
+{% block extra_js %}
+    <!-- ===== الخطوة 7: استدعاء print_system.js ===== -->
+    <script src="{% static 'js/print_system.js' %}"></script>
+{% endblock %}

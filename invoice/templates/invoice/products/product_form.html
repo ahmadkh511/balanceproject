@@ -1,0 +1,418 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load i18n %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- عنوان الصفحة مع تصميم أفضل -->
+    <div class="row mb-4">
+        <div class="col">
+            <div class="d-flex align-items-center">
+                <div class="rounded-circle bg-primary bg-opacity-10 p-3 me-3">
+                    <i class="fas fa-cube fa-2x text-primary"></i>
+                </div>
+                <div>
+                    <h1 class="h3 mb-1 text-gray-800">{{ title }}</h1>
+                    <p class="text-muted mb-0">
+                        <i class="fas fa-info-circle me-1"></i>
+                        {% trans "إضافة مادة جديدة" %}
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- رسائل التنبيه -->
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert alert-{{ message.tags }} alert-dismissible fade show mb-4" role="alert">
+                <div class="d-flex align-items-center">
+                    <i class="fas fa-{% if message.tags == 'success' %}check-circle{% elif message.tags == 'error' %}exclamation-circle{% else %}info-circle{% endif %} me-2"></i>
+                    {{ message }}
+                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        {% endfor %}
+    {% endif %}
+
+    <!-- نموذج إنشاء المادة -->
+    <div class="card shadow mb-4">
+        <div class="card-header py-3">
+            <h6 class="m-0 font-weight-bold text-primary">
+                <i class="fas fa-edit me-1"></i>{% trans "معلومات المادة الأساسية" %}
+            </h6>
+        </div>
+        <div class="card-body">
+            <form method="post" enctype="multipart/form-data" id="productForm" action="{% url 'invoice:product_create' %}">
+                {% csrf_token %}
+                
+                <div class="row">
+                    <!-- العمود الأيمن - معلومات المادة -->
+                    <div class="col-lg-8">
+                        <!-- اسم المادة (إجباري) -->
+                        <div class="mb-4">
+                            <label for="product_name" class="form-label fw-bold">
+                                {% trans "اسم المادة" %} 
+                                <span class="text-danger">*</span>
+                            </label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-light border-end-0">
+                                    <i class="fas fa-tag text-primary"></i>
+                                </span>
+                                <input type="text" 
+                                       class="form-control border-start-0" 
+                                       id="product_name" 
+                                       name="product_name" 
+                                       required 
+                                       autofocus
+                                       placeholder="{% trans 'أدخل اسم المادة' %}"
+                                       style="border-left: 1px solid #d1d3e2;">
+                            </div>
+                            <div class="form-text text-muted">
+                                <i class="fas fa-info-circle fa-xs"></i>
+                                {% trans "أدخل اسم المادة كاملاً كما يجب أن يظهر في الفواتير" %}
+                            </div>
+                        </div>
+
+                        <!-- الباركود الأساسي (اختياري) -->
+                        <div class="mb-4">
+                            <label for="main_barcode" class="form-label fw-bold">
+                                {% trans "الباركود الأساسي" %}
+                                <span class="text-muted">({% trans "اختياري" %})</span>
+                            </label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-light border-end-0">
+                                    <i class="fas fa-barcode text-primary"></i>
+                                </span>
+                                <input type="text" 
+                                       class="form-control border-start-0" 
+                                       id="main_barcode" 
+                                       name="main_barcode" 
+                                       placeholder="{% trans 'أدخل الباركود الأساسي (اختياري)' %}"
+                                       style="border-left: 1px solid #d1d3e2;">
+                            </div>
+                            <div class="form-text text-muted">
+                                <i class="fas fa-info-circle fa-xs"></i>
+                                {% trans " الباركود الأساسي للمادة (اختياري) - يجب أن يكون فريداً وهو مهم بمجال مثل البسة مواد غذائية او اي نشاط يعتمد على الباركود وليس السيريال " %}
+                            </div>
+                        </div>
+
+                        <!-- وصف المادة (اختياري) -->
+                        <div class="mb-4">
+                            <label for="product_description" class="form-label fw-bold">
+                                {% trans "وصف المادة" %}
+                                <span class="text-muted">({% trans "اختياري" %})</span>
+                            </label>
+                            <textarea class="form-control" 
+                                      id="product_description" 
+                                      name="product_description" 
+                                      rows="5"
+                                      placeholder="{% trans 'أضف وصفاً تفصيلياً للمادة (اختياري)' %}"></textarea>
+                            <div class="form-text text-muted">
+                                <i class="fas fa-info-circle fa-xs"></i>
+                                {% trans "يمكنك إضافة مواصفات أو ملاحظات مهمة عن المادة" %}
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- العمود الأيسر - صورة المادة -->
+                    <div class="col-lg-4">
+                        <div class="card border-0 shadow-sm">
+                            <div class="card-header bg-transparent border-0">
+                                <h6 class="fw-bold mb-0">
+                                    <i class="fas fa-image me-1 text-primary"></i>
+                                    {% trans "صورة المادة" %}
+                                </h6>
+                            </div>
+                            <div class="card-body">
+                                <!-- حاوية معاينة الصورة -->
+                                <div class="image-upload-container">
+                                    <div class="image-preview-wrapper border rounded-3 p-3 text-center bg-light mb-3" 
+                                         id="imagePreviewArea"
+                                         style="min-height: 250px; display: flex; align-items: center; justify-content: center; cursor: pointer;">
+                                        <div id="noImagePlaceholder" class="text-muted">
+                                            <i class="fas fa-cloud-upload-alt fa-3x mb-2"></i>
+                                            <br>
+                                            <span>{% trans 'اضغط لاختيار صورة للمادة' %}</span>
+                                            <br>
+                                            <small class="text-muted">{% trans 'JPG, PNG, GIF - 5MB كحد أقصى' %}</small>
+                                        </div>
+                                        <img id="productImagePreview" 
+                                             src="#" 
+                                             alt="{% trans 'معاينة الصورة' %}" 
+                                             style="max-width: 100%; max-height: 200px; display: none;"
+                                             class="img-fluid rounded">
+                                    </div>
+
+                                    <!-- حقل رفع الصورة (مخفي) -->
+                                    <input type="file" 
+                                           class="d-none" 
+                                           id="product_image" 
+                                           name="product_image" 
+                                           accept="image/*">
+
+                                    <!-- معلومات الصورة -->
+                                    <div id="imageInfo" class="small text-muted text-center" style="display: none;">
+                                        <i class="fas fa-file-image me-1"></i>
+                                        <span id="imageName"></span>
+                                        <span id="imageSize" class="ms-2"></span>
+                                    </div>
+
+                                    <!-- زر إزالة الصورة -->
+                                    <button type="button" 
+                                            class="btn btn-sm btn-outline-danger w-100 mt-2" 
+                                            id="removeImageBtn" 
+                                            style="display: none;">
+                                        <i class="fas fa-trash-alt me-1"></i>
+                                        {% trans "إزالة الصورة" %}
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- شريط التقدم (للمظهر فقط) -->
+                <div class="progress mb-4" style="height: 3px;">
+                    <div class="progress-bar bg-success" role="progressbar" style="width: 25%;" aria-valuenow="25" aria-valuemin="0" aria-valuemax="100"></div>
+                </div>
+
+                <!-- أزرار التحكم -->
+                <div class="d-flex gap-2 justify-content-start mt-4">
+                    <button type="submit" class="btn btn-success btn-lg">
+                        <i class="fas fa-save me-2"></i>
+                        {% trans "حفظ المادة" %}
+                    </button>
+                    <a href="{% url 'invoice:product_list' %}" class="btn btn-secondary btn-lg">
+                        <i class="fas fa-times me-2"></i>
+                        {% trans "إلغاء" %}
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- كود JavaScript المحسن -->
+<script nonce="{{ csp_nonce }}">
+document.addEventListener('DOMContentLoaded', function() {
+    console.log("✅ تم تحميل صفحة إنشاء المادة");
+    
+    // الحصول على العناصر
+    const productForm = document.getElementById('productForm');
+    const productImageInput = document.getElementById('product_image');
+    const productImagePreview = document.getElementById('productImagePreview');
+    const noImagePlaceholder = document.getElementById('noImagePlaceholder');
+    const removeImageBtn = document.getElementById('removeImageBtn');
+    const imageInfo = document.getElementById('imageInfo');
+    const imageName = document.getElementById('imageName');
+    const imageSize = document.getElementById('imageSize');
+    const productNameInput = document.getElementById('product_name');
+    const imagePreviewArea = document.getElementById('imagePreviewArea');
+    const mainBarcodeInput = document.getElementById('main_barcode');
+
+    // التحقق من وجود النموذج
+    if (productForm) {
+        console.log("✅ تم العثور على النموذج");
+        
+        // التحقق من صحة البيانات قبل الإرسال
+        productForm.addEventListener('submit', function(e) {
+            const productName = productNameInput.value.trim();
+            console.log("✅ اسم المادة المدخل:", productName);
+            
+            if (!productName) {
+                e.preventDefault();
+                showNotification('{% trans "يرجى إدخال اسم المادة" %}', 'error');
+                productNameInput.classList.add('is-invalid');
+                productNameInput.focus();
+            } else {
+                productNameInput.classList.remove('is-invalid');
+            }
+        });
+    }
+
+    // فتح مربع اختيار الصورة عند الضغط على منطقة المعاينة
+    if (imagePreviewArea) {
+        imagePreviewArea.addEventListener('click', function(e) {
+            // تجنب فتح مربع الاختيار عند الضغط على زر الإزالة
+            if (e.target.closest('#removeImageBtn')) {
+                return;
+            }
+            productImageInput.click();
+        });
+    }
+
+    // معاينة الصورة عند الاختيار
+    if (productImageInput) {
+        productImageInput.addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                // التحقق من نوع الملف
+                const validTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/jpg'];
+                if (!validTypes.includes(file.type)) {
+                    showNotification('{% trans "نوع الملف غير مدعوم. الرجاء اختيار صورة JPG, PNG, GIF" %}', 'error');
+                    this.value = '';
+                    return;
+                }
+
+                // التحقق من حجم الملف (5 ميجابايت)
+                const maxSize = 5 * 1024 * 1024; // 5MB
+                if (file.size > maxSize) {
+                    showNotification('{% trans "حجم الصورة كبير جداً. الحد الأقصى 5 ميجابايت" %}', 'error');
+                    this.value = '';
+                    return;
+                }
+
+                // عرض معلومات الصورة
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    productImagePreview.src = e.target.result;
+                    productImagePreview.style.display = 'block';
+                    noImagePlaceholder.style.display = 'none';
+                    
+                    // عرض معلومات الملف
+                    imageName.textContent = file.name.length > 30 ? file.name.substring(0, 27) + '...' : file.name;
+                    const fileSizeKB = (file.size / 1024).toFixed(2);
+                    imageSize.textContent = `(${fileSizeKB} KB)`;
+                    imageInfo.style.display = 'block';
+                    
+                    removeImageBtn.style.display = 'block';
+                    
+                    console.log(`✅ تم اختيار الصورة: ${file.name} (${fileSizeKB} KB)`);
+                };
+                reader.readAsDataURL(file);
+            } else {
+                resetImagePreview();
+            }
+        });
+    }
+
+    // إزالة الصورة
+    if (removeImageBtn) {
+        removeImageBtn.addEventListener('click', function(e) {
+            e.stopPropagation(); // منع انتشار الحدث لكي لا يفتح مربع اختيار الصورة
+            productImageInput.value = '';
+            resetImagePreview();
+        });
+    }
+
+    // دالة إعادة تعيين معاينة الصورة
+    function resetImagePreview() {
+        productImagePreview.src = '#';
+        productImagePreview.style.display = 'none';
+        noImagePlaceholder.style.display = 'block';
+        imageInfo.style.display = 'none';
+        removeImageBtn.style.display = 'none';
+        console.log("✅ تم إزالة الصورة");
+    }
+
+    // دالة عرض الإشعارات
+    function showNotification(message, type) {
+        // إنشاء إشعار مؤقت
+        const notification = document.createElement('div');
+        notification.className = `alert alert-${type === 'error' ? 'danger' : 'success'} alert-dismissible fade show position-fixed top-0 start-50 translate-middle-x mt-3`;
+        notification.style.zIndex = '9999';
+        notification.style.minWidth = '300px';
+        notification.innerHTML = `
+            <div class="d-flex align-items-center">
+                <i class="fas fa-${type === 'error' ? 'exclamation-circle' : 'check-circle'} me-2"></i>
+                ${message}
+            </div>
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        `;
+        document.body.appendChild(notification);
+        
+        setTimeout(() => {
+            notification.remove();
+        }, 3000);
+    }
+
+    // تحسين مظهر حقل الاسم عند الكتابة
+    if (productNameInput) {
+        productNameInput.addEventListener('input', function() {
+            if (this.value.trim()) {
+                this.classList.remove('is-invalid');
+                this.classList.add('is-valid');
+            } else {
+                this.classList.remove('is-valid');
+            }
+        });
+    }
+
+    // تحسين مظهر حقل الباركود عند الكتابة
+    if (mainBarcodeInput) {
+        mainBarcodeInput.addEventListener('input', function() {
+            if (this.value.trim()) {
+                this.classList.add('is-valid');
+            } else {
+                this.classList.remove('is-valid');
+            }
+        });
+    }
+});
+
+// كود إضافي للتأكد من تحميل الصفحة بالكامل
+window.addEventListener('load', function() {
+    console.log("✅ تم تحميل الصفحة بالكامل");
+});
+</script>
+
+{% block extra_css %}
+<style>
+    /* تحسينات إضافية للتصميم */
+    .image-upload-container {
+        transition: all 0.3s ease;
+    }
+    
+    .image-preview-wrapper {
+        transition: all 0.3s ease;
+        cursor: pointer;
+        border: 2px dashed #d1d3e2;
+    }
+    
+    .image-preview-wrapper:hover {
+        border-color: #4e73df !important;
+        background-color: #f8f9fc !important;
+        transform: scale(1.02);
+    }
+    
+    .is-valid {
+        border-color: #1cc88a !important;
+        background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 8 8'%3e%3cpath fill='%231cc88a' d='M2.3 6.73L.6 4.53c-.4-1.04.46-1.4 1.1-.8l1.1 1.4 3.4-3.8c.6-.63 1.6-.27 1.2.7l-4 4.6c-.43.5-.8.4-1.1.1z'/%3e%3c/svg%3e");
+        background-repeat: no-repeat;
+        background-position: left calc(0.375em + 0.1875rem) center;
+        background-size: calc(0.75em + 0.375rem) calc(0.75em + 0.375rem);
+    }
+    
+    .is-invalid {
+        border-color: #e74a3b !important;
+    }
+    
+    .card {
+        border-radius: 0.75rem;
+    }
+    
+    .btn-lg {
+        padding: 0.75rem 1.5rem;
+    }
+    
+    .progress {
+        border-radius: 1.5rem;
+    }
+    
+    /* تحسين للهواتف */
+    @media (max-width: 768px) {
+        .btn-lg {
+            width: 100%;
+            margin-bottom: 0.5rem;
+        }
+        
+        .d-flex.gap-2 {
+            flex-direction: column;
+        }
+    }
+</style>
+{% endblock %}
+{% endblock %}

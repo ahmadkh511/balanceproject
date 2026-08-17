@@ -1,0 +1,698 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}تعديل فاتورة بيع: {{ sale.uniqueId }}{% endblock %}
+
+{% block extra_css %}
+<style>
+:root {
+  --aqua-1: #e0f7fa; --aqua-2: #b2ebf2; --aqua-3: #4dd0e1; --aqua-4: #0097a7;
+  --text-dark: #006064; --text-light: #ffffff;
+  --shadow-sm: 0 2px 8px rgba(0, 150, 167, 0.08);
+}
+* { box-sizing: border-box; }
+body { background-color: var(--aqua-1); font-family: 'Tajawal', sans-serif; font-size: 0.85rem; }
+.container-fluid { padding: 0.75rem; }
+.card { border: none; border-radius: 8px; box-shadow: var(--shadow-sm); margin-bottom: 1rem; overflow: hidden; }
+.card-header { background: linear-gradient(135deg, var(--aqua-4) 0%, #006064 100%); color: var(--text-light); padding: 0.6rem 1rem; font-weight: 600; font-size: 0.9rem; display: flex; align-items: center; gap: 0.5rem; border-bottom: 1px solid var(--aqua-2); }
+.card-header i { font-size: 0.9rem; }
+.card-body { padding: 1rem; }
+.form-label { font-weight: 500; font-size: 0.75rem; margin-bottom: 0.2rem; color: var(--text-dark); display: flex; align-items: center; gap: 0.3rem; }
+.form-control, .form-select { border-radius: 4px; border: 1px solid var(--aqua-2); padding: 0.35rem 0.5rem; font-size: 0.8rem; transition: all 0.2s; }
+.form-control:focus, .form-select:focus { border-color: var(--aqua-3); box-shadow: 0 0 0 2px rgba(77, 208, 225, 0.2); }
+.btn { border-radius: 4px; padding: 0.35rem 0.7rem; font-weight: 600; font-size: 0.8rem; border: none; transition: all 0.2s; display: inline-flex; align-items: center; gap: 0.3rem; }
+.btn-sm { padding: 0.2rem 0.5rem; font-size: 0.7rem; }
+.btn-primary { background: linear-gradient(135deg, var(--aqua-4) 0%, #006064 100%); color: white; }
+.btn-success { background: linear-gradient(135deg, #00897b 0%, #00695c 100%); color: white; }
+.btn-warning { background: linear-gradient(135deg, #ffb300 0%, #ff8f00 100%); color: white; }
+.btn-danger { background: linear-gradient(135deg, #e53935 0%, #b71c1c 100%); color: white; }
+.required-field::after { content: " *"; color: #d32f2f; }
+
+.invoice-basic-info .row { margin-bottom: 0.5rem; }
+.shipping-number-container.d-none { display: none !important; }
+.paid-amount-container { transition: all 0.3s ease; opacity: 0; max-height: 0; overflow: hidden; }
+.paid-amount-container.show { opacity: 1; max-height: 80px; margin-bottom: 0.5rem; }
+
+.invoice-image-preview { width: 100px; height: 100px; border-radius: 8px; border: 2px dashed var(--aqua-2); cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center; background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%); color: var(--text-dark); margin: 0 auto 0.5rem; overflow: hidden; }
+.invoice-image-preview i { font-size: 1.5rem; color: var(--aqua-4); }
+.invoice-image-preview small { font-size: 0.6rem; }
+.invoice-image-preview.has-image { border: 2px solid var(--aqua-4); background: white; }
+.invoice-image-preview.has-image img { width: 100%; height: 100%; object-fit: contain; border-radius: 6px; }
+
+.items-section { background: white; border-radius: 8px; box-shadow: var(--shadow-sm); margin-bottom: 1rem; }
+.items-header { background: linear-gradient(135deg, var(--aqua-4) 0%, #006064 100%); color: white; padding: 0.5rem 1rem; display: flex; justify-content: space-between; align-items: center; border-radius: 8px 8px 0 0; }
+.items-header h5 { margin: 0; font-size: 0.9rem; font-weight: 600; display: flex; align-items: center; gap: 0.5rem; }
+.items-controls { display: flex; gap: 0.75rem; align-items: center; }
+.items-count-container { background: rgba(255,255,255,0.15); padding: 0.2rem 0.5rem; border-radius: 4px; display: flex; align-items: center; gap: 0.3rem; font-size: 0.75rem; }
+.items-count-container input { width: 50px; border: none; border-radius: 3px; padding: 0.1rem 0.2rem; text-align: center; background: white; color: var(--text-dark); }
+.items-table-container { overflow-x: auto; }
+.items-table { width: 100%; border-collapse: collapse; font-size: 0.75rem; }
+.items-table thead th { background: linear-gradient(135deg, var(--aqua-3) 0%, var(--aqua-4) 100%); color: white; font-weight: 600; text-align: center; padding: 0.4rem 0.2rem; white-space: nowrap; border-bottom: 2px solid var(--aqua-2); }
+.items-table tbody td { padding: 0.3rem 0.2rem; vertical-align: middle; border-bottom: 1px solid var(--aqua-1); }
+.items-table .form-control { padding: 0.2rem 0.3rem; font-size: 0.7rem; height: auto; }
+.image-preview { width: 35px; height: 35px; border: 2px dashed var(--aqua-2); border-radius: 4px; display: flex; align-items: center; justify-content: center; cursor: pointer; background: var(--aqua-1); margin: 0 auto; overflow: hidden; }
+.image-preview i { font-size: 0.9rem; color: var(--aqua-4); }
+.image-preview img { width: 100%; height: 100%; object-fit: cover; border-radius: 3px; }
+.delete-btn { background: linear-gradient(135deg, #e53935 0%, #b71c1c 100%); color: white; border: none; border-radius: 3px; padding: 0.15rem 0.25rem; cursor: pointer; font-size: 0.6rem; width: 22px; height: 22px; display: inline-flex; align-items: center; justify-content: center; margin: 0 auto; }
+.item-total { background: var(--aqua-1); font-weight: 600; color: var(--text-dark); text-align: center; }
+
+.barcode-row { background-color: var(--aqua-1); }
+.barcode-row td { padding: 0 !important; border: none !important; }
+.barcode-field-container { padding: 0.2rem 0.5rem; }
+.barcode-fields-list { display: grid; grid-template-columns: repeat(7, 1fr); gap: 0.2rem; }
+.barcode-item { display: flex; align-items: center; background: white; border: 1px solid var(--aqua-2); border-radius: 3px; padding: 0.1rem; }
+.barcode-input { border: none; background: transparent; padding: 0.1rem; font-size: 0.65rem; font-family: monospace; width: 100%; }
+.barcode-remove-btn { background: none; border: none; color: #e53935; padding: 0 0.1rem; cursor: pointer; font-size: 0.6rem; }
+.barcode-input.invalid-barcode { border: 1px solid #ff0033 !important; background-color: #fff0f0; color: #d32f2f; animation: shake 0.4s; }
+.barcode-input.valid-barcode { border: 1px solid #28a745 !important; background-color: #f0fff4; }
+@keyframes shake { 0%, 100% { transform: translateX(0); } 25%, 75% { transform: translateX(-3px); } 50% { transform: translateX(3px); } }
+@media (max-width: 768px) { .barcode-fields-list { grid-template-columns: repeat(3, 1fr); } }
+@media (max-width: 480px) { .barcode-fields-list { grid-template-columns: repeat(2, 1fr); } }
+
+.table-footer-actions { padding: 0.5rem; text-align: left; background: #f8f9fa; border-top: 1px solid var(--aqua-2); }
+#add-single-item { background: linear-gradient(135deg, #00897b 0%, #00695c 100%); color: white; border: none; border-radius: 4px; padding: 0.3rem 0.8rem; font-size: 0.8rem; cursor: pointer; }
+
+.product-search-container, .customer-search-container { position: relative; width: 100%; }
+.autocomplete-dropdown { position: absolute; top: 100%; left: 0; right: 0; background: white; border: 1px solid var(--aqua-3); border-radius: 0 0 4px 4px; box-shadow: 0 4px 8px rgba(0,150,167,0.15); max-height: 200px; overflow-y: auto; z-index: 9999; display: none; }
+.autocomplete-dropdown.show { display: block; }
+.autocomplete-item { padding: 0.4rem 0.5rem; cursor: pointer; border-bottom: 1px solid var(--aqua-1); display: flex; align-items: center; gap: 0.5rem; font-size: 0.75rem; }
+.autocomplete-item:hover { background-color: var(--aqua-1); }
+.autocomplete-item img { width: 30px; height: 30px; object-fit: cover; border-radius: 3px; }
+.autocomplete-item-title { font-weight: 600; color: var(--text-dark); }
+.autocomplete-item-details { display: flex; gap: 0.5rem; font-size: 0.65rem; color: #555; }
+
+.financial-content { display: flex; gap: 1rem; align-items: flex-start; }
+.financial-image { width: 110px; flex-shrink: 0; }
+.financial-calculations { flex: 1; }
+.financial-section { background: white; border-radius: 8px; padding: 0.75rem; border: 1px solid var(--aqua-2); }
+.financial-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; }
+.financial-column { display: flex; flex-direction: column; gap: 0.4rem; }
+.financial-row { display: flex; justify-content: space-between; align-items: center; background: var(--aqua-1); border-radius: 4px; padding: 0.3rem 0.5rem; border-left: 3px solid var(--aqua-3); font-size: 0.75rem; }
+.financial-row input { width: 80px; padding: 0.2rem; font-size: 0.75rem; border-radius: 3px; border: 1px solid var(--aqua-2); }
+.financial-label { font-weight: 600; color: var(--text-dark); display: flex; align-items: center; gap: 0.2rem; }
+.financial-value { font-weight: 700; color: var(--text-dark); }
+.grand-total { grid-column: 1 / -1; background: #fff3e0; border-left-color: #ff9800; font-size: 0.85rem; padding: 0.4rem 0.5rem; }
+.remaining-amount { grid-column: 1 / -1; background: #fff8e1; border-left-color: #f57c00; }
+.remaining-amount-in-words-container { grid-column: 1 / -1; background: white; border: 1px solid var(--aqua-2); border-radius: 4px; padding: 0.4rem; margin-top: 0.3rem; }
+.remaining-amount-in-words { display: flex; align-items: center; gap: 0.3rem; flex-wrap: wrap; }
+.remaining-words-label { font-weight: 600; color: var(--text-dark); font-size: 0.75rem; }
+.remaining-words-value { flex: 1; font-size: 0.8rem; background: var(--aqua-1); padding: 0.2rem 0.4rem; border-radius: 3px; min-height: 1.8rem; display: flex; align-items: center; }
+.refresh-remaining-words-btn { background: none; border: none; color: var(--aqua-4); cursor: pointer; font-size: 0.9rem; padding: 0 0.2rem; }
+@media (max-width: 992px) { .financial-content { flex-direction: column; } .financial-image { width: 100%; display: flex; justify-content: center; } .financial-grid { grid-template-columns: 1fr; } }
+
+.form-actions { display: flex; gap: 0.75rem; margin-top: 1rem; }
+.item-name-field, .product-search-value, .product-image-url-field, .auto-image-field, .item-delete-checkbox { display: none !important; }
+.deleted-item { display: none !important; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-2">
+    <div class="alert alert-info mb-3">
+        <i class="fas fa-edit"></i> تعديل فاتورة بيع رقم: <strong>{{ sale.uniqueId }}</strong> - تاريخ الإنشاء: {{ sale.date_created|date:"Y-m-d" }}
+    </div>
+
+    <form method="post" enctype="multipart/form-data" id="sale-form"
+          data-is-cash-payment="{% if sale.sale_payment_method and sale.sale_payment_method.is_cash %}true{% else %}false{% endif %}">
+        {% csrf_token %}
+
+        <div class="card">
+            <div class="card-header">
+                <i class="fas fa-info-circle"></i> معلومات الفاتورة الأساسية
+                <div class="ms-auto"></div>
+                <a href="{% url 'invoice:sale_list' %}" class="btn btn-sm btn-primary"><i class="fas fa-arrow-right"></i> رجوع</a>
+            </div>
+            <div class="card-body invoice-basic-info">
+                <div class="row g-2">
+                    <div class="col-md-3">
+                        <label class="form-label required-field"><i class="fas fa-user"></i> العميل</label>
+                        <div class="customer-search-container">
+                            <input type="text" class="form-control customer-search-input" id="customer-search" placeholder="ابحث بالاسم..." autocomplete="off" value="{{ sale.sale_customer.get_full_name|default:'' }}">
+                            <div class="autocomplete-dropdown" id="customer-results"></div>
+                        </div>
+                        {{ form.sale_customer }}
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label"><i class="fas fa-phone"></i> الهاتف</label>
+                        {{ form.sale_customer_phone }}
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label"><i class="fas fa-map-marker-alt"></i> العنوان</label>
+                        {{ form.sale_address }}
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label"><i class="fas fa-file-invoice"></i> رقم فاتورة العميل</label>
+                        {{ form.sale_invoice_number }}
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label"><i class="fas fa-calendar-alt"></i> التاريخ</label>
+                        {{ form.sale_date }}
+                    </div>
+                </div>
+
+                <div class="row g-2">
+                    <div class="col-md-3">
+                        <label class="form-label"><i class="fas fa-tasks"></i> حالة الفاتورة</label>
+                        {{ form.sale_status }}
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label"><i class="fas fa-money-bill-wave"></i> العملة</label>
+                        {{ form.sale_currency }}
+                    </div>
+
+ <div class="col-md-3">
+                        <label class="form-label">
+                            <i class="fas fa-credit-card"></i> طريقة الدفع
+                            <i class="fas fa-question-circle text-info ms-1" 
+                            data-bs-toggle="popover" 
+                            data-bs-placement="top" 
+                            data-bs-html="true" 
+                           data-bs-content="<b>انتبه:</b><br>فقط عند اختيار طريقة الدفع نقداً سيظهر حقل في القسم المالي <b>المبلغ المدفوع</b><br>كي يتم تسجل دفعة العميل في حال أن العميل لن يسدد قيمة الفاتورة كاملة">
+                            </i>
+                        </label>
+                        {{ form.sale_payment_method }}
+                    </div>
+
+                    <div class="col-md-3">
+                        <label class="form-label">
+                            <i class="fas fa-shipping-fast"></i> شركة الشحن
+                            <i class="fas fa-question-circle text-info ms-1" 
+                            data-bs-toggle="popover" 
+                            data-bs-placement="top" 
+                            data-bs-html="true" 
+                            data-bs-content="<b>انتبه:</b><br> عند اختيار شركة الشحن    <br>سيظهر حقل رقم ايصال الشحن تلقائيا     ">
+                            </i>
+                        </label>
+                        {{ form.sale_shipping_company }}
+                    </div>
+
+                </div>
+
+                <div class="row g-2">
+                    <div class="col-md-{% if form.sale_shipping_company.value %}9{% else %}12{% endif %}" id="notes-col">
+                        <label class="form-label"><i class="fas fa-sticky-note"></i> ملاحظات</label>
+                        {{ form.sale_notes }}
+                    </div>
+                    <div class="col-md-3 shipping-number-container {% if not form.sale_shipping_company.value %}d-none{% endif %}" id="shipping-num-col">
+                        <label class="form-label"><i class="fas fa-truck"></i> رقم الشحنة</label>
+                        {{ form.sale_shipping_num }}
+                    </div>
+                </div>
+
+                <div class="cash-balance-info mt-2">
+                    <div class="alert alert-info d-flex align-items-center p-2">
+                        <i class="fas fa-wallet me-2"></i>
+                        <span><strong>رصيد الصندوق الحالي:</strong> <span id="current-cash-balance">0.00</span></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="items-section">
+            <div class="items-header">
+                <h5><i class="fas fa-list"></i> بنود الفاتورة</h5>
+                <div class="items-controls">
+                    <div class="items-count-container">
+                        <label for="items-count">عدد البنود:</label>
+                        <input type="number" id="items-count" class="form-control" min="1" max="50" value="{{ formset.total_form_count }}">
+                    </div>
+                    <button type="button" class="btn btn-warning btn-sm" id="toggle-barcodes-btn"><i class="fas fa-eye"></i> إظهار الباركودات</button>
+                </div>
+            </div>
+
+            {{ formset.management_form }}
+
+            <div class="items-table-container">
+                <table class="items-table">
+                    <thead>
+                        <tr>
+                            <th width="4%">#</th><th width="28%">المادة</th><th width="8%">الكمية</th><th width="10%">السعر</th><th width="10%">الإجمالي</th><th width="15%">ملاحظات</th><th width="6%">صورة</th><th width="5%"></th>
+                        </tr>
+                    </thead>
+                    <tbody id="items-tbody">
+                        {% for form in formset.forms %}
+                        <tr class="item-row" data-item-index="{{ forloop.counter0 }}" data-item-id="{{ form.instance.id|default:'' }}">
+                            <td class="text-center fw-bold">{{ forloop.counter }}</td>
+                            <td>
+                                {% for hidden in form.hidden_fields %}{{ hidden }}{% endfor %}
+                                <input type="hidden" name="items-{{ forloop.counter0 }}-item_name" class="item-name-field" value="{% if form.item_name.value %}{{ form.item_name.value }}{% endif %}">
+                                <input type="hidden" name="items-{{ forloop.counter0 }}-product_search" class="product-search-value" value="{% if form.product.value %}{{ form.instance.product.product_name }}{% elif form.item_name.value %}{{ form.item_name.value }}{% endif %}">
+                                <input type="hidden" name="items-{{ forloop.counter0 }}-product_image_url" class="product-image-url-field" value="{% if form.instance.product and form.instance.product.image %}{{ form.instance.product.image.url }}{% endif %}">
+                                <input type="hidden" name="items-{{ forloop.counter0 }}-is_auto_image" class="auto-image-field" value="{% if form.instance.product and form.instance.product.image %}true{% endif %}">
+                                <div class="product-search-container">
+                                    <input type="text" class="form-control product-search-input" placeholder="ابحث بالاسم أو الباركود..." value="{% if form.product.value %}{{ form.instance.product.product_name }}{% elif form.item_name.value %}{{ form.item_name.value }}{% endif %}" autocomplete="off">
+                                    <div class="autocomplete-dropdown product-results"></div>
+                                </div>
+                                
+                            </td>
+                            <td class="quantity-cell">{{ form.sold_quantity }}</td>
+                            <td class="price-cell">{{ form.unit_price }}</td>
+                            <td class="total-cell"><input type="text" class="form-control item-total" readonly value="0.00"></td>
+                            <td>{{ form.notes }}</td>
+                            <td class="text-center">
+                                <div class="image-input-container">
+                                    <div class="image-preview" data-item-index="{{ forloop.counter0 }}" data-preview-id="{{ forloop.counter0 }}" title="اختر صورة">
+                                        {% if form.instance.sale_item_image %}<img src="{{ form.instance.sale_item_image.url }}" alt="صورة">
+                                        {% elif form.instance.product and form.instance.product.image %}<img src="{{ form.instance.product.image.url }}" alt="صورة">
+                                        {% else %}<i class="fas fa-camera"></i>{% endif %}
+                                    </div>
+                                    {{ form.sale_item_image }}
+                                </div>
+                            </td>
+                            <td class="text-center">
+                                <input type="checkbox" name="items-{{ forloop.counter0 }}-DELETE" class="item-delete-checkbox" id="id_items-{{ forloop.counter0 }}-DELETE">
+                                <button type="button" class="delete-btn" title="حذف البند"><i class="fas fa-trash"></i></button>
+                            </td>
+                        </tr>
+                        <tr class="barcode-row" data-item-index="{{ forloop.counter0 }}" style="display: none;">
+                            <td colspan="8"><div class="barcode-field-container"><div class="barcode-fields-list"></div></div></td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="table-footer-actions">
+                <button type="button" class="btn btn-success" id="add-single-item"><i class="fas fa-plus-circle"></i> إضافة بند جديد</button>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header"><i class="fas fa-calculator"></i> القسم المالي</div>
+            <div class="card-body">
+                <div class="financial-content">
+                    <div class="financial-image">
+                        <div class="image-input-container">
+                            <div id="invoice-image-preview-container" class="invoice-image-preview" title="انقر لاختيار صورة الفاتورة">
+                                {% if sale.sale_image %}<img src="{{ sale.sale_image.url }}" alt="صورة الفاتورة">
+                                {% else %}<i class="fas fa-camera"></i><small>صورة الفاتورة</small>{% endif %}
+                            </div>
+                            {{ form.sale_image }}
+                        </div>
+                    </div>
+                    <div class="financial-calculations">
+                        <div class="financial-section">
+                            <div class="financial-grid">
+                                <div class="financial-column">
+                                    <div class="financial-row">
+                                        <span class="financial-label"><i class="fas fa-receipt"></i> إجمالي البنود:</span>
+                                        <span class="financial-value" id="subtotal-amount">0.00</span>
+                                    </div>
+                                    <div class="financial-row">
+                                        <span class="financial-label"><i class="fas fa-percentage"></i> الضريبة %:</span>
+                                        <input type="number" class="form-control" id="tax-percentage" name="sale_tax_percentage" value="" min="0" max="100" step="0.01">
+                                    </div>
+                                    <div class="financial-row">
+                                        <span class="financial-label"><i class="fas fa-money-bill-wave"></i> قيمة الضريبة:</span>
+                                        <span class="financial-value" id="tax-amount">0.00</span>
+                                    </div>
+                                </div>
+                                <div class="financial-column">
+                                    <div class="financial-row">
+                                        <span class="financial-label"><i class="fas fa-plus-circle"></i> الإضافة:</span>
+                                        <input type="number" class="form-control" id="invoice-addition" name="sale_addition" value="" min="0" step="0.01">
+                                    </div>
+                                    <div class="financial-row">
+                                        <span class="financial-label"><i class="fas fa-minus-circle"></i> الخصم:</span>
+                                        <input type="number" class="form-control" id="invoice-discount" name="sale_discount" value="" min="0" step="0.01">
+                                    </div>
+                                    <div class="paid-amount-container{% if sale.sale_payment_method and sale.sale_payment_method.is_cash %} show{% endif %}" id="paid-amount-container">
+                                        <div class="financial-row">
+                                            <span class="financial-label"><i class="fas fa-hand-holding-usd"></i> المبلغ المدفوع:</span>
+                                            <input type="number" class="form-control" id="paid-amount" name="paid_amount" value="" min="0" step="0.01">
+                                        </div>
+                                        <div class="alert alert-warning mt-2 d-none" id="cash-balance-warning"><i class="fas fa-exclamation-triangle"></i> المبلغ المدفوع يتجاوز رصيد الصندوق</div>
+                                    </div>
+                                </div>
+                                <div class="financial-row grand-total">
+                                    <span class="financial-label"><i class="fas fa-file-invoice-dollar"></i> الإجمالي العام:</span>
+                                    <span class="financial-value" id="grand-total">0.00</span>
+                                </div>
+                                <div class="financial-row remaining-amount">
+                                    <span class="financial-label"><i class="fas fa-clock"></i> المبلغ المتبقي:</span>
+                                    <span class="financial-value" id="remaining-amount">0.00</span>
+                                </div>
+                                <div class="remaining-amount-in-words-container">
+                                    <div class="remaining-amount-in-words">
+                                        <div class="remaining-words-label"><i class="fas fa-font"></i> كتابة:</div>
+                                        <div class="remaining-words-value" id="remaining-words-value"><div class="small">جاري التحويل...</div></div>
+                                        <button type="button" class="refresh-remaining-words-btn" id="refresh-remaining-words-btn" title="تحديث الكتابة"><i class="fas fa-redo"></i></button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <input type="hidden" name="sale_subtotal" id="hidden-sale-subtotal" value="{{ sale.sale_subtotal|default:'0' }}">
+        <input type="hidden" name="sale_tax_amount" id="hidden-sale-tax-amount" value="{{ sale.sale_tax_amount|default:'0' }}">
+        <input type="hidden" name="sale_final_total" id="hidden-sale-final-total" value="{{ sale.sale_final_total|default:'0' }}">
+        <input type="hidden" name="balance_due" id="hidden-balance-due" value="{{ sale.balance_due|default:'0' }}">
+
+        <div class="form-actions">
+            <button type="submit" class="btn btn-success"><i class="fas fa-save"></i> حفظ التعديلات</button>
+            <a href="{% url 'invoice:sale_list' %}" class="btn btn-secondary"><i class="fas fa-times"></i> إلغاء</a>
+        </div>
+    </form>
+
+    {{ barcodes_data|json_script:"existingBarcodesData" }}
+    {{ financial_data|json_script:"saleFinancialData" }}
+    {{ items_data|json_script:"saleItemsData" }}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script nonce="{{ csp_nonce }}">
+// ============================================
+// المتغيرات العامة
+// ============================================
+window.barcodeData = {};
+window.barcodesVisible = false;
+window.paidAmountModified = false;
+window.usedProductIds = new Set();
+window.isPaymentMethodCash = false;
+window.existingBarcodes = {};
+window.saleFinancialData = {};
+window.saleItemsData = {};
+
+// ✅ قراءة البيانات من JSON scripts (القاعدة الذهبية)
+(function loadDataFromJsonScripts() {
+    try { var el1 = document.getElementById('existingBarcodesData'); if (el1 && el1.textContent.trim()) { window.existingBarcodes = JSON.parse(el1.textContent); } } catch (e) {}
+    try { var el2 = document.getElementById('saleFinancialData'); if (el2 && el2.textContent.trim()) { window.saleFinancialData = JSON.parse(el2.textContent); } } catch (e) {}
+    try { var el3 = document.getElementById('saleItemsData'); if (el3 && el3.textContent.trim()) { window.saleItemsData = JSON.parse(el3.textContent); } } catch (e) {}
+    var saleForm = document.getElementById('sale-form');
+    if (saleForm) { window.isPaymentMethodCash = saleForm.dataset.isCashPayment === 'true'; }
+})();
+
+// ============================================
+// دوال مساعدة
+// ============================================
+function parseNumber(v) { if (!v) return 0; if (typeof v === 'number') return v; var n = parseFloat(String(v).replace(/,/g, '.')); return isNaN(n) ? 0 : n; }
+function escapeHtml(s) { if (!s) return ''; var map = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;', '/': '&#x2F;' }; return String(s).replace(/[&<>"'/]/g, function(m) { return map[m]; }); }
+
+function fixAllNumberInputs() { document.querySelectorAll('input[type="number"]').forEach(function(input) { var rawVal = input.getAttribute('value'); if (rawVal && rawVal.includes(',')) { input.value = rawVal.replace(/,/g, '.'); } }); }
+function initializeFinancialFields() { var fd = window.saleFinancialData; if (!fd || !Object.keys(fd).length) return; var t = document.getElementById('tax-percentage'), a = document.getElementById('invoice-addition'), d = document.getElementById('invoice-discount'), p = document.getElementById('paid-amount'); if (t && fd.tax_percentage !== undefined) t.value = fd.tax_percentage; if (a && fd.addition !== undefined) a.value = fd.addition; if (d && fd.discount !== undefined) d.value = fd.discount; if (p && fd.paid_amount !== undefined) { p.value = fd.paid_amount; if (fd.paid_amount > 0) window.paidAmountModified = true; } }
+function fixItemFields() { var id = window.saleItemsData; if (!id || !Object.keys(id).length) return; document.querySelectorAll('.item-row').forEach(function(row) { var itemId = row.getAttribute('data-item-id'); if (itemId && id[itemId]) { var data = id[itemId]; var qtyInput = row.querySelector('input[name$="-sold_quantity"]'); var priceInput = row.querySelector('input[name$="-unit_price"]'); if (qtyInput && data.sold_quantity !== undefined) qtyInput.value = data.sold_quantity; if (priceInput && data.unit_price !== undefined) priceInput.value = data.unit_price; } }); }
+
+// ============================================
+// الحسابات المالية
+// ============================================
+function calculateSubtotalFromItems() { var subtotal = 0; document.querySelectorAll('.item-row:not(.deleted-item) .item-total').forEach(function(el) { subtotal += parseNumber(el.value); }); return subtotal; }
+function updateFinancialCalculations() { var subtotal = calculateSubtotalFromItems(); var taxP = parseNumber(document.getElementById('tax-percentage').value); var add = parseNumber(document.getElementById('invoice-addition').value); var disc = parseNumber(document.getElementById('invoice-discount').value); var taxA = subtotal * (taxP / 100); var total = subtotal + taxA + add - disc; var sE = document.getElementById('subtotal-amount'), tE = document.getElementById('tax-amount'), gE = document.getElementById('grand-total'); if (sE) sE.textContent = subtotal.toFixed(2); if (tE) tE.textContent = taxA.toFixed(2); if (gE) gE.textContent = Math.max(0, total).toFixed(2); var hSub = document.getElementById('hidden-sale-subtotal'), hTax = document.getElementById('hidden-sale-tax-amount'), hTot = document.getElementById('hidden-sale-final-total'); if (hSub) hSub.value = subtotal.toFixed(2); if (hTax) hTax.value = taxA.toFixed(2); if (hTot) hTot.value = Math.max(0, total).toFixed(2); updateRemainingAmount(); document.dispatchEvent(new Event('financialCalculationsUpdated')); }
+function updateRemainingAmount() { var gEl = document.getElementById('grand-total'), pEl = document.getElementById('paid-amount'), rEl = document.getElementById('remaining-amount'), hEl = document.getElementById('hidden-balance-due'); if (gEl && pEl && rEl) { var rem = Math.max(0, parseNumber(gEl.textContent) - parseNumber(pEl.value)); rEl.textContent = rem.toFixed(2); if (hEl) hEl.value = rem.toFixed(2); document.dispatchEvent(new Event('remainingAmountUpdated')); } }
+
+// ✅✅✅ تحديث الحسابات للبند (بدون لمس حقول الباركود هنا - يتم تأخيرها)
+function updateItemCalculations(row) {
+    var qInput = row.querySelector('input[name$="-sold_quantity"]');
+    var pInput = row.querySelector('input[name$="-unit_price"]');
+    var tInput = row.querySelector('.item-total');
+    var qty = Math.max(1, parseNumber(qInput ? qInput.value : 0));
+    var price = parseNumber(pInput ? pInput.value : 0);
+    if (tInput) tInput.value = (qty * price).toFixed(2);
+    updateFinancialCalculations();
+}
+
+// ============================================
+// إدارة الباركودات
+// ============================================
+function syncBarcodeFieldsToQuantity(idx, qty) {
+    if (!window.barcodeData[idx]) window.barcodeData[idx] = [];
+    if (window.barcodesVisible) {
+        var itemRow = document.querySelector('.item-row[data-item-index="' + idx + '"]');
+        if (itemRow) { generateBarcodeFields(itemRow, idx, qty); }
+    }
+}
+
+function loadExistingBarcodes() {
+    if (!window.existingBarcodes || !Object.keys(window.existingBarcodes).length) return;
+    Object.keys(window.existingBarcodes).forEach(function(id) {
+        var row = document.querySelector('.item-row[data-item-id="' + id + '"]');
+        if (!row) return;
+        var idx = row.getAttribute('data-item-index');
+        var barcodes = window.existingBarcodes[id];
+        if (!barcodes || !barcodes.length) return;
+        window.barcodeData[idx] = barcodes.slice();
+        var qtyInput = row.querySelector('input[name$="-sold_quantity"]');
+        if (qtyInput && parseNumber(qtyInput.value) < barcodes.length) { qtyInput.value = barcodes.length; updateItemCalculations(row); }
+        if (window.barcodesVisible) {
+            var barcodeRow = document.querySelector('.barcode-row[data-item-index="' + idx + '"]');
+            if (barcodeRow) {
+                barcodeRow.style.display = 'table-row';
+                generateBarcodeFields(row, idx, barcodes.length);
+                setTimeout(function() { barcodeRow.querySelectorAll('.barcode-input').forEach(function(inp, i) { if (barcodes[i]) { inp.value = barcodes[i]; validateBarcodeInput(inp, idx); } }); }, 50);
+            }
+        }
+    });
+}
+
+// ✅✅✅ الدالة الأساسية لتوليد الحقول مع الحفاظ على البيانات (مثل فاتورة المشتريات)
+function generateBarcodeFields(itemRow, idx, qty) {
+    var barcodeRow = document.querySelector('.barcode-row[data-item-index="' + idx + '"]');
+    if (!barcodeRow) return;
+    if (window.barcodesVisible) barcodeRow.style.display = 'table-row';
+    var fieldsList = barcodeRow.querySelector('.barcode-fields-list');
+    if (!fieldsList) return;
+
+    if (!window.barcodeData[idx]) window.barcodeData[idx] = [];
+
+    // ★★★ الإصلاح الجوهري: حفظ البيانات الحالية من الـ DOM قبل أي تعديل ★★★
+    var currentInputs = fieldsList.querySelectorAll('.barcode-input');
+    currentInputs.forEach(function(inp, i) {
+        if (i < window.barcodeData[idx].length) {
+            window.barcodeData[idx][i] = inp.value.trim();
+        }
+    });
+
+    // زيادة المصفوفة
+    while (window.barcodeData[idx].length < qty) { window.barcodeData[idx].push(''); }
+    // تقليص المصفوفة
+    if (window.barcodeData[idx].length > qty) { window.barcodeData[idx] = window.barcodeData[idx].slice(0, qty); }
+
+    // إعادة بناء الواجهة
+    fieldsList.innerHTML = '';
+    for (var i = 0; i < qty; i++) {
+        var val = window.barcodeData[idx][i] || '';
+        var field = document.createElement('div');
+        field.className = 'barcode-item';
+        field.innerHTML = '<button type="button" class="barcode-remove-btn" data-barcode-index="' + i + '" data-item-index="' + idx + '" title="حذف"><i class="fas fa-times"></i></button>' +
+            '<input type="text" class="barcode-input" placeholder="باركود ' + (i + 1) + '" value="' + escapeHtml(val) + '" data-barcode-index="' + i + '" data-item-index="' + idx + '">';
+        fieldsList.appendChild(field);
+    }
+    setupBarcodeEvents(itemRow, idx);
+}
+
+function setupBarcodeEvents(itemRow, idx) {
+    var barcodeRow = document.querySelector('.barcode-row[data-item-index="' + idx + '"]');
+    if (!barcodeRow) return;
+    barcodeRow.querySelectorAll('.barcode-input').forEach(function(inp) {
+        var bIdx = parseInt(inp.getAttribute('data-barcode-index'));
+        inp.addEventListener('input', function() { if (window.barcodeData[idx]) window.barcodeData[idx][bIdx] = this.value.trim(); this.classList.remove('invalid-barcode', 'valid-barcode'); });
+        inp.addEventListener('blur', function() { validateBarcodeInput(this, idx); });
+    });
+    barcodeRow.querySelectorAll('.barcode-remove-btn').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+            var bIdx = parseInt(this.getAttribute('data-barcode-index'));
+            if (window.barcodeData[idx]) window.barcodeData[idx].splice(bIdx, 1);
+            this.closest('.barcode-item').remove();
+            var qtyInput = itemRow.querySelector('input[name$="-sold_quantity"]');
+            if (qtyInput) { qtyInput.value = Math.max(1, window.barcodeData[idx] ? window.barcodeData[idx].length : 1); updateItemCalculations(itemRow); }
+            renumberBarcodeFields(itemRow, idx);
+        });
+    });
+}
+
+function renumberBarcodeFields(itemRow, idx) { var barcodeRow = document.querySelector('.barcode-row[data-item-index="' + idx + '"]'); if (!barcodeRow) return; barcodeRow.querySelectorAll('.barcode-item').forEach(function(field, i) { var inp = field.querySelector('.barcode-input'), btn = field.querySelector('.barcode-remove-btn'); if (inp) { inp.setAttribute('data-barcode-index', i); inp.placeholder = 'باركود ' + (i + 1); } if (btn) btn.setAttribute('data-barcode-index', i); }); }
+
+function validateBarcodeInput(inp, idx) { var val = inp.value.trim(); var itemRow = document.querySelector('.item-row[data-item-index="' + idx + '"]'); if (!val) { inp.classList.remove('invalid-barcode', 'valid-barcode'); return; } var pid = itemRow ? itemRow.querySelector('input[name$="-product"]') : null; var productId = pid ? pid.value : ''; var sid = itemRow ? itemRow.getAttribute('data-item-id') : ''; if (!productId) { inp.classList.add('invalid-barcode'); return; } fetch('/invoice/get-product-barcodes/' + productId + '/?check_barcode=' + encodeURIComponent(val) + '&sale_item_id=' + sid).then(function(res) { return res.json(); }).then(function(data) { inp.classList.remove('invalid-barcode', 'valid-barcode'); inp.classList.add(data.is_valid ? 'valid-barcode' : 'invalid-barcode'); inp.title = data.message || ''; }).catch(function() {}); }
+
+function hideAllBarcodes() { document.querySelectorAll('.barcode-row').forEach(function(r) { r.style.display = 'none'; }); }
+function showAllBarcodes() { document.querySelectorAll('.barcode-row').forEach(function(r) { r.style.display = 'table-row'; }); document.querySelectorAll('.item-row:not(.deleted-item)').forEach(function(item) { var idx = item.getAttribute('data-item-index'); var qtyInput = item.querySelector('input[name$="-sold_quantity"]'); var qty = qtyInput ? (parseInt(qtyInput.value) || 1) : 1; generateBarcodeFields(item, idx, qty); }); setTimeout(function() { Object.keys(window.existingBarcodes).forEach(function(id) { var row = document.querySelector('.item-row[data-item-id="' + id + '"]'); if (!row) return; var idx = row.getAttribute('data-item-index'); var barcodes = window.existingBarcodes[id]; if (!barcodes || !barcodes.length) return; window.barcodeData[idx] = barcodes.slice(); var barcodeRow = document.querySelector('.barcode-row[data-item-index="' + idx + '"]'); if (barcodeRow) { barcodeRow.querySelectorAll('.barcode-input').forEach(function(inp, i) { if (barcodes[i]) { inp.value = barcodes[i]; validateBarcodeInput(inp, idx); } }); } }); }, 100); }
+
+// ============================================
+// البحث التلقائي
+// ============================================
+function initializeCustomerAutocomplete() { var searchInput = document.getElementById('customer-search'), resultsDiv = document.getElementById('customer-results'), hiddenInput = document.getElementById('id_sale_customer'), phoneInput = document.getElementById('id_sale_customer_phone'), addressInput = document.getElementById('id_sale_address'), timeoutId; if (!searchInput || !resultsDiv) return; searchInput.addEventListener('input', function() { clearTimeout(timeoutId); var query = this.value.trim(); if (query.length < 2) { resultsDiv.classList.remove('show'); return; } resultsDiv.innerHTML = '<div class="autocomplete-item"><i class="fas fa-spinner fa-spin me-2"></i>جاري البحث...</div>'; resultsDiv.classList.add('show'); timeoutId = setTimeout(function() { fetch('/invoice/search-customers/?q=' + encodeURIComponent(query)).then(function(res) { return res.json(); }).then(function(data) { resultsDiv.innerHTML = ''; data.results.forEach(function(c) { var item = document.createElement('div'); item.className = 'autocomplete-item'; item.innerHTML = '<div><div class="autocomplete-item-title">' + escapeHtml(c.text) + '</div><div class="autocomplete-item-details">' + (c.phone ? '<span>📞 ' + escapeHtml(c.phone) + '</span>' : '') + ' ' + (c.address ? '<span>📍 ' + escapeHtml(c.address) + '</span>' : '') + '</div></div>'; item.addEventListener('click', function() { hiddenInput.value = c.id; searchInput.value = c.text; if (phoneInput) phoneInput.value = c.phone || ''; if (addressInput) addressInput.value = c.address || ''; resultsDiv.classList.remove('show'); }); resultsDiv.appendChild(item); }); }).catch(function() {}); }, 300); }); }
+function initializeProductAutocomplete(searchInput, hiddenInput, priceInput, idx) { var resultsDiv = searchInput.parentNode.querySelector('.product-results'), timeoutId; if (!searchInput || !resultsDiv) return; searchInput.addEventListener('input', function() { clearTimeout(timeoutId); var query = this.value.trim(); if (query.length < 2) { resultsDiv.classList.remove('show'); return; } resultsDiv.innerHTML = '<div class="autocomplete-item"><i class="fas fa-spinner fa-spin me-2"></i>جاري البحث...</div>'; resultsDiv.classList.add('show'); timeoutId = setTimeout(function() { fetch('/invoice/search-products/?q=' + encodeURIComponent(query)).then(function(res) { return res.json(); }).then(function(data) { resultsDiv.innerHTML = ''; data.results.forEach(function(p) { var item = document.createElement('div'); item.className = 'autocomplete-item'; var isUsed = window.usedProductIds.has(parseInt(p.id)); item.innerHTML = (p.image_url ? '<img src="' + escapeHtml(p.image_url) + '" alt="">' : '<div style="width:30px"></div>') + '<div><div class="autocomplete-item-title">' + escapeHtml(p.text) + (isUsed ? ' <span style="color:red">(مستخدم)</span>' : '') + '</div><div class="autocomplete-item-details">' + (p.price ? '<span style="color:#00897b;font-weight:600">💰 ' + escapeHtml(p.price) + '</span>' : '') + '</div></div>'; if (!isUsed || hiddenInput.value == p.id) { item.addEventListener('click', function() { hiddenInput.value = p.id; searchInput.value = p.text; if (priceInput) priceInput.value = parseNumber(p.price || 0); resultsDiv.classList.remove('show'); window.usedProductIds.add(parseInt(p.id)); updateItemCalculations(searchInput.closest('.item-row')); var preview = document.querySelector('.image-preview[data-item-index="' + idx + '"]'); if (preview && p.image_url) preview.innerHTML = '<img src="' + escapeHtml(p.image_url) + '" alt="">'; }); } else { item.style.opacity = '0.5'; } resultsDiv.appendChild(item); }); }).catch(function() {}); }, 300); }); }
+
+// مستمع عام لإغلاق القوائم
+document.addEventListener('click', function(e) { if (!e.target.closest('.product-search-container') && !e.target.closest('.customer-search-container')) { document.querySelectorAll('.autocomplete-dropdown.show').forEach(function(dd) { dd.classList.remove('show'); }); } });
+
+// ============================================
+// إدارة البنود
+// ============================================
+function setupItemEventListeners(item, idx) {
+    var pSearch = item.querySelector('.product-search-input');
+    var pHidden = item.querySelector('input[name$="-product"]');
+    var priceInput = item.querySelector('input[name$="-unit_price"]');
+    var qtyInput = item.querySelector('input[name$="-sold_quantity"]');
+    var deleteBtn = item.querySelector('.delete-btn');
+    var preview = item.querySelector('.image-preview');
+    var fileInput = item.querySelector('input[type="file"]');
+
+    if (pHidden && pHidden.value) window.usedProductIds.add(parseInt(pHidden.value));
+    if (pSearch && pHidden) initializeProductAutocomplete(pSearch, pHidden, priceInput, idx);
+
+    // ★★★ إصلاح تجربة المستخدم: تأخير أطول + تحديث عند مغادرة الحقل ★★★
+    if (qtyInput) {
+        var qtyTimer;
+        var triggerBarcodeUpdate = function() {
+            var qty = Math.max(1, parseNumber(qtyInput.value));
+            syncBarcodeFieldsToQuantity(idx, qty);
+        };
+        
+        qtyInput.addEventListener('input', function() {
+            // تحديث الحسابات المالية فوراً (الأسعار والإجماليات)
+            updateItemCalculations(item);
+            // تأخير تحديث الباركودات لمنع اختفائها أثناء الكتابة (800 ملي ثانية)
+            clearTimeout(qtyTimer);
+            qtyTimer = setTimeout(triggerBarcodeUpdate, 800);
+        });
+        
+        // تحديث فوري عند مغادرة الحقل (ضغط Tab أو النقر خارجه)
+        qtyInput.addEventListener('change', function() {
+            clearTimeout(qtyTimer);
+            triggerBarcodeUpdate();
+        });
+    }
+
+    if (priceInput) priceInput.addEventListener('input', function() { updateItemCalculations(item); });
+
+    if (deleteBtn) {
+        deleteBtn.addEventListener('click', function() {
+            var idInput = item.querySelector('input[name$="-id"]');
+            var delCb = item.querySelector('.item-delete-checkbox');
+            if (idInput && idInput.value) {
+                if (delCb) delCb.checked = true;
+                item.classList.add('deleted-item');
+                var barcodeRow = document.querySelector('.barcode-row[data-item-index="' + idx + '"]');
+                if (barcodeRow) barcodeRow.style.display = 'none';
+            } else {
+                var barcodeRow2 = document.querySelector('.barcode-row[data-item-index="' + idx + '"]');
+                if (barcodeRow2) barcodeRow2.remove();
+                item.remove();
+            }
+            if (pHidden && pHidden.value) window.usedProductIds.delete(parseInt(pHidden.value));
+            updateItemsNumbers();
+            updateFinancialCalculations();
+        });
+    }
+
+    if (preview && fileInput) {
+        fileInput.style.display = 'none';
+        preview.addEventListener('click', function() { fileInput.click(); });
+        fileInput.addEventListener('change', function(e) {
+            if (e.target.files[0]) {
+                var reader = new FileReader();
+                reader.onload = function(ev) { preview.innerHTML = '<img src="' + ev.target.result + '" alt="">'; };
+                reader.readAsDataURL(e.target.files[0]);
+            }
+        });
+    }
+}
+
+function initializeAllItems() { document.querySelectorAll('.item-row').forEach(function(item, idx) { var i = item.getAttribute('data-item-index') || idx; setupItemEventListeners(item, i); }); }
+
+function updateItemsNumbers() { document.querySelectorAll('.item-row:not(.deleted-item)').forEach(function(item, index) { var numCell = item.querySelector('td:first-child'); if (numCell) numCell.textContent = index + 1; }); var totalForms = document.getElementById('id_items-TOTAL_FORMS'); if (totalForms) totalForms.value = document.querySelectorAll('.item-row:not(.deleted-item)').length; }
+
+function addNewItem() {
+    var tbody = document.getElementById('items-tbody');
+    var totalForms = document.getElementById('id_items-TOTAL_FORMS');
+    var fn = parseInt(totalForms.value);
+    var newRow = document.createElement('tr');
+    newRow.className = 'item-row';
+    newRow.setAttribute('data-item-index', fn);
+    newRow.innerHTML = '<td class="text-center fw-bold">' + (fn + 1) + '</td><td><input type="hidden" name="items-' + fn + '-id" id="id_items-' + fn + '-id"><input type="hidden" name="items-' + fn + '-sale" id="id_items-' + fn + '-sale"><input type="hidden" name="items-' + fn + '-item_name" class="item-name-field" value=""><input type="hidden" name="items-' + fn + '-product_search" class="product-search-value" value=""><div class="product-search-container"><input type="text" class="form-control product-search-input" placeholder="ابحث عن المادة..." autocomplete="off"><div class="autocomplete-dropdown product-results"></div></div><input type="hidden" name="items-' + fn + '-product" id="id_items-' + fn + '-product"></td><td class="quantity-cell"><input type="number" name="items-' + fn + '-sold_quantity" value="1" step="0.01" min="0.01" class="form-control"></td><td class="price-cell"><input type="number" name="items-' + fn + '-unit_price" value="0" step="0.01" min="0" class="form-control"></td><td class="total-cell"><input type="text" class="form-control item-total" readonly value="0.00"></td><td><input type="text" name="items-' + fn + '-notes" class="form-control"></td><td class="text-center"><div class="image-input-container"><div class="image-preview" data-item-index="' + fn + '" title="اختر صورة"><i class="fas fa-camera"></i></div><input type="file" name="items-' + fn + '-sale_item_image" class="hidden-file-input" accept="image/*"></div></td><td class="text-center"><input type="checkbox" name="items-' + fn + '-DELETE" class="item-delete-checkbox"><button type="button" class="delete-btn" title="حذف البند"><i class="fas fa-trash"></i></button></td>';
+    
+    var barcodeRow = document.createElement('tr');
+    barcodeRow.className = 'barcode-row';
+    barcodeRow.setAttribute('data-item-index', fn);
+    barcodeRow.style.display = window.barcodesVisible ? 'table-row' : 'none';
+    barcodeRow.innerHTML = '<td colspan="8"><div class="barcode-field-container"><div class="barcode-fields-list"></div></div></td>';
+    
+    tbody.appendChild(newRow);
+    tbody.appendChild(barcodeRow);
+    totalForms.value = fn + 1;
+    window.barcodeData[fn] = [];
+    
+    setupItemEventListeners(newRow, fn);
+    updateItemCalculations(newRow);
+}
+
+// ============================================
+// دوال الإرسال
+// ============================================
+function collectBarcodeDataForSubmission() { document.querySelectorAll('input[name^="item_"][name$="_barcodes"]').forEach(function(el) { el.remove(); }); Object.keys(window.barcodeData).forEach(function(idx) { var barcodes = window.barcodeData[idx]; if (barcodes && barcodes.length) { barcodes.forEach(function(v) { if (v && v.trim()) { var input = document.createElement('input'); input.type = 'hidden'; input.name = 'item_' + idx + '_barcodes'; input.value = v.trim(); document.getElementById('sale-form').appendChild(input); } }); } }); }
+function syncFinancialFieldsBeforeSubmit() { var sEl = document.getElementById('subtotal-amount'), tEl = document.getElementById('tax-amount'), gEl = document.getElementById('grand-total'), rEl = document.getElementById('remaining-amount'); var hSub = document.getElementById('hidden-sale-subtotal'), hTax = document.getElementById('hidden-sale-tax-amount'), hTot = document.getElementById('hidden-sale-final-total'), hBal = document.getElementById('hidden-balance-due'); if (sEl && hSub) hSub.value = parseNumber(sEl.textContent); if (tEl && hTax) hTax.value = parseNumber(tEl.textContent); if (gEl && hTot) hTot.value = parseNumber(gEl.textContent); if (rEl && hBal) hBal.value = parseNumber(rEl.textContent); }
+
+// ============================================
+// شركة الشحن
+// ============================================
+function setupShippingCompanyEvent() { var select = document.getElementById('id_sale_shipping_company'), numCol = document.getElementById('shipping-num-col'), notesCol = document.getElementById('notes-col'); if (!select || !numCol || !notesCol) return; function updateLayout() { if (select.value) { numCol.classList.remove('d-none'); notesCol.classList.remove('col-md-12'); notesCol.classList.add('col-md-9'); } else { numCol.classList.add('d-none'); notesCol.classList.remove('col-md-9'); notesCol.classList.add('col-md-12'); } } updateLayout(); select.addEventListener('change', updateLayout); }
+
+// ============================================
+// الدفع والصندوق
+// ============================================
+function fetchCashBalance() { return fetch('/invoice/get-cash-balance/').then(function(res) { return res.json(); }).then(function(data) { var el = document.getElementById('current-cash-balance'); if (el) el.textContent = parseFloat(data.balance).toFixed(2); return data.balance; }).catch(function() { return 0; }); }
+function checkPaymentMethod(value) { var container = document.getElementById('paid-amount-container'), paidInput = document.getElementById('paid-amount'); if (value) { fetch('/invoice/get-payment-method/' + value + '/').then(function(res) { return res.json(); }).then(function(data) { if (data.is_cash) { container.classList.add('show'); window.isPaymentMethodCash = true; } else { container.classList.remove('show'); window.isPaymentMethodCash = false; if (paidInput) paidInput.value = '0'; window.paidAmountModified = false; updateRemainingAmount(); } }).catch(function() {}); } else { container.classList.remove('show'); window.isPaymentMethodCash = false; if (paidInput) paidInput.value = '0'; window.paidAmountModified = false; updateRemainingAmount(); } }
+
+// ============================================
+// التهيئة الرئيسية
+// ============================================
+document.addEventListener('DOMContentLoaded', function() {
+    fixAllNumberInputs();
+    initializeFinancialFields();
+    fixItemFields();
+    initializeCustomerAutocomplete();
+    setupShippingCompanyEvent();
+    initializeAllItems();
+    loadExistingBarcodes();
+
+    document.querySelectorAll('.item-row:not(.deleted-item)').forEach(function(r) { updateItemCalculations(r); });
+    updateFinancialCalculations();
+
+    var taxInput = document.getElementById('tax-percentage'), addInput = document.getElementById('invoice-addition'), discInput = document.getElementById('invoice-discount'), paidInput = document.getElementById('paid-amount');
+    if (taxInput) taxInput.addEventListener('input', function() { updateFinancialCalculations(); });
+    if (addInput) addInput.addEventListener('input', function() { updateFinancialCalculations(); });
+    if (discInput) discInput.addEventListener('input', function() { updateFinancialCalculations(); });
+    if (paidInput) { paidInput.addEventListener('input', function() { window.paidAmountModified = true; updateRemainingAmount(); }); }
+
+    var paymentSelect = document.getElementById('id_sale_payment_method');
+    if (paymentSelect) { checkPaymentMethod(paymentSelect.value); paymentSelect.addEventListener('change', function(e) { checkPaymentMethod(e.target.value); }); }
+
+    var addBtn = document.getElementById('add-single-item');
+    if (addBtn) addBtn.addEventListener('click', function() { addNewItem(); });
+
+    var toggleBtn = document.getElementById('toggle-barcodes-btn');
+    if (toggleBtn) {
+        toggleBtn.addEventListener('click', function() {
+            window.barcodesVisible = !window.barcodesVisible;
+            if (window.barcodesVisible) { showAllBarcodes(); toggleBtn.innerHTML = '<i class="fas fa-eye-slash me-1"></i>إخفاء الباركودات'; }
+            else { hideAllBarcodes(); toggleBtn.innerHTML = '<i class="fas fa-eye me-1"></i>إظهار الباركودات'; }
+        });
+    }
+
+    var imgPreview = document.getElementById('invoice-image-preview-container'), imgInput = document.getElementById('id_sale_image');
+    if (imgPreview && imgInput) { imgInput.style.display = 'none'; imgPreview.addEventListener('click', function() { imgInput.click(); }); imgInput.addEventListener('change', function(e) { if (e.target.files[0]) { var reader = new FileReader(); reader.onload = function(ev) { imgPreview.innerHTML = '<img src="' + ev.target.result + '" alt="">'; imgPreview.classList.add('has-image'); }; reader.readAsDataURL(e.target.files[0]); } }); }
+
+    var saleForm = document.getElementById('sale-form');
+    if (saleForm) { saleForm.addEventListener('submit', function() { collectBarcodeDataForSubmission(); syncFinancialFieldsBeforeSubmit(); }); }
+
+    fetchCashBalance();
+});
+
+
+// ============================================
+// [JS-12] تفعيل Popover لعلامات الاستفهام
+// ============================================
+document.addEventListener('DOMContentLoaded', function () {
+    var popoverTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="popover"]'));
+    var popoverList = popoverTriggerList.map(function (popoverTriggerEl) {
+        return new bootstrap.Popover(popoverTriggerEl, {
+            trigger: 'hover'
+        });
+    });
+});
+</script>
+{% endblock %}

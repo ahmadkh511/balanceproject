@@ -1,0 +1,240 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<style>
+    .detail-container {
+        padding: 2rem;
+        background-color: #f8f9fc;
+        min-height: 100vh;
+    }
+    .detail-header {
+        background-color: #fff;
+        padding: 1.5rem 2rem;
+        border-radius: 12px 12px 0 0;
+        box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.1);
+        margin-bottom: 1.5rem;
+    }
+    .detail-card {
+        border: none;
+        border-radius: 12px;
+        box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.1);
+        overflow: hidden;
+    }
+    .product-image-lg {
+        width: 100%;
+        max-width: 350px;
+        height: 350px;
+        object-fit: cover;
+        border-radius: 12px;
+        border: 1px solid #e3e6f0;
+    }
+    .no-image-lg {
+        width: 100%;
+        max-width: 350px;
+        height: 350px;
+        background-color: #eaecf4;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #858796;
+        font-size: 5rem;
+    }
+    .info-list {
+        list-style: none;
+        padding: 0;
+    }
+    .info-list li {
+        padding: 1rem 0;
+        border-bottom: 1px solid #e3e6f0;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    .info-list li:last-child {
+        border-bottom: none;
+    }
+    .info-list .info-label {
+        font-weight: 600;
+        color: #5a5c69;
+        display: flex;
+        align-items: center;
+    }
+    .info-list .info-label i {
+        width: 25px;
+        margin-left: 10px;
+        color: #858796;
+    }
+    .info-list .info-value {
+        font-weight: 500;
+        color: #3a3d45;
+    }
+    .barcode-item {
+        background-color: #f8f9fc;
+        border: 1px solid #e3e6f0;
+        border-radius: 8px;
+        padding: 1rem;
+        margin-bottom: 1rem;
+        transition: all 0.2s ease-in-out;
+    }
+    .barcode-item:hover {
+        box-shadow: 0 4px 8px rgba(0,0,0,0.05);
+        transform: translateY(-2px);
+    }
+    .barcode-number {
+        font-family: 'Courier New', Courier, monospace;
+        font-size: 1.1rem;
+        font-weight: bold;
+    }
+    .main-barcode-detail {
+        background-color: #e3f2fd;
+        border: 1px solid #bbdefb;
+        border-radius: 8px;
+        padding: 1rem 1.2rem;
+        margin-bottom: 1rem;
+        display: flex;
+        align-items: center;
+        gap: 0.8rem;
+    }
+    .main-barcode-detail .main-barcode-label {
+        font-weight: 700;
+        color: #1565c0;
+        font-size: 0.9rem;
+        white-space: nowrap;
+    }
+    .main-barcode-detail .main-barcode-value {
+        font-family: 'Courier New', Courier, monospace;
+        font-size: 1.15rem;
+        font-weight: bold;
+        color: #0d47a1;
+    }
+</style>
+
+<div class="detail-container">
+    <!-- رأس الصفحة -->
+    <div class="detail-header d-flex justify-content-between align-items-center">
+        <h1 class="h3 mb-0 text-gray-800">تفاصيل المادة: {{ product.product_name }}</h1>
+        <a href="{% url 'invoice:product_list' %}" class="btn btn-secondary shadow-sm">
+            <i class="fas fa-arrow-right ms-2"></i>رجوع للقائمة
+        </a>
+    </div>
+
+    <div class="row">
+        <!-- بطاقة معلومات المنتج -->
+        <div class="col-lg-6 mb-4">
+            <div class="card detail-card h-100">
+                <div class="card-body">
+                    <h5 class="card-title mb-4">
+                        <i class="fas fa-info-circle text-primary ms-2"></i>معلومات المنتج
+                    </h5>
+                    <div class="text-center mb-4">
+                        {% if product.product_image %}
+                            <img src="{{ product.product_image.url }}" class="product-image-lg" alt="{{ product.product_name }}">
+                        {% else %}
+                            <div class="no-image-lg mx-auto">
+                                <i class="fas fa-box"></i>
+                            </div>
+                        {% endif %}
+                    </div>
+                    <ul class="info-list">
+                        <li>
+                            <span class="info-label"><i class="fas fa-tag"></i>اسم المادة</span>
+                            <span class="info-value">{{ product.product_name }}</span>
+                        </li>
+                        <li>
+                            <span class="info-label"><i class="fas fa-barcode"></i>الباركود الأساسي</span>
+                            <span class="info-value">
+                                {% if product.main_barcode %}
+                                    <span style="font-family:'Courier New',Courier,monospace; font-weight:bold; color:#1565c0; background:#e3f2fd; padding:0.25rem 0.6rem; border-radius:5px; border:1px solid #bbdefb;">
+                                        {{ product.main_barcode }}
+                                    </span>
+                                {% else %}
+                                    <span class="text-muted">لا يوجد</span>
+                                {% endif %}
+                            </span>
+                        </li>
+                        <li>
+                            <span class="info-label"><i class="fas fa-money-bill-wave"></i>سعر الشراء</span>
+                            <span class="info-value">{{ product.purch_price }}</span>
+                        </li>
+                        <li>
+                            <span class="info-label"><i class="fas fa-dollar-sign"></i>سعر البيع</span>
+                            <span class="info-value text-success fw-bold">{{ product.sale_price }}</span>
+                        </li>
+                        <li>
+                            <span class="info-label"><i class="fas fa-cubes"></i>المخزون الحالي</span>
+                            <span class="info-value"><span class="badge bg-info text-white">{{ product.current_stock_quantity }}</span></span>
+                        </li>
+                        <li>
+                            <span class="info-label"><i class="fas fa-chart-line"></i>متوسط سعر الشراء</span>
+                            <span class="info-value">{{ product.average_purchase_cost }}</span>
+                        </li>
+                        <li>
+                            <span class="info-label"><i class="fas fa-calendar-alt"></i>تاريخ الإضافة</span>
+                            <span class="info-value">{{ product.date_created|date:"Y-m-d" }}</span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- بطاقة باركودات المنتج -->
+        <div class="col-lg-6 mb-4">
+            <div class="card detail-card h-100">
+                <div class="card-body d-flex flex-column">
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-barcode text-primary ms-2"></i>باركودات المنتج
+                        </h5>
+                        <span class="badge bg-primary">{{ barcodes.count }}</span>
+                    </div>
+                    
+                    <div class="flex-grow-1 overflow-auto">
+                        {% if product.main_barcode %}
+                        <div class="main-barcode-detail">
+                            <i class="fas fa-star" style="color:#f1c40f; font-size:1rem;"></i>
+                            <span class="main-barcode-label">الباركود الأساسي:</span>
+                            <span class="main-barcode-value">{{ product.main_barcode }}</span>
+                        </div>
+                        {% endif %}
+
+                        {% if barcodes %}
+                            {% for barcode in barcodes %}
+                            <div class="barcode-item">
+                                <div class="d-flex justify-content-between align-items-start">
+                                    <div>
+                                        <div class="barcode-number">{{ barcode.barcode_in }}</div>
+                                        {% if barcode.notes %}
+                                            <small class="text-muted d-block mt-1">{{ barcode.notes }}</small>
+                                        {% endif %}
+                                    </div>
+                                    <div>
+                                        {% if barcode.is_primary %}
+                                            <span class="badge bg-success">أساسي</span>
+                                        {% endif %}
+                                        {% if barcode.is_active %}
+                                            <span class="badge bg-info">نشط</span>
+                                        {% else %}
+                                            <span class="badge bg-danger">غير نشط</span>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        {% else %}
+                            {% if not product.main_barcode %}
+                            <div class="text-center py-5">
+                                <i class="fas fa-barcode fa-4x text-muted mb-3"></i>
+                                <h6 class="text-muted">لا توجد باركودات لهذه المادة</h6>
+                                <p class="text-muted small">يمكن إضافة الباركودات من خلال عمليات الشراء أو المبيعات.</p>
+                            </div>
+                            {% endif %}
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

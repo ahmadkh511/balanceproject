@@ -1,0 +1,3487 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}تعديل فاتورة البيع {{ sale.uniqueId }}{% endblock %}
+
+{% block extra_css %}
+<style>
+/* ============================================
+   [CSS-01] إعدادات التصميم العامة - التدرجات الزرقاء
+   ============================================ */
+.card {
+    border: none;
+    box-shadow: 0 8px 30px rgba(70, 130, 180, 0.15);
+    border-radius: 15px;
+    overflow: hidden;
+    margin-bottom: 25px;
+    transition: all 0.3s ease;
+}
+.card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 12px 40px rgba(70, 130, 180, 0.2);
+}
+.card-header {
+    padding: 18px 25px;
+    border-bottom: 1px solid rgba(70, 130, 180, 0.1);
+    font-weight: 600;
+    background: linear-gradient(135deg, #2c3e50 0%, #3498db 100%) !important;
+    color: white;
+    font-size: 1.1rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+.form-control {
+    border-radius: 10px;
+    padding: 12px 15px;
+    border: 1px solid #ced4da;
+    transition: all 0.3s ease;
+    font-size: 0.95rem;
+}
+.form-control:focus {
+    border-color: #3498db;
+    box-shadow: 0 0 0 4px rgba(52, 152, 219, 0.15);
+    transform: translateY(-2px);
+}
+.btn {
+    border-radius: 10px;
+    padding: 12px 25px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    font-size: 0.95rem;
+    border: none;
+    position: relative;
+    overflow: hidden;
+}
+.btn::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: rgba(255, 255, 255, 0.2);
+    transition: left 0.5s ease;
+}
+.btn:hover::before {
+    left: 100%;
+}
+.btn:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 25px rgba(65, 105, 225, 0.2);
+}
+.required-field::after {
+    content: " *";
+    color: #e74c3c;
+}
+.success-message {
+    background: linear-gradient(135deg, #27ae60 0%, #2ecc71 100%);
+    color: white;
+    padding: 15px 20px;
+    border-radius: 10px;
+    margin: 15px 0;
+    display: none;
+    box-shadow: 0 5px 15px rgba(39, 174, 96, 0.2);
+}
+
+/* ألوان الأزرار */
+.btn-success {
+    background: linear-gradient(135deg, #27ae60 0%, #2ecc71 100%) !important;
+}
+.btn-primary {
+    background: linear-gradient(135deg, #3498db 0%, #2980b9 100%) !important;
+}
+.btn-warning {
+    background: linear-gradient(135deg, #f39c12 0%, #e67e22 100%) !important;
+    color: white !important;
+}
+.btn-danger {
+    background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%) !important;
+}
+.btn-secondary {
+    background: linear-gradient(135deg, #95a5a6 0%, #7f8c8d 100%) !important;
+    color: white !important;
+}
+/* ============================================ */
+
+/* ============================================
+   [CSS-02] قسم معلومات الفاتورة الأساسية
+   ============================================ */
+.invoice-basic-info .row {
+    margin-bottom: 20px;
+}
+.invoice-basic-info .form-label {
+    font-weight: 600;
+    margin-bottom: 8px;
+    color: #2c3e50;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.invoice-basic-info .supplier-input-wrapper {
+    position: relative;
+}
+.shipping-number-container {
+    transition: all 0.3s ease;
+}
+.paid-amount-container {
+    transition: all 0.3s ease;
+    opacity: 0;
+    max-height: 0;
+    overflow: hidden;
+}
+.paid-amount-container.show {
+    opacity: 1;
+    max-height: 150px;
+    margin-bottom: 20px;
+}
+.cash-balance-info {
+    margin-bottom: 25px;
+}
+.cash-balance-info .alert {
+    border-radius: 12px;
+    border: none;
+    box-shadow: 0 5px 15px rgba(65, 105, 225, 0.1);
+}
+.cash-balance-info .alert-info {
+    background: linear-gradient(135deg, #e6f2ff 0%, #cce5ff 100%);
+    color: #1E90FF;
+    border-left: 5px solid #3498db;
+}
+.cash-balance-info .alert-warning {
+    background: linear-gradient(135deg, #fff8e1 0%, #ffecb3 100%);
+    color: #f57c00;
+    border-left: 5px solid #f39c12;
+}
+
+/* إزالة أيقونة المكبرة */
+.supplier-search-icon,
+.product-search-icon {
+    display: none !important;
+}
+
+.product-search-input,
+.supplier-search-input {
+    padding-left: 15px !important;
+}
+/* ============================================ */
+
+/* ============================================
+   [CSS-03] قسم بنود الفاتورة - بتدرجات زرقاء
+   ============================================ */
+.items-section {
+    background: white;
+    border-radius: 15px;
+    box-shadow: 0 8px 30px rgba(65, 105, 225, 0.1);
+    overflow: visible;
+    margin-bottom: 25px;
+    position: relative;
+    transition: all 0.3s ease;
+}
+.items-section:hover {
+    box-shadow: 0 12px 40px rgba(65, 105, 225, 0.15);
+}
+.items-header {
+    background: linear-gradient(135deg, #2c3e50 0%, #3498db 100%);
+    color: white;
+    padding: 18px 25px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-radius: 15px 15px 0 0;
+}
+.items-header h5 {
+    margin: 0;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 1.1rem;
+}
+.items-controls {
+    display: flex;
+    gap: 20px;
+    align-items: center;
+}
+.items-count-container {
+    background: rgba(255,255,255,0.2);
+    padding: 10px 15px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    backdrop-filter: blur(5px);
+}
+.items-count-container label {
+    margin: 0;
+    font-weight: 600;
+    font-size: 0.95rem;
+}
+.items-count-container input {
+    width: 80px;
+    border: none;
+    border-radius: 6px;
+    padding: 6px 10px;
+    text-align: center;
+    background: white;
+    color: #2c3e50;
+    font-weight: 600;
+}
+.items-table-container {
+    overflow-x: auto;
+    border-radius: 0 0 15px 15px;
+    position: relative;
+}
+.items-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    border: none;
+    background: white;
+}
+.items-table thead th {
+    background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
+    color: white;
+    font-weight: 600;
+    text-align: center;
+    padding: 15px 10px;
+    border-bottom: 2px solid #dee2e6;
+    font-size: 0.9rem;
+    white-space: nowrap;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+}
+.items-table tbody tr {
+    transition: all 0.3s ease;
+    border-bottom: 1px solid #e9ecef;
+    position: relative;
+}
+.items-table tbody tr:hover {
+    background-color: #f0f8ff;
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(65, 105, 225, 0.1);
+}
+.items-table tbody tr:last-child {
+    border-bottom: none;
+}
+.items-table tbody td {
+    padding: 15px 8px;
+    vertical-align: middle;
+    font-size: 0.9rem;
+    position: relative;
+    transition: all 0.3s ease;
+}
+.items-table .form-control {
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    padding: 10px 12px;
+    font-size: 0.9rem;
+    transition: all 0.3s ease;
+    background: #fafafa;
+    box-shadow: inset 0 1px 3px rgba(0,0,0,0.1);
+}
+.items-table .form-control:focus {
+    border-color: #3498db;
+    box-shadow: 0 0 0 4px rgba(52, 152, 219, 0.15), inset 0 1px 3px rgba(0,0,0,0.1);
+    background: white;
+    transform: translateY(-2px);
+}
+.table-footer-actions {
+    display: flex;
+    margin-top: 20px;
+    padding: 15px;
+    background: #f0f8ff;
+    border-radius: 10px;
+    border: 1px solid #d6eaff;
+}
+#add-single-item {
+    background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
+    color: white;
+    border: none;
+    border-radius: 10px;
+    padding: 12px 25px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    transition: all 0.3s ease;
+}
+#add-single-item:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 25px rgba(52, 152, 219, 0.3);
+}
+/* ============================================ */
+
+/* ============================================
+   [CSS-04] نظام اختيار نوع البيع - محسّن
+   ============================================ */
+.sale-type-selector {
+    margin-top: 12px;
+    padding: 12px;
+    background: #f8f9fa;
+    border-radius: 10px;
+    border: 1px solid #e9ecef;
+    box-shadow: 0 3px 10px rgba(0,0,0,0.05);
+}
+.sale-type-selector .btn-group {
+    width: 100%;
+    display: flex;
+    direction: ltr;
+}
+.sale-type-selector .btn {
+    flex: 1;
+    padding: 10px 15px;
+    font-size: 0.85rem;
+    border-radius: 8px;
+}
+.sale-type-selector .btn-outline-primary {
+    border-color: #3498db;
+    color: #3498db;
+}
+.sale-type-selector .btn-check:checked + .btn-outline-primary {
+    background-color: #3498db;
+    color: white;
+    border-color: #3498db;
+}
+.stock-info {
+    background: #e6f2ff;
+    border: 1px solid #cce5ff;
+    border-radius: 8px;
+    padding: 10px 15px;
+    margin-top: 10px;
+    font-size: 0.85rem;
+    box-shadow: 0 2px 8px rgba(52, 152, 219, 0.1);
+}
+.stock-info i {
+    color: #3498db;
+}
+.stock-info .barcoded-stock,
+.stock-info .non-barcoded-stock {
+    font-weight: 700;
+    color: #3498db;
+}
+/* ============================================ */
+
+/* ============================================
+   [CSS-05] نظام البحث التلقائي            
+   ============================================ */
+.product-search-container,
+.supplier-search-container {
+    position: relative;
+    width: 100%;
+    z-index: 100; 
+}
+
+.autocomplete-dropdown {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background: white;
+    border: 1px solid #3498db;
+    border-radius: 0 0 10px 10px;
+    box-shadow: 0 10px 30px rgba(52, 152, 219, 0.15);
+    max-height: 300px;
+    overflow-y: auto;
+    z-index: 99999;
+    display: none;
+    opacity: 0;
+    transition: opacity 0.3s ease-in-out;
+    pointer-events: none;
+}
+
+.autocomplete-dropdown.show {
+    display: block;
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.autocomplete-item {
+    padding: 15px 18px;
+    cursor: pointer;
+    border-bottom: 1px solid #ecf0f1;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    color: #2c3e50;
+    position: relative;
+    z-index: 100000;
+    transition: all 0.3s ease;
+}
+
+.autocomplete-item:hover {
+    background-color: #f0f8ff;
+    border-left: 4px solid #3498db;
+    position: relative;
+    transform: translateX(5px);
+}
+
+.autocomplete-item:last-child {
+    border-bottom: none;
+}
+
+.autocomplete-item img {
+    width: 50px;
+    height: 50px;
+    object-fit: cover;
+    border-radius: 8px;
+    border: 2px solid #ecf0f1;
+}
+.autocomplete-item-content {
+    flex: 1;
+    min-width: 0;
+}
+.autocomplete-item-title {
+    font-weight: 600;
+    color: #2c3e50;
+    margin-bottom: 5px;
+    font-size: 0.95rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.autocomplete-item-details {
+    display: flex;
+    gap: 15px;
+    align-items: center;
+    flex-wrap: wrap;
+}
+.autocomplete-item-price {
+    color: #3498db;
+    font-weight: 600;
+    font-size: 0.85rem;
+    background: rgba(52, 152, 219, 0.1);
+    padding: 3px 10px;
+    border-radius: 15px;
+}
+.autocomplete-item-stock {
+    color: #7f8c8d;
+    font-size: 0.8rem;
+    background: #f8f9fa;
+    padding: 3px 10px;
+    border-radius: 12px;
+}
+.autocomplete-item-barcode {
+    color: #95a5a6;
+    font-size: 0.75rem;
+    font-family: monospace;
+    background: #f8f9fa;
+    padding: 3px 8px;
+    border-radius: 5px;
+}
+.stock-indicator {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 3px 10px;
+    border-radius: 15px;
+    font-size: 0.8rem;
+    font-weight: 600;
+}
+.stock-indicator.high {
+    background: #e6f2ff;
+    color: #3498db;
+}
+.stock-indicator.medium {
+    background: #fff3cd;
+    color: #856404;
+}
+.stock-indicator.low {
+    background: #f8d7da;
+    color: #721c24;
+}
+.stock-indicator.out {
+    background: #e2e3e5;
+    color: #383d41;
+}
+/* ============================================ */
+
+/* ============================================
+   [CSS-06] نظام الباركودات - محسّن
+   ============================================ */
+.barcode-section {
+    background: linear-gradient(135deg, #f0f8ff 0%, #e6f2ff 100%);
+    padding: 18px;
+    border-radius: 10px;
+    border: 1px solid #d6eaff;
+    margin-top: 8px;
+    box-shadow: 0 5px 15px rgba(52, 152, 219, 0.1);
+}
+.barcode-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 18px;
+}
+.barcode-title {
+    font-weight: 600;
+    color: #2c3e50;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 0.95rem;
+}
+.barcode-toggle {
+    background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    padding: 8px 15px;
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+.barcode-toggle:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(52, 152, 219, 0.3);
+}
+.barcode-fields-container {
+    display: none;
+}
+.barcode-fields-container.show {
+    display: block;
+}
+.barcode-fields-list {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 15px;
+    width: 100%;
+}
+.barcode-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: white;
+    padding: 12px;
+    border-radius: 10px;
+    border: 1px solid #e0e0e0;
+    box-shadow: 0 3px 10px rgba(52, 152, 219, 0.08);
+    transition: all 0.3s ease;
+    position: relative;
+    width: 100%;
+    box-sizing: border-box;
+}
+.barcode-item:hover {
+    border-color: #3498db;
+    box-shadow: 0 5px 15px rgba(52, 152, 219, 0.15);
+    transform: translateY(-2px);
+}
+.barcode-input {
+    flex: 1;
+    padding: 10px 12px;
+    border: 1px solid #e0e0e0;
+    border-radius: 6px;
+    font-size: 0.85rem;
+    background: #fafafa;
+    font-family: monospace;
+    transition: all 0.3s ease;
+    min-width: 0;
+    color: #3498db;
+}
+.barcode-input:focus {
+    border-color: #3498db;
+    box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.15);
+    background: white;
+    outline: none;
+    color: #2980b9;
+}
+.barcode-buttons {
+    display: flex;
+    gap: 5px;
+    margin-right: 10px;
+    flex-shrink: 0;
+}
+.barcode-remove-btn {
+    background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
+    color: white;
+    border: none;
+    border-radius: 5px;
+    padding: 5px 8px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-size: 0.75rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+}
+.barcode-remove-btn:hover {
+    transform: scale(1.1);
+    box-shadow: 0 3px 10px rgba(231, 76, 60, 0.3);
+}
+.barcode-row {
+    background-color: #f0f8ff !important;
+}
+.barcode-row td {
+    padding: 0 !important;
+    border: none !important;
+}
+.barcode-row .barcode-field-container {
+    display: block;
+    margin: 0;
+    border: none;
+    border-radius: 0;
+    background-color: #f0f8ff;
+    padding: 18px;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.barcode-controls {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 18px;
+    padding: 12px;
+    background: white;
+    border-radius: 10px;
+    border: 1px solid #e0e0e0;
+    box-shadow: 0 3px 10px rgba(0,0,0,0.05);
+}
+.barcode-controls .form-check {
+    margin: 0;
+}
+.barcode-controls .btn-sm {
+    padding: 5px 12px;
+    font-size: 0.8rem;
+}
+/* ============================================ */
+
+/* ============================================
+   [CSS-07] نظام إدارة الصور
+   ============================================ */
+.image-preview {
+    width: 60px;
+    height: 60px;
+    border: 2px dashed #bdc3c7;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    overflow: hidden;
+    transition: all 0.3s ease;
+    background: #f8f9fa;
+    margin: 0 auto;
+}
+.image-preview:hover {
+    border-color: #3498db;
+    background: #e6f2ff;
+    transform: scale(1.05);
+}
+.image-preview.has-image {
+    border-style: solid;
+    border-color: #3498db;
+    background: white;
+}
+.image-preview img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 8px;
+}
+.image-preview i {
+    font-size: 1.4rem;
+    color: #95a5a6;
+}
+.invoice-image-preview,
+.product-image-preview {
+    width: 130px;
+    height: 130px;
+    border-radius: 12px;
+    border: 2px dashed #dee2e6;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, #f0f8ff 0%, #e6f2ff 100%);
+    color: #6c757d;
+    overflow: hidden;
+    transition: all 0.3s ease;
+    margin: 0 auto;
+}
+.invoice-image-preview:hover,
+.product-image-preview:hover {
+    border-color: #3498db;
+    background: linear-gradient(135deg, #e6f2ff 0%, #cce5ff 100%);
+    transform: translateY(-3px);
+    box-shadow: 0 8px 25px rgba(52, 152, 219, 0.2);
+}
+.invoice-image-preview.has-image,
+.product-image-preview.has-image {
+    background: none;
+    border: 2px solid #3498db;
+}
+.invoice-image-preview.has-image img,
+.product-image-preview.has-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 10px;
+}
+.hidden-file-input {
+    display: none !important;
+}
+/* ============================================ */
+
+/* ============================================
+   [CSS-08] القسم المالي - تصميم معدل
+   ============================================ */
+.financial-section {
+    background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+    border-radius: 18px;
+    padding: 28px;
+    margin-top: 25px;
+    border: 1px solid #e9ecef;
+    box-shadow: 0 10px 30px rgba(52, 152, 219, 0.08);
+}
+.financial-content {
+    display: flex;
+    gap: 35px;
+    align-items: flex-start;
+}
+.financial-image {
+    width: 220px;
+    flex-shrink: 0;
+}
+.financial-calculations {
+    flex: 1;
+}
+.financial-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+}
+.financial-column {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+.financial-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px 20px;
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 5px 15px rgba(52, 152, 219, 0.08);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    border-left: 5px solid #3498db;
+    border: 1px solid #f0f0f0;
+}
+.financial-row:hover {
+    box-shadow: 0 8px 25px rgba(52, 152, 219, 0.12);
+    transform: translateY(-3px);
+    border-left-color: #2980b9;
+}
+.financial-label {
+    font-weight: 600;
+    color: #2c3e50;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 0.95rem;
+}
+.financial-value {
+    font-weight: 700;
+    color: #2c3e50;
+    font-size: 1.1rem;
+}
+.grand-total {
+    font-size: 1.6rem;
+    color: #3498db;
+    border-top: 3px solid #e9ecef;
+    margin-top: 25px;
+    padding-top: 20px;
+    background: linear-gradient(135deg, #f0f8ff 0%, #e6f2ff 100%);
+    border-left-color: #3498db;
+    grid-column: 1 / -1;
+    box-shadow: 0 8px 25px rgba(52, 152, 219, 0.15);
+}
+.grand-total:hover {
+    box-shadow: 0 10px 30px rgba(52, 152, 219, 0.2);
+}
+
+/* حقل المبلغ المدفوع - مكبر */
+#paid-amount {
+    width: 220px !important;
+    font-size: 1.3rem;
+    font-weight: 700;
+    padding: 16px 18px;
+    border: 3px solid #3498db;
+    border-radius: 12px;
+    background-color: #f8f9fa;
+    text-align: center;
+    color: #2c3e50;
+}
+
+#paid-amount:focus {
+    border-color: #2980b9;
+    box-shadow: 0 0 0 5px rgba(52, 152, 219, 0.2);
+    background-color: white;
+    transform: scale(1.02);
+}
+
+.remaining-amount-wrapper {
+    grid-column: 1 / -1;
+    margin-top: 15px;
+}
+.remaining-amount-card {
+    background: linear-gradient(135deg, #f0f8ff 0%, #e6f2ff 100%);
+    border-radius: 16px;
+    border: 2px solid #3498db;
+    overflow: hidden;
+    box-shadow: 0 10px 30px rgba(52, 152, 219, 0.18);
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.remaining-amount-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 15px 40px rgba(52, 152, 219, 0.25);
+    border-color: #2980b9;
+}
+.remaining-amount-header {
+    background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
+    color: white;
+    padding: 18px 25px;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    font-size: 1.2rem;
+    font-weight: 700;
+}
+.remaining-amount-header i {
+    font-size: 1.4rem;
+    background: rgba(255, 255, 255, 0.2);
+    width: 45px;
+    height: 45px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 12px;
+    backdrop-filter: blur(5px);
+}
+.remaining-amount-body {
+    padding: 28px;
+}
+.remaining-amount-display {
+    display: flex;
+    flex-direction: column;
+    gap: 25px;
+}
+.remaining-amount-number {
+    display: flex;
+    align-items: baseline;
+    justify-content: center;
+    gap: 10px;
+    padding: 25px;
+    background: white;
+    border-radius: 15px;
+    box-shadow: 0 5px 20px rgba(52, 152, 219, 0.1);
+    border: 2px solid #3498db;
+}
+.amount-value {
+    font-size: 2.8rem;
+    font-weight: 800;
+    color: #2c3e50;
+    font-family: 'Arial', sans-serif;
+    letter-spacing: 1px;
+    text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.1);
+}
+.amount-currency {
+    font-size: 1.3rem;
+    font-weight: 600;
+    color: #3498db;
+    background: rgba(52, 152, 219, 0.1);
+    padding: 5px 15px;
+    border-radius: 25px;
+}
+.remaining-amount-words {
+    background: white;
+    border-radius: 15px;
+    padding: 25px;
+    border: 2px dashed #3498db;
+    min-height: 70px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+}
+.remaining-amount-words:hover {
+    border-style: solid;
+    border-color: #3498db;
+    background: #f0f8ff;
+    box-shadow: 0 5px 20px rgba(52, 152, 219, 0.15);
+}
+#remaining-words-value {
+    width: 100%;
+    text-align: center;
+    font-size: 1.3rem;
+    font-weight: 600;
+    color: #2c3e50;
+    line-height: 1.6;
+    direction: rtl;
+    padding: 12px;
+}
+.remaining-words-loading {
+    color: #7f8c8d;
+    font-style: italic;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    font-size: 1.1rem;
+}
+.remaining-words-loading i {
+    color: #3498db;
+    animation: spin 1.5s linear infinite;
+}
+.remaining-words-error {
+    color: #e74c3c;
+    font-size: 1.1rem;
+    padding: 15px;
+    background: #fff5f5;
+    border-radius: 10px;
+    border: 1px solid #ffcdd2;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+}
+.remaining-words-zero {
+    color: #3498db;
+    font-weight: 700;
+    background: #f0f8ff;
+    padding: 15px 25px;
+    border-radius: 12px;
+    border: 2px solid #d6eaff;
+    font-size: 1.2rem;
+}
+.remaining-words-currency {
+    font-size: 1rem;
+    color: #3498db;
+    font-weight: 600;
+    margin: 0 5px;
+}
+.remaining-amount-actions {
+    display: flex;
+    justify-content: center;
+    margin-top: 25px;
+}
+.refresh-remaining-words-btn {
+    background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
+    color: white;
+    border: none;
+    border-radius: 12px;
+    padding: 15px 30px;
+    font-weight: 600;
+    font-size: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 5px 20px rgba(52, 152, 219, 0.25);
+}
+.refresh-remaining-words-btn:hover {
+    background: linear-gradient(135deg, #2980b9 0%, #3498db 100%);
+    transform: translateY(-5px);
+    box-shadow: 0 10px 30px rgba(52, 152, 219, 0.35);
+}
+.refresh-remaining-words-btn:active {
+    transform: translateY(-2px);
+}
+.remaining-amount-footer {
+    background: rgba(52, 152, 219, 0.1);
+    padding: 15px 25px;
+    text-align: center;
+    color: #3498db;
+    font-size: 0.9rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    border-top: 1px solid rgba(52, 152, 219, 0.2);
+}
+
+.item-total {
+    background: linear-gradient(135deg, #e6f2ff 0%, #d6eaff 100%);
+    font-weight: 700;
+    color: #3498db;
+    border: 2px solid #d6eaff !important;
+}
+
+@keyframes highlight {
+    0% { background-color: #d6eaff; }
+    100% { background-color: #e6f2ff; }
+}
+.auto-updated {
+    background-color: #e6f2ff !important;
+    border-color: #3498db !important;
+    animation: highlight 2s ease;
+}
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* تحسينات للشاشات الصغيرة */
+@media (max-width: 768px) {
+    .financial-content {
+        flex-direction: column;
+    }
+    .financial-image {
+        width: 100%;
+        order: -1;
+    }
+    .financial-grid {
+        grid-template-columns: 1fr;
+    }
+    #paid-amount {
+        width: 170px !important;
+        font-size: 1.2rem;
+        padding: 14px 16px;
+    }
+    .amount-value {
+        font-size: 2.2rem;
+    }
+    #remaining-words-value {
+        font-size: 1.1rem;
+    }
+    .remaining-amount-header {
+        padding: 15px 20px;
+        font-size: 1.1rem;
+    }
+    .remaining-amount-body {
+        padding: 22px;
+    }
+}
+/* ============================================ */
+
+/* ============================================
+   [CSS-09] التحسينات والتجاوب مع الشاشات
+   ============================================ */
+.delete-btn {
+    background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    padding: 8px 12px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-size: 0.85rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    margin: 0 auto;
+}
+.delete-btn:hover {
+    transform: scale(1.1);
+    box-shadow: 0 5px 15px rgba(231, 76, 60, 0.4);
+}
+@media (max-width: 1400px) {
+    .barcode-fields-list {
+        grid-template-columns: repeat(4, 1fr);
+    }
+}
+@media (max-width: 1200px) {
+    .barcode-fields-list {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
+@media (max-width: 992px) {
+    .items-table thead th,
+    .items-table tbody td {
+        padding: 10px 5px;
+        font-size: 0.85rem;
+    }
+    .image-preview {
+        width: 50px;
+        height: 50px;
+    }
+    .barcode-fields-list {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+@media (max-width: 768px) {
+    .items-table thead th,
+    .items-table tbody td {
+        padding: 8px 4px;
+        font-size: 0.8rem;
+    }
+    .product-search-input {
+        font-size: 0.8rem;
+        padding: 8px 30px 8px 10px;
+    }
+    .items-header {
+        flex-direction: column;
+        gap: 12px;
+        align-items: stretch;
+    }
+    .items-controls {
+        justify-content: space-between;
+    }
+    .barcode-fields-list {
+        grid-template-columns: 1fr;
+    }
+    .remaining-amount {
+        flex-direction: column;
+        align-items: flex-start !important;
+        gap: 12px;
+    }
+    .remaining-amount .financial-value {
+        margin-left: 0 !important;
+    }
+    .financial-content {
+        flex-direction: column;
+    }
+    .financial-image {
+        width: 100%;
+        order: -1;
+    }
+    .financial-grid {
+        grid-template-columns: 1fr;
+    }
+    .remaining-amount-in-words {
+        flex-direction: column;
+        gap: 12px;
+    }
+    .remaining-words-label {
+        width: 100%;
+        justify-content: center;
+    }
+    .remaining-words-value {
+        text-align: center;
+        font-size: 1rem;
+        justify-content: center;
+    }
+    .refresh-remaining-words-btn {
+        align-self: center;
+    }
+}
+@media (max-width: 576px) {
+    .items-table thead th:nth-child(6),
+    .items-table tbody td:nth-child(6),
+    .items-table thead th:nth-child(7),
+    .items-table tbody td:nth-child(7) {
+        display: none;
+    }
+}
+/* ============================================ */
+
+/* ============================================
+   [CSS-10] الحقول المخفية والإصلاحات
+   ============================================ */
+.item-name-field,
+.product-search-value,
+.product-image-url-field,
+.auto-image-field {
+    display: none !important;
+}
+.table-toolbar {
+    display: none;
+}
+/* إخفاء Checkbox الحذف التلقائي من Django */
+.delete-checkbox {
+    display: none !important;
+}
+/* ============================================ */
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- ============================================
+       [HTML-01] نموذج فاتورة البيع الرئيسي
+       ============================================ -->
+    <form method="post" enctype="multipart/form-data" id="sale-form">
+        {% csrf_token %}
+        
+        <!-- معلومات الفاتورة الأساسية -->
+        <div class="card mb-4">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <div class="d-flex align-items-center">
+                    <i class="fas fa-edit me-2"></i>
+                    <h5 class="mb-0">تعديل فاتورة البيع: {{ sale.uniqueId }}</h5>
+                </div>
+                <div class="header-actions">
+                    <a href="{% url 'invoice:sale_detail' sale.slug %}" class="btn btn-secondary btn-sm">
+                        <i class="fas fa-arrow-right me-1"></i>رجوع للتفاصيل
+                    </a>
+                </div>
+            </div>
+            <div class="card-body invoice-basic-info">
+                <!-- السطر الأول: معلومات العميل الأساسية -->
+                <div class="row mb-3">
+                    <!-- حقل العميل مع البحث التلقائي -->
+                    <div class="col-md-3">
+                        <label class="form-label required-field">
+                            <i class="fas fa-user"></i>العميل
+                        </label>
+                        <div class="supplier-input-wrapper">
+                            <div class="supplier-search-container">
+                                <input type="text" 
+                                    class="form-control supplier-search-input" 
+                                    id="customer-search" 
+                                    placeholder="ابحث عن العميل بالاسم..."
+                                    autocomplete="off"
+                                    name="customer_search"
+                                    value="{{ sale.sale_customer.username|default:'' }}">
+                                <div class="autocomplete-dropdown" id="customer-results"></div>
+                            </div>
+                        </div>
+                        {{ form.sale_customer }}
+                    </div>
+
+                    <!-- هاتف العميل -->
+                    <div class="col-md-2">
+                        <label class="form-label">
+                            <i class="fas fa-phone"></i>هاتف العميل
+                        </label>
+                        {{ form.sale_customer_phone }}
+                    </div>
+
+                    <!-- عنوان العميل -->
+                    <div class="col-md-3">
+                        <label class="form-label">
+                            <i class="fas fa-map-marker-alt"></i>عنوان العميل
+                        </label>
+                        {{ form.sale_address }}
+                    </div>
+
+                    <!-- رقم فاتورة البيع -->
+                    <div class="col-md-2">
+                        <label class="form-label">
+                            <i class="fas fa-file-invoice"></i>رقم الفاتورة
+                        </label>
+                        {{ form.sale_invoice_number }}
+                    </div>
+
+                    <!-- تاريخ فاتورة البيع -->
+                    <div class="col-md-2">
+                        <label class="form-label">
+                            <i class="fas fa-calendar-alt"></i>تاريخ الفاتورة
+                        </label>
+                        {{ form.sale_date }}
+                    </div>
+                </div>
+
+                <!-- السطر الثاني: معلومات الدفع والشحن -->
+                <div class="row mb-3">
+                    <!-- حالة الفاتورة -->
+                    <div class="col-md-3">
+                        <label class="form-label">
+                            <i class="fas fa-tasks"></i>حالة الفاتورة
+                        </label>
+                        {{ form.sale_status }}
+                    </div>
+
+                    <!-- العملة -->
+                    <div class="col-md-3">
+                        <label class="form-label">
+                            <i class="fas fa-money-bill-wave"></i>العملة
+                        </label>
+                        {{ form.sale_currency }}
+                    </div>
+
+                    <!-- طريقة الدفع -->
+                    <div class="col-md-3">
+                        <label class="form-label">
+                            <i class="fas fa-credit-card"></i>طريقة الدفع
+                        </label>
+                        {{ form.sale_payment_method }}
+                    </div>
+
+                    <!-- شركة الشحن -->
+                    <div class="col-md-3">
+                        <label class="form-label">
+                            <i class="fas fa-shipping-fast"></i>شركة الشحن
+                        </label>
+                        {{ form.sale_shipping_company }}
+                    </div>
+                </div>
+
+                <!-- السطر الثالث: الملاحظات ورقم الشحنة -->
+                <div class="row mb-3">
+                    <!-- الملاحظات -->
+                    <div class="col-12" id="notes-col">
+                        <label class="form-label">
+                            <i class="fas fa-sticky-note"></i>ملاحظات الفاتورة 
+                        </label>
+                        {{ form.sale_notes }}
+                    </div>
+
+                    <!-- رقم الشحنة (يظهر فقط عند اختيار شركة شحن) -->
+                    <div class="col-md-3 shipping-number-container d-none" id="shipping-num-col">
+                        <label class="form-label">
+                            <i class="fas fa-barcode"></i>رقم الشحنة
+                        </label>
+                        {{ form.sale_shipping_num }}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ============================================
+           [HTML-03] قسم بنود الفاتورة - محسّن
+           ============================================ -->
+        <div class="items-section">
+            <div class="items-header">
+                <h5><i class="fas fa-list"></i>بنود الفاتورة</h5>
+                <div class="items-controls">
+                    <!-- عداد البنود -->
+                    <div class="items-count-container">
+                        <label for="items-count">عدد البنود:</label>
+                        <input type="number" id="items-count" class="form-control" min="1" max="50" value="{{ formset.total_form_count }}">
+                    </div>
+                    <!-- زر تبديل عرض الباركودات -->
+                    <button type="button" class="btn btn-warning btn-sm" id="toggle-barcodes-btn">
+                        <i class="fas fa-eye me-1"></i>إظهار الباركودات
+                    </button>
+                </div>
+            </div>
+            
+            <!-- إدارة الفورم سيت -->
+            {{ formset.management_form }}
+            
+            <!-- جدول البنود -->
+            <div class="items-table-container">
+                <div class="table-responsive">
+                    <table class="items-table">
+                        <thead>
+                            <tr>
+                                <th width="4%">#</th>
+                                <th width="28%">المادة</th>
+                                <th width="10%">الكمية</th>
+                                <th width="12%">السعر</th>
+                                <th width="12%">الإجمالي</th>
+                                <th width="18%">ملاحظات</th>
+                                <th width="8%">صورة</th>
+                                <th width="8%">إجراءات</th>
+                            </tr>
+                        </thead>
+                        <tbody id="items-tbody">
+                            <!-- بنود الفاتورة الحالية -->
+                            {% for form in formset %}
+                            <tr class="item-row" data-item-index="{{ forloop.counter0 }}">
+                                <td class="text-center fw-bold">{{ forloop.counter }}</td>
+                                <td>
+                                    <!-- الحقول المخفية -->
+                                    {% for hidden in form.hidden_fields %}
+                                        {{ hidden }}
+                                    {% endfor %}
+                                    
+                                    <!-- حقل اسم المادة المخفي -->
+                                    <input type="hidden" name="items-{{ forloop.counter0 }}-item_name" 
+                                           class="item-name-field" 
+                                           value="{% if form.item_name.value %}{{ form.item_name.value }}{% endif %}">
+                                    
+                                    <!-- حقل البحث عن المنتج المخفي -->
+                                    <input type="hidden" name="items-{{ forloop.counter0 }}-product_search" 
+                                           class="product-search-value"
+                                           value="{% if form.product.value %}{{ form.instance.product.product_name }}{% elif form.item_name.value %}{{ form.item_name.value }}{% endif %}">
+                                    
+                                    <!-- الحقول المخفية الجديدة للصور -->
+                                    <input type="hidden" name="items-{{ forloop.counter0 }}-product_image_url" 
+                                           class="product-image-url-field" value="">
+                                    <input type="hidden" name="items-{{ forloop.counter0 }}-is_auto_image" 
+                                           class="auto-image-field" value="">
+                                    
+                                    <!-- واجهة البحث عن المنتج -->
+                                    <div class="product-search-container">
+                                        <input type="text" class="form-control product-search-input" 
+                                               placeholder="ابحث عن المادة بالاسم أو الباركود..." 
+                                               value="{% if form.product.value %}{{ form.instance.product.product_name }}{% elif form.item_name.value %}{{ form.item_name.value }}{% endif %}"
+                                               autocomplete="off">
+                                        <div class="autocomplete-dropdown product-results"></div>
+                                    </div>
+                                    {{ form.product }}
+                                    
+                                    <!-- === نظام اختيار نوع البيع المحسّن === -->
+                                    <div class="sale-type-selector mt-2">
+                                        <div class="btn-group btn-group-sm" role="group" style="direction: ltr;">
+                                            <input type="radio" class="btn-check" name="items-{{ forloop.counter0 }}-sale_type" 
+                                                   id="items-{{ forloop.counter0 }}-sale_type_barcode" value="barcode" 
+                                                   {% if form.instance.quantity_with_barcode > 0 and form.instance.quantity_without_barcode == 0 %}checked{% endif %}>
+                                            <label class="btn btn-outline-primary" for="items-{{ forloop.counter0 }}-sale_type_barcode">
+                                                <i class="fas fa-barcode me-1"></i>بباركود
+                                            </label>
+                                            
+                                            <input type="radio" class="btn-check" name="items-{{ forloop.counter0 }}-sale_type" 
+                                                   id="items-{{ forloop.counter0 }}-sale_type_none" value="none"
+                                                   {% if form.instance.quantity_with_barcode == 0 and form.instance.quantity_without_barcode > 0 %}checked{% endif %}>
+                                            <label class="btn btn-outline-primary" for="items-{{ forloop.counter0 }}-sale_type_none">
+                                                <i class="fas fa-times me-1"></i>بدون باركود
+                                            </label>
+                                            
+                                            <input type="radio" class="btn-check" name="items-{{ forloop.counter0 }}-sale_type" 
+                                                   id="items-{{ forloop.counter0 }}-sale_type_mixed" value="mixed"
+                                                   {% if form.instance.quantity_with_barcode > 0 and form.instance.quantity_without_barcode > 0 %}checked{% endif %}>
+                                            <label class="btn btn-outline-primary" for="items-{{ forloop.counter0 }}-sale_type_mixed">
+                                                <i class="fas fa-random me-1"></i>مختلط
+                                            </label>
+                                        </div>
+                                        
+                                        <!-- عرض معلومات المخزون -->
+                                        <div class="stock-info mt-2 small text-muted" 
+                                             id="stock-info-{{ forloop.counter0 }}" 
+                                             style="display: none;">
+                                            <i class="fas fa-box me-1"></i>
+                                            <span class="barcoded-stock">0</span> مع باركود | 
+                                            <span class="non-barcoded-stock">0</span> بدون باركود
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    {{ form.sold_quantity }}
+                                    <!-- حقول الكميات المنفصلة المخفية -->
+                                    {{ form.quantity_with_barcode }}
+                                    {{ form.quantity_without_barcode }}
+                                </td>
+                                <td>
+                                    {{ form.unit_price }}
+                                </td>
+                                <td>
+                                    <input type="text" class="form-control item-total" readonly value="{{ form.instance.sale_total|default:'0.00' }}">
+                                </td>
+                                <td>
+                                    {{ form.notes }}
+                                </td>
+                                <td class="text-center">
+                                    <!-- معاينة صورة المادة -->
+                                    <div class="image-input-container">
+                                        <div id="product-image-preview-container-{{ forloop.counter0 }}" class="image-preview" title="انقر لاختيار صورة المادة">
+                                            {% if form.instance.sale_item_image %}
+                                                <img src="{{ form.instance.sale_item_image.url }}" alt="{{ form.instance.item_name }}">
+                                            {% else %}
+                                                <i class="fas fa-camera"></i>
+                                            {% endif %}
+                                        </div>
+                                        <!-- حقل رفع صورة المادة -->
+                                        <input type="file" name="items-{{ forloop.counter0 }}-sale_item_image" class="hidden-file-input" accept="image/*" id="id_items-{{ forloop.counter0 }}-sale_item_image">
+                                    </div>
+                                </td>
+                                <td class="text-center">
+                                    <!-- إخفاء Checkbox الحذف التلقائي -->
+                                    <div style="display: none;">
+                                        {{ form.DELETE }}
+                                    </div>
+                                    <!-- زر حذف البند -->
+                                    <button type="button" class="delete-btn" title="حذف البند">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </td>
+                            </tr>
+                            <!-- صف الباركود الخاص بهذا البند -->
+                            <tr class="barcode-row" data-item-index="{{ forloop.counter0 }}" style="display: none;">
+                                <td colspan="8">
+                                    <div class="barcode-field-container">
+                                        <!-- شريط التحكم -->
+                                        <div class="barcode-controls mb-3">
+                                            <div class="form-check form-check-inline">
+                                                <input class="form-check-input" type="checkbox" 
+                                                       id="auto-fill-barcodes-{{ forloop.counter0 }}"
+                                                       data-item-index="{{ forloop.counter0 }}">
+                                                <label class="form-check-label small" for="auto-fill-barcodes-{{ forloop.counter0 }}">
+                                                    تعبئة الباركودات تلقائياً من المخزون
+                                                </label>
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="barcode-fields-list">
+                                            <!-- جلب الباركودات الحالية لهذا البند -->
+                                            {% if form.instance.pk %}
+                                                {% for barcode_link in form.instance.item_barcodes.all %}
+                                                <div class="barcode-item">
+                                                    <div class="barcode-buttons">
+                                                        <button type="button" class="barcode-remove-btn" 
+                                                                data-barcode-index="{{ forloop.counter0 }}" data-item-index="{{ forloop.parentloop.counter0 }}" title="حذف الباركود">
+                                                            <i class="fas fa-times"></i>
+                                                        </button>
+                                                    </div>
+                                                    <input type="text" class="barcode-input" 
+                                                           placeholder="باركود {{ forloop.counter0|add:1 }}" 
+                                                           value="{{ barcode_link.barcode.barcode_in }}"
+                                                           data-barcode-index="{{ forloop.counter0 }}"
+                                                           data-item-index="{{ forloop.parentloop.counter0 }}"
+                                                           readonly>
+                                                </div>
+                                                {% endfor %}
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            
+            <!-- زر إضافة بند جديد -->
+            <div class="table-footer-actions">
+                <button type="button" class="btn btn-success" id="add-single-item">
+                    <i class="fas fa-plus-circle me-1"></i>إضافة بند جديد
+                </button>
+            </div>
+        </div>
+
+        <!-- ============================================
+           [HTML-04] القسم المالي - محسّن
+           ============================================ -->
+        <div class="card mb-4">
+            <div class="card-header d-flex align-items-center">
+                <i class="fas fa-calculator me-2"></i>
+                <h5 class="mb-0">القسم المالي</h5>
+            </div>
+            <div class="card-body">
+                <div class="financial-content">
+                    <!-- قسم صورة الفاتورة -->
+                    <div class="financial-image">
+                        <label class="form-label">
+                            <i class="fas fa-image"></i>صورة الفاتورة
+                        </label>
+                        <div class="d-flex flex-column align-items-center gap-3">
+                            <!-- معاينة صورة الفاتورة -->
+                            <div class="image-input-container">
+                                <div id="invoice-image-preview-container" class="invoice-image-preview" title="انقر لاختيار صورة الفاتورة">
+                                    {% if sale.sale_image %}
+                                        <img src="{{ sale.sale_image.url }}" alt="صورة الفاتورة">
+                                    {% else %}
+                                        <div class="text-center">
+                                            <i class="fas fa-camera mb-2 d-block" style="font-size: 28px;"></i>
+                                            <small>صورة الفاتورة</small>
+                                        </div>
+                                    {% endif %}
+                                </div>
+                                {{ form.sale_image }}
+                            </div>
+                            <div class="text-muted small text-center">
+                                <p class="mb-1">انقر على الصورة لتحميل صورة الفاتورة</p>
+                                <p class="mb-0">يُفضل صورة واضحة للفاتورة</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- قسم الحسابات المالية -->
+                    <div class="financial-calculations">
+                        <div class="financial-section">
+                            <!-- عرض رصيد الصندوق الحالي -->
+                            <div class="cash-balance-info mb-3">
+                                <div class="alert alert-info d-flex align-items-center">
+                                    <i class="fas fa-wallet me-2"></i>
+                                    <div>
+                                        <strong>رصيد الصندوق الحالي:</strong>
+                                        <span id="current-cash-balance" class="ms-2">0.00</span>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- شبكة الحسابات المالية -->
+                            <div class="financial-grid">
+                                <!-- العمود الأول: الإجمالي والضرائب -->
+                                <div class="financial-column">
+                                    <!-- إجمالي البنود -->
+                                    <div class="financial-row">
+                                        <span class="financial-label">
+                                            <i class="fas fa-receipt"></i>إجمالي البنود:
+                                        </span>
+                                        <span class="financial-value" id="subtotal-amount">{{ sale.sale_subtotal|default:'0.00' }}</span>
+                                    </div>
+                                    
+                                    <!-- نسبة الضريبة -->
+                                    <div class="financial-row">
+                                        <span class="financial-label">
+                                            <i class="fas fa-percentage"></i>الضريبة %:
+                                        </span>
+                                        <input type="number" class="form-control" id="tax-percentage" name="sale_tax_percentage" value="{{ form.sale_tax_percentage.value|default:'0' }}" min="0" max="100" step="0.01" style="width: 100px;">
+                                    </div>
+                                    
+                                    <!-- قيمة الضريبة -->
+                                    <div class="financial-row">
+                                        <span class="financial-label">
+                                            <i class="fas fa-money-bill-wave"></i>قيمة الضريبة:
+                                        </span>
+                                        <span class="financial-value" id="tax-amount">{{ sale.sale_tax_amount|default:'0.00' }}</span>
+                                    </div>
+                                </div>
+                                
+                                <!-- العمود الثاني: الإضافات والخصومات -->
+                                <div class="financial-column">
+                                    <!-- الإضافة -->
+                                    <div class="financial-row">
+                                        <span class="financial-label">
+                                            <i class="fas fa-plus-circle"></i>الإضافة:
+                                        </span>
+                                        <input type="number" class="form-control" id="invoice-addition" name="sale_addition" value="{{ form.sale_addition.value|default:'0' }}" min="0" step="0.01" style="width: 100px;">
+                                    </div>
+
+                                    <!-- الخصم -->
+                                    <div class="financial-row">
+                                        <span class="financial-label">
+                                            <i class="fas fa-minus-circle"></i>الخصم:
+                                        </span>
+                                        <input type="number" class="form-control" id="invoice-discount" name="sale_discount" value="{{ form.sale_discount.value|default:'0' }}" min="0" step="0.01" style="width: 100px;">
+                                    </div>
+
+                                    <!-- === حقل المبلغ المدفوع - مكبر === -->
+                                    <div class="paid-amount-container" id="paid-amount-container">
+                                        <div class="financial-row">
+                                            <span class="financial-label">
+                                                <i class="fas fa-hand-holding-usd"></i>المبلغ المدفوع:
+                                            </span>
+                                           <input type="number" 
+                                            class="form-control" 
+                                            id="paid-amount" 
+                                            name="paid_amount" 
+                                            value="{{ form.paid_amount.value|default:'0' }}" 
+                                            min="0" 
+                                            step="0.01">
+                                        </div>
+                                        <!-- تحذير إذا تجاوز المبلغ المدفوع رصيد الصندوق -->
+                                        <div class="alert alert-warning mt-2 d-none" id="cash-balance-warning">
+                                            <i class="fas fa-exclamation-triangle me-2"></i>
+                                            المبلغ المدفوع يتجاوز رصيد الصندوق الحالي
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- الإجمالي العام -->
+                                <div class="financial-row grand-total">
+                                    <span class="financial-label">
+                                        <i class="fas fa-file-invoice-dollar"></i>الإجمالي العام:
+                                    </span>
+                                    <span class="financial-value" id="grand-total">{{ sale.sale_final_total|default:'0.00' }}</span>
+                                </div>
+                                
+                                <!-- المبلغ المتبقي -->
+                                <div class="financial-row remaining-amount">
+                                    <div class="financial-label">
+                                        <i class="fas fa-clock"></i>
+                                        <span>المبلغ المتبقي:</span>
+                                    </div>
+                                    <span class="financial-value" id="remaining-amount">{{ sale.balance_due|default:'0.00' }}</span>
+                                </div>
+                                
+                                <!-- المبلغ المتبقي كتابة -->
+                                <div class="remaining-amount-in-words-container">
+                                    <div class="remaining-amount-in-words">
+                                        <div class="remaining-words-label">
+                                            <i class="fas fa-font"></i>
+                                            <span>كتابة:</span>
+                                        </div>
+                                        <div class="remaining-words-value" id="remaining-words-value">
+                                            <div class="remaining-words-loading">
+                                                <i class="fas fa-spinner"></i>
+                                                <span>جاري التحويل...</span>
+                                            </div>
+                                        </div>
+                                        <button type="button" class="refresh-remaining-words-btn" id="refresh-remaining-words-btn" title="تحديث الكتابة">
+                                            <i class="fas fa-redo"></i>
+                                        </button>
+                                    </div>
+                                    <div class="mt-2 text-muted small text-center">
+                                        <i class="fas fa-info-circle me-1"></i>
+                                        سيتم تحديث الكتابة تلقائياً عند تغيير المبلغ
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ============================================
+           [HTML-05] أزرار الحفظ والإجراءات
+           ============================================ -->
+        <div class="d-flex gap-2 justify-content-start mt-3">
+            <button type="submit" class="btn btn-success btn-lg px-4">
+                <i class="fas fa-save me-1"></i>حفظ التغييرات
+            </button>
+            <a href="{% url 'invoice:sale_detail' sale.slug %}" class="btn btn-secondary btn-lg px-4">
+                <i class="fas fa-times me-1"></i>إلغاء
+            </a>
+        </div>
+    </form>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script nonce="{{ csp_nonce }}">
+// ============================================
+// [JS-01] البيانات العامة للتطبيق
+// ============================================
+window.barcodeData = {};          // تخزين بيانات الباركود لكل بند
+window.barcodesVisible = false;   // حالة عرض/إخفاء الباركودات
+window.productsCache = {};        // كاش للنتائج البحث عن المنتجات
+window.suppliersCache = {};       // كاش للنتائج البحث عن الموردين (نستخدمه للعملاء أيضاً)
+window.isPaymentMethodCash = false; // هل طريقة الدفع نقدية؟
+window.paidAmountModified = false;  // هل تم تعديل المبلغ المدفوع يدوياً؟
+window.initializationComplete = false; // هل اكتملت تهيئة الصفحة؟
+
+// قيمة المبلغ المدفوع الأصلية من الفاتورة
+window.originalPaidAmount = parseFloat('{{ form.paid_amount.value|default:"0" }}') || 0;
+
+// ============================================
+// [JS-02] دوال مساعدة عامة
+// ============================================
+
+/**
+ * جلب رصيد الصندوق الحالي
+ * @returns {Promise<number>} رصيد الصندوق
+ */
+function fetchCashBalance() {
+    return fetch('/invoice/get-cash-balance/')
+        .then(response => response.json())
+        .then(data => {
+            const cashBalanceElement = document.getElementById('current-cash-balance');
+            if (cashBalanceElement) {
+                cashBalanceElement.textContent = parseFloat(data.balance).toFixed(2);
+            }
+            return data.balance;
+        })
+        .catch(error => {
+            console.error('❌ خطأ في جلب رصيد الصندوق:', error);
+            return 0;
+        });
+}
+
+/**
+ * التحقق من رصيد الصندوق مقابل المبلغ المدفوع
+ * @param {string} paidAmount - المبلغ المدفوع
+ */
+function checkCashBalance(paidAmount) {
+    fetchCashBalance().then(cashBalance => {
+        const cashBalanceWarning = document.getElementById('cash-balance-warning');
+        if (parseFloat(paidAmount) > parseFloat(cashBalance)) {
+            cashBalanceWarning.classList.remove('d-none');
+        } else {
+            cashBalanceWarning.classList.add('d-none');
+        }
+    });
+}
+
+/**
+ * إعداد حدث طريقة الدفع
+ */
+function setupPaymentMethodEvent() {
+    console.log('⚙️ إعداد حدث طريقة الدفع...');
+    
+    const paymentMethodSelect = document.getElementById('id_sale_payment_method');
+    const paidAmountContainer = document.getElementById('paid-amount-container');
+    const paidAmountInput = document.getElementById('paid-amount');
+    
+    // تعيين قيمة المبلغ المدفوع من الفاتورة الأصلية
+    if (paidAmountInput) {
+        paidAmountInput.value = window.originalPaidAmount.toFixed(2);
+    }
+    
+    // جلب رصيد الصندوق عند تحميل الصفحة
+    fetchCashBalance();
+    
+    if (paymentMethodSelect && paidAmountContainer) {
+        checkPaymentMethod(paymentMethodSelect.value);
+        
+        paymentMethodSelect.addEventListener('change', function() {
+            console.log('🔄 تم تغيير طريقة الدفع إلى:', this.value);
+            checkPaymentMethod(this.value);
+            fetchCashBalance();
+        });
+    }
+    
+    if (paidAmountInput) {
+        paidAmountInput.addEventListener('input', function() {
+            window.paidAmountModified = true;
+            this.classList.remove('auto-updated');
+            checkCashBalance(this.value);
+            updateRemainingAmount();
+        });
+    }
+}
+
+/**
+ * التحقق من طريقة الدفع وتحديث الواجهة بناءً عليها
+ * @param {string} value - قيمة طريقة الدفع
+ */
+function checkPaymentMethod(value) {
+    console.log('🔍 التحقق من طريقة الدفع:', value);
+    
+    const paidAmountContainer = document.getElementById('paid-amount-container');
+    const paidAmountInput = document.getElementById('paid-amount');
+    
+    if (value) {
+        fetch(`/invoice/get-payment-method/${value}/`)
+            .then(response => response.json())
+            .then(data => {
+                console.log('📊 بيانات طريقة الدفع:', data);
+                
+                if (data.is_cash) {
+                    console.log('💰 طريقة الدفع نقداً - إظهار حقل المبلغ المدفوع');
+                    paidAmountContainer.classList.add('show');
+                    window.isPaymentMethodCash = true;
+                    
+                    // لا ننسخ الإجمالي تلقائياً في التعديل
+                    // فقط نعرض القيمة الأصلية للمبلغ المدفوع
+                } else {
+                    console.log('💳 طريقة الدفع أخرى - إخفاء حقل المبلغ المدفوع');
+                    paidAmountContainer.classList.remove('show');
+                    window.isPaymentMethodCash = false;
+                    paidAmountInput.value = window.originalPaidAmount.toFixed(2);
+                    paidAmountInput.classList.remove('auto-updated');
+                    window.paidAmountModified = false;
+                    updateRemainingAmount();
+                }
+            })
+            .catch(error => {
+                console.error('❌ خطأ في جلب بيانات طريقة الدفع:', error);
+                paidAmountContainer.classList.remove('show');
+                window.isPaymentMethodCash = false;
+                paidAmountInput.value = window.originalPaidAmount.toFixed(2);
+                paidAmountInput.classList.remove('auto-updated');
+                window.paidAmountModified = false;
+                updateRemainingAmount();
+            });
+    } else {
+        console.log('⚠️ لم يتم اختيار طريقة دفع');
+        paidAmountContainer.classList.remove('show');
+        window.isPaymentMethodCash = false;
+        paidAmountInput.value = window.originalPaidAmount.toFixed(2);
+        paidAmountInput.classList.remove('auto-updated');
+        window.paidAmountModified = false;
+        updateRemainingAmount();
+    }
+}
+
+/**
+ * تحديث قيمة المبلغ المتبقي
+ */
+function updateRemainingAmount() {
+    const grandTotalElement = document.getElementById('grand-total');
+    const paidAmountInput = document.getElementById('paid-amount');
+    const remainingAmountElement = document.getElementById('remaining-amount');
+    
+    if (grandTotalElement && paidAmountInput && remainingAmountElement) {
+        const grandTotalValue = parseFloat(grandTotalElement.textContent) || 0;
+        const paidAmountValue = parseFloat(paidAmountInput.value) || 0;
+        const remainingAmount = Math.max(0, grandTotalValue - paidAmountValue);
+        
+        remainingAmountElement.textContent = remainingAmount.toFixed(2);
+        
+        // إطلاق حدث لتحديث المحول الخاص بالمبلغ المتبقي
+        document.dispatchEvent(new Event('remainingAmountUpdated'));
+    }
+}
+
+/**
+ * إعداد حدث شركة الشحن لظهور حقل رقم الشحنة
+ */
+function setupShippingCompanyEvent() {
+    const shippingCompanySelect = document.getElementById('id_sale_shipping_company');
+    const shippingNumberCol = document.getElementById('shipping-num-col');
+    const notesCol = document.getElementById('notes-col');
+    
+    if (shippingCompanySelect && shippingNumberCol && notesCol) {
+        // التحقق من القيمة الحالية
+        if (shippingCompanySelect.value) {
+            shippingNumberCol.classList.remove('d-none');
+            shippingNumberCol.classList.add('col-md-3');
+            notesCol.classList.remove('col-12');
+            notesCol.classList.add('col-md-9');
+        } else {
+            shippingNumberCol.classList.add('d-none');
+            shippingNumberCol.classList.remove('col-md-3');
+            notesCol.classList.add('col-12');
+            notesCol.classList.remove('col-md-9');
+        }
+        
+        shippingCompanySelect.addEventListener('change', function() {
+            if (this.value) {
+                shippingNumberCol.classList.remove('d-none');
+                shippingNumberCol.classList.add('col-md-3');
+                notesCol.classList.remove('col-12');
+                notesCol.classList.add('col-md-9');
+            } else {
+                shippingNumberCol.classList.add('d-none');
+                shippingNumberCol.classList.remove('col-md-3');
+                notesCol.classList.add('col-12');
+                notesCol.classList.remove('col-md-9');
+            }
+        });
+    }
+}
+
+/**
+ * عرض رسالة نجاح
+ * @param {string} message - نص الرسالة
+ */
+function showSuccessMessage(message) {
+    const oldMessages = document.querySelectorAll('.success-message');
+    oldMessages.forEach(msg => msg.remove());
+    
+    const successMsg = document.createElement('div');
+    successMsg.className = 'success-message';
+    successMsg.innerHTML = `
+        <i class="fas fa-check-circle me-2"></i>
+        ${message}
+    `;
+    
+    const container = document.querySelector('.container-fluid');
+    container.insertBefore(successMsg, container.firstChild);
+    
+    setTimeout(() => {
+        successMsg.style.opacity = '0';
+        setTimeout(() => successMsg.remove(), 500);
+    }, 3000);
+}
+
+// ============================================
+// [JS-03] نظام تحويل المبلغ المتبقي إلى كلمات
+// ============================================
+let remainingAmountConverter = {
+    cache: {},
+    currentRemainingAmount: 0,
+    currentCurrencyId: null,
+    isLoading: false,
+    
+    init: function() {
+        console.log('🔤 تهيئة نظام تحويل المبلغ المتبقي إلى كلمات...');
+        this.updateFromPage();
+        this.setupEventListeners();
+        this.convert();
+    },
+    
+    updateFromPage: function() {
+        this.remainingElement = document.getElementById('remaining-amount');
+        this.currencySelect = document.getElementById('id_sale_currency');
+        this.displayElement = document.getElementById('remaining-words-value');
+        this.refreshBtn = document.getElementById('refresh-remaining-words-btn');
+        
+        if (this.remainingElement) {
+            const remainingText = this.remainingElement.textContent.replace(/,/g, '').trim();
+            this.currentRemainingAmount = parseFloat(remainingText) || 0;
+        }
+        
+        if (this.currencySelect) {
+            this.currentCurrencyId = this.currencySelect.value;
+        }
+        
+        console.log(`📊 المبلغ المتبقي الحالي: ${this.currentRemainingAmount}, العملة: ${this.currentCurrencyId}`);
+    },
+    
+    setupEventListeners: function() {
+        if (this.currencySelect) {
+            this.currencySelect.addEventListener('change', () => {
+                this.currentCurrencyId = this.currencySelect.value;
+                this.convert();
+            });
+        }
+        
+        if (this.refreshBtn) {
+            this.refreshBtn.addEventListener('click', () => {
+                this.convert();
+                showSuccessMessage('تم تحديث المبلغ المكتوب');
+            });
+        }
+        
+        document.addEventListener('financialCalculationsUpdated', () => {
+            this.updateFromPage();
+            this.convert();
+        });
+        
+        document.addEventListener('remainingAmountUpdated', () => {
+            this.updateFromPage();
+            this.convert();
+        });
+    },
+    
+    showLoading: function() {
+        if (!this.displayElement) return;
+        
+        this.displayElement.innerHTML = `
+            <div class="remaining-words-loading">
+                <i class="fas fa-spinner"></i>
+                <span>جاري التحويل...</span>
+            </div>
+        `;
+    },
+    
+    showAmountZero: function() {
+        if (!this.displayElement) return;
+        
+        this.displayElement.innerHTML = `
+            <div class="remaining-words-zero">
+                <i class="fas fa-check-circle me-1"></i>
+                <span>المبلغ المتبقي صفر</span>
+            </div>
+        `;
+    },
+    
+    showError: function(message) {
+        if (!this.displayElement) return;
+        
+        this.displayElement.innerHTML = `
+            <div class="remaining-words-error">
+                <i class="fas fa-exclamation-triangle"></i>
+                <span>${message}</span>
+            </div>
+        `;
+    },
+    
+    updateDisplay: function(data) {
+        if (!this.displayElement) return;
+        
+        const currencySymbol = data.currency?.symbol || 'ل.س';
+        
+        this.displayElement.innerHTML = `
+            <div>
+                ${data.amount_in_words}
+                <span class="remaining-words-currency">(${currencySymbol})</span>
+            </div>
+        `;
+        
+        console.log('✅ تم تحديث العرض بالمبلغ المتبقي المكتوب');
+    },
+    
+    convert: function() {
+        this.updateFromPage();
+        
+        if (!this.remainingElement || !this.displayElement) {
+            console.error('❌ عناصر العرض غير موجودة');
+            return;
+        }
+        
+        if (this.currentRemainingAmount <= 0) {
+            this.showAmountZero();
+            return;
+        }
+        
+        if (this.isLoading) {
+            console.log('⏳ النظام قيد التحميل، انتظر...');
+            return;
+        }
+        
+        const cacheKey = `${this.currentRemainingAmount.toFixed(2)}-${this.currentCurrencyId}`;
+        if (this.cache[cacheKey]) {
+            console.log('💾 استخدام البيانات من التخزين المؤقت');
+            this.updateDisplay(this.cache[cacheKey]);
+            return;
+        }
+        
+        this.isLoading = true;
+        this.showLoading();
+        
+        this.fetchAmountInWords(this.currentRemainingAmount, this.currentCurrencyId)
+            .then(response => {
+                if (response.success) {
+                    this.cache[cacheKey] = response;
+                    this.updateDisplay(response);
+                } else {
+                    throw new Error(response.error || 'حدث خطأ في التحويل');
+                }
+            })
+            .catch(error => {
+                console.error('❌ خطأ في التحويل:', error);
+                this.showError('تعذر تحويل المبلغ المتبقي إلى كلمات');
+            })
+            .finally(() => {
+                this.isLoading = false;
+            });
+    },
+    
+    fetchAmountInWords: async function(amount, currencyId) {
+        const url = `/invoice/api/convert-to-words/?amount=${amount}&currency_id=${currencyId || ''}`;
+        console.log(`🌐 جلب البيانات من: ${url}`);
+        
+        try {
+            const response = await fetch(url, {
+                headers: {
+                    'Accept': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            });
+            
+            if (!response.ok) {
+                throw new Error(`خطأ في الشبكة: ${response.status}`);
+            }
+            
+            return await response.json();
+        } catch (error) {
+            throw error;
+        }
+    }
+};
+
+// ============================================
+// [JS-04] التهيئة الرئيسية عند تحميل الصفحة
+// ============================================
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('🚀 بدء تهيئة صفحة تعديل فاتورة البيع...');
+    
+    // تهيئة جميع المكونات
+    initializeCustomerAutocomplete();
+    initializeAllItems();
+    setupGlobalEvents();
+    setupImagePreviews();
+    setupItemsCountInput();
+    setupBarcodeToggle();
+    setupFinancialCalculations();
+    updateFinancialCalculations();
+    setupShippingCompanyEvent();
+    setupPaymentMethodEvent();
+    setupMixedSaleSystem();
+    
+    // إخفاء جميع الباركودات في البداية
+    hideAllBarcodes();
+    
+    // تهيئة نظام تحويل المبالغ إلى كلمات
+    setTimeout(() => {
+        remainingAmountConverter.init();
+    }, 1500);
+    
+    setTimeout(function() {
+        updateItemsCountInput();
+        window.initializationComplete = true;
+        console.log('✅ اكتملت تهيئة الصفحة بنجاح');
+    }, 500);
+});
+
+// ============================================
+// [JS-05] نظام البحث التلقائي عن العملاء
+// ============================================
+function initializeCustomerAutocomplete() {
+    const searchInput = document.getElementById('customer-search');
+    const resultsContainer = document.getElementById('customer-results');
+    const customerHidden = document.getElementById('id_sale_customer');
+    const phoneInput = document.getElementById('id_sale_customer_phone');
+    const addressInput = document.getElementById('id_sale_address');
+
+    let searchTimeout;
+    let currentSearchQuery = '';
+
+    searchInput.addEventListener('input', function() {
+        clearTimeout(searchTimeout);
+        const query = this.value.trim();
+        currentSearchQuery = query;
+        
+        if (query.length < 2) {
+            resultsContainer.classList.remove('show');
+            return;
+        }
+
+        resultsContainer.innerHTML = '<div class="autocomplete-item"><i class="fas fa-spinner fa-spin me-2"></i>جاري البحث...</div>';
+        resultsContainer.classList.add('show');
+
+        searchTimeout = setTimeout(() => {
+            if (window.customersCache && window.customersCache[query]) {
+                displayCustomerResults(window.customersCache[query], query);
+                return;
+            }
+
+            fetch(`/invoice/search-suppliers/?q=${encodeURIComponent(query)}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (!window.customersCache) window.customersCache = {};
+                    window.customersCache[query] = data;
+                    displayCustomerResults(data, query);
+                })
+                .catch(error => {
+                    console.error('Error searching customers:', error);
+                    resultsContainer.innerHTML = '<div class="autocomplete-item text-danger"><i class="fas fa-exclamation-triangle me-2"></i>خطأ في البحث</div>';
+                });
+        }, 500);
+    });
+
+    function displayCustomerResults(data, query) {
+        if (query !== currentSearchQuery) return;
+        
+        resultsContainer.innerHTML = '';
+        
+        if (!data.results || data.results.length === 0) {
+            resultsContainer.innerHTML = '<div class="autocomplete-item text-muted"><i class="fas fa-search me-2"></i>لا توجد نتائج</div>';
+        } else {
+            data.results.forEach(customer => {
+                const item = document.createElement('div');
+                item.className = 'autocomplete-item';
+                item.innerHTML = `
+                    <div class="autocomplete-item-content">
+                        <div class="autocomplete-item-title">${customer.text}</div>
+                        <div class="autocomplete-item-details">
+                            ${customer.phone ? `<span class="autocomplete-item-price"><i class="fas fa-phone me-1"></i>${customer.phone}</span>` : ''}
+                            ${customer.address ? `<span class="autocomplete-item-stock"><i class="fas fa-map-marker-alt me-1"></i>${customer.address}</span>` : ''}
+                        </div>
+                    </div>
+                `;
+                item.dataset.id = customer.id;
+                item.dataset.phone = customer.phone || '';
+                item.dataset.address = customer.address || '';
+                
+                item.addEventListener('click', function() {
+                    customerHidden.value = this.dataset.id;
+                    if (phoneInput) phoneInput.value = this.dataset.phone;
+                    if (addressInput) addressInput.value = this.dataset.address;
+                    searchInput.value = customer.text;
+                    resultsContainer.classList.remove('show');
+                    
+                    if (phoneInput) phoneInput.classList.add('auto-updated');
+                    if (addressInput) addressInput.classList.add('auto-updated');
+                    setTimeout(() => {
+                        if (phoneInput) phoneInput.classList.remove('auto-updated');
+                        if (addressInput) addressInput.classList.remove('auto-updated');
+                    }, 2000);
+                    
+                    showSuccessMessage('تم اختيار العميل وملء بياناته تلقائياً');
+                });
+                
+                resultsContainer.appendChild(item);
+            });
+        }
+    }
+
+    document.addEventListener('click', function(e) {
+        if (!searchInput.contains(e.target) && !resultsContainer.contains(e.target)) {
+            resultsContainer.classList.remove('show');
+        }
+    });
+}
+
+// ============================================
+// [JS-06] نظام البحث التلقائي عن المنتجات
+// ============================================
+function initializeProductAutocomplete(productSearchInput, productHidden, priceInput, itemIndex) {
+    const resultsContainer = productSearchInput.parentNode.querySelector('.product-results');
+    const productSearchValue = productSearchInput.closest('.item-row').querySelector('.product-search-value');
+    const itemNameField = productSearchInput.closest('.item-row').querySelector('.item-name-field');
+    
+    let searchTimeout;
+    let currentSearchQuery = '';
+    let isProcessing = false;
+
+    productSearchInput.addEventListener('input', function() {
+        clearTimeout(searchTimeout);
+        const query = this.value.trim();
+        currentSearchQuery = query;
+        
+        if (productSearchValue) {
+            productSearchValue.value = query;
+        }
+        
+        if (itemNameField) {
+            itemNameField.value = query;
+        }
+        
+        if (query.length < 2) {
+            resultsContainer.classList.remove('show');
+            return;
+        }
+
+        if (isProcessing) return;
+        
+        resultsContainer.innerHTML = '<div class="autocomplete-item"><i class="fas fa-spinner fa-spin me-2"></i>جاري البحث عن المنتجات...</div>';
+        resultsContainer.classList.add('show');
+
+        searchTimeout = setTimeout(() => {
+            if (window.productsCache[query]) {
+                displayProductResults(window.productsCache[query], query, productSearchInput, productHidden, priceInput, itemIndex);
+                return;
+            }
+
+            isProcessing = true;
+            fetch(`/invoice/search-products/?q=${encodeURIComponent(query)}`)
+                .then(response => response.json())
+                .then(data => {
+                    window.productsCache[query] = data;
+                    displayProductResults(data, query, productSearchInput, productHidden, priceInput, itemIndex);
+                })
+                .catch(error => {
+                    console.error('Error searching products:', error);
+                    resultsContainer.innerHTML = '<div class="autocomplete-item text-danger"><i class="fas fa-exclamation-triangle me-2"></i>خطأ في البحث عن المنتجات</div>';
+                })
+                .finally(() => {
+                    isProcessing = false;
+                });
+        }, 400);
+    });
+
+    function displayProductResults(data, query, productSearchInput, productHidden, priceInput, itemIndex) {
+        if (query !== currentSearchQuery) return;
+        
+        const resultsContainer = productSearchInput.parentNode.querySelector('.product-results');
+        resultsContainer.innerHTML = '';
+        
+        if (!data.results || data.results.length === 0) {
+            resultsContainer.innerHTML = `
+                <div class="autocomplete-item text-muted">
+                    <i class="fas fa-search me-2"></i>
+                    <div class="autocomplete-item-content">
+                        <div class="autocomplete-item-title">لا توجد منتجات مطابقة</div>
+                    </div>
+                </div>
+            `;
+            return;
+        }
+            
+        data.results.forEach(product => {
+            const item = document.createElement('div');
+            item.className = 'autocomplete-item';
+            
+            let imageHtml = '';
+            if (product.image_url) {
+                imageHtml = `<img src="${product.image_url}" alt="${product.text}">`;
+            } else {
+                imageHtml = `<div class="bg-light d-flex align-items-center justify-content-center" style="width:50px;height:50px;border-radius:8px;">
+                               <i class="fas fa-box text-muted"></i>
+                             </div>`;
+            }
+            
+            let stockIndicator = '';
+            if (product.stock !== undefined) {
+                let stockClass = 'high';
+                let stockText = 'متوفر';
+                
+                if (product.stock <= 0) {
+                    stockClass = 'out';
+                    stockText = 'نفد المخزون';
+                } else if (product.stock < 10) {
+                    stockClass = 'low';
+                    stockText = 'مخزون منخفض';
+                } else if (product.stock < 50) {
+                    stockClass = 'medium';
+                    stockText = 'مخزون متوسط';
+                }
+                
+                stockIndicator = `<span class="stock-indicator ${stockClass}">${stockText}: ${product.stock}</span>`;
+            }
+            
+            let barcodeHtml = '';
+            if (product.barcode) {
+                barcodeHtml = `<span class="autocomplete-item-barcode"><i class="fas fa-barcode me-1"></i>${product.barcode}</span>`;
+            }
+            
+            item.innerHTML = `
+                ${imageHtml}
+                <div class="autocomplete-item-content">
+                    <div class="autocomplete-item-title">${product.text}</div>
+                    <div class="autocomplete-item-details">
+                        ${product.price ? `<span class="autocomplete-item-price"><i class="fas fa-tag me-1"></i>${product.price} ر.س</span>` : ''}
+                        ${stockIndicator}
+                        ${barcodeHtml}
+                    </div>
+                </div>
+            `;
+            
+            item.dataset.id = product.id;
+            item.dataset.price = product.price || '0';
+            item.dataset.text = product.text;
+            item.dataset.image = product.image_url || '';
+            item.dataset.barcode = product.barcode || '';
+            
+            item.addEventListener('click', function() {
+                const itemRow = productSearchInput.closest('.item-row');
+                const productId = this.dataset.id;
+                const productName = this.dataset.text;
+                
+                productHidden.value = productId;
+                console.log(`✅ تم ربط المنتج: ${productId} - ${productName}`);
+                
+                if (priceInput) {
+                    priceInput.value = this.dataset.price;
+                    priceInput.dispatchEvent(new Event('input', { bubbles: true }));
+                }
+                productSearchInput.value = productName;
+                
+                const productSearchValue = itemRow.querySelector('.product-search-value');
+                if (productSearchValue) {
+                    productSearchValue.value = productName;
+                }
+                
+                const itemNameField = itemRow.querySelector('.item-name-field');
+                if (itemNameField) {
+                    itemNameField.value = productName;
+                }
+                
+                resultsContainer.classList.remove('show');
+                
+                fetchProductStock(productId, itemIndex);
+                
+                const previewContainer = document.getElementById(`product-image-preview-container-${itemIndex}`);
+                if (previewContainer) {
+                    if (this.dataset.image) {
+                        previewContainer.innerHTML = `<img src="${this.dataset.image}" alt="${productName}">`;
+                        previewContainer.classList.add('has-image');
+                        
+                        let imageUrlField = itemRow.querySelector('.product-image-url-field');
+                        if (!imageUrlField) {
+                            imageUrlField = document.createElement('input');
+                            imageUrlField.type = 'hidden';
+                            imageUrlField.className = 'product-image-url-field';
+                            imageUrlField.name = `items-${itemIndex}-product_image_url`;
+                            itemRow.appendChild(imageUrlField);
+                        }
+                        imageUrlField.value = this.dataset.image;
+                        
+                        let autoImageField = itemRow.querySelector('.auto-image-field');
+                        if (!autoImageField) {
+                            autoImageField = document.createElement('input');
+                            autoImageField.type = 'hidden';
+                            autoImageField.className = 'auto-image-field';
+                            autoImageField.name = `items-${itemIndex}-is_auto_image`;
+                            autoImageField.value = 'true';
+                            itemRow.appendChild(autoImageField);
+                        }
+
+                        createFileFromImageUrl(this.dataset.image, productName, itemIndex).catch(error => {
+                            console.error(`❌ خطأ في إنشاء ملف الصورة: ${error}`);
+                        });
+
+                    } else {
+                        previewContainer.innerHTML = '<i class="fas fa-camera"></i>';
+                        previewContainer.classList.remove('has-image');
+                        
+                        const imageUrlField = itemRow.querySelector('.product-image-url-field');
+                        const autoImageField = itemRow.querySelector('.auto-image-field');
+                        if (imageUrlField) imageUrlField.remove();
+                        if (autoImageField) autoImageField.remove();
+                    }
+                }
+                
+                updateItemCalculations(itemRow);
+                showSuccessMessage('تم إضافة المنتج بنجاح');
+            });
+            
+            resultsContainer.appendChild(item);
+        });
+    }
+
+    document.addEventListener('click', function(e) {
+        if (!productSearchInput.contains(e.target) && !resultsContainer.contains(e.target)) {
+            resultsContainer.classList.remove('show');
+        }
+    });
+}
+
+/**
+ * إنشاء ملف من رابط الصورة وحفظه في حقل الملف
+ */
+async function createFileFromImageUrl(imageUrl, productName, itemIndex) {
+    try {
+        console.log(`🖼️ محاولة تحميل الصورة من: ${imageUrl}`);
+        
+        const response = await fetch(imageUrl);
+        if (!response.ok) {
+            throw new Error(`فشل تحميل الصورة: ${response.status}`);
+        }
+        
+        const blob = await response.blob();
+        console.log(`✅ تم تحميل الصورة بنجاح، الحجم: ${blob.size} bytes`);
+        
+        let fileExtension = 'jpg';
+        const urlParts = imageUrl.split('.');
+        if (urlParts.length > 1) {
+            const ext = urlParts.pop().toLowerCase();
+            if (['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(ext)) {
+                fileExtension = ext;
+            }
+        }
+        
+        const fileName = `product_${productName.replace(/[^a-zA-Z0-9]/g, '_')}.${fileExtension}`;
+        const file = new File([blob], fileName, { type: blob.type });
+        console.log(`📁 تم إنشاء الملف: ${fileName}, النوع: ${file.type}`);
+        
+        const fileInput = document.getElementById(`id_items-${itemIndex}-sale_item_image`);
+        if (fileInput) {
+            const dataTransfer = new DataTransfer();
+            dataTransfer.items.add(file);
+            fileInput.files = dataTransfer.files;
+            fileInput.dispatchEvent(new Event('change', { bubbles: true }));
+            console.log(`✅ تم تعيين الملف في حقل الإدخال للبند ${itemIndex}`);
+        }
+    } catch (error) {
+        console.error(`❌ خطأ في تحميل الصورة التلقائية: ${error}`);
+    }
+}
+
+// ============================================
+// [JS-07] نظام إدارة بنود الفاتورة
+// ============================================
+function addNewItem() {
+    const tbody = document.getElementById('items-tbody');
+    const totalForms = document.getElementById('id_items-TOTAL_FORMS');
+    const formNum = parseInt(totalForms.value);
+    
+    const newRow = document.createElement('tr');
+    newRow.className = 'item-row';
+    newRow.setAttribute('data-item-index', formNum);
+    
+    newRow.innerHTML = `
+        <td class="text-center fw-bold">${formNum + 1}</td>
+        <td>
+            <input type="hidden" name="items-${formNum}-id" id="id_items-${formNum}-id">
+            <input type="hidden" name="items-${formNum}-sale" id="id_items-${formNum}-sale">
+            
+            <input type="hidden" name="items-${formNum}-item_name" class="item-name-field" value="">
+            
+            <input type="hidden" name="items-${formNum}-product_search" class="product-search-value" value="">
+            
+            <input type="hidden" name="items-${formNum}-product_image_url" class="product-image-url-field" value="">
+            <input type="hidden" name="items-${formNum}-is_auto_image" class="auto-image-field" value="">
+            
+            <div class="product-search-container">
+                <input type="text" class="form-control product-search-input" 
+                       placeholder="ابحث عن المادة بالاسم أو الباركود..." 
+                       autocomplete="off">
+                <div class="autocomplete-dropdown product-results"></div>
+            </div>
+            <input type="hidden" name="items-${formNum}-product" id="id_items-${formNum}-product">
+            
+            <div class="sale-type-selector mt-2">
+                <div class="btn-group btn-group-sm" role="group" style="direction: ltr;">
+                    <input type="radio" class="btn-check" name="items-${formNum}-sale_type" 
+                           id="items-${formNum}-sale_type_barcode" value="barcode" checked>
+                    <label class="btn btn-outline-primary" for="items-${formNum}-sale_type_barcode">
+                        <i class="fas fa-barcode me-1"></i>بباركود
+                    </label>
+                    
+                    <input type="radio" class="btn-check" name="items-${formNum}-sale_type" 
+                           id="items-${formNum}-sale_type_none" value="none">
+                    <label class="btn btn-outline-primary" for="items-${formNum}-sale_type_none">
+                        <i class="fas fa-times me-1"></i>بدون باركود
+                    </label>
+                    
+                    <input type="radio" class="btn-check" name="items-${formNum}-sale_type" 
+                           id="items-${formNum}-sale_type_mixed" value="mixed">
+                    <label class="btn btn-outline-primary" for="items-${formNum}-sale_type_mixed">
+                        <i class="fas fa-random me-1"></i>مختلط
+                    </label>
+                </div>
+                
+                <div class="stock-info mt-2 small text-muted" 
+                     id="stock-info-${formNum}" 
+                     style="display: none;">
+                    <i class="fas fa-box me-1"></i>
+                    <span class="barcoded-stock">0</span> مع باركود | 
+                    <span class="non-barcoded-stock">0</span> بدون باركود
+                </div>
+            </div>
+        </td>
+        <td>
+            <input type="number" name="items-${formNum}-sold_quantity" value="1" step="0.01" min="0.01" class="form-control" id="id_items-${formNum}-sold_quantity">
+            <input type="hidden" name="items-${formNum}-quantity_with_barcode" value="0">
+            <input type="hidden" name="items-${formNum}-quantity_without_barcode" value="0">
+        </td>
+        <td>
+            <input type="number" name="items-${formNum}-unit_price" value="0" step="0.01" min="0" class="form-control" id="id_items-${formNum}-unit_price">
+        </td>
+        <td>
+            <input type="text" class="form-control item-total" readonly value="0.00">
+        </td>
+        <td>
+            <input type="text" name="items-${formNum}-notes" class="form-control" id="id_items-${formNum}-notes">
+        </td>
+        <td class="text-center">
+            <div class="image-input-container">
+                <div id="product-image-preview-container-${formNum}" class="image-preview" title="انقر لاختيار صورة المادة">
+                    <i class="fas fa-camera"></i>
+                </div>
+                <input type="file" name="items-${formNum}-sale_item_image" class="hidden-file-input" accept="image/*" id="id_items-${formNum}-sale_item_image">
+            </div>
+        </td>
+        <td class="text-center">
+            <div style="display: none;">
+                <input type="checkbox" name="items-${formNum}-DELETE" id="id_items-${formNum}-DELETE">
+            </div>
+            <button type="button" class="delete-btn" title="حذف البند">
+                <i class="fas fa-trash"></i>
+            </button>
+        </td>
+    `;
+    
+    const barcodeRow = document.createElement('tr');
+    barcodeRow.className = 'barcode-row';
+    barcodeRow.setAttribute('data-item-index', formNum);
+    barcodeRow.style.display = 'none';
+    
+    barcodeRow.innerHTML = `
+        <td colspan="8">
+            <div class="barcode-field-container">
+                <div class="barcode-controls mb-3">
+                    <div class="form-check form-check-inline">
+                        <input class="form-check-input" type="checkbox" 
+                               id="auto-fill-barcodes-${formNum}"
+                               data-item-index="${formNum}">
+                        <label class="form-check-label small" for="auto-fill-barcodes-${formNum}">
+                            تعبئة الباركودات تلقائياً من المخزون
+                        </label>
+                    </div>
+                </div>
+                
+                <div class="barcode-fields-list"></div>
+            </div>
+        </td>
+    `;
+    
+    tbody.appendChild(newRow);
+    tbody.appendChild(barcodeRow);
+    totalForms.value = formNum + 1;
+    
+    window.barcodeData[formNum] = [];
+    
+    const productSearchInput = newRow.querySelector('.product-search-input');
+    const productHidden = newRow.querySelector(`input[name="items-${formNum}-product"]`);
+    const priceInput = newRow.querySelector(`input[name="items-${formNum}-unit_price"]`);
+    
+    if (productSearchInput && productHidden) {
+        initializeProductAutocomplete(productSearchInput, productHidden, priceInput, formNum);
+    }
+    
+    setupSaleTypeSelection(formNum);
+    setupImagePreviewForItem(formNum);
+    setupItemEvents(newRow);
+    updateItemCalculations(newRow);
+    updateItemsCountInput();
+    
+    return newRow;
+}
+
+function initializeAllItems() {
+    const items = document.querySelectorAll('.item-row');
+    
+    items.forEach((item, index) => {
+        const itemIndex = item.getAttribute('data-item-index');
+        
+        if (!window.barcodeData[itemIndex]) {
+            window.barcodeData[itemIndex] = [];
+        }
+        
+        const productSearchInput = item.querySelector('.product-search-input');
+        const productHidden = item.querySelector('input[name$="-product"]');
+        const priceInput = item.querySelector('input[name$="-unit_price"]');
+        
+        if (productSearchInput && productHidden) {
+            initializeProductAutocomplete(productSearchInput, productHidden, priceInput, itemIndex);
+        }
+        
+        setupItemEvents(item);
+        updateItemCalculations(item);
+    });
+}
+
+function setupItemEvents(item) {
+    const quantityInput = item.querySelector('input[name$="-sold_quantity"]');
+    const priceInput = item.querySelector('input[name$="-unit_price"]');
+    const deleteBtn = item.querySelector('.delete-btn');
+    const deleteCheckbox = item.querySelector('input[name$="-DELETE"]');
+    
+    [quantityInput, priceInput].forEach(input => {
+        if (input) {
+            input.addEventListener('input', function() {
+                updateItemCalculations(item);
+                
+                if (input === quantityInput) {
+                    updateQuantitiesFromBarcodes(item.getAttribute('data-item-index'));
+                }
+            });
+        }
+    });
+    
+    if (deleteBtn && deleteCheckbox) {
+        deleteBtn.addEventListener('click', function() {
+            const itemIndex = item.getAttribute('data-item-index');
+            
+            // تفعيل Checkbox الحذف
+            deleteCheckbox.checked = true;
+            
+            // إخفاء الصف بصرياً
+            item.style.display = 'none';
+            
+            // إخفاء صف الباركود المرتبط
+            const barcodeRow = document.querySelector(`.barcode-row[data-item-index="${itemIndex}"]`);
+            if (barcodeRow) {
+                barcodeRow.style.display = 'none';
+            }
+            
+            delete window.barcodeData[itemIndex];
+            updateFinancialCalculations();
+            updateItemsCountInput();
+        });
+    }
+}
+
+// ============================================
+// [JS-08] نظام إدارة الصور
+// ============================================
+function setupImagePreviews() {
+    const invoiceFileInput = document.getElementById('id_sale_image');
+    const invoicePreviewContainer = document.getElementById('invoice-image-preview-container');
+    
+    if (invoiceFileInput && invoicePreviewContainer) {
+        invoiceFileInput.style.display = 'none';
+        
+        invoicePreviewContainer.addEventListener('click', function() {
+            invoiceFileInput.click();
+        });
+        
+        invoiceFileInput.addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    invoicePreviewContainer.innerHTML = `<img src="${e.target.result}">`;
+                    invoicePreviewContainer.classList.add('has-image');
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+    }
+
+    document.querySelectorAll('.item-row').forEach(item => {
+        const itemIndex = item.getAttribute('data-item-index');
+        setupImagePreviewForItem(itemIndex);
+    });
+}
+
+function setupImagePreviewForItem(itemIndex) {
+    const productImageInput = document.getElementById(`id_items-${itemIndex}-sale_item_image`);
+    const previewContainer = document.getElementById(`product-image-preview-container-${itemIndex}`);
+    
+    if (productImageInput && previewContainer) {
+        productImageInput.style.display = 'none';
+        
+        previewContainer.addEventListener('click', function() {
+            productImageInput.click();
+        });
+        
+        productImageInput.addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    previewContainer.innerHTML = `<img src="${e.target.result}">`;
+                    previewContainer.classList.add('has-image');
+                    
+                    const manualImageField = document.createElement('input');
+                    manualImageField.type = 'hidden';
+                    manualImageField.name = `items-${itemIndex}-manual_image_upload`;
+                    manualImageField.value = 'true';
+                    previewContainer.appendChild(manualImageField);
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+    }
+}
+
+// ============================================
+// [JS-09] نظام إدارة الباركودات
+// ============================================
+function generateBarcodeFields(itemElement, itemIndex, quantity) {
+    const barcodeRow = document.querySelector(`.barcode-row[data-item-index="${itemIndex}"]`);
+    if (!barcodeRow) return;
+    
+    barcodeRow.style.display = 'table-row';
+    
+    const barcodeFieldsList = barcodeRow.querySelector('.barcode-fields-list');
+    if (!barcodeFieldsList) return;
+    
+    if (barcodeFieldsList.children.length > 0) {
+        const quantityInput = itemElement.querySelector('input[name$="-sold_quantity"]');
+        if (quantityInput) {
+            quantityInput.value = window.barcodeData[itemIndex].length || 1;
+            updateItemCalculations(itemElement);
+        }
+        return;
+    }
+    
+    if (!window.barcodeData[itemIndex]) {
+        window.barcodeData[itemIndex] = [];
+    }
+    
+    if (window.barcodeData[itemIndex].length === 0) {
+        for (let i = 0; i < quantity; i++) {
+            const barcodeField = document.createElement('div');
+            barcodeField.className = 'barcode-item';
+            
+            barcodeField.innerHTML = `
+                <div class="barcode-buttons">
+                    <button type="button" class="barcode-remove-btn" 
+                            data-barcode-index="${i}" data-item-index="${itemIndex}" title="حذف الباركود">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                <input type="text" class="barcode-input" 
+                       placeholder="باركود ${i + 1}" 
+                       value=""
+                       data-barcode-index="${i}"
+                       data-item-index="${itemIndex}">
+            `;
+            
+            barcodeFieldsList.appendChild(barcodeField);
+            window.barcodeData[itemIndex][i] = '';
+        }
+    }
+    
+    setupBarcodeFieldsEvents(itemElement, itemIndex);
+}
+
+function setupBarcodeFieldsEvents(itemElement, itemIndex) {
+    const barcodeRow = document.querySelector(`.barcode-row[data-item-index="${itemIndex}"]`);
+    if (!barcodeRow) return;
+    
+    const barcodeInputs = barcodeRow.querySelectorAll('.barcode-input');
+    const removeButtons = barcodeRow.querySelectorAll('.barcode-remove-btn');
+    
+    if (!window.barcodeData[itemIndex]) {
+        window.barcodeData[itemIndex] = [];
+    }
+    
+    barcodeInputs.forEach(input => {
+        const barcodeIndex = parseInt(input.getAttribute('data-barcode-index'));
+        
+        if (window.barcodeData[itemIndex][barcodeIndex]) {
+            input.value = window.barcodeData[itemIndex][barcodeIndex];
+        }
+        
+        input.addEventListener('input', function() {
+            window.barcodeData[itemIndex][barcodeIndex] = this.value.trim();
+            updateQuantitiesFromBarcodes(itemIndex);
+        });
+    });
+    
+    removeButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            const barcodeIndex = parseInt(this.getAttribute('data-barcode-index'));
+            const barcodeField = this.closest('.barcode-item');
+            
+            if (barcodeField) {
+                if (window.barcodeData[itemIndex]) {
+                    window.barcodeData[itemIndex].splice(barcodeIndex, 1);
+                }
+                
+                barcodeField.remove();
+                updateQuantitiesFromBarcodes(itemIndex);
+                renumberBarcodeFields(itemElement, itemIndex);
+            }
+        });
+    });
+}
+
+function renumberBarcodeFields(itemElement, itemIndex) {
+    const barcodeRow = document.querySelector(`.barcode-row[data-item-index="${itemIndex}"]`);
+    if (!barcodeRow) return;
+    
+    const barcodeFields = barcodeRow.querySelectorAll('.barcode-item');
+    
+    barcodeFields.forEach((field, index) => {
+        const barcodeInput = field.querySelector('.barcode-input');
+        const removeBtn = field.querySelector('.barcode-remove-btn');
+        
+        if (barcodeInput) {
+            barcodeInput.setAttribute('data-barcode-index', index);
+            barcodeInput.placeholder = `باركود ${index + 1}`;
+        }
+        if (removeBtn) {
+            removeBtn.setAttribute('data-barcode-index', index);
+        }
+    });
+}
+
+// ============================================
+// [JS-10] نظام البيع المختلط - محسّن
+// ============================================
+
+async function fetchProductStock(productId, itemIndex) {
+    try {
+        console.log(`🔍 جلب معلومات المخزون للمنتج: ${productId}, البند: ${itemIndex}`);
+        
+        const url = `/invoice/get-product-stock-api/${productId}/`;
+        console.log(`🌐 جلب البيانات من: ${url}`);
+        
+        const response = await fetch(url);
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        console.log(`📊 استجابة الخادم:`, data);
+        
+        if (data.success) {
+            const stockInfo = document.getElementById(`stock-info-${itemIndex}`);
+            if (stockInfo) {
+                stockInfo.querySelector('.barcoded-stock').textContent = data.barcoded_stock;
+                stockInfo.querySelector('.non-barcoded-stock').textContent = data.non_barcoded_stock;
+                stockInfo.style.display = 'block';
+                console.log(`✅ عرض معلومات المخزون: ${data.barcoded_stock} مع باركود, ${data.non_barcoded_stock} بدون باركود`);
+            }
+            return data;
+        } else {
+            throw new Error(data.error || 'خطأ في البيانات المستلمة');
+        }
+    } catch (error) {
+        console.error('❌ خطأ في جلب معلومات المخزون:', error);
+        const stockInfo = document.getElementById(`stock-info-${itemIndex}`);
+        if (stockInfo) {
+            stockInfo.innerHTML = `<div class="text-danger small">
+                <i class="fas fa-exclamation-triangle me-1"></i>
+                تعذر جلب معلومات المخزون
+            </div>`;
+            stockInfo.style.display = 'block';
+        }
+        return null;
+    }
+}
+
+function setupSaleTypeSelection(itemIndex) {
+    const saleTypeRadios = document.querySelectorAll(`input[name="items-${itemIndex}-sale_type"]`);
+    const barcodeRow = document.querySelector(`.barcode-row[data-item-index="${itemIndex}"]`);
+    const quantityInput = document.querySelector(`input[name="items-${itemIndex}-sold_quantity"]`);
+    const withBarcodeField = document.querySelector(`input[name="items-${itemIndex}-quantity_with_barcode"]`);
+    const withoutBarcodeField = document.querySelector(`input[name="items-${itemIndex}-quantity_without_barcode"]`);
+    
+    saleTypeRadios.forEach(radio => {
+        radio.addEventListener('change', function() {
+            const selectedType = this.value;
+            const productHidden = document.querySelector(`input[name="items-${itemIndex}-product"]`);
+            const productId = productHidden ? productHidden.value : null;
+            
+            if (!productId) {
+                alert('يرجى اختيار منتج أولاً');
+                return;
+            }
+            
+            fetchProductStock(productId, itemIndex).then(stockData => {
+                if (!stockData) return;
+                
+                switch(selectedType) {
+                    case 'barcode':
+                        if (barcodeRow) barcodeRow.style.display = 'table-row';
+                        if (quantityInput) quantityInput.value = stockData.barcoded_stock;
+                        if (withBarcodeField) withBarcodeField.value = stockData.barcoded_stock;
+                        if (withoutBarcodeField) withoutBarcodeField.value = 0;
+                        autoFillBarcodesFromStock(itemIndex, stockData.barcodes);
+                        break;
+                        
+                    case 'none':
+                        if (barcodeRow) barcodeRow.style.display = 'none';
+                        if (quantityInput) quantityInput.value = stockData.non_barcoded_stock;
+                        if (withBarcodeField) withBarcodeField.value = 0;
+                        if (withoutBarcodeField) withoutBarcodeField.value = stockData.non_barcoded_stock;
+                        break;
+                        
+                    case 'mixed':
+                        if (barcodeRow) barcodeRow.style.display = 'table-row';
+                        if (withBarcodeField) withBarcodeField.value = 0;
+                        if (withoutBarcodeField) withoutBarcodeField.value = 0;
+                        break;
+                }
+                
+                updateItemCalculations(document.querySelector(`.item-row[data-item-index="${itemIndex}"]`));
+            });
+        });
+    });
+}
+
+function autoFillBarcodesFromStock(itemIndex, barcodes) {
+    const barcodeRow = document.querySelector(`.barcode-row[data-item-index="${itemIndex}"]`);
+    if (!barcodeRow) return;
+    
+    const barcodeFieldsList = barcodeRow.querySelector('.barcode-fields-list');
+    if (!barcodeFieldsList) return;
+    
+    barcodeFieldsList.innerHTML = '';
+    
+    if (!window.barcodeData[itemIndex]) {
+        window.barcodeData[itemIndex] = [];
+    }
+    
+    barcodes.forEach((barcodeData, index) => {
+        const barcodeField = document.createElement('div');
+        barcodeField.className = 'barcode-item';
+        
+        barcodeField.innerHTML = `
+            <div class="barcode-buttons">
+                <button type="button" class="barcode-remove-btn" 
+                        data-barcode-index="${index}" data-item-index="${itemIndex}" title="حذف الباركود">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <input type="text" class="barcode-input" 
+                   placeholder="باركود ${index + 1}" 
+                   value="${barcodeData.barcode}"
+                   data-barcode-index="${index}"
+                   data-item-index="${itemIndex}"
+                   readonly>
+        `;
+        
+        barcodeFieldsList.appendChild(barcodeField);
+        window.barcodeData[itemIndex][index] = barcodeData.barcode;
+    });
+    
+    setupBarcodeFieldsEventsForItem(itemIndex);
+    updateQuantitiesFromBarcodes(itemIndex);
+}
+
+function setupBarcodeFieldsEventsForItem(itemIndex) {
+    const barcodeRow = document.querySelector(`.barcode-row[data-item-index="${itemIndex}"]`);
+    if (!barcodeRow) return;
+    
+    const removeButtons = barcodeRow.querySelectorAll('.barcode-remove-btn');
+    
+    removeButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            const barcodeIndex = parseInt(this.getAttribute('data-barcode-index'));
+            const barcodeField = this.closest('.barcode-item');
+            
+            if (barcodeField) {
+                if (window.barcodeData[itemIndex]) {
+                    window.barcodeData[itemIndex].splice(barcodeIndex, 1);
+                }
+                
+                barcodeField.remove();
+                
+                const remainingBarcodes = barcodeRow.querySelectorAll('.barcode-item');
+                remainingBarcodes.forEach((field, newIndex) => {
+                    const input = field.querySelector('.barcode-input');
+                    const btn = field.querySelector('.barcode-remove-btn');
+                    
+                    if (input) {
+                        input.setAttribute('data-barcode-index', newIndex);
+                        input.placeholder = `باركود ${newIndex + 1}`;
+                    }
+                    if (btn) {
+                        btn.setAttribute('data-barcode-index', newIndex);
+                    }
+                });
+                
+                updateQuantitiesFromBarcodes(itemIndex);
+            }
+        });
+    });
+}
+
+function updateQuantitiesFromBarcodes(itemIndex) {
+    const itemRow = document.querySelector(`.item-row[data-item-index="${itemIndex}"]`);
+    if (!itemRow) return;
+    
+    const barcodeCount = window.barcodeData[itemIndex] ? window.barcodeData[itemIndex].length : 0;
+    const quantityInput = itemRow.querySelector('input[name$="-sold_quantity"]');
+    const withBarcodeField = itemRow.querySelector('input[name$="-quantity_with_barcode"]');
+    const withoutBarcodeField = itemRow.querySelector('input[name$="-quantity_without_barcode"]');
+    const saleTypeRadio = itemRow.querySelector('input[name$="-sale_type"]:checked');
+    
+    if (quantityInput && withBarcodeField && withoutBarcodeField) {
+        const totalQuantity = parseFloat(quantityInput.value) || 0;
+        
+        if (saleTypeRadio) {
+            switch(saleTypeRadio.value) {
+                case 'barcode':
+                    quantityInput.value = barcodeCount;
+                    withBarcodeField.value = barcodeCount;
+                    withoutBarcodeField.value = 0;
+                    break;
+                    
+                case 'mixed':
+                    withBarcodeField.value = barcodeCount;
+                    withoutBarcodeField.value = Math.max(0, totalQuantity - barcodeCount);
+                    break;
+                    
+                case 'none':
+                    withBarcodeField.value = 0;
+                    withoutBarcodeField.value = totalQuantity;
+                    break;
+            }
+        }
+        
+        updateItemCalculations(itemRow);
+    }
+}
+
+function setupMixedSaleSystem() {
+    console.log('🔄 إعداد نظام البيع المختلط...');
+    
+    document.querySelectorAll('.item-row').forEach(item => {
+        const itemIndex = item.getAttribute('data-item-index');
+        setupSaleTypeSelection(itemIndex);
+        
+        const productSearchInput = item.querySelector('.product-search-input');
+        if (productSearchInput) {
+            productSearchInput.addEventListener('change', function() {
+                const productHidden = item.querySelector('input[name$="-product"]');
+                if (productHidden && productHidden.value) {
+                    console.log(`🔄 تغيير المنتج للبند ${itemIndex}: ${productHidden.value}`);
+                    fetchProductStock(productHidden.value, itemIndex);
+                }
+            });
+        }
+    });
+    
+    document.addEventListener('change', function(e) {
+        if (e.target.matches('[id^="auto-fill-barcodes"]')) {
+            const itemIndex = e.target.getAttribute('data-item-index');
+            console.log(`✅ تفعيل التعبئة التلقائية للباركودات للبند ${itemIndex}`);
+            
+            if (e.target.checked) {
+                const productHidden = document.querySelector(`input[name="items-${itemIndex}-product"]`);
+                if (productHidden && productHidden.value) {
+                    fetchProductStock(productHidden.value, itemIndex).then(stockData => {
+                        if (stockData && stockData.barcodes) {
+                            console.log(`🔄 تعبئة الباركودات تلقائياً للبند ${itemIndex}`);
+                            autoFillBarcodesFromStock(itemIndex, stockData.barcodes);
+                        }
+                    });
+                } else {
+                    alert('يرجى اختيار منتج أولاً');
+                    e.target.checked = false;
+                }
+            }
+        }
+    });
+}
+
+// ============================================
+// [JS-11] نظام الحسابات المالية
+// ============================================
+function setupFinancialCalculations() {
+    const inputs = ['tax-percentage', 'invoice-addition', 'invoice-discount'];
+    inputs.forEach(id => {
+        const input = document.getElementById(id);
+        if (input) {
+            input.addEventListener('input', function() {
+                updateFinancialCalculations();
+                updateRemainingAmount();
+            });
+        }
+    });
+    
+    const paidAmountInput = document.getElementById('paid-amount');
+    if (paidAmountInput) {
+        paidAmountInput.addEventListener('input', function() {
+            updateRemainingAmount();
+        });
+    }
+}
+
+function updateFinancialCalculations() {
+    console.log('🧮 تحديث الحسابات المالية...');
+    
+    let subtotal = 0;
+    document.querySelectorAll('.item-total').forEach(totalInput => {
+        subtotal += parseFloat(totalInput.value) || 0;
+    });
+    
+    const taxPercentage = parseFloat(document.getElementById('tax-percentage').value) || 0;
+    const additionAmount = parseFloat(document.getElementById('invoice-addition').value) || 0;
+    const discountAmount = parseFloat(document.getElementById('invoice-discount').value) || 0;
+    
+    const taxAmount = subtotal * (taxPercentage / 100);
+    const afterTaxAmount = subtotal + taxAmount;
+    const grandTotal = afterTaxAmount + additionAmount - discountAmount;
+    
+    document.getElementById('subtotal-amount').textContent = subtotal.toFixed(2);
+    document.getElementById('tax-amount').textContent = taxAmount.toFixed(2);
+    document.getElementById('grand-total').textContent = grandTotal.toFixed(2);
+    
+    console.log('📊 الإجمالي العام:', grandTotal.toFixed(2));
+    
+    updateRemainingAmount();
+    
+    const paidAmountContainer = document.getElementById('paid-amount-container');
+    if (paidAmountContainer && paidAmountContainer.classList.contains('show')) {
+        const paidAmountInput = document.getElementById('paid-amount');
+        if (paidAmountInput) {
+            checkCashBalance(paidAmountInput.value);
+        }
+    }
+    
+    document.dispatchEvent(new Event('financialCalculationsUpdated'));
+}
+
+function updateItemCalculations(item) {
+    const quantityInput = item.querySelector('input[name$="-sold_quantity"]');
+    const priceInput = item.querySelector('input[name$="-unit_price"]');
+    const totalInput = item.querySelector('.item-total');
+    
+    const quantity = parseFloat(quantityInput?.value) || 0;
+    const price = parseFloat(priceInput?.value) || 0;
+    const total = quantity * price;
+    
+    if (totalInput) {
+        totalInput.value = total.toFixed(2);
+    }
+    
+    updateFinancialCalculations();
+}
+
+// ============================================
+// [JS-12] إدارة الأحداث العامة
+// ============================================
+function setupGlobalEvents() {
+    document.getElementById('add-single-item').addEventListener('click', function() {
+        addNewItem();
+        updateItemsCountInput();
+    });
+    
+    document.getElementById('sale-form').addEventListener('submit', function(e) {
+        if (!prepareFormForSubmit(this)) {
+            e.preventDefault();
+        }
+    });
+}
+
+function setupItemsCountInput() {
+    const itemsCountInput = document.getElementById('items-count');
+    
+    if (itemsCountInput) {
+        itemsCountInput.addEventListener('input', function() {
+            const count = parseInt(this.value) || 1;
+            adjustItemCount(count);
+        });
+        
+        setTimeout(() => {
+            updateItemsCountInput();
+        }, 100);
+    }
+}
+
+function adjustItemCount(targetCount) {
+    if (targetCount < 1) targetCount = 1;
+    if (targetCount > 50) targetCount = 50;
+    
+    const currentItems = document.querySelectorAll('.item-row:not([style*="display: none"])');
+    const currentCount = currentItems.length;
+    
+    if (targetCount === currentCount) return;
+    
+    if (targetCount > currentCount) {
+        const itemsToAdd = targetCount - currentCount;
+        for (let i = 0; i < itemsToAdd; i++) {
+            addNewItem();
+        }
+    } else {
+        const itemsToRemove = currentCount - targetCount;
+        const items = Array.from(currentItems).reverse();
+        
+        for (let i = 0; i < itemsToRemove; i++) {
+            const item = items[i];
+            const deleteCheckbox = item.querySelector('input[name$="-DELETE"]');
+            if (deleteCheckbox) {
+                deleteCheckbox.checked = true;
+                item.style.display = 'none';
+                
+                const itemIndex = item.getAttribute('data-item-index');
+                const barcodeRow = document.querySelector(`.barcode-row[data-item-index="${itemIndex}"]`);
+                if (barcodeRow) {
+                    barcodeRow.style.display = 'none';
+                }
+            }
+        }
+    }
+    
+    updateItemsCountInput();
+    updateFinancialCalculations();
+}
+
+function updateItemsCountInput() {
+    const itemsCountInput = document.getElementById('items-count');
+    const visibleItems = document.querySelectorAll('.item-row:not([style*="display: none"])');
+    if (itemsCountInput) {
+        itemsCountInput.value = visibleItems.length;
+    }
+}
+
+function updateItemsNumbers() {
+    const visibleItems = document.querySelectorAll('.item-row:not([style*="display: none"])');
+    visibleItems.forEach((item, index) => {
+        const numberCell = item.querySelector('td:first-child');
+        if (numberCell) {
+            numberCell.textContent = index + 1;
+        }
+    });
+}
+
+function updateTotalForms() {
+    const totalForms = document.getElementById('id_items-TOTAL_FORMS');
+    const allForms = document.querySelectorAll('.item-row');
+    totalForms.value = allForms.length;
+}
+
+function setupBarcodeToggle() {
+    const toggleBtn = document.getElementById('toggle-barcodes-btn');
+    
+    if (toggleBtn) {
+        toggleBtn.addEventListener('click', function() {
+            window.barcodesVisible = !window.barcodesVisible;
+            
+            if (window.barcodesVisible) {
+                showAllBarcodes();
+                this.innerHTML = '<i class="fas fa-eye-slash me-1"></i>إخفاء الباركودات';
+                showSuccessMessage('تم إظهار الباركودات');
+            } else {
+                hideAllBarcodes();
+                this.innerHTML = '<i class="fas fa-eye me-1"></i>إظهار الباركودات';
+                showSuccessMessage('تم إخفاء الباركودات');
+            }
+        });
+    }
+}
+
+function showAllBarcodes() {
+    document.querySelectorAll('.barcode-row').forEach(row => {
+        row.style.display = 'table-row';
+    });
+    
+    document.querySelectorAll('.item-row:not([style*="display: none"])').forEach(item => {
+        const itemIndex = item.getAttribute('data-item-index');
+        const quantityInput = item.querySelector('input[name$="-sold_quantity"]');
+        if (quantityInput) {
+            const quantity = parseInt(quantityInput.value) || 0;
+            if (quantity > 0) {
+                generateBarcodeFields(item, itemIndex, quantity);
+            }
+        }
+    });
+}
+
+function hideAllBarcodes() {
+    document.querySelectorAll('.barcode-row').forEach(row => {
+        row.style.display = 'none';
+    });
+}
+
+// ============================================
+// [JS-13] نظام التحقق من صحة النموذج
+// ============================================
+function validateProductSelection() {
+    let hasErrors = false;
+    const items = document.querySelectorAll('.item-row:not([style*="display: none"])');
+    
+    items.forEach((item, index) => {
+        const productHidden = item.querySelector('input[name$="-product"]');
+        const productSearchInput = item.querySelector('.product-search-input');
+        
+        if (!productHidden.value && productSearchInput.value.trim() === '') {
+            console.log(`❌ البند ${index + 1}: لم يتم اختيار منتج`);
+            hasErrors = true;
+        }
+    });
+    
+    return !hasErrors;
+}
+
+function prepareFormForSubmit(form) {
+    console.log("🔧 تجهيز النموذج للإرسال...");
+    
+    if (!validateProductSelection()) {
+        alert('يرجى اختيار منتج لكل بند من بنود الفاتورة');
+        return false;
+    }
+    
+    const errors = validateForm();
+    if (errors.length > 0) {
+        showFormErrors(errors);
+        return false;
+    }
+    
+    document.querySelectorAll('.item-row').forEach((item, index) => {
+        const productSearchInput = item.querySelector('.product-search-input');
+        const itemNameField = item.querySelector('.item-name-field');
+        const productSearchValue = item.querySelector('.product-search-value');
+        
+        if (productSearchInput && itemNameField) {
+            if (!itemNameField.value && productSearchInput.value.trim()) {
+                itemNameField.value = productSearchInput.value.trim();
+            }
+        }
+        
+        if (productSearchValue && productSearchInput) {
+            productSearchValue.value = productSearchInput.value.trim();
+        }
+    });
+    
+    document.querySelectorAll('.item-row').forEach((item, index) => {
+        const itemIndex = item.getAttribute('data-item-index');
+        
+        const barcodeRow = document.querySelector(`.barcode-row[data-item-index="${itemIndex}"]`);
+        if (barcodeRow) {
+            const barcodeInputs = barcodeRow.querySelectorAll('.barcode-input');
+            barcodeInputs.forEach((input) => {
+                const barcodeValue = input.value.trim();
+                if (barcodeValue) {
+                    const hiddenInput = document.createElement('input');
+                    hiddenInput.type = 'hidden';
+                    hiddenInput.name = `item_${itemIndex}_barcodes`;
+                    hiddenInput.value = barcodeValue;
+                    form.appendChild(hiddenInput);
+                    console.log(`📤 إرسال باركود للبند ${itemIndex}: ${barcodeValue}`);
+                }
+            });
+        }
+    });
+    
+    return true;
+}
+
+function validateForm() {
+    const errors = [];
+    
+    const customerHidden = document.getElementById('id_sale_customer');
+    if (!customerHidden || !customerHidden.value) {
+        errors.push('يجب اختيار عميل');
+    }
+    
+    const visibleItems = document.querySelectorAll('.item-row:not([style*="display: none"])');
+    if (visibleItems.length === 0) {
+        errors.push('يجب إضافة بند واحد على الأقل');
+    }
+    
+    visibleItems.forEach((item, index) => {
+        const productHidden = item.querySelector('input[name$="-product"]');
+        const productSearchInput = item.querySelector('.product-search-input');
+        const quantityInput = item.querySelector('input[name$="-sold_quantity"]');
+        const priceInput = item.querySelector('input[name$="-unit_price"]');
+        
+        if ((!productHidden || !productHidden.value) && (!productSearchInput || !productSearchInput.value)) {
+            errors.push(`البند ${index + 1}: يجب اختيار مادة`);
+        }
+        
+        if (!quantityInput || parseFloat(quantityInput.value) <= 0) {
+            errors.push(`البند ${index + 1}: يجب إدخال كمية صحيحة`);
+        }
+        
+        if (!priceInput || parseFloat(priceInput.value) < 0) {
+            errors.push(`البند ${index + 1}: يجب إدخال سعر صحيح`);
+        }
+    });
+    
+    return errors;
+}
+
+function showFormErrors(errors) {
+    document.querySelectorAll('.form-errors').forEach(el => el.remove());
+    
+    const firstSection = document.querySelector('.items-section');
+    if (firstSection) {
+        const errorContainer = document.createElement('div');
+        errorContainer.className = 'alert alert-danger form-errors';
+        errorContainer.innerHTML = `
+            <h5 class="alert-heading">يوجد أخطاء في النموذج:</h5>
+            <ul class="mb-0">
+                ${errors.map(error => `<li>${error}</li>`).join('')}
+            </ul>
+        `;
+        firstSection.parentNode.insertBefore(errorContainer, firstSection);
+        
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+}
+</script>
+{% endblock %}

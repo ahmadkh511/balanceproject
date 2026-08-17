@@ -1,0 +1,1051 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}تفاصيل فاتورة الشراء - {{ purchase.uniqueId }}{% endblock %}
+
+{% block extra_css %}
+    <!-- 1. استدعاء ملف الـ CSS الخاص بنظام الطباعة الموحد -->
+    <link rel="stylesheet" href="{% static 'css/print_system.css' %}">
+    <style>
+        /* تنسيقات خاصة بصفحة الفاتورة فقط (لا علاقة لها بالطباعة) */
+        :root {
+            --aqua-1: #e0f7fa;
+            --aqua-2: #b2ebf2;
+            --aqua-3: #4dd0e1;
+            --aqua-4: #0097a7;
+            --text-dark: #006064;
+            --text-light: #ffffff;
+            --shadow-sm: 0 2px 8px rgba(0, 150, 167, 0.08);
+            --shadow-md: 0 4px 12px rgba(0, 150, 167, 0.12);
+        }
+
+        .info-strip {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+            gap: 0;
+            border-bottom: 1px solid var(--aqua-2);
+            font-size: 0.8rem;
+        }
+        .info-cell {
+            padding: 0.45rem 0.75rem;
+            border-left: 1px solid var(--aqua-1);
+        }
+        .info-cell:last-child { border-left: none; }
+        .info-cell-label {
+            font-size: 0.65rem;
+            color: var(--aqua-4);
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+            margin-bottom: 0.05rem;
+        }
+        .info-cell-value {
+            font-weight: 600;
+            color: var(--text-dark);
+            white-space: normal;
+            word-wrap: break-word;
+            word-break: break-word;
+            overflow-wrap: break-word;
+            line-height: 1.4;
+        }
+        .info-cell-value.wrap-text {
+            white-space: normal !important;
+            word-break: break-word !important;
+        }
+
+        .notes-bar {
+            padding: 0.4rem 0.85rem;
+            background: #fffbeb;
+            border-bottom: 1px solid #fde68a;
+            font-size: 0.78rem;
+            color: #92400e;
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+        }
+
+        .thumb {
+            width: 30px;
+            height: 30px;
+            border-radius: 4px;
+            object-fit: cover;
+            border: 1px solid var(--aqua-2);
+        }
+        .thumb-placeholder {
+            width: 30px;
+            height: 30px;
+            background: var(--aqua-1);
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--aqua-2);
+            font-size: 0.7rem;
+        }
+
+        .barcode-row td {
+            padding: 0.25rem 0.5rem !important;
+            background: var(--aqua-1) !important;
+            border-bottom: 1px dashed var(--aqua-2) !important;
+        }
+        
+        .barcodes-wrapper {
+            display: flex;
+            flex-direction: column;
+            gap: 0.3rem;
+            width: 100%;
+        }
+        .barcodes-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.3rem;
+            padding: 0.2rem 0;
+        }
+        .barcode-item {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            background: white;
+            border: 1px solid var(--aqua-3);
+            border-radius: 9999px;
+            padding: 2px 10px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.68rem;
+            font-weight: 600;
+            color: var(--text-dark);
+            box-shadow: var(--shadow-sm);
+            white-space: nowrap;
+            text-decoration: none !important;
+        }
+        .barcode-item .barcode-icon { font-size: 0.6rem; color: var(--aqua-4); }
+        .copy-barcode-btn {
+            background: none; border: none; padding: 0; margin: 0;
+            cursor: pointer; color: #9ca3af; transition: color 0.2s; 
+            display: flex; align-items: center; font-size: 0.6rem;
+        }
+        .copy-barcode-btn:hover { color: var(--aqua-4); }
+        .copy-barcode-btn.copied { color: #10b981; }
+        .no-barcodes {
+            display: inline-flex; align-items: center; gap: 4px; color: #9ca3af;
+            font-size: 0.65rem; background: white; padding: 2px 8px;
+            border-radius: 9999px; border: 1px dashed #d1d5db;
+        }
+
+        .barcode-item.sold {
+            background-color: #ffebee; color: #b71c1c; border-color: #ef9a9a; opacity: 0.95;
+        }
+        .barcode-item.sold .barcode-icon { color: #b71c1c; }
+        .barcode-item.sold .sold-badge {
+            font-size: 0.6rem; font-family: 'Tajawal', sans-serif; font-weight: 700;
+            background: #b71c1c; color: white; padding: 1px 6px; border-radius: 4px; margin-right: 2px;
+        }
+
+        .barcode-item.returned { background-color: #fff3e0; color: #ef6c00; border-color: #ffcc80; }
+        .barcode-item.returned .barcode-icon { color: #ef6c00; }
+        .barcode-item.returned .returned-badge {
+            font-size: 0.6rem; font-family: 'Tajawal', sans-serif; font-weight: 700;
+            background: #ef6c00; color: white; padding: 1px 6px; border-radius: 4px; margin-right: 2px;
+        }
+
+        /* ===== قسم الصورة والمالية ===== */
+        .finance-section {
+            border-top: 2px solid var(--aqua-2);
+            padding: 0.85rem 1rem;
+            background: linear-gradient(180deg, #ffffff 0%, #f0fdfa 100%);
+        }
+        .finance-layout {
+            display: grid;
+            grid-template-columns: 1fr 2.5fr;
+            gap: 1.5rem;
+            align-items: start;
+        }
+
+        /* عمود الصورة */
+        .finance-image-col {
+            background: white;
+            border-radius: 12px;
+            padding: 0.75rem;
+            box-shadow: var(--shadow-sm);
+            border: 1px solid var(--aqua-1);
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+        .finance-image-col:hover {
+            box-shadow: var(--shadow-md);
+            border-color: var(--aqua-3);
+        }
+        .finance-image-wrapper {
+            position: relative;
+            overflow: hidden;
+            border-radius: 8px;
+            background: var(--aqua-1);
+        }
+        .finance-thumb {
+            width: 100%;
+            height: 200px;
+            object-fit: cover;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: transform 0.3s ease;
+            display: block;
+        }
+        .finance-thumb:hover {
+            transform: scale(1.02);
+        }
+        .finance-thumb-placeholder {
+            width: 100%;
+            height: 200px;
+            background: linear-gradient(135deg, var(--aqua-1), var(--aqua-2));
+            border-radius: 8px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: var(--aqua-4);
+            gap: 0.5rem;
+        }
+        .finance-thumb-placeholder i {
+            font-size: 3rem;
+            opacity: 0.5;
+        }
+        .finance-thumb-placeholder span {
+            font-size: 0.8rem;
+            font-weight: 600;
+            opacity: 0.6;
+        }
+        .finance-thumb-hint {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.3rem;
+            margin-top: 0.5rem;
+            font-size: 0.65rem;
+            color: var(--aqua-4);
+            font-weight: 600;
+            background: var(--aqua-1);
+            padding: 0.2rem 0.8rem;
+            border-radius: 9999px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        .finance-thumb-hint:hover {
+            background: var(--aqua-2);
+        }
+        .finance-thumb-hint i {
+            font-size: 0.6rem;
+        }
+        .invoice-image-label {
+            font-size: 0.7rem;
+            color: var(--aqua-4);
+            font-weight: 700;
+            display: block;
+            margin-bottom: 0.4rem;
+            letter-spacing: 0.5px;
+        }
+
+        /* عمود البيانات المالية */
+        .finance-fields-col {
+            min-width: 0;
+        }
+        .finance-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 0.45rem;
+        }
+        .fin-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: white;
+            border-radius: 5px;
+            padding: 0.4rem 0.65rem;
+            border-left: 3px solid var(--aqua-3);
+            box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+            transition: box-shadow 0.2s;
+        }
+        .fin-item:hover {
+            box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+        }
+        .fin-label {
+            font-size: 0.72rem;
+            color: var(--aqua-4);
+            font-weight: 500;
+        }
+        .fin-value {
+            font-weight: 700;
+            font-size: 0.85rem;
+            color: var(--text-dark);
+            white-space: nowrap;
+        }
+        .fin-value.green { color: #059669; }
+        .fin-value.red { color: #dc2626; }
+        .fin-total {
+            margin-top: 0.6rem;
+            background: linear-gradient(135deg, var(--aqua-4) 0%, #006064 100%);
+            color: white;
+            padding: 0.65rem 1.1rem;
+            border-radius: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 1.05rem;
+            box-shadow: 0 4px 12px rgba(0, 150, 167, 0.25);
+        }
+        .fin-total strong {
+            font-size: 1.2rem;
+            letter-spacing: 0.3px;
+        }
+        .fin-words {
+            margin-top: 0.45rem;
+            font-size: 0.78rem;
+            color: var(--aqua-4);
+            text-align: center;
+            font-style: italic;
+            padding: 0.4rem 0.6rem;
+            background: white;
+            border-radius: 5px;
+            border: 1px dashed var(--aqua-2);
+        }
+
+        .lightbox-overlay {
+            position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 99999;
+            display: flex; align-items: center; justify-content: center; cursor: pointer;
+            backdrop-filter: blur(4px); animation: lbIn 0.2s ease;
+        }
+        .lightbox-overlay img {
+            max-width: 92vw;
+            max-height: 92vh;
+            border-radius: 8px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+            object-fit: contain;
+        }
+        @keyframes lbIn {
+            from { opacity: 0; transform: scale(0.95); }
+            to { opacity: 1; transform: scale(1); }
+        }
+
+        .cell-product-name {
+            font-weight: 700;
+            color: #1f2937;
+            font-size: 0.78rem;
+            display: block;
+            line-height: 1.3;
+        }
+        .product-meta {
+            font-size: 0.6rem;
+            color: #9ca3af;
+            display: flex;
+            gap: 0.3rem;
+            margin-top: 2px;
+        }
+        .qty-badge {
+            background: var(--aqua-1);
+            color: var(--aqua-4);
+            padding: 1px 4px;
+            border-radius: 4px;
+            font-size: 0.58rem;
+        }
+        .cell-notes {
+            font-size: 0.72rem;
+            color: #6b7280;
+            font-style: italic;
+            max-width: 160px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .cell-notes-wrapper { position: relative; }
+        .cell-notes-wrapper:hover .cell-notes-tooltip { display: block; }
+        .cell-notes-tooltip {
+            display: none;
+            position: absolute;
+            bottom: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #1f2937;
+            color: white;
+            padding: 0.35rem 0.6rem;
+            border-radius: 5px;
+            font-size: 0.72rem;
+            font-style: normal;
+            white-space: normal;
+            min-width: 160px;
+            max-width: 280px;
+            text-align: right;
+            z-index: 100;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+            margin-bottom: 4px;
+            line-height: 1.5;
+        }
+        .cell-notes-tooltip::after {
+            content: '';
+            position: absolute;
+            top: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            border: 5px solid transparent;
+            border-top-color: #1f2937;
+        }
+        .cell-notes-empty { color: #d1d5db; font-size: 0.7rem; }
+
+        /* ============================================
+           تنسيقات خاصة بالطباعة (مطابقة لتصميم الصفحة)
+           ============================================ */
+        @media print {
+            /* إخفاء عناصر غير مرغوب فيها */
+            .no-print {
+                display: none !important;
+            }
+            
+            /* إظهار الصورة في الطباعة بنفس التصميم */
+            .finance-layout {
+                display: grid !important;
+                grid-template-columns: 1fr 2.5fr !important;
+                gap: 1.5rem !important;
+                align-items: start !important;
+            }
+            
+            .finance-image-col {
+                background: white !important;
+                border: 1px solid #b2ebf2 !important;
+                border-radius: 12px !important;
+                padding: 0.75rem !important;
+                box-shadow: none !important;
+                text-align: center !important;
+            }
+            
+            .finance-image-wrapper {
+                border-radius: 8px !important;
+                background: #e0f7fa !important;
+                overflow: hidden !important;
+            }
+            
+            .finance-thumb {
+                width: 100% !important;
+                height: 200px !important;
+                object-fit: cover !important;
+                border-radius: 8px !important;
+                display: block !important;
+                cursor: default !important;
+            }
+            
+            .finance-thumb:hover {
+                transform: none !important;
+            }
+            
+            .finance-thumb-placeholder {
+                width: 100% !important;
+                height: 200px !important;
+                background: linear-gradient(135deg, #e0f7fa, #b2ebf2) !important;
+                border-radius: 8px !important;
+                display: flex !important;
+                flex-direction: column !important;
+                align-items: center !important;
+                justify-content: center !important;
+                color: #0097a7 !important;
+                gap: 0.5rem !important;
+            }
+            
+            .finance-thumb-placeholder i {
+                font-size: 3rem !important;
+                opacity: 0.5 !important;
+            }
+            
+            .finance-thumb-placeholder span {
+                font-size: 0.8rem !important;
+                font-weight: 600 !important;
+                opacity: 0.6 !important;
+            }
+            
+            .invoice-image-label {
+                font-size: 0.7rem !important;
+                color: #0097a7 !important;
+                font-weight: 700 !important;
+                display: block !important;
+                margin-bottom: 0.4rem !important;
+                letter-spacing: 0.5px !important;
+            }
+            
+            /* إخفاء مؤشر التكبير في الطباعة */
+            .finance-thumb-hint {
+                display: none !important;
+            }
+            
+            /* تنسيق الجدول المالي في الطباعة */
+            .finance-fields-col {
+                min-width: 0 !important;
+            }
+            
+            .finance-grid {
+                display: grid !important;
+                grid-template-columns: repeat(3, 1fr) !important;
+                gap: 0.45rem !important;
+            }
+            
+            .fin-item {
+                display: flex !important;
+                justify-content: space-between !important;
+                align-items: center !important;
+                background: white !important;
+                border-radius: 5px !important;
+                padding: 0.4rem 0.65rem !important;
+                border-left: 3px solid #4dd0e1 !important;
+                box-shadow: 0 1px 3px rgba(0,0,0,0.04) !important;
+            }
+            
+            .fin-label {
+                font-size: 0.72rem !important;
+                color: #0097a7 !important;
+                font-weight: 500 !important;
+            }
+            
+            .fin-value {
+                font-weight: 700 !important;
+                font-size: 0.85rem !important;
+                color: #006064 !important;
+                white-space: nowrap !important;
+            }
+            
+            .fin-value.green { color: #059669 !important; }
+            .fin-value.red { color: #dc2626 !important; }
+            
+            .fin-total {
+                margin-top: 0.6rem !important;
+                background: linear-gradient(135deg, #0097a7, #006064) !important;
+                color: white !important;
+                padding: 0.65rem 1.1rem !important;
+                border-radius: 8px !important;
+                display: flex !important;
+                justify-content: space-between !important;
+                align-items: center !important;
+                font-size: 1.05rem !important;
+                box-shadow: 0 4px 12px rgba(0, 150, 167, 0.25) !important;
+            }
+            
+            .fin-total strong {
+                font-size: 1.2rem !important;
+                letter-spacing: 0.3px !important;
+            }
+            
+            .fin-words {
+                margin-top: 0.45rem !important;
+                font-size: 0.78rem !important;
+                color: #0097a7 !important;
+                text-align: center !important;
+                font-style: italic !important;
+                padding: 0.4rem 0.6rem !important;
+                background: white !important;
+                border-radius: 5px !important;
+                border: 1px dashed #b2ebf2 !important;
+            }
+            
+            /* تنسيق الباركود في الطباعة */
+            .barcode-item {
+                background: white !important;
+                border: 1px solid #4dd0e1 !important;
+                border-radius: 9999px !important;
+                padding: 2px 10px !important;
+                font-family: 'Courier New', monospace !important;
+                font-size: 0.68rem !important;
+                font-weight: 600 !important;
+                color: #006064 !important;
+                box-shadow: 0 2px 8px rgba(0, 150, 167, 0.08) !important;
+                white-space: nowrap !important;
+            }
+            
+            .barcode-item.sold {
+                background-color: #ffebee !important;
+                color: #b71c1c !important;
+                border-color: #ef9a9a !important;
+            }
+            
+            .barcode-item.returned {
+                background-color: #fff3e0 !important;
+                color: #ef6c00 !important;
+                border-color: #ffcc80 !important;
+            }
+            
+            .barcode-row td {
+                background: #e0f7fa !important;
+                border-bottom: 1px dashed #b2ebf2 !important;
+            }
+            
+            /* تنسيق المعلومات الأساسية */
+            .info-strip {
+                display: grid !important;
+                grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)) !important;
+                gap: 0 !important;
+                border-bottom: 1px solid #b2ebf2 !important;
+                font-size: 0.8rem !important;
+            }
+            
+            .info-cell {
+                padding: 0.45rem 0.75rem !important;
+                border-left: 1px solid #e0f7fa !important;
+            }
+            
+            .info-cell-label {
+                font-size: 0.65rem !important;
+                color: #0097a7 !important;
+                font-weight: 600 !important;
+                text-transform: uppercase !important;
+                letter-spacing: 0.3px !important;
+                margin-bottom: 0.05rem !important;
+            }
+            
+            .info-cell-value {
+                font-weight: 600 !important;
+                color: #006064 !important;
+                white-space: normal !important;
+                word-wrap: break-word !important;
+                line-height: 1.4 !important;
+            }
+            
+            .notes-bar {
+                padding: 0.4rem 0.85rem !important;
+                background: #fffbeb !important;
+                border-bottom: 1px solid #fde68a !important;
+                font-size: 0.78rem !important;
+                color: #92400e !important;
+                display: flex !important;
+                align-items: center !important;
+                gap: 0.4rem !important;
+            }
+            
+            /* إظهار صور البنود */
+            .thumb {
+                width: 30px !important;
+                height: 30px !important;
+                border-radius: 4px !important;
+                object-fit: cover !important;
+                border: 1px solid #b2ebf2 !important;
+            }
+            
+            .thumb-placeholder {
+                display: none !important;
+            }
+            
+            /* تنسيق الخلايا */
+            .cell-product-name {
+                font-weight: 700 !important;
+                color: #1f2937 !important;
+                font-size: 0.78rem !important;
+                display: block !important;
+                line-height: 1.3 !important;
+            }
+            
+            /* إخفاء عناصر التفاعل */
+            .copy-barcode-btn {
+                display: none !important;
+            }
+            
+            .cell-notes-tooltip {
+                display: none !important;
+            }
+            
+            /* ضمان عدم كسر الصفحة */
+            .finance-section {
+                page-break-inside: avoid !important;
+            }
+            
+            .card {
+                page-break-inside: avoid !important;
+            }
+            
+            /* تنسيق الجدول */
+            .table-bordered {
+                border-collapse: collapse !important;
+            }
+            
+            .table-bordered th,
+            .table-bordered td {
+                border: 1px solid #dee2e6 !important;
+            }
+        }
+
+        /* ============================================
+           تنسيقات الـ Responsive للشاشات
+           ============================================ */
+        @media (max-width: 992px) {
+            .info-strip { grid-template-columns: repeat(3, 1fr); }
+            .finance-layout {
+                grid-template-columns: 1fr;
+                gap: 1rem;
+            }
+            .finance-image-col {
+                max-width: 300px;
+                margin: 0 auto;
+                width: 100%;
+            }
+            .finance-thumb,
+            .finance-thumb-placeholder {
+                height: 180px;
+            }
+            .finance-grid { grid-template-columns: repeat(2, 1fr); }
+        }
+        @media (max-width: 768px) {
+            .info-strip { grid-template-columns: repeat(2, 1fr); }
+            .finance-image-col {
+                max-width: 250px;
+            }
+            .finance-thumb,
+            .finance-thumb-placeholder {
+                height: 150px;
+            }
+            .finance-grid { grid-template-columns: repeat(2, 1fr); }
+            .cell-notes { max-width: 100px; }
+            .barcode-item { font-size: 0.6rem; padding: 1px 6px; }
+        }
+        @media (max-width: 480px) {
+            .info-strip { grid-template-columns: 1fr; }
+            .finance-image-col {
+                max-width: 200px;
+            }
+            .finance-thumb,
+            .finance-thumb-placeholder {
+                height: 120px;
+            }
+            .finance-grid { grid-template-columns: 1fr; gap: 0.3rem; }
+            .fin-item { padding: 0.3rem 0.45rem; }
+            .fin-label { font-size: 0.65rem; }
+            .fin-value { font-size: 0.78rem; }
+            .fin-total { padding: 0.5rem 0.8rem; font-size: 0.92rem; }
+            .fin-total strong { font-size: 1.05rem; }
+            .cell-notes { max-width: 80px; font-size: 0.65rem; }
+            .cell-notes-tooltip { min-width: 140px; max-width: 220px; font-size: 0.65rem; }
+            .barcodes-list { gap: 0.2rem; }
+            .barcode-item { font-size: 0.55rem; padding: 1px 4px; gap: 3px; }
+        }
+    </style>
+{% endblock %}
+
+{% block content %}
+<!-- 2. وضع id="printableArea" و class="invoice-print-area" على الـ div الرئيسي -->
+<div class="main-wrapper invoice-print-area" id="printableArea">
+
+    <div class="card" id="invoiceCard">
+
+        <div class="card-header">
+            <div style="display:flex; align-items:center; gap:0.5rem; flex-wrap:wrap;">
+                <i class="fas fa-file-invoice no-print"></i>
+                <span>فاتورة شراء #{{ purchase.uniqueId }}</span>
+                <div class="ms-auto"></div>
+                <span class="header-meta" style="font-size:0.8rem; opacity:0.8;">
+                    <i class="far fa-calendar-alt"></i> {{ purchase.purch_date|date:"Y-m-d"|default:"---" }}
+                </span>
+            </div>
+        </div>
+
+        <!-- 3. إضافة كلاس no-print لأزرار التحكم والتنقل -->
+        <div class="no-print" style="padding:0.5rem 1rem; display:flex; gap:0.4rem; border-bottom:1px solid var(--aqua-1); flex-wrap:wrap;">
+            {% if request.user.is_superuser or purchase.created_by == request.user %}
+            <a class="btn btn-warning" data-href="{% url 'invoice:purch_edit' slug=purchase.slug %}">
+                <i class="fas fa-pen"></i> تعديل
+            </a>
+            <a class="btn btn-success" data-href="{% url 'invoice:purch_return_create' slug=purchase.slug %}">
+                <i class="fas fa-undo-alt"></i> مرتجع
+            </a>
+            {% endif %}
+            <a class="btn btn-secondary" data-href="{% url 'invoice:purch_list' %}">
+                <i class="fas fa-arrow-right"></i> العودة للقائمة
+            </a>
+        </div>
+
+        <div class="info-strip">
+            <div class="info-cell">
+                <div class="info-cell-label">المورد</div>
+                <div class="info-cell-value">{% if purchase.purch_supplier %}{{ purchase.purch_supplier.get_full_name|default:purchase.purch_supplier.username }}{% else %}---{% endif %}</div>
+            </div>
+            <div class="info-cell">
+                <div class="info-cell-label">العنوان</div>
+                <div class="info-cell-value" style="white-space: normal; word-break: break-word;">{{ purchase.purch_address|default:"---" }}</div>
+            </div>
+            <div class="info-cell">
+                <div class="info-cell-label">الهاتف</div>
+                <div class="info-cell-value">{{ purchase.purch_supplier_phone|default:"---" }}</div>
+            </div>
+            <div class="info-cell">
+                <div class="info-cell-label">رقم فاتورة المورد</div>
+                <div class="info-cell-value">{{ purchase.supplier_invoice_number|default:"---" }}</div>
+            </div>
+            <div class="info-cell">
+                <div class="info-cell-label">شركة الشحن</div>
+                <div class="info-cell-value" style="white-space: normal; word-break: break-word;">{{ purchase.purch_shipping_company|default:"---" }}</div>
+            </div>
+            <div class="info-cell">
+                <div class="info-cell-label">رقم الشحنة</div>
+                <div class="info-cell-value" style="white-space: normal; word-break: break-word;">{{ purchase.purch_shipping_num|default:"---" }}</div>
+            </div>
+            <div class="info-cell">
+                <div class="info-cell-label">العملة</div>
+                <div class="info-cell-value">{{ purchase.purch_currency.name_ar|default:"---" }}</div>
+            </div>
+            <div class="info-cell">
+                <div class="info-cell-label">المستخدم</div>
+                <div class="info-cell-value">{{ purchase.created_by.get_full_name|default:purchase.created_by.username }}</div>
+            </div>
+            <div class="info-cell">
+                <div class="info-cell-label">طريقة الدفع</div>
+                <div class="info-cell-value">{{ purchase.purch_payment_method.name|default:"---" }}</div>
+            </div>
+        </div>
+
+        {% if purchase.purch_notes %}
+        <div class="notes-bar">
+            <i class="fas fa-comment-alt"></i>
+            <span>{{ purchase.purch_notes }}</span>
+        </div>
+        {% endif %}
+
+        <div class="card-body" style="padding:0.5rem; overflow-x:auto;">
+            <table class="table table-bordered" style="margin-bottom:0;">
+                <thead>
+                    <tr>
+                        <th style="width:30px; text-align:center;" data-print-field="col-index">#</th>
+                        <th style="width:180px;" data-print-field="col-product">المادة</th>
+                        <th style="width:65px; text-align:center;" data-print-field="col-qty">الكمية</th>
+                        <th style="width:75px; text-align:center;" data-print-field="col-price">السعر</th>
+                        <th style="width:85px; text-align:center;" data-print-field="col-total">الإجمالي</th>
+                        <th style="width:140px;" data-print-field="col-notes">ملاحظات</th>
+                        <th style="width:40px; text-align:center;" data-print-field="col-image">صورة</th>
+                        <th style="width:40px; text-align:center;" class="no-print" data-print-field="col-barcodes">باركود</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in items %}
+                    <tr class="item-row">
+                        <td style="color:#999; text-align:center;" data-print-field="col-index">{{ forloop.counter }}</td>
+                        <td data-print-field="col-product">
+                            <span class="cell-product-name">{{ item.product_name }}</span>
+                            <span class="product-meta no-print">
+                                <span class="qty-badge"><i class="fas fa-box"></i> أصلي: {{ item.original_quantity }}</span>
+                                <span class="qty-badge"><i class="fas fa-undo-alt"></i> مرتجع: {{ item.returned_quantity }}</span>
+                            </span>
+                        </td>
+                        <td style="font-weight:600; color:var(--aqua-4); text-align:center;" data-print-field="col-qty">{{ item.purchased_quantity }}</td>
+                        <td style="font-weight:600; color:var(--aqua-4); text-align:center;" data-print-field="col-price">{{ item.unit_price|floatformat:2 }}</td>
+                        <td style="font-weight:700; text-align:center;" data-print-field="col-total">{{ item.purch_total|floatformat:2 }}</td>
+                        <td data-print-field="col-notes">
+                            {% if item.notes %}
+                            <div class="cell-notes-wrapper">
+                                <span class="cell-notes">{{ item.notes }}</span>
+                                <div class="cell-notes-tooltip no-print">{{ item.notes }}</div>
+                            </div>
+                            {% else %}
+                            <span class="cell-notes-empty no-print">—</span>
+                            {% endif %}
+                        </td>
+                        <td style="text-align:center;" data-print-field="col-image">
+                            {% if item.purch_item_image %}
+                            <img src="{{ item.purch_item_image.url }}" class="thumb" alt="">
+                            {% else %}
+                            <div class="thumb-placeholder no-print"><i class="fas fa-image"></i></div>
+                            {% endif %}
+                        </td>
+                        <td class="no-print" data-print-field="col-barcodes"></td>
+                    </tr>
+                    
+                    <!-- صف الباركودات -->
+                    <tr class="barcode-row" data-print-field="col-barcodes">
+                        <td colspan="8">
+                            <div class="barcodes-wrapper">
+                                <div id="barcodes-{{ forloop.counter }}" class="barcodes-list">
+                                    {% for barcode in item.barcodes %}
+                                        {% with barcode_value=barcode.barcode_in|default:barcode %}
+                                            {% if "(مباع)" in barcode_value %}
+                                                {% with cleaned_barcode=barcode_value|cut:item.product_name|cut:"("|cut:")"|cut:"مباع"|cut:"returned"|cut:"-"|cut:" " %}
+                                                <span class="barcode-item sold" style="text-decoration: none;">
+                                                    <span class="sold-badge">مباع</span>
+                                                    <i class="fas fa-qrcode barcode-icon"></i>
+                                                    <span class="barcode-text">{{ cleaned_barcode|cut:"  "|cut:"  " }}</span>
+                                                </span>
+                                                {% endwith %}
+                                            {% elif "(returned)" in barcode_value %}
+                                                {% with cleaned_barcode=barcode_value|cut:item.product_name|cut:"("|cut:")"|cut:"returned"|cut:"-"|cut:" " %}
+                                                <span class="barcode-item returned" style="text-decoration: none;">
+                                                    <span class="returned-badge">مرتجع</span>
+                                                    <i class="fas fa-qrcode barcode-icon"></i>
+                                                    <span class="barcode-text">{{ cleaned_barcode|cut:"  "|cut:"  " }}</span>
+                                                </span>
+                                                {% endwith %}
+                                            {% else %}
+                                                {% with cleaned_barcode=barcode_value|cut:item.product_name|cut:"-"|cut:" " %}
+                                                <span class="barcode-item" style="text-decoration: none;">
+                                                    <i class="fas fa-qrcode barcode-icon"></i>
+                                                    <span class="barcode-text">{{ cleaned_barcode|cut:"  "|cut:"  " }}</span>
+                                                    <button type="button" class="copy-barcode-btn no-print" data-barcode-value="{{ cleaned_barcode|cut:"  "|cut:"  " }}" title="نسخ الرقم">
+                                                        <i class="far fa-copy"></i>
+                                                    </button>
+                                                </span>
+                                                {% endwith %}
+                                            {% endif %}
+                                        {% endwith %}
+                                    {% empty %}
+                                    <span class="no-barcodes"><i class="fas fa-times-circle"></i> لا يوجد باركودات</span>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="8" style="text-align:center; color:#9ca3af; padding:2rem;">
+                            <i class="fas fa-inbox" style="font-size:1.5rem;"></i><br>لا توجد بنود
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- ===== قسم الصورة والمالية ===== -->
+        <div class="finance-section">
+            <div class="finance-layout">
+                <!-- عمود الصورة -->
+                <div class="finance-image-col">
+                    <span class="invoice-image-label">
+                        <i class="fas fa-image"></i> صورة الفاتورة
+                    </span>
+                    <div class="finance-image-wrapper">
+                        {% if purchase.purch_image %}
+                        <img src="{{ purchase.purch_image.url }}" alt="صورة الفاتورة" class="finance-thumb" id="invoiceThumb">
+                        {% else %}
+                        <div class="finance-thumb-placeholder no-print">
+                            <i class="fas fa-image"></i>
+                            <span>لا توجد صورة</span>
+                        </div>
+                        {% endif %}
+                    </div>
+                    {% if purchase.purch_image %}
+                    <span class="finance-thumb-hint no-print" id="thumbHint">
+                        <i class="fas fa-expand"></i> اضغط للتكبير
+                    </span>
+                    {% endif %}
+                </div>
+
+                <!-- عمود البيانات المالية -->
+                <div class="finance-fields-col">
+                    <div class="finance-grid">
+                        <div class="fin-item">
+                            <span class="fin-label">إجمالي البنود</span>
+                            <span class="fin-value">{{ purchase.purch_subtotal|floatformat:2 }}</span>
+                        </div>
+                        <div class="fin-item">
+                            <span class="fin-label">الضريبة ({{ purchase.purch_tax_percentage|default:"0" }}%)</span>
+                            <span class="fin-value">{{ purchase.purch_tax_amount|floatformat:2 }}</span>
+                        </div>
+                        <div class="fin-item">
+                            <span class="fin-label">الخصم</span>
+                            <span class="fin-value red">- {{ purchase.purch_discount|floatformat:2 }}</span>
+                        </div>
+                        <div class="fin-item">
+                            <span class="fin-label">الإضافة</span>
+                            <span class="fin-value green">+ {{ purchase.purch_addition|floatformat:2 }}</span>
+                        </div>
+                        <div class="fin-item">
+                            <span class="fin-label">المدفوع</span>
+                            <span class="fin-value green">{{ purchase.paid_amount|floatformat:2 }}</span>
+                        </div>
+                        <div class="fin-item">
+                            <span class="fin-label">المتبقي</span>
+                            <span class="fin-value red">{{ purchase.balance_due|floatformat:2 }}</span>
+                        </div>
+                    </div>
+                    <div class="fin-total">
+                        <span>الإجمالي النهائي ({{ purchase.purch_currency.name|default:"ل.س" }})</span>
+                        <strong>{{ purchase.purch_final_total|floatformat:2 }}</strong>
+                    </div>
+                    {% if purchase.total_in_words %}
+                    <div class="fin-words">{{ purchase.total_in_words }}</div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- 6. استدعاء قالب نظام الطباعة الموحد -->
+    {% include 'includes/print_system.html' %}
+
+</div>
+{% endblock %}
+
+{% block extra_js %}
+    <!-- 7. استدعاء ملف الـ JS الخاص بنظام الطباعة الموحد -->
+    <script src="{% static 'js/print_system.js' %}"></script>
+    
+    <!-- أكواد JS خاصة بالصفحة فقط -->
+    <script nonce="{{ csp_nonce }}">
+        // ==========================================
+        // نسخ الباركودات
+        // ==========================================
+        document.querySelectorAll('.copy-barcode-btn').forEach(function(btn) {
+            btn.addEventListener('click', function(e) {
+                e.stopPropagation();
+                var text = this.getAttribute('data-barcode-value');
+                var tempInput = document.createElement('input');
+                tempInput.value = text;
+                document.body.appendChild(tempInput);
+                tempInput.select();
+                document.execCommand('copy');
+                document.body.removeChild(tempInput);
+                var icon = this.querySelector('i');
+                icon.classList.remove('fa-copy'); 
+                icon.classList.add('fa-check');
+                this.classList.add('copied');
+                var self = this;
+                setTimeout(function() { 
+                    icon.classList.remove('fa-check'); 
+                    icon.classList.add('fa-copy'); 
+                    self.classList.remove('copied'); 
+                }, 2000);
+            });
+        });
+
+        // ==========================================
+        // تكبير الصورة (Lightbox)
+        // ==========================================
+        function openLightbox(src) {
+            var overlay = document.createElement('div');
+            overlay.className = 'lightbox-overlay';
+            var img = document.createElement('img');
+            img.src = src;
+            img.alt = 'صورة الفاتورة';
+            overlay.appendChild(img);
+            overlay.addEventListener('click', function() { this.remove(); });
+            var closeHandler = function(e) {
+                if (e.key === 'Escape') {
+                    overlay.remove();
+                    document.removeEventListener('keydown', closeHandler);
+                }
+            };
+            document.addEventListener('keydown', closeHandler);
+            document.body.appendChild(overlay);
+        }
+
+        var invoiceThumb = document.getElementById('invoiceThumb');
+        if (invoiceThumb) {
+            invoiceThumb.addEventListener('click', function() {
+                openLightbox(this.src);
+            });
+        }
+
+        var thumbHint = document.getElementById('thumbHint');
+        if (thumbHint) {
+            thumbHint.addEventListener('click', function() {
+                var img = document.getElementById('invoiceThumb');
+                if (img) openLightbox(img.src);
+            });
+        }
+
+        // ==========================================
+        // الروابط الديناميكية
+        // ==========================================
+        document.querySelectorAll('[data-href]').forEach(function(link) {
+            link.addEventListener('click', function(e) { 
+                e.preventDefault(); 
+                var href = this.getAttribute('data-href'); 
+                if (href) window.location.href = href; 
+            });
+        });
+    </script>
+{% endblock %}

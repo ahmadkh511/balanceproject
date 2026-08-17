@@ -1,0 +1,295 @@
+<!-- templates/403.html -->
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ليس لديك صلاحية</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap');
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Tajawal', sans-serif;
+            background: linear-gradient(160deg, #e0f7fa 0%, #b2ebf2 40%, #e0f2f1 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 1rem;
+        }
+
+        .error-card {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 8px 40px rgba(0, 150, 167, 0.12);
+            max-width: 480px;
+            width: 100%;
+            overflow: hidden;
+            animation: cardIn 0.45s ease;
+        }
+
+        @keyframes cardIn {
+            from { opacity: 0; transform: translateY(25px) scale(0.97); }
+            to { opacity: 1; transform: translateY(0) scale(1); }
+        }
+
+        .card-top {
+            background: linear-gradient(135deg, #0097a7 0%, #006064 100%);
+            padding: 2.5rem 2rem 2rem;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .card-top::before {
+            content: '';
+            position: absolute;
+            top: -30px; left: -30px;
+            width: 120px; height: 120px;
+            background: rgba(255,255,255,0.06);
+            border-radius: 50%;
+        }
+
+        .card-top::after {
+            content: '';
+            position: absolute;
+            bottom: -40px; right: -20px;
+            width: 150px; height: 150px;
+            background: rgba(255,255,255,0.04);
+            border-radius: 50%;
+        }
+
+        .icon-circle {
+            width: 80px; height: 80px;
+            background: rgba(255,255,255,0.15);
+            border: 3px solid rgba(255,255,255,0.3);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 1rem;
+            animation: iconPulse 2.5s ease-in-out infinite;
+        }
+
+        @keyframes iconPulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.06); }
+        }
+
+        .icon-circle svg {
+            width: 38px; height: 38px;
+            fill: none;
+            stroke: white;
+            stroke-width: 2;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+        }
+
+        .card-top h1 {
+            color: white;
+            font-size: 1.3rem;
+            font-weight: 700;
+            margin-bottom: 0.3rem;
+        }
+
+        .card-top p {
+            color: rgba(255,255,255,0.8);
+            font-size: 0.85rem;
+            font-weight: 500;
+        }
+
+        .card-body {
+            padding: 1.75rem 2rem 2rem;
+        }
+
+        .message-box {
+            background: #f0fdfa;
+            border: 1px solid #b2ebf2;
+            border-radius: 10px;
+            padding: 1rem 1.25rem;
+            margin-bottom: 1.25rem;
+        }
+
+        .message-box p {
+            color: #006064;
+            font-size: 0.88rem;
+            line-height: 1.75;
+        }
+
+        .reasons-list {
+            list-style: none;
+            margin: 0.75rem 0 0;
+            padding: 0;
+        }
+
+        .reasons-list li {
+            display: flex;
+            align-items: flex-start;
+            gap: 0.5rem;
+            font-size: 0.82rem;
+            color: #0097a7;
+            padding: 0.3rem 0;
+        }
+
+        .reasons-list li svg {
+            width: 16px; height: 16px;
+            fill: none;
+            stroke: #4dd0e1;
+            stroke-width: 2;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+            flex-shrink: 0;
+            margin-top: 2px;
+        }
+
+        .actions {
+            display: flex;
+            flex-direction: column;
+            gap: 0.6rem;
+            margin-top: 1.25rem;
+        }
+
+        .btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            padding: 0.7rem 1.25rem;
+            border-radius: 10px;
+            font-family: 'Tajawal', sans-serif;
+            font-size: 0.88rem;
+            font-weight: 700;
+            text-decoration: none;
+            cursor: pointer;
+            border: none;
+            transition: all 0.25s;
+            width: 100%;
+        }
+
+        .btn svg {
+            width: 18px; height: 18px;
+            fill: none;
+            stroke: currentColor;
+            stroke-width: 2;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #0097a7 0%, #006064 100%);
+            color: white;
+            box-shadow: 0 4px 15px rgba(0, 150, 167, 0.3);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0, 150, 167, 0.4);
+        }
+
+        .btn-secondary {
+            background: #f0fdfa;
+            color: #0097a7;
+            border: 1.5px solid #b2ebf2;
+        }
+
+        .btn-secondary:hover {
+            background: #e0f7fa;
+            border-color: #4dd0e1;
+        }
+
+        .btn-outline {
+            background: transparent;
+            color: #0097a7;
+            border: 1.5px solid #b2ebf2;
+        }
+
+        .btn-outline:hover {
+            background: #f0fdfa;
+            border-color: #4dd0e1;
+        }
+
+        .logout-form {
+            margin: 0;
+            padding: 0;
+        }
+
+        .footer-note {
+            text-align: center;
+            margin-top: 1.25rem;
+            font-size: 0.72rem;
+            color: #9ca3af;
+        }
+
+        @media (max-width: 500px) {
+            .card-body { padding: 1.25rem 1.25rem 1.5rem; }
+            .card-top { padding: 2rem 1.25rem 1.5rem; }
+            .icon-circle { width: 65px; height: 65px; }
+            .icon-circle svg { width: 30px; height: 30px; }
+            .card-top h1 { font-size: 1.15rem; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="error-card">
+    <div class="card-top">
+        <div class="icon-circle">
+            <svg viewBox="0 0 24 24">
+                <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+                <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+            </svg>
+        </div>
+        <h1>لا يمكنك الوصول لهذه الصفحة</h1>
+        <p>الرجاء عدم القلق، الأمر طبيعي</p>
+    </div>
+
+    <div class="card-body">
+        <div class="message-box">
+            <p>
+                عذراً، ليس لديك الصلاحية الكافية للوصول إلى هذه الصفحة أو إجراء هذا العمل.
+                هذا لا يعني أن هناك مشكلة في النظام، بل هو إجراء لحماية البيانات وتنظيم الصلاحيات.
+            </p>
+            <ul class="reasons-list">
+                <li>
+                    <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                    <span>قد تكون هذه الصفحة مخصصة للمدير أو البائع فقط</span>
+                </li>
+                <li>
+                    <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                    <span>قد لا تكون هذه الفاتورة من إنشائك فلا تملك تعديلها</span>
+                </li>
+                <li>
+                    <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                    <span>قد تحتاج إلى التحدث مع المدير لتفعيل صلاحيات إضافية</span>
+                </li>
+            </ul>
+        </div>
+
+        <div class="actions">
+            <a href="/" class="btn btn-primary">
+                <svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+                العودة للرئيسية
+            </a>
+            <a href="javascript:void(0)" class="btn btn-secondary" onclick="window.history.back()">
+                <svg viewBox="0 0 24 24"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+                العودة للصفحة السابقة
+            </a>
+            <form class="logout-form" action="{% url 'accounts:logout' %}" method="post">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-outline">
+                    <svg viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+                    تسجيل الدخول بحساب آخر
+                </button>
+            </form>
+        </div>
+
+        <div class="footer-note">
+            إذا كنت تعتقد أن هذا خطأ، تواصل مع المسؤول التقني
+        </div>
+    </div>
+</div>
+
+</body>
+</html>

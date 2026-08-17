@@ -1,0 +1,1 @@
+web: gunicorn balanceIQ.wsgi:application

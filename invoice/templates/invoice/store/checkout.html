@@ -1,0 +1,1225 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %} إتمام الشراء - متجر البرنامج {% endblock %}
+
+{% block extra_css %}
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<!-- مكتبة أعلام الدول -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/18.2.1/css/intlTelInput.css">
+<style>
+    :root {
+        --primary: #6366f1;
+        --primary-dark: #4f46e5;
+        --primary-light: #eef2ff;
+        --dark: #0f172a;
+        --gray: #64748b;
+        --gray-light: #94a3b8;
+        --border: #e2e8f0;
+        --success: #10b981;
+        --success-light: #ecfdf5;
+        --danger: #ef4444;
+        --danger-light: #fef2f2;
+        --warning: #f59e0b;
+        --radius: 14px;
+        --radius-sm: 10px;
+        --shadow: 0 4px 24px rgba(0,0,0,0.06);
+        --shadow-lg: 0 10px 40px rgba(0,0,0,0.1);
+    }
+
+    * {
+        box-sizing: border-box;
+    }
+
+    body {
+        font-family: 'Cairo', sans-serif;
+        background: linear-gradient(135deg, #f8fafc 0%, #eef2ff 100%);
+        color: var(--dark);
+        min-height: 100vh;
+        margin: 0;
+        padding: 0;
+    }
+
+    /* شريط الخطوات */
+    .steps-bar {
+        max-width: 860px;
+        margin: 30px auto 0;
+        padding: 0 20px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0;
+    }
+
+    .step-item {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .step-circle {
+        width: 38px;
+        height: 38px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.85rem;
+        font-weight: 700;
+        border: 2px solid var(--border);
+        color: var(--gray-light);
+        background: white;
+        transition: all 0.3s;
+        flex-shrink: 0;
+    }
+
+    .step-circle.active {
+        background: var(--primary);
+        border-color: var(--primary);
+        color: white;
+        box-shadow: 0 4px 12px rgba(99,102,241,0.35);
+    }
+
+    .step-circle.done {
+        background: var(--success);
+        border-color: var(--success);
+        color: white;
+    }
+
+    .step-label {
+        font-size: 0.85rem;
+        font-weight: 600;
+        color: var(--gray-light);
+    }
+
+    .step-label.active { color: var(--primary); }
+    .step-label.done { color: var(--success); }
+
+    .step-line {
+        width: 60px;
+        height: 2px;
+        background: var(--border);
+        margin: 0 12px;
+        flex-shrink: 0;
+    }
+
+    .step-line.done { background: var(--success); }
+
+    /* الحاوية الرئيسية */
+    .checkout-container {
+        max-width: 860px;
+        margin: 30px auto 50px;
+        padding: 0 20px;
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 25px;
+    }
+
+    @media (min-width: 768px) {
+        .checkout-container { grid-template-columns: 1fr 340px; }
+    }
+
+    /* البطاقات */
+    .card {
+        background: white;
+        border-radius: var(--radius);
+        padding: 28px;
+        box-shadow: var(--shadow);
+        border: 1px solid rgba(0,0,0,0.04);
+        transition: all 0.3s;
+    }
+
+    .card:hover {
+        box-shadow: var(--shadow-lg);
+    }
+
+    .card-header-custom {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 25px;
+        padding-bottom: 16px;
+        border-bottom: 2px solid var(--primary-light);
+    }
+
+    .card-header-icon {
+        width: 42px;
+        height: 42px;
+        border-radius: var(--radius-sm);
+        background: var(--primary-light);
+        color: var(--primary);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.1rem;
+        flex-shrink: 0;
+    }
+
+    .card-header-title {
+        font-size: 1.15rem;
+        font-weight: 700;
+        margin: 0;
+        color: var(--dark);
+    }
+
+    /* الحقول */
+    .form-group {
+        margin-bottom: 20px;
+        position: relative;
+    }
+
+    .form-label {
+        display: block;
+        margin-bottom: 7px;
+        font-weight: 600;
+        font-size: 0.9rem;
+        color: var(--dark);
+    }
+
+    .form-label .required-star {
+        color: var(--danger);
+        margin-right: 2px;
+    }
+
+    .form-label .hint {
+        font-weight: 400;
+        color: var(--gray-light);
+        font-size: 0.75rem;
+    }
+
+    .input-wrapper {
+        position: relative;
+    }
+
+    .input-icon {
+        position: absolute;
+        right: 14px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: var(--gray-light);
+        font-size: 0.95rem;
+        pointer-events: none;
+        transition: color 0.3s;
+        z-index: 1;
+    }
+
+    .form-input {
+        width: 100%;
+        padding: 13px 42px 13px 15px;
+        border: 2px solid var(--border);
+        border-radius: var(--radius-sm);
+        font-family: inherit;
+        font-size: 0.95rem;
+        transition: all 0.3s;
+        background: #fafbfc;
+        direction: rtl;
+    }
+
+    .form-input:focus {
+        outline: none;
+        border-color: var(--primary);
+        background: white;
+        box-shadow: 0 0 0 4px rgba(99,102,241,0.1);
+    }
+
+    .form-input.is-valid {
+        border-color: var(--success);
+        background: var(--success-light);
+    }
+
+    .form-input.is-invalid {
+        border-color: var(--danger);
+        background: var(--danger-light);
+    }
+
+    textarea.form-input {
+        resize: vertical;
+        min-height: 80px;
+        padding-top: 13px;
+    }
+
+    /* ===== تنسيقات حقل الهاتف مع مكتبة الدول ===== */
+    .iti.iti--allow-dropdown {
+        width: 100%;
+        direction: ltr;
+    }
+    
+    .iti__flag-container {
+        right: auto !important;
+        left: 0 !important;
+    }
+    
+    .form-input.iti__tel-input {
+        padding-left: 72px !important;
+        padding-right: 15px !important;
+        text-align: right;
+        direction: ltr;
+    }
+    
+    /* ===== القائمة المنسدلة تظهر لليسار ===== */
+    .iti__country-list {
+        direction: ltr !important;
+        text-align: left !important;
+        border-radius: var(--radius-sm) !important;
+        box-shadow: var(--shadow-lg) !important;
+        margin-top: 5px !important;
+        z-index: 9999 !important;
+        max-height: 250px !important;
+        overflow-y: auto !important;
+        left: 0 !important;
+        right: auto !important;
+        width: 280px !important;
+        border: 1px solid var(--border) !important;
+    }
+
+    .iti__country-list::-webkit-scrollbar {
+        width: 4px;
+    }
+    
+    .iti__country-list::-webkit-scrollbar-thumb {
+        background: var(--primary-light);
+        border-radius: 4px;
+    }
+
+    .iti__country {
+        padding: 8px 12px !important;
+        font-size: 0.9rem !important;
+        font-family: 'Cairo', sans-serif !important;
+    }
+
+    .iti__country:hover {
+        background: var(--primary-light) !important;
+    }
+
+    .iti__country.iti__highlight {
+        background: var(--primary-light) !important;
+    }
+
+    .iti__country-name {
+        margin-right: 6px !important;
+        font-weight: 500;
+    }
+
+    .iti__dial-code {
+        color: var(--gray) !important;
+        font-weight: 400;
+    }
+
+    /* ===== استبدال علم سوريا بالعلم الجديد (الأخضر) ===== */
+    .iti__flag.iti__sy {
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 900 600'%3E%3Crect width='900' height='200' fill='%23007a3d'/%3E%3Crect width='900' height='200' y='200' fill='%23ffffff'/%3E%3Crect width='900' height='200' y='400' fill='%23000000'/%3E%3Cg fill='%23ce1126'%3E%3Cpath d='M350 300l23.5 70.5-61.8-45h76.6l-61.8 45z'/%3E%3Cpath d='M450 300l23.5 70.5-61.8-45h76.6l-61.8 45z'/%3E%3Cpath d='M550 300l23.5 70.5-61.8-45h76.6l-61.8 45z'/%3E%3C/g%3E%3C/svg%3E") !important;
+        background-position: 0 0 !important;
+        background-size: contain !important;
+        background-repeat: no-repeat !important;
+        background-color: transparent !important;
+    }
+
+    /* رسائل الخطأ */
+    .field-error {
+        display: none;
+        font-size: 0.8rem;
+        color: var(--danger);
+        margin-top: 5px;
+        font-weight: 600;
+        align-items: center;
+        gap: 5px;
+    }
+
+    .field-error.show {
+        display: flex;
+    }
+
+    .char-counter {
+        position: absolute;
+        left: 12px;
+        bottom: 10px;
+        font-size: 0.72rem;
+        color: var(--gray-light);
+        pointer-events: none;
+        direction: ltr;
+    }
+
+    .char-counter.danger { color: var(--danger); }
+
+    /* ملخص الطلب */
+    .summary-items {
+        max-height: 320px;
+        overflow-y: auto;
+        margin-bottom: 15px;
+    }
+
+    .summary-items::-webkit-scrollbar {
+        width: 4px;
+    }
+    .summary-items::-webkit-scrollbar-thumb {
+        background: var(--primary-light);
+        border-radius: 4px;
+    }
+
+    .summary-item {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 10px 0;
+        border-bottom: 1px solid #f1f5f9;
+    }
+
+    .summary-item:last-child { border-bottom: none; }
+
+    .summary-item-img {
+        width: 50px;
+        height: 50px;
+        border-radius: 8px;
+        object-fit: cover;
+        flex-shrink: 0;
+        background: #f1f5f9;
+        border: 1px solid #e2e8f0;
+    }
+
+    .summary-item-info {
+        flex: 1;
+        min-width: 0;
+    }
+
+    .summary-item-name {
+        font-size: 0.82rem;
+        font-weight: 600;
+        color: var(--dark);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .summary-item-qty {
+        font-size: 0.75rem;
+        color: var(--gray);
+    }
+
+    .summary-item-price {
+        font-size: 0.9rem;
+        font-weight: 700;
+        color: var(--primary);
+        flex-shrink: 0;
+    }
+
+    .summary-divider {
+        height: 1px;
+        background: linear-gradient(90deg, transparent, var(--border), transparent);
+        margin: 15px 0;
+    }
+
+    .total-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 12px 0 0;
+    }
+
+    .total-label {
+        font-size: 1rem;
+        font-weight: 700;
+        color: var(--dark);
+    }
+
+    .total-value {
+        font-size: 1.4rem;
+        font-weight: 800;
+        color: var(--primary);
+    }
+
+    /* الأزرار */
+    .btn-submit {
+        width: 100%;
+        padding: 16px;
+        background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+        color: white;
+        border: none;
+        border-radius: var(--radius-sm);
+        font-size: 1.05rem;
+        font-weight: 700;
+        cursor: pointer;
+        margin-top: 20px;
+        transition: all 0.3s;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+        font-family: inherit;
+        box-shadow: 0 4px 15px rgba(99,102,241,0.3);
+    }
+
+    .btn-submit:hover:not(:disabled) {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(99,102,241,0.4);
+    }
+
+    .btn-submit:disabled {
+        opacity: 0.7;
+        cursor: not-allowed;
+        transform: none;
+    }
+
+    .btn-submit .spinner {
+        display: none;
+        width: 20px;
+        height: 20px;
+        border: 3px solid rgba(255,255,255,0.3);
+        border-top-color: white;
+        border-radius: 50%;
+        animation: spin 0.7s linear infinite;
+    }
+
+    .btn-submit.is-loading .spinner { display: block; }
+    .btn-submit.is-loading .btn-text { display: none; }
+
+    @keyframes spin {
+        to { transform: rotate(360deg); }
+    }
+
+    .btn-back {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 10px 20px;
+        background: white;
+        color: var(--gray);
+        border: 2px solid var(--border);
+        border-radius: var(--radius-sm);
+        font-size: 0.9rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s;
+        font-family: inherit;
+        text-decoration: none;
+        margin-bottom: 5px;
+    }
+
+    .btn-back:hover {
+        border-color: var(--primary);
+        color: var(--primary);
+        background: var(--primary-light);
+        transform: translateX(-3px);
+    }
+
+    /* شريط الثقة */
+    .trust-bar {
+        display: flex;
+        justify-content: center;
+        gap: 20px;
+        flex-wrap: wrap;
+        margin-top: 15px;
+        padding-top: 15px;
+        border-top: 1px solid #f1f5f9;
+    }
+
+    .trust-item {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 0.78rem;
+        color: var(--gray);
+        font-weight: 600;
+    }
+
+    .trust-item i {
+        color: var(--success);
+        font-size: 0.85rem;
+    }
+
+    /* مودال النجاح */
+    .success-overlay {
+        position: fixed;
+        inset: 0;
+        background: rgba(0,0,0,0.5);
+        backdrop-filter: blur(4px);
+        display: none;
+        align-items: center;
+        justify-content: center;
+        z-index: 10000;
+        padding: 20px;
+    }
+
+    .success-overlay.show { display: flex; }
+
+    .success-card {
+        background: white;
+        border-radius: 20px;
+        padding: 40px;
+        text-align: center;
+        max-width: 420px;
+        width: 100%;
+        box-shadow: var(--shadow-lg);
+        animation: successPop 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+
+    @keyframes successPop {
+        0% { opacity: 0; transform: scale(0.7); }
+        100% { opacity: 1; transform: scale(1); }
+    }
+
+    .success-icon {
+        width: 80px;
+        height: 80px;
+        border-radius: 50%;
+        background: var(--success-light);
+        color: var(--success);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 2rem;
+        margin: 0 auto 20px;
+    }
+
+    .success-title {
+        font-size: 1.3rem;
+        font-weight: 800;
+        color: var(--dark);
+        margin-bottom: 10px;
+    }
+
+    .success-order-id {
+        display: inline-block;
+        background: var(--primary-light);
+        color: var(--primary);
+        padding: 6px 18px;
+        border-radius: 20px;
+        font-size: 0.9rem;
+        font-weight: 700;
+        margin-bottom: 8px;
+    }
+
+    .success-msg {
+        font-size: 0.9rem;
+        color: var(--gray);
+        margin-bottom: 25px;
+        line-height: 1.6;
+    }
+
+    .success-btn {
+        padding: 12px 35px;
+        background: var(--primary);
+        color: white;
+        border: none;
+        border-radius: var(--radius-sm);
+        font-size: 1rem;
+        font-weight: 700;
+        cursor: pointer;
+        transition: 0.3s;
+        font-family: inherit;
+    }
+
+    .success-btn:hover {
+        background: var(--primary-dark);
+        transform: translateY(-2px);
+    }
+
+    /* رسالة الخطأ العامة */
+    .general-error {
+        display: none;
+        background: var(--danger-light);
+        border: 1px solid rgba(239,68,68,0.2);
+        color: var(--danger);
+        padding: 12px 16px;
+        border-radius: var(--radius-sm);
+        font-size: 0.88rem;
+        font-weight: 600;
+        margin-bottom: 20px;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .general-error.show { display: flex; }
+
+    /* التجاوب */
+    @media (max-width: 767px) {
+        .steps-bar { gap: 0; }
+        .step-label { font-size: 0.75rem; }
+        .step-line { width: 30px; margin: 0 6px; }
+        .card { padding: 20px; }
+        .trust-bar { gap: 12px; }
+        .iti__country-list {
+            width: 220px !important;
+        }
+    }
+
+    @media (max-width: 400px) {
+        .step-label { display: none; }
+        .iti__country-list {
+            width: 180px !important;
+        }
+    }
+
+    /* تحسين عرض حقول النص */
+    .form-group.textarea-group .input-icon {
+        top: 18px;
+        transform: none;
+    }
+
+    /* تحسينات إضافية */
+    .input-wrapper:focus-within .input-icon {
+        color: var(--primary);
+    }
+
+    .iti__selected-dial-code {
+        font-weight: 600;
+        color: var(--dark);
+    }
+
+    .iti__arrow {
+        margin-left: 6px !important;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<!-- شريط الخطوات -->
+<div class="steps-bar">
+    <div class="step-item">
+        <div class="step-circle done"><i class="fas fa-check" style="font-size:0.75rem;"></i></div>
+        <span class="step-label done">السلة</span>
+    </div>
+    <div class="step-line done"></div>
+    <div class="step-item">
+        <div class="step-circle active"><i class="fas fa-pen" style="font-size:0.7rem;"></i></div>
+        <span class="step-label active">بيانات الشحن</span>
+    </div>
+    <div class="step-line"></div>
+    <div class="step-item">
+        <div class="step-circle">3</div>
+        <span class="step-label">التأكيد</span>
+    </div>
+</div>
+
+<form id="checkoutForm" method="POST" action="{% url 'invoice:place_order' %}">
+    {% csrf_token %}
+    <div class="checkout-container">
+
+        <!-- قسم البيانات -->
+        <div>
+            <a href="{% url 'invoice:cart_detail' %}" class="btn-back">
+                <i class="fas fa-arrow-right"></i>
+                العودة للسلة
+            </a>
+
+            <div class="card">
+                <div class="card-header-custom">
+                    <div class="card-header-icon">
+                        <i class="fas fa-map-marker-alt"></i>
+                    </div>
+                    <h2 class="card-header-title">بيانات الشحن</h2>
+                </div>
+
+                <div class="general-error" id="generalError">
+                    <i class="fas fa-exclamation-circle"></i>
+                    <span id="generalErrorText"></span>
+                </div>
+
+                <!-- الاسم -->
+                <div class="form-group">
+                    <label class="form-label">
+                        الاسم الكامل <span class="required-star">*</span>
+                        <span class="hint">(3 أحرف على الأقل)</span>
+                    </label>
+                    <div class="input-wrapper">
+                        <input
+                            type="text"
+                            name="full_name"
+                            id="fullName"
+                            class="form-input"
+                            maxlength="100"
+                            required
+                            autocomplete="name"
+                            placeholder="الاسم الثلاثي"
+                            value="{{ request.user.get_full_name|default:'' }}"
+                        >
+                        <i class="fas fa-user input-icon"></i>
+                    </div>
+                    <div class="field-error" id="fullNameError">
+                        <i class="fas fa-exclamation-circle"></i>
+                        <span></span>
+                    </div>
+                </div>
+
+                <!-- الهاتف -->
+                <div class="form-group">
+                    <label class="form-label">
+                        رقم الهاتف <span class="required-star">*</span>
+                        <span class="hint">(مع رمز الدولة)</span>
+                    </label>
+                    <div class="input-wrapper">
+                        <input
+                            type="tel"
+                            name="phone"
+                            id="phone"
+                            class="form-input"
+                            required
+                            autocomplete="tel"
+                            placeholder="999 999 999"
+                            value="{{ request.user.profile.phone|default:'' }}"
+                        >
+                    </div>
+                    <div class="field-error" id="phoneError">
+                        <i class="fas fa-exclamation-circle"></i>
+                        <span></span>
+                    </div>
+                </div>
+
+                <!-- العنوان -->
+                <div class="form-group textarea-group">
+                    <label class="form-label">
+                        عنوان الشحن <span class="required-star">*</span>
+                        <span class="hint">(5 أحرف على الأقل)</span>
+                    </label>
+                    <div class="input-wrapper">
+                        <textarea
+                            name="address"
+                            id="address"
+                            class="form-input"
+                            maxlength="500"
+                            required
+                            placeholder="المدينة، الحي، الشارع، قرب..."
+                            oninput="updateCharCounter(this, 'addressCounter', 500)"
+                        >{{ request.user.profile.address|default:'' }}</textarea>
+                        <i class="fas fa-location-dot input-icon" style="top:18px; transform:none;"></i>
+                    </div>
+                    <span class="char-counter" id="addressCounter">0 / 500</span>
+                    <div class="field-error" id="addressError">
+                        <i class="fas fa-exclamation-circle"></i>
+                        <span></span>
+                    </div>
+                </div>
+
+                <!-- الملاحظات -->
+                <div class="form-group textarea-group">
+                    <label class="form-label">
+                        ملاحظات
+                        <span class="hint">(اختياري)</span>
+                    </label>
+                    <div class="input-wrapper">
+                        <textarea
+                            name="notes"
+                            id="notes"
+                            class="form-input"
+                            maxlength="1000"
+                            placeholder="تفاصيل إضافية..."
+                            oninput="updateCharCounter(this, 'notesCounter', 1000)"
+                        ></textarea>
+                        <i class="fas fa-comment-dots input-icon" style="top:18px; transform:none;"></i>
+                    </div>
+                    <span class="char-counter" id="notesCounter">0 / 1000</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- قسم ملخص الطلب -->
+        <div>
+            <div class="card" style="position:sticky; top:20px;">
+                <div class="card-header-custom">
+                    <div class="card-header-icon" style="background:#ecfdf5; color:var(--success);">
+                        <i class="fas fa-receipt"></i>
+                    </div>
+                    <h2 class="card-header-title">ملخص الطلب</h2>
+                </div>
+
+                <div class="summary-items">
+                    {% for item in cart.items.all %}
+                    <div class="summary-item">
+                        <img
+                            src="{% if item.product.product_image %}{{ item.product.product_image.url }}{% else %}{% static 'images/no-image.png' %}{% endif %}"
+                            alt="{{ item.product.product_name }}"
+                            class="summary-item-img"
+                            loading="lazy"
+                        >
+                        <div class="summary-item-info">
+                            <div class="summary-item-name">{{ item.product.product_name }}</div>
+                            <div class="summary-item-qty">الكمية: {{ item.quantity }}</div>
+                        </div>
+                        <div class="summary-item-price">{{ item.total_item_price|floatformat:0 }} ل.س</div>
+                    </div>
+                    {% empty %}
+                    <div style="text-align:center; padding:30px 0; color:var(--gray-light);">
+                        <i class="fas fa-cart-arrow-down" style="font-size:2rem; margin-bottom:10px; display:block;"></i>
+                        السلة فارغة
+                    </div>
+                    {% endfor %}
+                </div>
+
+                <div class="summary-divider"></div>
+
+                <div class="total-row">
+                    <span class="total-label">الإجمالي</span>
+                    <span class="total-value">{{ cart.total_price|floatformat:0 }} ل.س</span>
+                </div>
+
+                <button type="submit" class="btn-submit" id="submitBtn">
+                    <span class="btn-text"><i class="fas fa-lock" style="font-size:0.85rem;"></i> تأكيد الطلب</span>
+                    <span class="spinner"></span>
+                </button>
+
+                <div class="trust-bar">
+                    <div class="trust-item"><i class="fas fa-shield-alt"></i> دفع آمن</div>
+                    <div class="trust-item"><i class="fas fa-truck"></i> شحن سريع</div>
+                    <div class="trust-item"><i class="fas fa-undo"></i> استرجاع</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</form>
+
+<!-- مودال النجاح -->
+<div class="success-overlay" id="successOverlay">
+    <div class="success-card">
+        <div class="success-icon">
+            <i class="fas fa-check"></i>
+        </div>
+        <h3 class="success-title">تم استلام طلبك بنجاح!</h3>
+        <div class="success-order-id" id="successOrderId">#---</div>
+        <p class="success-msg">
+            شكراً لك! سنقوم بمراجعة طلبك والتواصل معك قريباً لتأكيد التفاصيل.
+        </p>
+        <button class="success-btn" id="successBtn">العودة للمتجر</button>
+    </div>
+</div>
+
+{% endblock %}
+
+
+{% block extra_js %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/18.2.1/js/intlTelInput.min.js" nonce="{{ request.csp_nonce }}"></script>
+<script nonce="{{ request.csp_nonce }}">
+document.addEventListener('DOMContentLoaded', function() {
+    'use strict';
+
+    // دالة لجلب CSRF token
+    function getCookie(name) {
+        var cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            var cookies = document.cookie.split(';');
+            for (var i = 0; i < cookies.length; i++) {
+                var cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+
+    // دالة تحديث عداد الأحرف
+    window.updateCharCounter = function(textarea, counterId, max) {
+        var counter = document.getElementById(counterId);
+        if (!counter) return;
+        var len = textarea.value.length;
+        counter.textContent = len + ' / ' + max;
+        counter.className = 'char-counter';
+        if (len > max * 0.9) counter.classList.add('danger');
+        if (len === 0) counter.classList.remove('danger');
+    };
+
+    // دوال عرض وإخفاء الأخطاء
+    function showFieldError(fieldId, message) {
+        var input = document.getElementById(fieldId);
+        var errorEl = document.getElementById(fieldId + 'Error');
+        if (input) {
+            input.classList.remove('is-valid');
+            input.classList.add('is-invalid');
+        }
+        if (errorEl) {
+            var span = errorEl.querySelector('span');
+            if (span) span.textContent = message;
+            errorEl.classList.add('show');
+        }
+    }
+
+    function clearFieldError(fieldId) {
+        var input = document.getElementById(fieldId);
+        var errorEl = document.getElementById(fieldId + 'Error');
+        if (input) input.classList.remove('is-invalid');
+        if (errorEl) errorEl.classList.remove('show');
+    }
+
+    function markFieldValid(fieldId) {
+        var input = document.getElementById(fieldId);
+        if (input) {
+            input.classList.remove('is-invalid');
+            input.classList.add('is-valid');
+        }
+        clearFieldError(fieldId);
+    }
+
+    function showGeneralError(msg) {
+        var el = document.getElementById('generalError');
+        var textEl = document.getElementById('generalErrorText');
+        if (textEl) textEl.textContent = msg;
+        if (el) el.classList.add('show');
+    }
+
+    function hideGeneralError() {
+        var el = document.getElementById('generalError');
+        if (el) el.classList.remove('show');
+    }
+
+    // التحقق من صحة الاسم
+    var nameRegex = /^[\u0600-\u06FFa-zA-Z\s]+$/;
+
+    // عناصر الحقول
+    var fullNameInput = document.getElementById('fullName');
+    var phoneInput = document.getElementById('phone');
+    var addressInput = document.getElementById('address');
+
+    /* ========================================
+       تهيئة حقل الهاتف مع مكتبة الدول
+       ======================================== */
+    var iti = window.intlTelInput(phoneInput, {
+        separateDialCode: true,
+        initialCountry: "sa",
+        preferredCountries: [
+            "sy", "sa", "ae", "eg", "jo", "lb", "ps", 
+            "iq", "kw", "qa", "om", "bh", "ye", 
+            "dz", "ma", "tn", "ly", "sd", "so", "mr"
+        ],
+        utilsScript: "https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/18.2.1/js/utils.js"
+    });
+
+    // ضبط القائمة لتظهر لليسار
+    setTimeout(function() {
+        var countryList = document.querySelector('.iti__country-list');
+        if (countryList) {
+            countryList.style.left = '0';
+            countryList.style.right = 'auto';
+        }
+    }, 500);
+
+    /* ========================================
+       التحقق الحي
+       ======================================== */
+    if (fullNameInput) {
+        fullNameInput.addEventListener('input', function() {
+            var val = this.value.trim();
+            if (val.length === 0) { 
+                clearFieldError('fullName'); 
+                this.classList.remove('is-valid');
+                return; 
+            }
+            if (val.length < 3) { 
+                showFieldError('fullName', 'الاسم لا يقل عن 3 أحرف'); 
+                return; 
+            }
+            if (!nameRegex.test(val)) { 
+                showFieldError('fullName', 'الاسم يجب أن يحتوي على حروف فقط'); 
+                return; 
+            }
+            markFieldValid('fullName');
+        });
+    }
+
+    if (phoneInput) {
+        phoneInput.addEventListener('input', function() {
+            var val = this.value.trim();
+            if (val.length === 0) { 
+                clearFieldError('phone'); 
+                this.classList.remove('is-valid');
+                return; 
+            }
+            if (iti.isValidNumber()) {
+                markFieldValid('phone');
+            } else {
+                if (val.length > 3) {
+                    showFieldError('phone', 'صيغة الرقم غير صحيحة للدولة المختارة');
+                }
+            }
+        });
+    }
+
+    if (addressInput) {
+        addressInput.addEventListener('input', function() {
+            var val = this.value.trim();
+            if (val.length === 0) { 
+                clearFieldError('address'); 
+                this.classList.remove('is-valid');
+                return; 
+            }
+            if (val.length < 5) { 
+                showFieldError('address', 'العنوان لا يقل عن 5 أحرف'); 
+                return; 
+            }
+            markFieldValid('address');
+        });
+    }
+
+    // تحديث عدادات الأحرف عند التحميل
+    setTimeout(function() {
+        var addressTextarea = document.getElementById('address');
+        var notesTextarea = document.getElementById('notes');
+        if (addressTextarea) updateCharCounter(addressTextarea, 'addressCounter', 500);
+        if (notesTextarea) updateCharCounter(notesTextarea, 'notesCounter', 1000);
+    }, 100);
+
+    /* ========================================
+       التحقق الكامل عند الإرسال
+       ======================================== */
+    function validateForm() {
+        var isValid = true;
+        hideGeneralError();
+
+        var fullNameEl = document.getElementById('fullName');
+        var addressEl = document.getElementById('address');
+        var notesEl = document.getElementById('notes');
+
+        var name = fullNameEl.value.trim();
+        var address = addressEl.value.trim();
+        var notes = notesEl ? notesEl.value.trim() : '';
+
+        // التحقق من الاسم
+        if (!name) {
+            showFieldError('fullName', 'الاسم مطلوب');
+            isValid = false;
+        } else if (name.length < 3) {
+            showFieldError('fullName', 'الاسم لا يقل عن 3 أحرف');
+            isValid = false;
+        } else if (!nameRegex.test(name)) {
+            showFieldError('fullName', 'الاسم يجب أن يحتوي على حروف فقط');
+            isValid = false;
+        } else {
+            markFieldValid('fullName');
+        }
+
+        // التحقق من الهاتف
+        if (!phoneInput.value.trim()) {
+            showFieldError('phone', 'رقم الهاتف مطلوب');
+            isValid = false;
+        } else if (!iti.isValidNumber()) {
+            showFieldError('phone', 'رقم الهاتف غير صحيح للدولة المختارة');
+            isValid = false;
+        } else {
+            phoneInput.value = iti.getNumber();
+            markFieldValid('phone');
+        }
+
+        // التحقق من العنوان
+        if (!address) {
+            showFieldError('address', 'العنوان مطلوب');
+            isValid = false;
+        } else if (address.length < 5) {
+            showFieldError('address', 'العنوان لا يقل عن 5 أحرف');
+            isValid = false;
+        } else {
+            markFieldValid('address');
+        }
+
+        // التحقق من الملاحظات
+        if (notes.length > 1000) {
+            showGeneralError('الملاحظات طويلة جداً (الحد الأقصى 1000 حرف)');
+            isValid = false;
+        }
+
+        return isValid;
+    }
+
+    /* ========================================
+       إرسال الطلب
+       ======================================== */
+    var isSubmitting = false;
+    var form = document.getElementById('checkoutForm');
+
+    if (form) {
+        form.addEventListener('submit', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+
+            if (isSubmitting) return false;
+
+            if (!validateForm()) {
+                var firstErr = document.querySelector('.form-input.is-invalid');
+                if (firstErr) {
+                    firstErr.focus();
+                    firstErr.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }
+                return false;
+            }
+
+            isSubmitting = true;
+            var btn = document.getElementById('submitBtn');
+            if (btn) {
+                btn.classList.add('is-loading');
+                btn.disabled = true;
+            }
+            hideGeneralError();
+
+            var formData = new FormData(form);
+
+            fetch(form.action, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': getCookie('csrftoken'),
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                body: formData
+            })
+            .then(function(response) {
+                return response.json().then(function(data) {
+                    return { ok: response.ok, data: data };
+                });
+            })
+            .then(function(res) {
+                if (res.ok && res.data.success) {
+                    // تحديث عداد السلة
+                    try { localStorage.setItem('cartCount', 0); } catch(e) {}
+                    if (window.updateCartBadge) window.updateCartBadge(0);
+                    
+                    // تحويل إذا وجد رابط
+                    if (res.data.redirect_url) {
+                        window.location.href = res.data.redirect_url;
+                        return;
+                    }
+                    
+                    // عرض مودال النجاح
+                    var orderIdEl = document.getElementById('successOrderId');
+                    if (orderIdEl) orderIdEl.textContent = '#' + res.data.order_id;
+                    var overlay = document.getElementById('successOverlay');
+                    if (overlay) overlay.classList.add('show');
+                    
+                } else {
+                    showGeneralError(res.data.message || 'حدث خطأ غير متوقع');
+                    if (btn) {
+                        btn.classList.remove('is-loading');
+                        btn.disabled = false;
+                    }
+                    isSubmitting = false;
+                }
+            })
+            .catch(function(error) {
+                console.error('Error:', error);
+                showGeneralError('خطأ في الاتصال بالخادم، يرجى المحاولة لاحقاً.');
+                if (btn) {
+                    btn.classList.remove('is-loading');
+                    btn.disabled = false;
+                }
+                isSubmitting = false;
+            });
+        });
+    }
+
+    // زر العودة للمتجر
+    var successBtn = document.getElementById('successBtn');
+    if (successBtn) {
+        successBtn.addEventListener('click', function() {
+            window.location.href = '/';
+        });
+    }
+
+    // إغلاق مودال النجاح بالضغط خارج البطاقة
+    var overlay = document.getElementById('successOverlay');
+    if (overlay) {
+        overlay.addEventListener('click', function(e) {
+            if (e.target === this) {
+                window.location.href = '/';
+            }
+        });
+    }
+});
+</script>
+{% endblock %}

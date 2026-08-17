@@ -1,0 +1,175 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{% if form.instance.pk %}تعديل العملة{% else %}إضافة عملة جديدة{% endif %}{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>{% if form.instance.pk %}تعديل العملة{% else %}إضافة عملة جديدة{% endif %}</h2>
+        <a href="{% url 'invoice:currency_list' %}" class="btn btn-secondary">
+            <i class="fas fa-arrow-right ms-1"></i>العودة للقائمة
+        </a>
+    </div>
+    
+    <div class="card">
+        <div class="card-body">
+            <form method="post">
+                {% csrf_token %}
+                
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label for="{{ form.code.id_for_label }}" class="form-label">كود العملة</label>
+                            {{ form.code }}
+                            {% if form.code.errors %}
+                            <div class="text-danger">
+                                {{ form.code.errors }}
+                            </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="{{ form.symbol.id_for_label }}" class="form-label">رمز العملة</label>
+                            {{ form.symbol }}
+                            {% if form.symbol.errors %}
+                            <div class="text-danger">
+                                {{ form.symbol.errors }}
+                            </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="{{ form.name.id_for_label }}" class="form-label">الاسم بالإنجليزية</label>
+                            {{ form.name }}
+                            {% if form.name.errors %}
+                            <div class="text-danger">
+                                {{ form.name.errors }}
+                            </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="{{ form.name_ar.id_for_label }}" class="form-label">الاسم بالعربية</label>
+                            {{ form.name_ar }}
+                            {% if form.name_ar.errors %}
+                            <div class="text-danger">
+                                {{ form.name_ar.errors }}
+                            </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="{{ form.exchange_rate.id_for_label }}" class="form-label">سعر الصرف</label>
+                            {{ form.exchange_rate }}
+                            {% if form.exchange_rate.errors %}
+                            <div class="text-danger">
+                                {{ form.exchange_rate.errors }}
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label for="{{ form.singular_ar.id_for_label }}" class="form-label">المفرد بالعربية</label>
+                            {{ form.singular_ar }}
+                            {% if form.singular_ar.errors %}
+                            <div class="text-danger">
+                                {{ form.singular_ar.errors }}
+                            </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="{{ form.dual_ar.id_for_label }}" class="form-label">المثنى بالعربية</label>
+                            {{ form.dual_ar }}
+                            {% if form.dual_ar.errors %}
+                            <div class="text-danger">
+                                {{ form.dual_ar.errors }}
+                            </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="{{ form.plural_ar.id_for_label }}" class="form-label">الجمع بالعربية</label>
+                            {{ form.plural_ar }}
+                            {% if form.plural_ar.errors %}
+                            <div class="text-danger">
+                                {{ form.plural_ar.errors }}
+                            </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="{{ form.fraction_name_ar.id_for_label }}" class="form-label">اسم الكسر</label>
+                            {{ form.fraction_name_ar }}
+                            {% if form.fraction_name_ar.errors %}
+                            <div class="text-danger">
+                                {{ form.fraction_name_ar.errors }}
+                            </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="{{ form.fraction_dual_ar.id_for_label }}" class="form-label">مثنى الكسر</label>
+                            {{ form.fraction_dual_ar }}
+                            {% if form.fraction_dual_ar.errors %}
+                            <div class="text-danger">
+                                {{ form.fraction_dual_ar.errors }}
+                            </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="{{ form.fraction_plural_ar.id_for_label }}" class="form-label">جمع الكسر</label>
+                            {{ form.fraction_plural_ar }}
+                            {% if form.fraction_plural_ar.errors %}
+                            <div class="text-danger">
+                                {{ form.fraction_plural_ar.errors }}
+                            </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="{{ form.decimals.id_for_label }}" class="form-label">المنازل العشرية</label>
+                            {{ form.decimals }}
+                            {% if form.decimals.errors %}
+                            <div class="text-danger">
+                                {{ form.decimals.errors }}
+                            </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="mb-3 form-check">
+                            {{ form.is_default }}
+                            <label for="{{ form.is_default.id_for_label }}" class="form-check-label">العملة الأساسية</label>
+                            {% if form.is_default.errors %}
+                            <div class="text-danger">
+                                {{ form.is_default.errors }}
+                            </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="mb-3 form-check">
+                            {{ form.is_active }}
+                            <label for="{{ form.is_active.id_for_label }}" class="form-check-label">نشط</label>
+                            {% if form.is_active.errors %}
+                            <div class="text-danger">
+                                {{ form.is_active.errors }}
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="d-flex justify-content-end">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save ms-1"></i>حفظ
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

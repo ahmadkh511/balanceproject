@@ -1,0 +1,170 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block extra_css %}
+<style>
+    .cat-card { border: none; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); margin-bottom: 1rem; padding: 1rem; }
+    .cat-header { display: flex; justify-content: space-between; align-items: center; }
+    .tier-badge { background: #e3f2fd; color: #1565c0; padding: 3px 10px; border-radius: 12px; font-size: 0.8rem; font-weight: 600; }
+    .custom-toast { position: fixed; bottom: 20px; left: 20px; padding: 10px 20px; color: white; border-radius: 5px; font-weight: bold; opacity: 0; transition: 0.3s; z-index: 9999; }
+    .custom-toast.show { opacity: 1; }
+    .toast-success { background: #1cc88a; }
+    .toast-error { background: #e74a3b; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h3 class="text-dark font-weight-bold"><i class="fas fa-tags me-2"></i>{{ title }}</h3>
+        <div class="d-flex gap-2">
+            <a href="{% url 'invoice:control_store' %}" class="btn btn-outline-secondary btn-sm"><i class="fas fa-arrow-right me-1"></i> العودة</a>
+            <button class="btn btn-primary btn-sm" id="btnAddCat"><i class="fas fa-plus me-1"></i> تصنيف جديد</button>
+        </div>
+    </div>
+
+    <div id="categoriesList">
+        {% for cat in categories %}
+        <div class="cat-card" data-id="{{ cat.id }}" data-name="{{ cat.name }}" data-tier="{{ cat.pricing_tier.id|default:'' }}" data-active="{{ cat.is_active|lower }}">
+            <div class="cat-header">
+                <div>
+                    <h5 class="mb-1">{{ cat.name }} 
+                        {% if not cat.is_active %}<span class="badge bg-secondary">معطل</span>{% endif %}
+                    </h5>
+                    {% if cat.pricing_tier %}
+                        <span class="tier-badge"><i class="fas fa-link me-1"></i> مرتبط بـ: {{ cat.pricing_tier.name }} ({{ cat.pricing_tier.discount_percent }}%)</span>
+                    {% else %}
+                        <span class="text-muted small">غير مرتبط بسعر ديناميكي</span>
+                    {% endif %}
+                </div>
+                <div>
+                    <button class="btn btn-sm btn-outline-info btn-edit-cat"><i class="fas fa-pen"></i></button>
+                    <button class="btn btn-sm btn-outline-danger btn-del-cat"><i class="fas fa-trash"></i></button>
+                </div>
+            </div>
+        </div>
+        {% empty %}
+        <div class="text-center text-muted mt-5">
+            <i class="fas fa-folder-open fa-3x mb-3"></i>
+            <p>لا توجد تصنيفات بعد.</p>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<!-- مودال الإضافة/التعديل -->
+<div class="modal fade" id="catModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header bg-primary text-white">
+        <h5 class="modal-title" id="catModalTitle">إضافة تصنيف</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        {% csrf_token %}
+        <input type="hidden" id="catId">
+        <div class="mb-3">
+            <label class="form-label">اسم التصنيف</label>
+            <input type="text" class="form-control" id="catName" required>
+        </div>
+        <div class="mb-3">
+            <label class="form-label">ربط بمستوى تسعير (اختياري)</label>
+            <select class="form-select" id="catTier">
+                <option value="">-- بدون (يستخدم السعر الافتراضي) --</option>
+                {% for tier in tiers %}
+                <option value="{{ tier.id }}">{{ tier.name }} (خصم {{ tier.discount_percent }}%)</option>
+                {% endfor %}
+            </select>
+            <div class="form-text">إذا اخترت مستوى، سيتم استخدام سعر هذا المستوى لكل منتجات هذا التصنيف في المتجر.</div>
+        </div>
+        <div class="form-check form-switch mb-3">
+            <input class="form-check-input" type="checkbox" id="catActive" checked>
+            <label class="form-check-label" for="catActive">ظاهر في المتجر</label>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إلغاء</button>
+        <button type="button" class="btn btn-primary" id="btnSaveCat">حفظ</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="custom-toast" id="toastMsg"></div>
+{% endblock %}
+
+{% block extra_js %}
+<script nonce="{{ csp_nonce }}">
+document.addEventListener('DOMContentLoaded', function() {
+    var csrftoken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+    var catModal = new bootstrap.Modal(document.getElementById('catModal'));
+    var isEditing = false;
+
+    function showToast(msg, type) {
+        var t = document.getElementById('toastMsg');
+        t.textContent = msg;
+        t.className = 'custom-toast ' + (type === 'error' ? 'toast-error' : 'toast-success');
+        setTimeout(function() { t.classList.add('show'); }, 10);
+        setTimeout(function() { t.classList.remove('show'); }, 3000);
+    }
+
+    document.getElementById('btnAddCat').addEventListener('click', function() {
+        isEditing = false;
+        document.getElementById('catModalTitle').textContent = 'إضافة تصنيف جديد';
+        document.getElementById('catId').value = '';
+        document.getElementById('catName').value = '';
+        document.getElementById('catTier').value = '';
+        document.getElementById('catActive').checked = true;
+        catModal.show();
+    });
+
+    document.addEventListener('click', function(e) {
+        if (e.target.closest('.btn-edit-cat')) {
+            isEditing = true;
+            var card = e.target.closest('.cat-card');
+            document.getElementById('catModalTitle').textContent = 'تعديل التصنيف';
+            document.getElementById('catId').value = card.dataset.id;
+            document.getElementById('catName').value = card.dataset.name;
+            document.getElementById('catTier').value = card.dataset.tier;
+            document.getElementById('catActive').checked = card.dataset.active === 'true';
+            catModal.show();
+        }
+        if (e.target.closest('.btn-del-cat')) {
+            if(!confirm('هل أنت متأكد من حذف هذا التصنيف؟')) return;
+            var card = e.target.closest('.cat-card');
+            var id = card.dataset.id;
+            
+            fetch('/invoice/api/categories/' + id + '/delete/', {
+                method: 'POST', headers: { 'X-CSRFToken': csrftoken }
+            }).then(r => r.json()).then(data => {
+                if(data.success) { card.remove(); showToast('تم الحذف'); }
+                else showToast(data.message, 'error');
+            });
+        }
+    });
+
+    document.getElementById('btnSaveCat').addEventListener('click', function() {
+        var id = document.getElementById('catId').value;
+        var name = document.getElementById('catName').value;
+        var tierId = document.getElementById('catTier').value;
+        var isActive = document.getElementById('catActive').checked;
+        
+        if(!name) { alert('الاسم مطلوب'); return; }
+
+        var url = id ? '/invoice/api/categories/' + id + '/update/' : '/invoice/api/categories/add/';
+        
+        fetch(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrftoken },
+            body: JSON.stringify({ name: name, tier_id: tierId, is_active: isActive })
+        }).then(r => r.json()).then(data => {
+            if(data.success) {
+                catModal.hide();
+                showToast(id ? 'تم التحديث' : 'تم الإضافة');
+                setTimeout(function() { location.reload(); }, 500);
+            } else { showToast(data.message, 'error'); }
+        }).catch(() => showToast('خطأ في الاتصال', 'error'));
+    });
+});
+</script>
+{% endblock %}

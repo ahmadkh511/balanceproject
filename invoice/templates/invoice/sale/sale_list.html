@@ -1,0 +1,898 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}قائمة فواتير البيع | نظام Balance IQ{% endblock %}
+
+{% block extra_css %}
+    <link rel="stylesheet" href="{% static 'css/print_system.css' %}">
+    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <style>
+    :root {
+        --aqua-1: #e0f7fa;
+        --aqua-2: #b2ebf2;
+        --aqua-3: #4dd0e1;
+        --aqua-4: #0097a7;
+        --text-dark: #006064;
+        --text-light: #ffffff;
+        --shadow-sm: 0 2px 8px rgba(0, 150, 167, 0.08);
+        --shadow-md: 0 4px 12px rgba(0, 150, 167, 0.12);
+        --danger: #e53935;
+        --success: #00897b;
+        --warning: #ffb300;
+        --info: #00acc1;
+    }
+
+    body {
+        background-color: var(--aqua-1);
+        font-family: 'Tajawal', sans-serif;
+        color: var(--text-dark);
+        padding: 2rem;
+    }
+
+    .container {
+        max-width: 1400px;
+        margin: 0 auto;
+    }
+
+    .page-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 2rem;
+        flex-wrap: wrap;
+        gap: 1rem;
+    }
+
+    .header-title h1 {
+        font-size: 1.75rem;
+        font-weight: 800;
+        color: var(--text-dark);
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        margin: 0;
+    }
+
+    .header-title h1 i {
+        background: linear-gradient(135deg, var(--aqua-4), var(--text-dark));
+        -webkit-background-clip: text;
+        background-clip: text;
+        -webkit-text-fill-color: transparent;
+        font-size: 2rem;
+    }
+
+    .header-actions {
+        display: flex;
+        gap: 0.75rem;
+        align-items: center;
+    }
+
+    .btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+        padding: 0.5rem 1rem;
+        font-size: 0.85rem;
+        font-weight: 600;
+        font-family: 'Tajawal', sans-serif;
+        border-radius: 8px;
+        border: none;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        text-decoration: none;
+    }
+
+    .btn-primary {
+        background: linear-gradient(135deg, var(--aqua-4) 0%, #006064 100%);
+        color: var(--text-light);
+        box-shadow: var(--shadow-sm);
+    }
+
+    .btn-primary:hover {
+        transform: translateY(-1px);
+        box-shadow: var(--shadow-md);
+    }
+
+    .btn-outline {
+        background: white;
+        color: var(--text-dark);
+        border: 1px solid var(--aqua-2);
+    }
+
+    .btn-outline:hover {
+        background: var(--aqua-1);
+        border-color: var(--aqua-3);
+    }
+
+    .btn-icon {
+        width: 38px;
+        height: 38px;
+        padding: 0;
+    }
+
+    /* === تأثير نبض الرادار لأيقونة البحث === */
+    .search-pulse-wrapper {
+        position: relative;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .search-pulse-wrapper .btn-icon {
+        position: relative;
+        z-index: 5;
+        transition: all 0.3s ease;
+    }
+
+    .search-pulse-wrapper .btn-icon:hover {
+        border-color: var(--aqua-4);
+        color: var(--aqua-4);
+        background: var(--aqua-1);
+    }
+
+    .search-pulse-wrapper::before {
+        content: '';
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        width: 38px;
+        height: 38px;
+        border-radius: 50%;
+        border: 2px solid var(--aqua-4);
+        animation: radarPulse 2.4s cubic-bezier(0.25, 0.46, 0.45, 0.94) infinite;
+        pointer-events: none;
+        z-index: 1;
+    }
+
+    .search-pulse-wrapper::after {
+        content: '';
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        width: 38px;
+        height: 38px;
+        border-radius: 50%;
+        border: 2px solid var(--aqua-3);
+        animation: radarPulse 2.4s cubic-bezier(0.25, 0.46, 0.45, 0.94) 0.8s infinite;
+        pointer-events: none;
+        z-index: 1;
+    }
+
+    .radar-ring-extra {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        width: 38px;
+        height: 38px;
+        border-radius: 50%;
+        border: 2px solid var(--aqua-2);
+        animation: radarPulse 2.4s cubic-bezier(0.25, 0.46, 0.45, 0.94) 1.6s infinite;
+        pointer-events: none;
+        z-index: 1;
+    }
+
+    @keyframes radarPulse {
+        0% {
+            width: 38px;
+            height: 38px;
+            opacity: 0.7;
+            border-width: 2.5px;
+        }
+        50% {
+            opacity: 0.35;
+            border-width: 1.5px;
+        }
+        100% {
+            width: 70px;
+            height: 70px;
+            opacity: 0;
+            border-width: 0.5px;
+        }
+    }
+
+    .search-pulse-wrapper.pulse-off::before,
+    .search-pulse-wrapper.pulse-off::after,
+    .search-pulse-wrapper.pulse-off .radar-ring-extra {
+        animation: none;
+        opacity: 0;
+    }
+
+    .filters-card {
+        background: white;
+        border-radius: 12px;
+        box-shadow: var(--shadow-sm);
+        margin-bottom: 1.5rem;
+        overflow: hidden;
+        transition: all 0.3s ease;
+        max-height: 0;
+        opacity: 0;
+        padding: 0 1.25rem;
+        visibility: hidden;
+    }
+
+    .filters-card.show {
+        max-height: 500px;
+        opacity: 1;
+        visibility: visible;
+        padding: 1.25rem;
+    }
+
+    .filter-form {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 1rem;
+        align-items: flex-end;
+    }
+
+    .form-group {
+        flex: 1;
+        min-width: 160px;
+    }
+
+    .form-group label {
+        display: block;
+        font-size: 0.7rem;
+        font-weight: 700;
+        color: var(--text-dark);
+        margin-bottom: 0.25rem;
+    }
+
+    .form-control {
+        width: 100%;
+        padding: 0.5rem 0.75rem;
+        font-size: 0.8rem;
+        font-family: 'Tajawal', sans-serif;
+        border: 1px solid var(--aqua-2);
+        border-radius: 8px;
+        transition: all 0.2s;
+    }
+
+    .form-control:focus {
+        border-color: var(--aqua-3);
+        outline: none;
+        box-shadow: 0 0 0 2px rgba(77, 208, 225, 0.2);
+    }
+
+    .filter-actions {
+        display: flex;
+        gap: 0.5rem;
+    }
+
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 1.5rem;
+        margin-bottom: 2rem;
+    }
+
+    .stat-card {
+        background: white;
+        padding: 1.25rem;
+        border-radius: 12px;
+        box-shadow: var(--shadow-sm);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        border-right: 4px solid var(--aqua-4);
+        transition: all 0.2s ease;
+    }
+
+    .stat-card:hover {
+        transform: translateY(-2px);
+        box-shadow: var(--shadow-md);
+    }
+
+    .stat-info h3 {
+        font-size: 0.75rem;
+        color: var(--text-dark);
+        margin-bottom: 0.5rem;
+        opacity: 0.8;
+    }
+
+    .stat-info .value {
+        font-size: 1.5rem;
+        font-weight: 800;
+        color: var(--text-dark);
+    }
+
+    .stat-icon {
+        width: 48px;
+        height: 48px;
+        border-radius: 12px;
+        background: var(--aqua-1);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        color: var(--aqua-4);
+    }
+
+    .table-card {
+        background: white;
+        border-radius: 12px;
+        box-shadow: var(--shadow-sm);
+        overflow: hidden;
+    }
+
+    .table-header {
+        padding: 1rem 1.5rem;
+        border-bottom: 1px solid var(--aqua-1);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .table-title {
+        font-weight: 700;
+        color: var(--text-dark);
+        font-size: 0.9rem;
+    }
+
+    .table-meta {
+        font-size: 0.75rem;
+        color: var(--text-dark);
+        opacity: 0.7;
+    }
+
+    .table-responsive {
+        overflow-x: auto;
+    }
+
+    .table {
+        width: 100%;
+        border-collapse: collapse;
+        min-width: 1000px;
+    }
+
+    .table th {
+        background: linear-gradient(135deg, var(--aqua-3) 0%, var(--aqua-4) 100%);
+        padding: 0.75rem 1rem;
+        text-align: right;
+        font-size: 0.75rem;
+        font-weight: 700;
+        color: white;
+    }
+
+    .sort-header {
+        cursor: pointer;
+        user-select: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        color: white;
+        text-decoration: none;
+    }
+
+    .sort-header i {
+        transition: transform 0.2s;
+    }
+
+    .table td {
+        padding: 0.75rem 1rem;
+        border-bottom: 1px solid var(--aqua-1);
+        font-size: 0.8rem;
+        vertical-align: middle;
+    }
+
+    .table tbody tr {
+        transition: all 0.2s ease;
+        cursor: pointer;
+    }
+
+    .table tbody tr:hover {
+        background-color: var(--aqua-1);
+    }
+
+    .customer-info {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .customer-avatar {
+        width: 32px;
+        height: 32px;
+        border-radius: 8px;
+        background: var(--aqua-1);
+        color: var(--aqua-4);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 700;
+        font-size: 0.8rem;
+    }
+
+    .amount-text {
+        font-weight: 700;
+        font-family: monospace;
+    }
+
+    .badge {
+        padding: 0.25rem 0.6rem;
+        border-radius: 50px;
+        font-size: 0.65rem;
+        font-weight: 700;
+        display: inline-block;
+    }
+
+    .badge-success { background: var(--aqua-1); color: var(--success); border: 1px solid var(--success); }
+    .badge-warning { background: var(--aqua-1); color: var(--warning); border: 1px solid var(--warning); }
+    .badge-danger { background: var(--aqua-1); color: var(--danger); border: 1px solid var(--danger); }
+    .badge-info { background: var(--aqua-1); color: var(--info); border: 1px solid var(--info); }
+    .badge-secondary { background: var(--aqua-1); color: #6c757d; border: 1px solid #6c757d; }
+
+    .action-btns {
+        display: flex;
+        gap: 0.5rem;
+        flex-wrap: wrap;
+    }
+
+    .action-btn {
+        width: 32px;
+        height: 32px;
+        border-radius: 6px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        transition: all 0.2s;
+        text-decoration: none;
+    }
+
+    .action-btn.view { background: linear-gradient(135deg, var(--info) 0%, #00838f 100%); }
+    .action-btn.edit { background: linear-gradient(135deg, var(--warning) 0%, #ff8f00 100%); }
+    .action-btn.return { background: linear-gradient(135deg, var(--success) 0%, #00695c 100%); }
+    .action-btn.list { background: linear-gradient(135deg, #6c757d 0%, #495057 100%); }
+
+    .action-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: var(--shadow-sm);
+    }
+
+    .pagination-footer {
+        padding: 1rem 1.5rem;
+        border-top: 1px solid var(--aqua-1);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 1rem;
+    }
+
+    .page-info {
+        font-size: 0.8rem;
+        color: var(--text-dark);
+        opacity: 0.7;
+    }
+
+    .page-nav {
+        display: flex;
+        gap: 0.25rem;
+    }
+
+    .page-link {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 32px;
+        height: 32px;
+        border-radius: 8px;
+        background: white;
+        border: 1px solid var(--aqua-2);
+        color: var(--text-dark);
+        font-weight: 600;
+        font-size: 0.75rem;
+        text-decoration: none;
+        transition: all 0.2s;
+    }
+
+    .page-link:hover {
+        border-color: var(--aqua-4);
+        color: var(--aqua-4);
+        background: var(--aqua-1);
+    }
+
+    .page-link.active {
+        background: linear-gradient(135deg, var(--aqua-4) 0%, #006064 100%);
+        color: white;
+        border-color: transparent;
+    }
+
+    .page-link.disabled {
+        background: var(--aqua-1);
+        color: var(--aqua-2);
+        pointer-events: none;
+    }
+
+    @media (max-width: 1200px) {
+        .stats-grid { grid-template-columns: repeat(2, 1fr); }
+    }
+
+    @media (max-width: 768px) {
+        body { padding: 1rem; }
+        .stats-grid { grid-template-columns: 1fr; }
+        .page-header, .table-header, .pagination-footer { flex-direction: column; align-items: flex-start; }
+        .filter-form { flex-direction: column; }
+        .form-group { width: 100%; }
+        .action-btns { flex-wrap: wrap; }
+    }
+    </style>
+{% endblock %}
+
+{% block content %}
+
+<!-- ===== الخطوة 2: إضافة id="printableArea" و class="invoice-print-area" ===== -->
+<div class="container invoice-print-area" id="printableArea">
+
+    <!-- هيدر الطباعة المتكرر (مخفي افتراضياً، يظهر عند الطباعة) -->
+    <div class="print-header-area no-print" id="printHeaderArea" style="display:none;">
+        <table style="width:100%; border-collapse:collapse;">
+            <tr>
+                <td style="width:50px; vertical-align:middle;">
+                    <img src="" alt="شعار" class="ph-logo" id="phLogoImg" style="display:none;">
+                    <span id="phLogoPlaceholder" style="font-size:7pt; color:#999;">—</span>
+                </td>
+                <td style="vertical-align:middle; text-align:center;">
+                    <div class="ph-company" id="phCompanyName">—</div>
+                    <div class="ph-details" id="phCompanyDetails"></div>
+                </td>
+                <td style="width:50px;"></td>
+            </tr>
+        </table>
+    </div>
+
+    <!-- فوتر الطباعة المتكرر (مخفي افتراضياً) -->
+    <div class="print-footer-area no-print" id="printFooterArea" style="display:none;">
+        <span id="phFooterText"></span>
+    </div>
+
+    <!-- ===== زر الطباعة - يحل محله زر النظام الموحد ===== -->
+    <!-- تمت إزالته لأنه جزء من print_system.html -->
+
+    <!-- ===== منطقة المحتوى القابلة للطباعة ===== -->
+    <div class="list-print-area" id="listPrintArea">
+        <!-- Header -->
+        <div class="page-header">
+            <div class="header-title">
+                <h1><i class="fas fa-file-invoice-dollar"></i> قائمة فاتور البيع</h1>
+            </div>
+            <!-- ===== الخطوة 3: إضافة class="no-print" لكل عناصر التحكم ===== -->
+            <div class="header-actions no-print">
+                <div class="search-pulse-wrapper" id="searchPulseWrapper">
+                    <span class="radar-ring-extra"></span>
+                    <button type="button" class="btn btn-outline btn-icon" id="toggleFiltersBtn" aria-label="فتح البحث">
+                        <i class="fas fa-search"></i>
+                    </button>
+                </div>
+                <div class="dropdown">
+                    <button class="btn btn-outline" data-bs-toggle="dropdown">
+                        <i class="fas fa-file-export"></i> تصدير
+                    </button>
+                    <ul class="dropdown-menu">
+                        <li><a class="dropdown-item" href="#" id="exportExcelBtn"><i class="fas fa-file-excel me-2"></i>Excel</a></li>
+                        <li><a class="dropdown-item" href="#" id="exportPdfBtn"><i class="fas fa-file-pdf me-2"></i>PDF</a></li>
+                    </ul>
+                </div>
+                
+                {% if request.user.is_superuser or request.user.is_staff %}
+                <a href="{% url 'invoice:sale_create' %}" class="btn btn-primary">
+                    <i class="fas fa-plus"></i> فاتورة جديدة
+                </a>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- ===== Filters Panel - class="no-print" ===== -->
+        <div class="filters-card no-print" id="filtersCard">
+            <form method="GET" class="filter-form" id="searchForm">
+                <div class="form-group">
+                    <label><i class="fas fa-calendar-alt"></i> من تاريخ</label>
+                    <input type="date" name="date_from" class="form-control" value="{{ request.GET.date_from }}">
+                </div>
+                <div class="form-group">
+                    <label><i class="fas fa-calendar-alt"></i> إلى تاريخ</label>
+                    <input type="date" name="date_to" class="form-control" value="{{ request.GET.date_to }}">
+                </div>
+                <div class="form-group">
+                    <label><i class="fas fa-user"></i> العميل</label>
+                    <input type="text" name="customer" class="form-control" placeholder="اسم العميل..." value="{{ request.GET.customer }}">
+                </div>
+                <div class="form-group">
+                    <label><i class="fas fa-tag"></i> حالة الفاتورة</label>
+                    <select name="status" class="form-control">
+                        <option value="">الكل</option>
+                        {% for status in sale_statuses %}
+                        <option value="{{ status.id }}" {% if request.GET.status == status.id|stringformat:"s" %}selected{% endif %}>{{ status.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label><i class="fas fa-search"></i> بحث سريع</label>
+                    <input type="text" name="q" class="form-control" placeholder="رقم الفاتورة..." value="{{ request.GET.q }}">
+                </div>
+                <div class="filter-actions">
+                    <button type="submit" class="btn btn-primary"><i class="fas fa-search"></i> بحث</button>
+                    <a href="{% url 'invoice:sale_list' %}" class="btn btn-outline"><i class="fas fa-redo-alt"></i></a>
+                </div>
+            </form>
+        </div>
+
+        <!-- ===== Stats Cards - مع data-print-field للتحكم ===== -->
+        <div class="stats-grid" data-print-field="col-stats">
+            <div class="stat-card">
+                <div class="stat-info">
+                    <h3>إجمالي المبيعات</h3>
+                    <div class="value">{{ total_sales_amount|default:"0"|floatformat:0 }} <small></small></div>
+                </div>
+                <div class="stat-icon"><i class="fas fa-chart-line"></i></div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-info">
+                    <h3>عدد الفواتير</h3>
+                    <div class="value">{{ total_invoices_count|default:"0" }}</div>
+                </div>
+                <div class="stat-icon"><i class="fas fa-file-invoice"></i></div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-info">
+                    <h3>قيمة المرتجعات</h3>
+                    <div class="value">{{ total_returns_amount|default:"0"|floatformat:0 }} <small></small></div>
+                </div>
+                <div class="stat-icon"><i class="fas fa-undo-alt"></i></div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-info">
+                    <h3>متوسط قيمة الفاتورة</h3>
+                    <div class="value">{{ average_invoice|default:"0"|floatformat:0 }} <small></small></div>
+                </div>
+                <div class="stat-icon"><i class="fas fa-chart-pie"></i></div>
+            </div>
+        </div>
+
+        <!-- ===== Table ===== -->
+        <div class="table-card" data-print-field="col-table">
+            <div class="table-header">
+                <div class="table-title"><i class="fas fa-list-ul"></i> سجل الفواتير</div>
+                <div class="table-meta">
+                    عرض <strong>{{ sales.start_index }}</strong> - <strong>{{ sales.end_index }}</strong> من <strong>{{ sales.paginator.count }}</strong>
+                </div>
+            </div>
+            <div class="table-responsive">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <!-- ===== الخطوة 4: إضافة data-print-field لأعمدة الجدول ===== -->
+                            <th data-print-field="col-invoice-id">
+                                <span class="sort-header" data-sort="uniqueId">رقم الفاتورة <i class="fas fa-sort"></i></span>
+                            </th>
+                            <th data-print-field="col-date">
+                                <span class="sort-header" data-sort="sale_date">التاريخ <i class="fas fa-sort"></i></span>
+                            </th>
+                            <th data-print-field="col-customer">العميل</th>
+                            <th data-print-field="col-total">
+                                <span class="sort-header" data-sort="sale_final_total">الإجمالي <i class="fas fa-sort"></i></span>
+                            </th>
+                            <th data-print-field="col-status">الحالة</th>
+                            <th data-print-field="col-returns">المرتجعات</th>
+                            <!-- ===== الخطوة 3: إضافة class="no-print" لعمود الإجراءات ===== -->
+                            <th class="no-print">إجراءات</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for sale in sales %}
+                        <tr class="clickable-row" data-href="{% url 'invoice:sale_detail' slug=sale.slug %}">
+                            <!-- ===== الخطوة 5: تكرار data-print-field في الخلايا ===== -->
+                            <td data-print-field="col-invoice-id">
+                                <span style="font-weight: 700; color: var(--aqua-4);">#{{ sale.uniqueId }}</span>
+                            </td>
+                            <td data-print-field="col-date">{{ sale.sale_date|date:"Y-m-d" }}</td>
+                            <td data-print-field="col-customer">
+                                <div class="customer-info">
+                                    <div class="customer-avatar">{{ sale.sale_customer|default:"ن"|slice:":1"|upper }}</div>
+                                    <div>
+                                        <div style="font-weight: 600;">{{ sale.sale_customer|default:"عميل نقدي" }}</div>
+                                        {% if sale.sale_customer and sale.sale_customer.email %}
+                                        <div style="font-size: 0.7rem; opacity: 0.7;">{{ sale.sale_customer.email }}</div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </td>
+                            <td data-print-field="col-total" class="amount-text">{{ sale.sale_final_total|floatformat:2 }}</td>
+                            <td data-print-field="col-status">
+                                {% if sale.sale_status %}
+                                    <span class="badge badge-info">{{ sale.sale_status.name }}</span>
+                                {% else %}
+                                    <span class="badge badge-secondary">غير محدد</span>
+                                {% endif %}
+                            </td>
+                            <td data-print-field="col-returns">
+                                <span class="badge {% if sale.has_return %}badge-success{% else %}badge-secondary{% endif %}">
+                                    {% if sale.has_return %}
+                                        <i class="fas fa-check-circle"></i> مرتجع
+                                    {% else %}
+                                        <i class="fas fa-times-circle"></i> لا يوجد
+                                    {% endif %}
+                                </span>
+                            </td>
+                            
+                            <!-- ===== عمود الإجراءات - class="no-print" ===== -->
+                            <td class="actions-cell no-print">
+                                <div class="action-btns">
+                                    <a href="{% url 'invoice:sale_detail' sale.slug %}" class="action-btn view" title="عرض التفاصيل">
+                                        <i class="fas fa-eye"></i>
+                                    </a>
+                                    
+                                    {% if request.user.is_superuser or sale.created_by == request.user %}
+                                    <a href="{% url 'invoice:sale_edit' sale.slug %}" class="action-btn edit" title="تعديل الفاتورة">
+                                        <i class="fas fa-edit"></i>
+                                    </a>
+                                    <a href="{% url 'invoice:sale_return_create' sale.slug %}" class="action-btn return" title="إنشاء مرتجع">
+                                        <i class="fas fa-undo-alt"></i>
+                                    </a>
+                                    
+                                    {% if sale.has_return and request.user.is_superuser or sale.created_by == request.user %}
+                                    <a href="{% url 'invoice:sale_return_list' %}?sale={{ sale.uniqueId }}" class="action-btn list" title="عرض المرتجعات">
+                                        <i class="fas fa-list-ul"></i>
+                                    </a>
+                                    {% endif %}
+                                    {% endif %}
+                                </div>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="7" style="text-align: center; padding: 3rem;">
+                                <i class="fas fa-file-invoice" style="font-size: 3rem; color: var(--aqua-2); margin-bottom: 1rem;"></i>
+                                <h4>لا توجد فواتير بيع</h4>
+                                <p style="opacity: 0.7;">لم يتم العثور على سجلات مطابقة.</p>
+                                
+                                {% if request.user.is_superuser or request.user.is_staff %}
+                                <a href="{% url 'invoice:sale_create' %}" class="btn btn-primary no-print">
+                                    <i class="fas fa-plus"></i> إنشاء أول فاتورة
+                                </a>
+                                {% else %}
+                                <p style="margin-top: 0.5rem; opacity: 0.5;">(يتطلب إنشاء فاتورة جديدة من قبل الإدارة)</p>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- ===== Pagination - class="no-print" ===== -->
+            {% if sales.paginator.num_pages > 1 %}
+            <div class="pagination-footer no-print">
+                <div class="page-info">
+                    الصفحة {{ sales.number }} من {{ sales.paginator.num_pages }}
+                </div>
+                <div class="page-nav">
+                    {% if sales.has_previous %}
+                        <a href="?page=1{% if request.GET.sort %}&sort={{ request.GET.sort }}{% endif %}{% if request.GET.order %}&order={{ request.GET.order }}{% endif %}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}{% if request.GET.date_from %}&date_from={{ request.GET.date_from }}{% endif %}{% if request.GET.date_to %}&date_to={{ request.GET.date_to }}{% endif %}{% if request.GET.customer %}&customer={{ request.GET.customer }}{% endif %}" class="page-link" title="الأولى"><i class="fas fa-angle-double-right"></i></a>
+                        <a href="?page={{ sales.previous_page_number }}{% if request.GET.sort %}&sort={{ request.GET.sort }}{% endif %}{% if request.GET.order %}&order={{ request.GET.order }}{% endif %}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}{% if request.GET.date_from %}&date_from={{ request.GET.date_from }}{% endif %}{% if request.GET.date_to %}&date_to={{ request.GET.date_to }}{% endif %}{% if request.GET.customer %}&customer={{ request.GET.customer }}{% endif %}" class="page-link" title="السابقة"><i class="fas fa-angle-right"></i></a>
+                    {% else %}
+                        <span class="page-link disabled"><i class="fas fa-angle-double-right"></i></span>
+                        <span class="page-link disabled"><i class="fas fa-angle-right"></i></span>
+                    {% endif %}
+
+                    {% for i in sales.paginator.page_range %}
+                        {% if sales.number == i %}
+                            <span class="page-link active">{{ i }}</span>
+                        {% elif i > sales.number|add:'-3' and i < sales.number|add:'3' %}
+                            <a href="?page={{ i }}{% if request.GET.sort %}&sort={{ request.GET.sort }}{% endif %}{% if request.GET.order %}&order={{ request.GET.order }}{% endif %}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}{% if request.GET.date_from %}&date_from={{ request.GET.date_from }}{% endif %}{% if request.GET.date_to %}&date_to={{ request.GET.date_to }}{% endif %}{% if request.GET.customer %}&customer={{ request.GET.customer }}{% endif %}" class="page-link">{{ i }}</a>
+                        {% endif %}
+                    {% endfor %}
+
+                    {% if sales.has_next %}
+                        <a href="?page={{ sales.next_page_number }}{% if request.GET.sort %}&sort={{ request.GET.sort }}{% endif %}{% if request.GET.order %}&order={{ request.GET.order }}{% endif %}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}{% if request.GET.date_from %}&date_from={{ request.GET.date_from }}{% endif %}{% if request.GET.date_to %}&date_to={{ request.GET.date_to }}{% endif %}{% if request.GET.customer %}&customer={{ request.GET.customer }}{% endif %}" class="page-link" title="التالية"><i class="fas fa-angle-left"></i></a>
+                        <a href="?page={{ sales.paginator.num_pages }}{% if request.GET.sort %}&sort={{ request.GET.sort }}{% endif %}{% if request.GET.order %}&order={{ request.GET.order }}{% endif %}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}{% if request.GET.date_from %}&date_from={{ request.GET.date_from }}{% endif %}{% if request.GET.date_to %}&date_to={{ request.GET.date_to }}{% endif %}{% if request.GET.customer %}&customer={{ request.GET.customer }}{% endif %}" class="page-link" title="الأخيرة"><i class="fas fa-angle-double-left"></i></a>
+                    {% else %}
+                        <span class="page-link disabled"><i class="fas fa-angle-left"></i></span>
+                        <span class="page-link disabled"><i class="fas fa-angle-double-left"></i></span>
+                    {% endif %}
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- ===== الخطوة 6: استدعاء print_system.html ===== -->
+    {% include 'includes/print_system.html' %}
+
+</div> <!-- نهاية printableArea -->
+{% endblock %}
+
+{% block extra_js %}
+    <!-- ===== الخطوة 7: استدعاء print_system.js ===== -->
+    <script src="{% static 'js/print_system.js' %}"></script>
+
+    <!-- ===== JavaScript الخاص بالصفحة ===== -->
+    <script nonce="{{ csp_nonce }}">
+    (function() {
+        'use strict';
+
+        // ============================================
+        // 1. فلاتر البحث
+        // ============================================
+        var toggleBtn = document.getElementById('toggleFiltersBtn');
+        var filtersCard = document.getElementById('filtersCard');
+        var pulseWrapper = document.getElementById('searchPulseWrapper');
+
+        if (toggleBtn && filtersCard && pulseWrapper) {
+            toggleBtn.addEventListener('click', function() {
+                var isOpen = filtersCard.classList.toggle('show');
+                if (isOpen) {
+                    pulseWrapper.classList.add('pulse-off');
+                } else {
+                    pulseWrapper.classList.remove('pulse-off');
+                }
+            });
+        }
+
+        // ============================================
+        // 2. الترتيب
+        // ============================================
+        var sortHeaders = document.querySelectorAll('.sort-header');
+        if (sortHeaders.length > 0) {
+            var currentUrl = new URL(window.location.href);
+            var currentSort = currentUrl.searchParams.get('sort');
+            var currentOrder = currentUrl.searchParams.get('order');
+
+            sortHeaders.forEach(function(header) {
+                var field = header.getAttribute('data-sort');
+                var icon = header.querySelector('i');
+                if (field === currentSort && icon) {
+                    if (currentOrder === 'asc') icon.className = 'fas fa-sort-up';
+                    else if (currentOrder === 'desc') icon.className = 'fas fa-sort-down';
+                }
+                header.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    var sortField = this.getAttribute('data-sort');
+                    var url = new URL(window.location.href);
+                    var existingSort = url.searchParams.get('sort');
+                    var existingOrder = url.searchParams.get('order');
+                    var newOrder = 'asc';
+                    if (existingSort === sortField) {
+                        newOrder = (existingOrder === 'asc') ? 'desc' : 'asc';
+                    }
+                    url.searchParams.set('sort', sortField);
+                    url.searchParams.set('order', newOrder);
+                    url.searchParams.set('page', '1');
+                    window.location.href = url.toString();
+                });
+            });
+        }
+
+        // ============================================
+        // 3. فتح الفلتر تلقائياً إذا كان هناك فلتر نشط
+        // ============================================
+        var hasActiveFilters = false;
+        document.querySelectorAll('.filter-form input, .filter-form select').forEach(function(el) {
+            if (el.value) hasActiveFilters = true;
+        });
+        if (hasActiveFilters && filtersCard && pulseWrapper) {
+            filtersCard.classList.add('show');
+            pulseWrapper.classList.add('pulse-off');
+        }
+
+        // ============================================
+        // 4. صفوف قابلة للنقر
+        // ============================================
+        var clickableRows = document.querySelectorAll('.clickable-row');
+        clickableRows.forEach(function(row) {
+            row.addEventListener('click', function(e) {
+                if (e.target.closest('.actions-cell')) return;
+                var href = this.getAttribute('data-href');
+                if (href) window.location.href = href;
+            });
+        });
+
+    })();
+    </script>
+{% endblock %}

@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <div class="card shadow">
+        <div class="card-header bg-danger text-white">
+            <h5 class="mb-0"><i class="fas fa-exclamation-triangle ml-2"></i> تقرير الديون المتراكمة (فواتير غير مدفوعة)</h5>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-striped table-hover">
+                    <thead class="thead-dark">
+                        <tr>
+                            <th>رقم الفاتورة</th>
+                            <th>العميل</th>
+                            <th>التاريخ</th>
+                            <th>أيام التأخير</th>
+                            <th>الإجمالي</th>
+                            <th>المدفوع</th>
+                            <th>المتبقي (الدين)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for invoice in invoices %}
+                        <tr>
+                            <td><a href="{% url 'invoice:sale_detail' invoice.slug %}">{{ invoice.uniqueId }}</a></td>
+                            <td>{{ invoice.sale_customer }}</td>
+                            <td>{{ invoice.sale_date }}</td>
+                            <td>
+                                {% widthratio invoice.sale_date|date:"U" 1 86400 as days %}
+                                {# حساب بسيط للأيام - يمكنك تحسينه بتمرير التاريخ من الفيو #}
+                                <span class="badge badge-warning">متأخر</span>
+                            </td>
+                            <td>{{ invoice.sale_final_total|floatformat:2 }}</td>
+                            <td class="text-success">{{ invoice.paid_amount|floatformat:2 }}</td>
+                            <td class="text-danger font-weight-bold">{{ invoice.balance_due|floatformat:2 }}</td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="7" class="text-center text-success">
+                                <i class="fas fa-check-circle fa-2x"></i>
+                                <p class="mb-0 mt-2">لا توجد ديون متراكمة، جميع الفواتير مسددة.</p>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

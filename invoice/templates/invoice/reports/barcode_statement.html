@@ -1,0 +1,316 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}كشف حركة الباركود{% endblock %}
+
+{% block extra_css %}
+<style>
+    :root {
+        --primary: #6f42c1; 
+        --primary-light: #e2d9f3;
+        --info: #17a2b8;
+        --info-light: #d1ecf1;
+    }
+    body { background-color: #f4f6f9; }
+    .card-header { background: linear-gradient(135deg, #6f42c1 0%, #5a32a3 100%); }
+    .table-custom th { background: var(--primary-light); color: #4a3080; white-space: nowrap; }
+    
+    /* تنسيق خانة البحث */
+    .search-box {
+        position: relative;
+        max-width: 500px;
+        margin: 0 auto;
+    }
+    .search-input {
+        height: 60px;
+        font-size: 1.5rem;
+        text-align: center;
+        border: 2px dashed #6f42c1;
+        border-radius: 10px;
+        transition: all 0.3s;
+    }
+    .search-input:focus {
+        border-style: solid;
+        box-shadow: 0 0 15px rgba(111, 66, 193, 0.3);
+    }
+    
+    /* تنسيق الأزرار */
+    .action-btns {
+        position: absolute;
+        left: 10px;
+        top: 50%;
+        transform: translateY(-50%);
+        display: flex;
+        gap: 5px;
+    }
+    [dir="rtl"] .action-btns {
+        left: auto;
+        right: 10px;
+    }
+    .btn-reset {
+        background: #fff;
+        border: none;
+        color: #dc3545;
+        cursor: pointer;
+        padding: 5px 10px;
+        border-radius: 5px;
+        font-size: 1.2rem;
+        transition: 0.2s;
+    }
+    .btn-reset:hover { background: #dc3545; color: #fff; }
+
+    /* تنسيق الحالات والشارات */
+    .badge-type { font-size: 0.75rem; padding: 4px 8px; border-radius: 4px; }
+    .badge-purchase { background: #fff3e0; color: #ef6c00; }
+    .badge-purchase-return { background: #fce4ec; color: #c2185b; }
+    .badge-sale { background: #e3f2fd; color: #1565c0; }
+    .badge-sale-return { background: #e8f5e9; color: #2e7d32; }
+    
+    .status-active { color: #2e7d32; font-weight: bold; }
+    .status-sold { color: #d32f2f; font-weight: bold; }
+    .status-returned { color: #f57c00; font-weight: bold; }
+    
+    /* بطاقة المنتج */
+    .product-info-card {
+        background: #fff;
+        border-inline-start: 5px solid var(--primary);
+        border-radius: 8px;
+        padding: 15px;
+        margin-bottom: 20px;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        transition: 0.3s;
+    }
+    .product-info-card.is-main-barcode {
+        border-inline-start-color: var(--info);
+    }
+    
+    /* تأثير التحميل */
+    .loading-overlay {
+        display: none;
+        position: fixed;
+        top: 0; left: 0; right: 0; bottom: 0;
+        background: rgba(255,255,255,0.8);
+        z-index: 9999;
+        justify-content: center;
+        align-items: center;
+        flex-direction: column;
+    }
+    .loading-overlay.show { display: flex; }
+
+    /* أنماط الطباعة */
+    @media print {
+        .no-print { display: none !important; }
+        .card { border: none; box-shadow: none; }
+        .card-header { background: #fff !important; color: #000 !important; }
+        .table-custom th { background: #f8f9fa !important; color: #000 !important; }
+        body { background: #fff; }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- طبقة التحميل -->
+<div id="loading-overlay" class="loading-overlay">
+    <div class="spinner-border text-primary" style="width: 3rem; height: 3rem;" role="status"></div>
+    <div class="mt-2 font-weight-bold">جاري البحث...</div>
+</div>
+
+<div class="container" style="max-width: 900px;">
+    <div class="card shadow-sm">
+        <div class="card-header text-white no-print">
+            <div class="d-flex justify-content-between align-items-center">
+                <h5 class="mb-0"><i class="fas fa-barcode ml-2"></i> تتبع حركة الباركود</h5>
+                <div>
+                    {% if search_query %}
+                    <a href="{% url 'invoice:barcode_statement' %}" class="btn btn-sm btn-light mr-2">
+                        <i class="fas fa-redo"></i> تقرير جديد
+                    </a>
+                    <button onclick="window.print()" class="btn btn-sm btn-outline-light">
+                        <i class="fas fa-print"></i> طباعة
+                    </button>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        <div class="card-body">
+            
+            <!-- نموذج البحث التلقائي -->
+            <div class="search-box mb-4 no-print">
+                <input type="text" id="barcode-input" class="form-control search-input" 
+                       placeholder="امسح أو أدخل رقم الباركود هنا..." 
+                       value="{{ search_query }}" autocomplete="off">
+                       
+                <div class="action-btns">
+                    {% if search_query %}
+                        <button type="button" id="clear-btn" class="btn-reset" title="مسح البحث">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    {% endif %}
+                </div>
+                
+                <small class="form-text text-muted text-center d-block mt-2">
+                    <i class="fas fa-info-circle"></i> 
+                    يتم البحث تلقائياً في الباركودات الفرعية والباركود الأساسي للمادة
+                </small>
+            </div>
+
+            <!-- عرض النتائج -->
+            {% if barcode_obj %}
+                <!-- بطاقة معلومات المنتج - حالة الباركود الفرعي -->
+                <div class="product-info-card">
+                    <div>
+                        <h5 class="mb-1">
+                            <strong>{{ barcode_obj.product.product_name|default:"منتج غير محدد" }}</strong>
+                        </h5>
+                        <div class="text-muted small">
+                            الباركود: <strong dir="ltr">{{ barcode_obj.barcode_in }}</strong> | 
+                            الحالة الحالية: <span class="status-{{ barcode_obj.status }}">{{ barcode_obj.get_status_display }}</span>
+                        </div>
+                    </div>
+                    <div class="text-left">
+                        {% if barcode_obj.product.product_image %}
+                            <img src="{{ barcode_obj.product.product_image.url }}" width="70" height="70" style="border-radius:8px; object-fit:cover; border:1px solid #eee;">
+                        {% else %}
+                             <i class="fas fa-box-open fa-2x text-muted"></i>
+                        {% endif %}
+                    </div>
+                </div>
+
+            {% elif product_obj %}
+                <!-- بطاقة معلومات المنتج - حالة الباركود الرئيسي -->
+                <div class="product-info-card is-main-barcode">
+                    <div>
+                        <h5 class="mb-1">
+                            <strong>{{ product_obj.product_name|default:"منتج غير محدد" }}</strong>
+                            <span class="badge badge-info mr-2" style="font-size: 0.8em;">بحث بالباركود الرئيسي</span>
+                        </h5>
+                        <div class="text-muted small">
+                            الباركود الأساسي: <strong dir="ltr">{{ search_query }}</strong> | 
+                            عدد الباركودات الفرعية المرتبطة: <strong>{{ product_obj.barcodes.count }}</strong>
+                        </div>
+                    </div>
+                    <div class="text-left">
+                        {% if product_obj.product_image %}
+                            <img src="{{ product_obj.product_image.url }}" width="70" height="70" style="border-radius:8px; object-fit:cover; border:1px solid #eee;">
+                        {% else %}
+                             <i class="fas fa-box-open fa-2x text-muted"></i>
+                        {% endif %}
+                    </div>
+                </div>
+            {% endif %}
+
+            {% if barcode_obj or product_obj %}
+                <!-- جدول الحركات -->
+                <div class="table-responsive">
+                    <table class="table table-custom table-hover">
+                        <thead>
+                            <tr>
+                                <th width="100">التاريخ</th>
+                                <th width="120">نوع الحركة</th>
+                                <!-- إظهار عمود الباركود فقط إذا كان البحث عن المادة الرئيسية -->
+                                {% if product_obj %}
+                                <th width="130">رقم الباركود</th>
+                                {% endif %}
+                                <th>رقم المرجع</th>
+                                <th>التفاصيل</th>
+                                <th width="80">الكمية</th>
+                                <th width="100">الحالة</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for move in movements %}
+                            <tr>
+                                <td>{{ move.date|date:"Y-m-d" }}</td>
+                                <td>
+                                    <span class="badge-type badge-{{ move.type }}">
+                                        {{ move.type_display }}
+                                    </span>
+                                </td>
+                                {% if product_obj %}
+                                <td dir="ltr" class="text-center">{{ move.barcode_in }}</td>
+                                {% endif %}
+                                <td>
+                                    <span class="font-weight-bold text-primary">{{ move.reference }}</span>
+                                </td>
+                                <td>{{ move.detail }}</td>
+                                <td class="text-center">{{ move.quantity }}</td>
+                                <td>
+                                    <span class="{{ move.status_class }}">
+                                        {{ move.status_display }}
+                                    </span>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="{% if product_obj %}7{% else %}6{% endif %}" class="text-center text-muted py-5">
+                                    <i class="fas fa-inbox fa-2x mb-2 d-block"></i>
+                                    لا توجد حركات مسجلة لهذا الباركود أو المادة.
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+
+            {% elif search_query %}
+                <div class="alert alert-warning text-center mt-4 no-print">
+                    <i class="fas fa-exclamation-triangle"></i> لا يوجد باركود أو مادة بالقيمة: <strong>{{ search_query }}</strong>
+                </div>
+            {% else %}
+                <div class="text-center text-muted py-5 no-print">
+                    <i class="fas fa-search fa-3x mb-3" style="opacity:0.2;"></i><br>
+                    في انتظار مسح أو إدخال رقم الباركود.
+                </div>
+            {% endif %}
+
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script nonce="{{ csp_nonce }}">
+document.addEventListener('DOMContentLoaded', function() {
+    const input = document.getElementById('barcode-input');
+    const clearBtn = document.getElementById('clear-btn');
+    const loader = document.getElementById('loading-overlay');
+    let timer;
+
+    // 1. البحث التلقائي عند الكتابة
+    if (input) {
+        input.addEventListener('input', function() {
+            clearTimeout(timer);
+            const val = this.value.trim();
+            
+            // إذا أصبح الحقل فارغاً، لا نفعل شيئاً
+            if (val.length === 0) return;
+
+            // انتظار 500 ميلي ثانية بعد توقف الكتابة ثم البحث
+            timer = setTimeout(() => {
+                if (val.length > 0) {
+                    showLoader();
+                    window.location.href = `?q=${encodeURIComponent(val)}`;
+                }
+            }, 500); // 500ms مناسب جداً لماسحات الباركود
+        });
+        
+        // تركيز تلقائي على الحقل عند تحميل الصفحة
+        setTimeout(() => input.focus(), 100);
+    }
+
+    // 2. زر المسح (X)
+    if (clearBtn) {
+        clearBtn.addEventListener('click', function() {
+            window.location.href = window.location.pathname; // العودة للصفحة بدون بارامترات
+        });
+    }
+
+    function showLoader() {
+        if(loader) loader.classList.add('show');
+    }
+});
+</script>
+{% endblock %}

@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html dir="rtl" lang="ar">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>تفعيل حسابك</title>
+</head>
+<body style="margin:0; padding:0; background-color:#f4f4f4; font-family:'Tajawal',Arial,sans-serif; -webkit-font-smoothing:antialiased;">
+    
+    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background-color:#f4f4f4; padding:20px 0;">
+        <tr>
+            <td align="center" style="padding:20px 0;">
+                
+                <!-- بداية البطاقة -->
+                <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="max-width:600px; background-color:#ffffff; border-radius:16px; overflow:hidden; box-shadow:0 8px 24px rgba(0,0,0,0.08); border-top:6px solid #0097a7;">
+                    
+                    <!-- الهيدر -->
+                    <tr>
+                        <td align="center" style="padding:40px 30px 20px; background:linear-gradient(135deg,#0097a7 0%,#006064 100%);">
+                            <table role="presentation" cellspacing="0" cellpadding="0" border="0">
+                                <tr>
+                                    <td align="center" style="background-color:rgba(255,255,255,0.15); width:72px; height:72px; border-radius:50%; border:2px solid rgba(255,255,255,0.3);">
+                                        <span style="font-size:32px; color:#ffffff;">&#x1F680;</span>
+                                    </td>
+                                </tr>
+                            </table>
+                            <h1 style="margin:20px 0 5px; color:#ffffff; font-size:24px; font-weight:800;">مرحباً بك في نظام الأزوردي</h1>
+                            <p style="margin:0; color:rgba(255,255,255,0.85); font-size:16px;">خطوة واحدة تفصلك عن بدء إدارة أعمالك</p>
+                        </td>
+                    </tr>
+
+                    <!-- المحتوى -->
+                    <tr>
+                        <td style="padding:40px 30px;">
+                            <p style="margin:0 0 20px; color:#334155; font-size:16px; line-height:1.6;">مرحباً <strong>{{ user.get_full_name|default:user.username }}</strong>،</p>
+                            <p style="margin:0 0 30px; color:#64748b; font-size:15px; line-height:1.6;">شكراً لثقتك بنظام الأزوردي. لتتمكن من الوصول إلى لوحة التحكم، نقطة البيع، والمتجر الإلكتروني، يرجى تفعيل حسابك بالضغط على الزر أدناه:</p>
+                            
+                            <!-- زر التفعيل -->
+                            <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
+                                <tr>
+                                    <td align="center" style="padding-bottom:30px;">
+                                        <a href="{{ protocol }}://{{ domain }}{% url 'accounts:activate' uidb64=uid token=token %}" target="_blank" style="background:linear-gradient(135deg,#0097a7 0%,#006064 100%); color:#ffffff; text-decoration:none; padding:14px 36px; border-radius:8px; font-size:16px; font-weight:700; display:inline-block; box-shadow:0 4px 14px rgba(0,150,167,0.3);">تفعيل حسابي الآن</a>
+                                    </td>
+                                </tr>
+                            </table>
+
+                            <!-- الرابط البديل -->
+                            <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background-color:#f8fafc; border-radius:8px; border:1px dashed #cbd5e1;">
+                                <tr>
+                                    <td style="padding:15px; text-align:center;">
+                                        <p style="margin:0 0 5px; font-size:13px; color:#94a3b8;">إذا لم يعمل الزر، انسخ الرابط التالي وضعه في المتصفح:</p>
+                                        <p style="margin:0; font-size:12px; color:#0097a7; word-break:break-all;">{{ protocol }}://{{ domain }}{% url 'accounts:activate' uidb64=uid token=token %}</p>
+                                    </td>
+                                </tr>
+                            </table>
+                        </td>
+                    </tr>
+
+                    <!-- الفوتر -->
+                    <tr>
+                        <td style="padding:20px 30px; text-align:center; border-top:1px solid #e2e8f0; background-color:#f8fafc;">
+                            <p style="margin:0; font-size:12px; color:#94a3b8;">© 2026 نظام الأزوردي. جميع الحقوق محفوظة.</p>
+                            <p style="margin:5px 0 0; font-size:11px; color:#cbd5e1;">إذا لم تقم بإنشاء هذا الحساب، يرجى تجاهل هذا البريد الإلكتروني.</p>
+                        </td>
+                    </tr>
+
+                </table>
+                <!-- نهاية البطاقة -->
+
+            </td>
+        </tr>
+    </table>
+
+</body>
+</html>

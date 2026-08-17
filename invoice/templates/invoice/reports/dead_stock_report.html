@@ -1,0 +1,368 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block extra_css %}
+    <!-- نظام الطباعة المتقدم -->
+    <link rel="stylesheet" href="{% static 'css/print_system.css' %}">
+    
+    <style>
+        /* ===== التصميم العصري للقالب ===== */
+        .dead-stock-dashboard {
+            padding: 1.5rem 0;
+        }
+        
+        .stat-card {
+            background: white;
+            border-radius: 12px;
+            padding: 1.25rem 1.5rem;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+            border-right: 4px solid #0097a7;
+            transition: all 0.3s ease;
+            height: 100%;
+        }
+        .stat-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.08);
+        }
+        .stat-card .stat-icon {
+            font-size: 1.8rem;
+            color: #0097a7;
+            opacity: 0.6;
+            margin-left: 0.75rem;
+        }
+        .stat-card .stat-label {
+            font-size: 0.8rem;
+            color: #888;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+        }
+        .stat-card .stat-value {
+            font-size: 1.6rem;
+            font-weight: 700;
+            color: #006064;
+            margin-top: 0.25rem;
+        }
+        .stat-card .stat-sub {
+            font-size: 0.75rem;
+            color: #aaa;
+            margin-top: 0.15rem;
+        }
+        .stat-card.warning {
+            border-right-color: #f59e0b;
+        }
+        .stat-card.warning .stat-icon { color: #f59e0b; }
+        .stat-card.warning .stat-value { color: #b45309; }
+        
+        /* ===== الجدول ===== */
+        .table-modern {
+            border-collapse: separate;
+            border-spacing: 0;
+            width: 100%;
+            font-size: 0.9rem;
+        }
+        .table-modern thead th {
+            background: linear-gradient(135deg, #e0f7fa, #b2ebf2);
+            color: #006064;
+            font-weight: 700;
+            padding: 0.75rem 1rem;
+            border-bottom: 2px solid #4dd0e1;
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+        .table-modern thead th:first-child {
+            border-radius: 0 8px 0 0;
+        }
+        .table-modern thead th:last-child {
+            border-radius: 8px 0 0 0;
+        }
+        .table-modern tbody td {
+            padding: 0.7rem 1rem;
+            border-bottom: 1px solid #f0f4f8;
+            vertical-align: middle;
+            color: #1a202c;
+        }
+        .table-modern tbody tr {
+            transition: background 0.15s ease;
+        }
+        .table-modern tbody tr:hover {
+            background: #f8fafc;
+        }
+        .table-modern tbody tr:last-child td {
+            border-bottom: none;
+        }
+        
+        .badge-qty {
+            background: #e0f7fa;
+            color: #006064;
+            font-weight: 700;
+            padding: 0.25rem 0.7rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+        }
+        .badge-value {
+            background: #fef3c7;
+            color: #b45309;
+            font-weight: 700;
+            padding: 0.25rem 0.7rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+        }
+        .text-muted-date {
+            color: #94a3b8;
+            font-size: 0.8rem;
+        }
+        .text-danger-light {
+            color: #dc2626;
+            font-weight: 600;
+            font-size: 0.8rem;
+        }
+        
+        .table-wrapper {
+            overflow-x: auto;
+            scrollbar-width: none;
+            -ms-overflow-style: none;
+            border-radius: 8px;
+            border: 1px solid #eef2f6;
+        }
+        .table-wrapper::-webkit-scrollbar {
+            display: none;
+            height: 0;
+            width: 0;
+        }
+        
+        .invoice-print-area {
+            background: #f8fafc;
+            min-height: 100vh;
+        }
+        .invoice-print-area .card {
+            border: none;
+            border-radius: 16px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        }
+        .invoice-print-area .card-header {
+            background: white;
+            border-bottom: 1px solid #eef2f6;
+            border-radius: 16px 16px 0 0 !important;
+            padding: 1rem 1.5rem;
+        }
+        .invoice-print-area .card-body {
+            background: white;
+            border-radius: 0 0 16px 16px;
+            padding: 1.5rem;
+        }
+        
+        @media (max-width: 768px) {
+            .stat-card .stat-value {
+                font-size: 1.2rem;
+            }
+            .table-modern {
+                font-size: 0.75rem;
+            }
+            .table-modern thead th,
+            .table-modern tbody td {
+                padding: 0.4rem 0.5rem;
+            }
+            .dead-stock-dashboard {
+                padding: 0.5rem 0;
+            }
+        }
+        
+        @media print {
+            .stat-card {
+                box-shadow: none !important;
+                border: 1px solid #ddd !important;
+            }
+            .stat-card .stat-value {
+                font-size: 1.2rem !important;
+            }
+            .table-modern thead th {
+                background: #f0f0f0 !important;
+                color: #000 !important;
+                border-bottom: 2px solid #333 !important;
+            }
+            .table-modern tbody td {
+                padding: 0.4rem 0.6rem !important;
+            }
+            .badge-qty, .badge-value {
+                background: #eee !important;
+                color: #000 !important;
+            }
+            .no-print {
+                display: none !important;
+            }
+        }
+    </style>
+{% endblock %}
+
+{% block content %}
+<!-- ===== حاوية الطباعة الرئيسية ===== -->
+<div class="dead-stock-dashboard invoice-print-area" id="printableArea">
+    <div class="container-fluid px-2 px-md-4">
+        
+        <!-- ===== بطاقات الإحصائيات ===== -->
+        <div class="row g-3 mb-4 no-print">
+            <div class="col-6 col-md-4">
+                <div class="stat-card">
+                    <div class="d-flex align-items-center">
+                        <span class="stat-icon"><i class="fas fa-box"></i></span>
+                        <div>
+                            <div class="stat-label">إجمالي الأصناف</div>
+                            <div class="stat-value">{{ dead_items|length }}</div>
+                            <div class="stat-sub">منتج راكد</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-6 col-md-4">
+                <div class="stat-card warning">
+                    <div class="d-flex align-items-center">
+                        <span class="stat-icon"><i class="fas fa-coins"></i></span>
+                        <div>
+                            <div class="stat-label">قيمة المخزون الراكد</div>
+                            <div class="stat-value">{{ total_dead_value|floatformat:1 }}</div>
+                            <div class="stat-sub">إجمالي القيمة</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-6 col-md-4">
+                <div class="stat-card">
+                    <div class="d-flex align-items-center">
+                        <span class="stat-icon"><i class="fas fa-calendar-alt"></i></span>
+                        <div>
+                            <div class="stat-label">مدة التوقف</div>
+                            <div class="stat-value">{{ days_threshold|default:30 }}</div>
+                            <div class="stat-sub">يوم فأكثر</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ===== بطاقة الجدول ===== -->
+        <div class="card">
+            <div class="card-header no-print">
+                <div class="d-flex flex-wrap align-items-center justify-content-between gap-2">
+                    <h5 class="mb-0 fw-bold" style="color: #006064 !important;">
+                        <i class="fas fa-warehouse me-2"></i> {{ title|default:"تقرير المخزون الراكد" }}
+                    </h5>
+                    <form method="get" class="d-flex align-items-center gap-2 flex-wrap">
+                        <label class="text-muted small mb-0">عرض المواد غير المباعة منذ:</label>
+                        <input type="number" name="days" value="{{ days_threshold|default:30 }}" 
+                               class="form-control form-control-sm" style="width: 70px;" min="1" max="365">
+                        <span class="text-muted small">يوم</span>
+                        <button type="submit" class="btn btn-sm" style="background: #0097a7; color: white; border: none; border-radius: 6px; padding: 0.3rem 0.8rem;">
+                            <i class="fas fa-sync-alt"></i> تحديث
+                        </button>
+                    </form>
+                </div>
+            </div>
+            <div class="card-body">
+                <!-- تنبيه إجمالي القيمة -->
+                <div class="alert alert-info d-flex align-items-center gap-2 no-print" style="border-radius: 10px;">
+                    <i class="fas fa-info-circle fa-lg" style="color: #0097a7;"></i>
+                    <span>إجمالي قيمة المخزون الراكد: <strong style="color: #006064; font-size: 1.1rem;">{{ total_dead_value|floatformat:1 }}</strong></span>
+                </div>
+
+                <!-- ===== الجدول ===== -->
+                <div class="table-wrapper">
+                    <table class="table-modern" id="deadStockTable">
+                        <thead>
+                            <tr>
+                                <th data-print-field="col-index" style="width: 45px; text-align: center;">#</th>
+                                <th data-print-field="col-name">اسم المادة</th>
+                                <th data-print-field="col-qty" style="text-align: center;">الكمية</th>
+                                <th data-print-field="col-cost" style="text-align: center;">سعر التكلفة</th>
+                                <th data-print-field="col-value" style="text-align: center;">قيمة المخزون</th>
+                                <th data-print-field="col-date" style="text-align: center;">آخر بيع</th>
+                                <th class="no-print" style="text-align: center; width: 100px;">إجراء</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for item in dead_items %}
+                            <tr>
+                                <td data-print-field="col-index" style="text-align: center; color: #94a3b8; font-weight: 600;">
+                                    {{ forloop.counter }}
+                                </td>
+                                <td data-print-field="col-name" style="font-weight: 500;">
+                                    {{ item.product.product_name }}
+                                </td>
+                                <td data-print-field="col-qty" style="text-align: center;">
+                                    <span class="badge-qty">{{ item.stock }}</span>
+                                </td>
+                                <td data-print-field="col-cost" style="text-align: center;">
+                                    {{ item.product.purch_price|floatformat:1 }}
+                                </td>
+                                <td data-print-field="col-value" style="text-align: center;">
+                                    <span class="badge-value">{{ item.value|floatformat:1 }}</span>
+                                </td>
+                                <td data-print-field="col-date" style="text-align: center;">
+                                    {% if item.last_sale_date %}
+                                        <span class="text-muted-date">{{ item.last_sale_date }}</span>
+                                    {% else %}
+                                        <span class="text-danger-light"><i class="fas fa-exclamation-circle"></i> لم يبع</span>
+                                    {% endif %}
+                                </td>
+                                <td class="no-print" style="text-align: center;">
+                                    <a href="{% url 'invoice:product_detail' item.product.slug %}" 
+                                       class="btn btn-sm btn-outline-primary" 
+                                       style="border-radius: 20px; font-size: 0.7rem; padding: 0.2rem 0.8rem; border-color: #0097a7; color: #0097a7;">
+                                        <i class="fas fa-eye"></i> عرض
+                                    </a>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="7" class="text-center py-4 text-success">
+                                    <i class="fas fa-check-circle fa-2x d-block mb-2" style="color: #10b981;"></i>
+                                    <span style="font-size: 1.1rem; font-weight: 600;">ممتاز!</span><br>
+                                    <span class="text-muted">جميع المنتجات تتحرك بانتظام، لا يوجد مخزون راكد.</span>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                
+                <!-- ===== ملخص ===== -->
+                <div class="d-flex justify-content-between align-items-center mt-3 pt-2 border-top no-print" style="border-color: #eef2f6 !important;">
+                    <span class="text-muted small">عدد الأصناف الراكدة: <strong>{{ dead_items|length }}</strong></span>
+                    <span class="text-muted small">القيمة الإجمالية: <strong style="color: #006064;">{{ total_dead_value|floatformat:1 }}</strong></span>
+                </div>
+            </div>
+        </div>
+        
+        <!-- ===== تضمين نظام الطباعة المتقدم ===== -->
+        {% include 'includes/print_system.html' %}
+        
+    </div>
+</div>
+
+<!-- ===== زر الطباعة الخاص بالنظام المتقدم (موجود داخل print_system.html) ===== -->
+<!-- تم حذف الزر المكرر هنا -->
+
+{% endblock %}
+
+{% block extra_js %}
+    <!-- نظام الطباعة المتقدم -->
+    <script src="{% static 'js/print_system.js' %}"></script>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // تنسيق الأرقام بصفر واحد بعد الفاصلة
+            document.querySelectorAll('[data-print-field="col-cost"], [data-print-field="col-value"]').forEach(function(el) {
+                let val = parseFloat(el.textContent.trim().replace(/,/g, ''));
+                if (!isNaN(val)) {
+                    el.textContent = val.toFixed(1);
+                }
+            });
+            
+            console.log('✅ نظام الطباعة المتقدم جاهز');
+        });
+    </script>
+{% endblock %}

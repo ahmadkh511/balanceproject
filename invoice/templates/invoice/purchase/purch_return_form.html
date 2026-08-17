@@ -1,0 +1,1564 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}إنشاء مرتجع مشتريات{% endblock %}
+
+{% block extra_css %}
+<style>
+/* ============================================
+   [CSS-01] إعدادات التصميم العامة بألوان الأزوردي
+   ============================================ */
+:root {
+  --aqua-1: #e0f7fa;
+  --aqua-2: #b2ebf2;
+  --aqua-3: #4dd0e1;
+  --aqua-4: #0097a7;
+  --text-dark: #006064;
+  --text-light: #ffffff;
+  --shadow-sm: 0 2px 8px rgba(0, 150, 167, 0.08);
+  --shadow-md: 0 4px 12px rgba(0, 150, 167, 0.12);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  background-color: var(--aqua-1);
+  font-family: 'Tajawal', sans-serif;
+  font-size: 0.85rem;
+}
+
+.container-fluid {
+  padding: 0.75rem;
+}
+
+.card {
+  border: none;
+  border-radius: 8px;
+  box-shadow: var(--shadow-sm);
+  margin-bottom: 1rem;
+  overflow: hidden;
+}
+
+.card-header {
+  background: linear-gradient(135deg, var(--aqua-4) 0%, #006064 100%);
+  color: var(--text-light);
+  padding: 0.6rem 1rem;
+  font-weight: 600;
+  font-size: 0.9rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  border-bottom: 1px solid var(--aqua-2);
+}
+
+.card-header i {
+  font-size: 0.9rem;
+}
+
+.card-body {
+  padding: 1rem;
+}
+
+.form-label {
+  font-weight: 500;
+  font-size: 0.75rem;
+  margin-bottom: 0.2rem;
+  color: var(--text-dark);
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+
+.form-control, .form-select {
+  border-radius: 4px;
+  border: 1px solid var(--aqua-2);
+  padding: 0.35rem 0.5rem;
+  font-size: 0.8rem;
+  transition: all 0.2s;
+}
+
+.form-control:focus, .form-select:focus {
+  border-color: var(--aqua-3);
+  box-shadow: 0 0 0 2px rgba(77, 208, 225, 0.2);
+}
+
+.btn {
+  border-radius: 4px;
+  padding: 0.35rem 0.7rem;
+  font-weight: 600;
+  font-size: 0.8rem;
+  border: none;
+  transition: all 0.2s;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+
+.btn-sm {
+  padding: 0.2rem 0.5rem;
+  font-size: 0.7rem;
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, var(--aqua-4) 0%, #006064 100%);
+  color: white;
+}
+
+.btn-success {
+  background: linear-gradient(135deg, #00897b 0%, #00695c 100%);
+  color: white;
+}
+
+.btn-warning {
+  background: linear-gradient(135deg, #ffb300 0%, #ff8f00 100%);
+  color: white;
+}
+
+.btn-secondary {
+  background: linear-gradient(135deg, #6c757d 0%, #5a6268 100%);
+  color: white;
+}
+
+.required-field::after {
+  content: " *";
+  color: #d32f2f;
+}
+
+.success-message {
+  background: linear-gradient(135deg, #00897b 0%, #00695c 100%);
+  color: white;
+  padding: 0.5rem 1rem;
+  border-radius: 4px;
+  margin: 0.5rem 0;
+  display: none;
+  font-size: 0.8rem;
+}
+
+.invoice-basic-info .row {
+  margin-bottom: 0.5rem;
+}
+
+.paid-amount-container {
+  transition: all 0.3s ease;
+}
+
+.cash-balance-info .alert {
+  padding: 0.4rem 0.8rem;
+  margin-bottom: 0.5rem;
+  border-radius: 4px;
+  font-size: 0.8rem;
+  background: var(--aqua-1);
+  border: 1px solid var(--aqua-2);
+  color: var(--text-dark);
+}
+
+.items-section {
+  background: white;
+  border-radius: 8px;
+  box-shadow: var(--shadow-sm);
+  margin-bottom: 1rem;
+}
+
+.items-header {
+  background: linear-gradient(135deg, var(--aqua-4) 0%, #006064 100%);
+  color: white;
+  padding: 0.5rem 1rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-radius: 8px 8px 0 0;
+}
+
+.items-header h5 {
+  margin: 0;
+  font-size: 0.9rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.items-controls {
+  display: flex;
+  gap: 0.75rem;
+  align-items: center;
+}
+
+.items-count-container {
+  background: rgba(255,255,255,0.15);
+  padding: 0.2rem 0.5rem;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-size: 0.75rem;
+}
+
+.items-count-container input {
+  width: 50px;
+  border: none;
+  border-radius: 3px;
+  padding: 0.1rem 0.2rem;
+  text-align: center;
+  background: white;
+  color: var(--text-dark);
+}
+
+.items-table-container {
+  overflow-x: auto;
+}
+
+.items-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.75rem;
+}
+
+.items-table thead th {
+  background: linear-gradient(135deg, var(--aqua-3) 0%, var(--aqua-4) 100%);
+  color: white;
+  font-weight: 600;
+  text-align: center;
+  padding: 0.4rem 0.2rem;
+  white-space: nowrap;
+  border-bottom: 2px solid var(--aqua-2);
+}
+
+.items-table tbody td {
+  padding: 0.3rem 0.2rem;
+  vertical-align: middle;
+  border-bottom: 1px solid var(--aqua-1);
+}
+
+.items-table .form-control {
+  padding: 0.2rem 0.3rem;
+  font-size: 0.7rem;
+  height: auto;
+}
+
+.product-image-small {
+  width: 25px !important;
+  height: 25px !important;
+  border-radius: 3px;
+  object-fit: cover;
+  border: 1px solid var(--aqua-2);
+}
+
+.image-placeholder-small {
+  width: 25px;
+  height: 25px;
+  border-radius: 3px;
+  background: #f8f9fa;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px dashed #ced4da;
+  font-size: 12px;
+}
+
+.barcode-row {
+  background-color: var(--aqua-1);
+}
+
+.barcode-row td {
+  padding: 0 !important;
+  border: none !important;
+}
+
+.barcode-fields-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 0.2rem;
+  padding: 0.5rem;
+}
+
+.barcode-checkbox-item {
+  display: flex;
+  align-items: center;
+  background: white;
+  border: 1px solid var(--aqua-2);
+  border-radius: 3px;
+  padding: 0.2rem;
+  margin-bottom: 0.2rem;
+}
+
+.barcode-checkbox-item.selected {
+  background-color: #e8f5e9;
+  border-color: #00897b;
+}
+
+.barcode-label {
+  margin-right: 0.3rem;
+  flex-grow: 1;
+  cursor: default;
+}
+
+.barcode-text-container {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+}
+
+.barcode-text {
+  font-family: monospace;
+  font-size: 0.7rem;
+}
+
+.copy-barcode-btn {
+  background: none;
+  border: none;
+  color: var(--aqua-4);
+  cursor: pointer;
+  padding: 0.1rem 0.2rem;
+  font-size: 0.6rem;
+}
+
+@media (max-width: 768px) {
+  .barcode-fields-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+.quantity-info-vertical {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: 0.65rem;
+}
+
+.quantity-info-vertical .badge {
+  font-size: 0.6rem;
+  padding: 0.2rem 0.3rem;
+}
+
+.financial-content {
+  display: flex;
+  gap: 1rem;
+  align-items: flex-start;
+}
+
+.financial-image {
+  width: 70px;
+  flex-shrink: 0;
+}
+
+.financial-calculations {
+  flex: 1;
+}
+
+.financial-section {
+  background: white;
+  border-radius: 8px;
+  padding: 0.75rem;
+  border: 1px solid var(--aqua-2);
+}
+
+.financial-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.5rem;
+}
+
+.financial-column {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.financial-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: var(--aqua-1);
+  border-radius: 4px;
+  padding: 0.3rem 0.5rem;
+  border-left: 3px solid var(--aqua-3);
+  font-size: 0.75rem;
+}
+
+.financial-row input {
+  width: 120px;
+  padding: 0.2rem;
+  font-size: 0.75rem;
+  border-radius: 3px;
+  border: 1px solid var(--aqua-2);
+}
+
+.financial-label {
+  font-weight: 600;
+  color: var(--text-dark);
+  display: flex;
+  align-items: center;
+  gap: 0.2rem;
+}
+
+.financial-value {
+  font-weight: 700;
+  color: var(--text-dark);
+}
+
+.grand-total {
+  grid-column: 1 / -1;
+  background: #fff3e0;
+  border-left-color: #ff9800;
+  font-size: 0.85rem;
+  padding: 0.4rem 0.5rem;
+}
+
+.remaining-amount {
+  grid-column: 1 / -1;
+  background: #fff8e1;
+  border-left-color: #f57c00;
+}
+
+.remaining-amount-in-words-container {
+  grid-column: 1 / -1;
+  background: white;
+  border: 1px solid var(--aqua-2);
+  border-radius: 4px;
+  padding: 0.4rem;
+  margin-top: 0.3rem;
+}
+
+.remaining-amount-in-words {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  flex-wrap: wrap;
+}
+
+.remaining-words-label {
+  font-weight: 600;
+  color: var(--text-dark);
+  font-size: 0.75rem;
+}
+
+.remaining-words-value {
+  flex: 1;
+  font-size: 0.8rem;
+  background: var(--aqua-1);
+  padding: 0.2rem 0.4rem;
+  border-radius: 3px;
+  min-height: 1.8rem;
+  display: flex;
+  align-items: center;
+  word-break: break-word;
+  white-space: normal;
+}
+
+.refresh-remaining-words-btn {
+  background: none;
+  border: none;
+  color: var(--aqua-4);
+  cursor: pointer;
+  font-size: 0.9rem;
+  padding: 0 0.2rem;
+}
+
+@media (max-width: 992px) {
+  .financial-content {
+    flex-direction: column;
+  }
+  .financial-image {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+  }
+  .financial-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.form-actions {
+  display: flex;
+  gap: 0.75rem;
+  margin-top: 1rem;
+}
+
+.invoice-image-preview {
+  width: 60px;
+  height: 60px;
+  border-radius: 6px;
+  border: 2px dashed var(--aqua-2);
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+  color: var(--text-dark);
+  margin: 0 auto 0.5rem;
+}
+
+.invoice-image-preview i {
+  font-size: 1rem;
+  color: var(--aqua-4);
+}
+
+.invoice-image-preview small {
+  font-size: 0.6rem;
+}
+
+.invoice-image-preview.has-image {
+  border: 2px solid var(--aqua-4);
+  background: white;
+}
+
+.invoice-image-preview.has-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 6px;
+}
+
+.image-modal {
+  display: none;
+  position: fixed;
+  z-index: 9999;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0,0,0,0.9);
+}
+
+.image-modal-content {
+  margin: auto;
+  display: block;
+  width: 80%;
+  max-width: 700px;
+  max-height: 80%;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+
+.image-modal-close {
+  position: absolute;
+  top: 15px;
+  right: 35px;
+  color: #f1f1f1;
+  font-size: 40px;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+/* تنسيق رسائل التحذير المخصصة */
+.custom-popup-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0,0,0,0.5);
+  z-index: 1050;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.custom-popup-box {
+  background: white;
+  padding: 1.5rem;
+  border-radius: 8px;
+  box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+  max-width: 500px;
+  width: 90%;
+  text-align: center;
+  animation: popIn 0.3s ease-out;
+}
+
+@keyframes popIn {
+  from { transform: scale(0.8); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+
+.popup-icon {
+  font-size: 3rem;
+  margin-bottom: 1rem;
+}
+
+.popup-icon.warning { color: #ffc107; }
+.popup-icon.error { color: #dc3545; }
+.popup-icon.success { color: #28a745; }
+
+.popup-title {
+  font-size: 1.2rem;
+  font-weight: bold;
+  margin-bottom: 0.5rem;
+  color: var(--text-dark);
+}
+
+.popup-message {
+  font-size: 0.9rem;
+  color: #666;
+  margin-bottom: 1.5rem;
+}
+
+.popup-actions {
+  display: flex;
+  gap: 0.5rem;
+  justify-content: center;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-2">
+    <!-- العنصر الخفي لبيانات الدفع -->
+    <div id="payment-data" 
+         data-is-cash="{% if is_cash_payment %}true{% else %}false{% endif %}"
+         data-payment-method="{{ payment_method_name|default:'على الآجل' }}"
+         data-invoice-id="{{ original_purchase.uniqueId }}"
+         data-currency-name="{{ original_purchase.purch_currency.name_ar|default:'ليرة سورية' }}"
+         style="display: none;">
+    </div>
+
+    <!-- نافذة عرض الصورة -->
+    <div id="imageModal" class="image-modal">
+        <span class="image-modal-close">&times;</span>
+        <div class="image-modal-content">
+            {% if original_purchase.purch_image %}
+            <img src="{{ original_purchase.purch_image.url }}" alt="صورة الفاتورة" id="modalImage" style="width:100%">
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- نموذج مرتجع المشتريات -->
+    <form method="post" id="purch-return-form" novalidate>
+        {% csrf_token %}
+
+        <!-- معلومات الفاتورة الأصلية -->
+        <div class="card">
+            <div class="card-header">
+                <i class="fas fa-info-circle"></i>مرتجع لفاتورة المشتريات    - رقم: {{ original_purchase.uniqueId }}
+                <div class="ms-auto"></div>
+                <a href="{% url 'invoice:purch_detail' slug=original_purchase.slug %}" class="btn btn-sm btn-primary">
+                    <i class="fas fa-arrow-right"></i> رجوع
+                </a>
+            </div>
+            <div class="card-body invoice-basic-info">
+                <div class="row g-2">
+                    <div class="col-md-3">
+                        <label class="form-label"><i class="fas fa-user-tie"></i> المورد</label>
+                        <input type="text" class="form-control" value="{{ original_purchase.purch_supplier.get_full_name|default:original_purchase.purch_supplier.username }}" readonly>
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label"><i class="fas fa-phone"></i> الهاتف</label>
+                        <input type="text" class="form-control" value="{{ original_purchase.purch_supplier_phone|default:'---' }}" readonly>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label"><i class="fas fa-map-marker-alt"></i> العنوان</label>
+                        <input type="text" class="form-control" value="{{ original_purchase.purch_address|default:'---' }}" readonly>
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label"><i class="fas fa-file-invoice"></i> رقم فاتورة المورد</label>
+                        <input type="text" class="form-control" value="{{ original_purchase.supplier_invoice_number|default:'---' }}" readonly>
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label"><i class="fas fa-calendar-alt"></i> التاريخ</label>
+                        <input type="text" class="form-control" value="{{ original_purchase.purch_date|date:'Y-m-d' }}" readonly>
+                    </div>
+                </div>
+
+                <div class="row g-2 mt-2">
+                    <div class="col-md-3">
+                        <label class="form-label"><i class="fas fa-tasks"></i> حالة الفاتورة</label>
+                        <input type="text" class="form-control" value="{{ original_purchase.purch_status.status_name|default:'جديدة' }}" readonly>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label"><i class="fas fa-money-bill-wave"></i> العملة</label>
+                        <input type="text" class="form-control" value="{{ original_purchase.purch_currency.name_ar|default:'ليرة سورية' }}" readonly>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label"><i class="fas fa-credit-card"></i> طريقة الدفع</label>
+                        <input type="text" class="form-control" value="{{ payment_method_name|default:'غير محدد' }}" readonly>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label"><i class="fas fa-shipping-fast"></i> شركة الشحن</label>
+                        <input type="text" class="form-control" value="{{ original_purchase.purch_shipping_company.name|default:'---' }}" readonly>
+                    </div>
+                </div>
+
+                <!-- معلومات المرتجع -->
+                <div class="row g-2 mt-3">
+                    <div class="col-md-4">
+                        <label class="form-label required-field"><i class="fas fa-calendar-alt"></i> تاريخ المرتجع</label>
+                        {{ form.return_date }}
+                        {% if form.return_date.errors %}
+                            <div class="field-errors">{{ form.return_date.errors }}</div>
+                        {% endif %}
+                    </div>
+                    <div class="col-md-8">
+                        <label class="form-label"><i class="fas fa-sticky-note"></i> ملاحظات المرتجع</label>
+                        {{ form.return_notes }}
+                    </div>
+                </div>
+
+                {% if original_purchase.purch_notes %}
+                <div class="mt-3">
+                    <label class="form-label text-warning">
+                        <i class="fas fa-sticky-note me-1"></i>ملاحظات الفاتورة الأصلية
+                    </label>
+                    <div class="border rounded p-2 bg-warning-light small">
+                        {{ original_purchase.purch_notes }}
+                    </div>
+                </div>
+                {% endif %}
+
+                {% if is_cash_payment %}
+                <div class="cash-balance-info mt-2">
+                    <div class="alert alert-info d-flex align-items-center p-2">
+                        <i class="fas fa-wallet me-2"></i>
+                        <span><strong>رصيد الصندوق الحالي:</strong> <span id="current-cash-balance">0.00</span></span>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- بنود المرتجع -->
+        <div class="items-section">
+            <div class="items-header">
+                <h5><i class="fas fa-list"></i> بنود المرتجع</h5>
+                <div class="items-controls">
+                    <div class="items-count-container">
+                        <label for="items-count">عدد البنود:</label>
+                        <input type="number" id="items-count" class="form-control" min="1" max="50" value="{{ items_data|length }}" readonly>
+                    </div>
+                    <button type="button" class="btn btn-warning btn-sm" id="toggle-barcodes-btn">
+                        <i class="fas fa-eye"></i> إظهار الباركودات
+                    </button>
+                </div>
+            </div>
+
+            <div class="items-table-container">
+                <table class="items-table">
+                    <thead>
+                        <tr>
+                            <th width="4%">#</th>
+                            <th width="30%">المادة</th>
+                            <th width="12%">الكمية المرتجعة</th>
+                            <th width="10%">السعر</th>
+                            <th width="10%">الإجمالي</th>
+                            <th width="14%">الكميات</th>
+                        </tr>
+                    </thead>
+                    <tbody id="items-tbody">
+                        {% for item_data in items_data %}
+                        <tr class="item-row" data-item-id="{{ item_data.original_item.id }}">
+                            <td class="text-center fw-bold">{{ forloop.counter }}</td>
+                            <td>
+                                {{ item_data.form.original_item }}
+                                {{ item_data.form.product }}
+                                {{ item_data.form.purchased_quantity }}
+                                {{ item_data.form.return_unit_price }}
+                                {{ item_data.form.return_total }}
+                                
+                                <div class="d-flex align-items-center gap-2">
+                                    <div>
+                                        {% if item_data.original_item.purch_item_image %}
+                                            <img src="{{ item_data.original_item.purch_item_image.url }}" 
+                                                 alt="{{ item_data.original_item.item_name }}" 
+                                                 class="product-image-small">
+                                        {% elif item_data.product and item_data.product.product_image %}
+                                            <img src="{{ item_data.product.product_image.url }}" 
+                                                 alt="{{ item_data.product.product_name }}" 
+                                                 class="product-image-small">
+                                        {% else %}
+                                            <div class="image-placeholder-small">
+                                                <i class="fas fa-box"></i>
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                    <div class="flex-grow-1">
+                                        <div class="small fw-bold mb-1">
+                                            {{ item_data.product.product_name|default:item_data.original_item.item_name }}
+                                        </div>
+                                        {% if item_data.product.product_code %}
+                                        <div class="text-muted" style="font-size: 0.7rem;">
+                                            <i class="fas fa-hashtag me-1"></i>{{ item_data.product.product_code }}
+                                        </div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </td>
+                            <td>
+                                <div class="quantity-field-compact">
+                                    {{ item_data.form.returned_quantity }}
+                                    {% if item_data.form.returned_quantity.errors %}
+                                        <div class="field-errors">{{ item_data.form.returned_quantity.errors }}</div>
+                                    {% endif %}
+                                </div>
+                            </td>
+                            <td>
+                                <div class="price-display" id="price-display-{{ item_data.original_item.id }}">
+                                    {{ item_data.form.return_unit_price.value|default:item_data.original_item.unit_price }}
+                                </div>
+                            </td>
+                            <td>
+                                <div class="total-display" id="total-display-{{ item_data.original_item.id }}">
+                                    0.00
+                                </div>
+                            </td>
+                            <td>
+                                <div class="quantity-info-vertical">
+                                    <span class="badge bg-secondary" title="الكمية الأصلية">
+                                        <i class="fas fa-box"></i> أصلي: {{ item_data.original_item.purchased_quantity }}
+                                    </span>
+                                    <span class="badge bg-danger mt-1" title="مرتجع سابق">
+                                        <i class="fas fa-undo"></i> مرتجع: {{ item_data.previously_returned }}
+                                    </span>
+                                    <span class="badge bg-success mt-1" title="الكمية المتاحة">
+                                        <i class="fas fa-check"></i> متاح: {{ item_data.available_quantity }}
+                                    </span>
+                                </div>
+                            </td>
+                        </tr>
+                        
+                        <tr class="barcode-row" data-item-id="{{ item_data.original_item.id }}" style="display: none;">
+                            <td colspan="6">
+                                <div class="barcode-section">
+                                    <div class="barcode-header px-2 pt-2">
+                                        <div class="small fw-bold">
+                                            <i class="fas fa-barcode me-2"></i> اختر الباركود المراد ارجاعه
+                                            <span class="badge bg-info ms-2" 
+                                                  id="selected-barcodes-count-{{ item_data.original_item.id }}">0</span>
+                                        </div>
+                                    </div>
+                                    {% if item_data.available_barcodes_count > 0 %}
+                                    <div class="barcode-fields-grid">
+                                        {% for barcode_item in item_data.available_barcodes %}
+                                        <div class="barcode-checkbox-item" id="barcode-item-{{ barcode_item.barcode.id }}-{{ item_data.original_item.id }}">
+                                            <input type="checkbox" 
+                                                   name="{{ item_data.form.original_barcodes.html_name }}" 
+                                                   value="{{ barcode_item.barcode.id }}" 
+                                                   id="barcode_{{ barcode_item.barcode.id }}_{{ item_data.original_item.id }}"
+                                                   class="barcode-checkbox"
+                                                   data-item-id="{{ item_data.original_item.id }}"
+                                                   style="margin-left: 5px;">
+                                            <label for="barcode_{{ barcode_item.barcode.id }}_{{ item_data.original_item.id }}" 
+                                                   class="small mb-0 barcode-label">
+                                                <div class="barcode-text-container">
+                                                    <span class="barcode-text">{{ barcode_item.barcode.barcode_in }}</span>
+                                                    <button type="button" class="copy-barcode-btn" data-barcode="{{ barcode_item.barcode.barcode_in }}" title="نسخ الباركود">
+                                                        <i class="fas fa-copy"></i>
+                                                    </button>
+                                                </div>
+                                            </label>
+                                        </div>
+                                        {% endfor %}
+                                    </div>
+                                    {% else %}
+                                    <div class="text-center text-muted py-2 small">
+                                        <i class="fas fa-exclamation-circle me-1"></i>
+                                        لا توجد باركودات متاحة لهذا البند
+                                    </div>
+                                    {% endif %}
+                                </div>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="6" class="text-center text-muted py-4">
+                                <i class="fas fa-info-circle fs-4 mb-3"></i>
+                                <div class="fw-bold mb-2">لا توجد بنود متاحة في الفاتورة</div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- القسم المالي -->
+        <div class="card">
+            <div class="card-header">
+                <i class="fas fa-calculator"></i> القسم المالي
+            </div>
+            <div class="card-body">
+                <div class="financial-content">
+                    <div class="financial-image">
+                        <div class="image-input-container">
+                            <div id="invoice-image-preview-container" class="invoice-image-preview" title="صورة الفاتورة الأصلية">
+                                {% if original_purchase.purch_image %}
+                                    <img src="{{ original_purchase.purch_image.url }}" alt="صورة الفاتورة" style="width:100%;height:100%;object-fit:cover;border-radius:6px;">
+                                {% else %}
+                                    <i class="fas fa-image"></i>
+                                    <small>صورة الفاتورة</small>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="financial-calculations">
+                        <div class="financial-section">
+                            <div class="financial-grid">
+                                <div class="financial-column">
+                                    <div class="financial-row">
+                                        <span class="financial-label"><i class="fas fa-receipt"></i> إجمالي البنود:</span>
+                                        <span class="financial-value" id="subtotal-amount">0.00</span>
+                                    </div>
+                                </div>
+
+                                <div class="financial-column">
+                                    {% if is_cash_payment %}
+                                    <div class="paid-amount-container show" id="paid-amount-container">
+                                        <div class="financial-row">
+                                            <span class="financial-label"><i class="fas fa-hand-holding-usd"></i> المبلغ المستلم:</span>
+                                            {{ form.paid_amount }}
+                                        </div>
+                                        <div class="alert alert-warning mt-2 d-none" id="cash-balance-warning">
+                                            <i class="fas fa-exclamation-triangle"></i> المبلغ المستلم يتجاوز رصيد الصندوق
+                                        </div>
+                                    </div>
+                                    {% endif %}
+                                </div>
+
+                                <div class="financial-row grand-total">
+                                    <span class="financial-label"><i class="fas fa-file-invoice-dollar"></i> الإجمالي العام للمرتجع:</span>
+                                    <span class="financial-value" id="grand-total">0.00</span>
+                                </div>
+
+                                <div class="financial-row remaining-amount">
+                                    <span class="financial-label"><i class="fas fa-clock"></i> المبلغ المتبقي للمورد:</span>
+                                    <span class="financial-value" id="remaining-amount">0.00</span>
+                                </div>
+
+                                <div class="remaining-amount-in-words-container">
+                                    <div class="remaining-amount-in-words">
+                                        <div class="remaining-words-label">
+                                            <i class="fas fa-font"></i> كتابة:
+                                        </div>
+                                        <div class="remaining-words-value" id="remaining-words-value">
+                                            {% if is_cash_payment and expected_return_total > 0 %}
+                                                {{ expected_return_total|floatformat:2 }} {{ original_purchase.purch_currency.name_ar|default:'ليرة سورية' }} فقط لا غير
+                                            {% else %}
+                                                <div class="remaining-words-loading small">جاري التحويل...</div>
+                                            {% endif %}
+                                        </div>
+                                        <button type="button" class="refresh-remaining-words-btn" id="refresh-remaining-words-btn" title="تحديث الكتابة">
+                                            <i class="fas fa-redo"></i>
+                                        </button>
+                                    </div>
+                                    <div class="text-muted small text-center mt-1">
+                                        <i class="fas fa-info-circle"></i> يتحدث تلقائياً
+                                    </div>
+                                </div>
+
+                                {% if is_cash_payment %}
+                                <div class="mt-2 small" id="settlement-note">
+                                    <i class="fas fa-info-circle text-primary"></i>
+                                    <span id="settlement-note-text">يمكنك استلام جزء من المبلغ الآن، وسيبقى المتبقي كرصيد للمورد.</span>
+                                </div>
+                                <input type="hidden" name="settlement_status" id="settlement-status" value="pending">
+                                <input type="hidden" name="paid_amount_modified" id="paid-amount-modified" value="false">
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- أزرار الحفظ -->
+        <div class="form-actions">
+            <button type="submit" class="btn btn-success" id="submit-btn">
+                <i class="fas fa-save"></i> حفظ المرتجع
+            </button>
+            <a href="{% url 'invoice:purch_detail' slug=original_purchase.slug %}" class="btn btn-secondary">
+                <i class="fas fa-times"></i> إلغاء
+            </a>
+        </div>
+    </form>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script nonce="{{ csp_nonce }}">
+// ============================================
+// البيانات العامة
+// ============================================
+window.barcodesVisible = false;
+window.paidAmountModified = false;
+window.expectedReturnTotal = parseFloat('{{ expected_return_total|default:"0" }}') || 0;
+window.currencyName = '{{ original_purchase.purch_currency.name_ar|default:"ليرة سورية" }}';
+
+// ============================================
+// دالة تحويل المبلغ إلى كلمات
+// ============================================
+function numberToWordsAR(number) {
+    if (number === 0) return 'صفر';
+    
+    const units = ['', 'واحد', 'اثنان', 'ثلاثة', 'أربعة', 'خمسة', 'ستة', 'سبعة', 'ثمانية', 'تسعة'];
+    const tens = ['', 'عشرة', 'عشرون', 'ثلاثون', 'أربعون', 'خمسون', 'ستون', 'سبعون', 'ثمانون', 'تسعون'];
+    const hundreds = ['', 'مائة', 'مئتان', 'ثلاثمائة', 'أربعمائة', 'خمسمائة', 'ستمائة', 'سبعمائة', 'ثمانمائة', 'تسعمائة'];
+    
+    function convertThreeDigits(num) {
+        let result = '';
+        const hundred = Math.floor(num / 100);
+        const remainder = num % 100;
+        
+        if (hundred > 0) {
+            result += hundreds[hundred];
+            if (remainder > 0) result += ' و';
+        }
+        
+        if (remainder > 0) {
+            if (remainder < 10) {
+                result += units[remainder];
+            } else if (remainder < 20) {
+                const teens = ['', 'أحد عشر', 'اثنا عشر', 'ثلاثة عشر', 'أربعة عشر', 'خمسة عشر', 'ستة عشر', 'سبعة عشر', 'ثمانية عشر', 'تسعة عشر'];
+                result += teens[remainder - 10];
+            } else {
+                const ten = Math.floor(remainder / 10);
+                const unit = remainder % 10;
+                if (unit > 0) {
+                    result += units[unit] + ' و' + tens[ten];
+                } else {
+                    result += tens[ten];
+                }
+            }
+        }
+        
+        return result;
+    }
+    
+    function convert(num) {
+        if (num === 0) return '';
+        
+        const billions = Math.floor(num / 1000000000);
+        const millions = Math.floor((num % 1000000000) / 1000000);
+        const thousands = Math.floor((num % 1000000) / 1000);
+        const rest = num % 1000;
+        
+        let result = '';
+        
+        if (billions > 0) {
+            result += convertThreeDigits(billions) + ' مليار';
+            if (billions === 1) result = 'مليار';
+            else if (billions === 2) result = 'ملياران';
+            if (millions > 0 || thousands > 0 || rest > 0) result += ' و';
+        }
+        
+        if (millions > 0) {
+            result += convertThreeDigits(millions) + ' مليون';
+            if (millions === 1) result = 'مليون';
+            else if (millions === 2) result = 'مليونان';
+            if (thousands > 0 || rest > 0) result += ' و';
+        }
+        
+        if (thousands > 0) {
+            result += convertThreeDigits(thousands) + ' ألف';
+            if (thousands === 1) result = 'ألف';
+            else if (thousands === 2) result = 'ألفان';
+            if (rest > 0) result += ' و';
+        }
+        
+        if (rest > 0) {
+            result += convertThreeDigits(rest);
+        }
+        
+        return result;
+    }
+    
+    return convert(number);
+}
+
+function formatAmountToWords(amount, currencyName) {
+    if (!amount || amount <= 0) return 'صفر ' + currencyName + ' فقط لا غير';
+    
+    const integerPart = Math.floor(amount);
+    const fractionalPart = Math.round((amount - integerPart) * 100);
+    
+    let result = '';
+    
+    if (integerPart > 0) {
+        result += numberToWordsAR(integerPart) + ' ' + currencyName;
+        if (integerPart === 1) result = 'واحد ' + currencyName;
+        else if (integerPart === 2) result = 'اثنان ' + currencyName;
+    }
+    
+    if (fractionalPart > 0) {
+        if (integerPart > 0) result += ' و';
+        if (fractionalPart === 1) result += numberToWordsAR(fractionalPart) + ' قرش';
+        else if (fractionalPart === 2) result += numberToWordsAR(fractionalPart) + ' قرشان';
+        else result += numberToWordsAR(fractionalPart) + ' قرشاً';
+    }
+    
+    result += ' فقط لا غير';
+    return result;
+}
+
+// ============================================
+// دوال الرسائل المخصصة (Popup)
+// ============================================
+function showPopup(title, message, iconType, onConfirm, onCancel) {
+    // إزالة أي popup قديم
+    const oldPopup = document.querySelector('.custom-popup-overlay');
+    if (oldPopup) oldPopup.remove();
+    
+    const overlay = document.createElement('div');
+    overlay.className = 'custom-popup-overlay';
+    
+    let iconClass = '';
+    let iconColor = '';
+    
+    if (iconType === 'warning') {
+        iconClass = 'fas fa-exclamation-triangle';
+        iconColor = 'warning';
+    } else if (iconType === 'error') {
+        iconClass = 'fas fa-times-circle';
+        iconColor = 'error';
+    } else {
+        iconClass = 'fas fa-check-circle';
+        iconColor = 'success';
+    }
+    
+    overlay.innerHTML = `
+        <div class="custom-popup-box">
+            <div class="popup-icon ${iconColor}"><i class="${iconClass}"></i></div>
+            <div class="popup-title">${title}</div>
+            <div class="popup-message">${message}</div>
+            <div class="popup-actions">
+                <button type="button" class="btn btn-success" id="popup-confirm-btn">نعم، متأكد</button>
+                <button type="button" class="btn btn-secondary" id="popup-cancel-btn">إلغاء</button>
+            </div>
+        </div>
+    `;
+    
+    document.body.appendChild(overlay);
+    
+    const confirmBtn = overlay.querySelector('#popup-confirm-btn');
+    const cancelBtn = overlay.querySelector('#popup-cancel-btn');
+    
+    confirmBtn.addEventListener('click', () => {
+        overlay.remove();
+        if (typeof onConfirm === 'function') onConfirm();
+    });
+    
+    cancelBtn.addEventListener('click', () => {
+        overlay.remove();
+        if (typeof onCancel === 'function') onCancel();
+    });
+    
+    // إغلاق بالنقر خارج الصندوق
+    overlay.addEventListener('click', (e) => {
+        if (e.target === overlay) {
+            overlay.remove();
+            if (typeof onCancel === 'function') onCancel();
+        }
+    });
+}
+
+function showSuccessToast(message) {
+    const toast = document.createElement('div');
+    toast.className = 'success-message';
+    toast.style.display = 'flex';
+    toast.style.position = 'fixed';
+    toast.style.top = '20px';
+    toast.style.left = '50%';
+    toast.style.transform = 'translateX(-50%)';
+    toast.style.zIndex = '9999';
+    toast.innerHTML = `<i class="fas fa-check-circle me-2"></i>${message}`;
+    document.body.appendChild(toast);
+    
+    setTimeout(() => {
+        toast.style.opacity = '0';
+        setTimeout(() => toast.remove(), 500);
+    }, 3000);
+}
+
+// ============================================
+// دوال مساعدة
+// ============================================
+function fetchCashBalance() {
+    return fetch('/invoice/get-cash-balance/')
+        .then(response => response.json())
+        .then(data => {
+            const cashBalanceElement = document.getElementById('current-cash-balance');
+            if (cashBalanceElement) {
+                cashBalanceElement.textContent = parseFloat(data.balance).toFixed(2);
+            }
+            return data.balance;
+        })
+        .catch(error => {
+            console.error('خطأ في جلب رصيد الصندوق:', error);
+            return 0;
+        });
+}
+
+function checkCashBalance(paidAmount) {
+    fetchCashBalance().then(cashBalance => {
+        const cashBalanceWarning = document.getElementById('cash-balance-warning');
+        if (parseFloat(paidAmount) > parseFloat(cashBalance)) {
+            cashBalanceWarning?.classList.remove('d-none');
+        } else {
+            cashBalanceWarning?.classList.add('d-none');
+        }
+    });
+}
+
+function updateRemainingAmount() {
+    const grandTotalElement = document.getElementById('grand-total');
+    const paidAmountInput = document.getElementById('paid-amount');
+    const remainingAmountElement = document.getElementById('remaining-amount');
+    
+    if (grandTotalElement && paidAmountInput && remainingAmountElement) {
+        const grandTotalValue = parseFloat(grandTotalElement.textContent) || 0;
+        let paidAmountValue = parseFloat(paidAmountInput.value) || 0;
+        
+        // التأكد من أن paidAmountValue ليس NaN
+        if (isNaN(paidAmountValue)) {
+            paidAmountValue = 0;
+            paidAmountInput.value = 0;
+        }
+        
+        const remainingAmount = Math.max(0, grandTotalValue - paidAmountValue);
+        
+        remainingAmountElement.textContent = remainingAmount.toFixed(2);
+        
+        // تحديث المبلغ كتابة
+        const remainingWordsElement = document.getElementById('remaining-words-value');
+        if (remainingWordsElement) {
+            if (remainingAmount <= 0) {
+                remainingWordsElement.innerHTML = '<div class="remaining-words-zero">صفر ' + window.currencyName + ' فقط لا غير</div>';
+            } else {
+                const words = formatAmountToWords(remainingAmount, window.currencyName);
+                remainingWordsElement.innerHTML = '<div>' + words + '</div>';
+            }
+        }
+        
+        const settlementNote = document.getElementById('settlement-note-text');
+        const settlementStatus = document.getElementById('settlement-status');
+        if (settlementNote && settlementStatus) {
+            if (remainingAmount <= 0) {
+                settlementNote.textContent = '✅ تم استلام كامل المبلغ من المورد';
+                settlementStatus.value = 'settled';
+            } else if (paidAmountValue > 0) {
+                settlementNote.textContent = '⚠️ تم استلام جزء من المبلغ، والباقي رصيد للمورد';
+                settlementStatus.value = 'partial';
+            } else {
+                settlementNote.textContent = 'ℹ️ لم يتم استلام أي مبلغ، كامل المبلغ رصيد للمورد';
+                settlementStatus.value = 'pending';
+            }
+        }
+        
+        document.dispatchEvent(new Event('remainingAmountUpdated'));
+    }
+}
+
+function updatePaidAmountAutomatically() {
+    const paymentDataElement = document.getElementById('payment-data');
+    const isCashPayment = paymentDataElement?.dataset.isCash === 'true';
+    if (!isCashPayment) return;
+    
+    const paidAmountInput = document.getElementById('paid-amount');
+    const paidAmountModifiedInput = document.getElementById('paid-amount-modified');
+    const grandTotal = parseFloat(document.getElementById('grand-total').textContent) || 0;
+    const isModified = paidAmountModifiedInput?.value === 'true';
+    
+    if (paidAmountInput && !isModified) {
+        paidAmountInput.value = grandTotal.toFixed(2);
+        updateRemainingAmount();
+        checkCashBalance(grandTotal);
+    }
+}
+
+function updateCalculations() {
+    let subtotal = 0;
+    
+    document.querySelectorAll('.item-row').forEach(row => {
+        const itemId = row.getAttribute('data-item-id');
+        const quantityInput = row.querySelector('input[name$="-returned_quantity"]');
+        const unitPriceInput = row.querySelector('input[name$="-return_unit_price"]');
+        const totalInput = row.querySelector('input[name$="-return_total"]');
+        
+        if (quantityInput && unitPriceInput && totalInput) {
+            const quantity = parseFloat(quantityInput.value) || 0;
+            const unitPrice = parseFloat(unitPriceInput.value) || 0;
+            const total = quantity * unitPrice;
+            
+            totalInput.value = total.toFixed(2);
+            
+            const totalDisplay = document.getElementById(`total-display-${itemId}`);
+            if (totalDisplay) totalDisplay.textContent = total.toFixed(2);
+            
+            subtotal += total;
+        }
+    });
+    
+    const subtotalEl = document.getElementById('subtotal-amount');
+    const grandTotalEl = document.getElementById('grand-total');
+    
+    if (subtotalEl) subtotalEl.textContent = subtotal.toFixed(2);
+    if (grandTotalEl) grandTotalEl.textContent = subtotal.toFixed(2);
+    
+    updateRemainingAmount();
+    document.dispatchEvent(new Event('financialCalculationsUpdated'));
+    
+    return subtotal;
+}
+
+// ============================================
+// دوال إدارة الباركودات
+// ============================================
+function updateBarcodeCount(itemId) {
+    const checkboxes = document.querySelectorAll(`.barcode-checkbox[data-item-id="${itemId}"]`);
+    let selectedCount = 0;
+    
+    checkboxes.forEach(checkbox => {
+        const barcodeItem = checkbox.closest('.barcode-checkbox-item');
+        if (checkbox.checked) {
+            selectedCount++;
+            barcodeItem?.classList.add('selected');
+        } else {
+            barcodeItem?.classList.remove('selected');
+        }
+    });
+    
+    const counter = document.getElementById(`selected-barcodes-count-${itemId}`);
+    if (counter) counter.textContent = selectedCount;
+    return selectedCount;
+}
+
+// ============================================
+// التهيئة الرئيسية
+// ============================================
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('بدء تهيئة صفحة مرتجع المشتريات...');
+    
+    const paymentDataElement = document.getElementById('payment-data');
+    const isCashPayment = paymentDataElement?.dataset.isCash === 'true';
+    
+    // تحديث الحسابات الأولية
+    updateCalculations();
+    
+    // تعيين المبلغ المستلم تلقائياً
+    if (isCashPayment) {
+        setTimeout(() => {
+            updatePaidAmountAutomatically();
+        }, 100);
+    }
+    
+    // أحداث حقول الكمية
+    document.querySelectorAll('input[name$="-returned_quantity"]').forEach(input => {
+        input.addEventListener('input', function() {
+            const max = parseFloat(this.getAttribute('max')) || 0;
+            const value = parseFloat(this.value) || 0;
+            
+            if (max > 0 && value > max) {
+                this.value = max;
+                showPopup('تنبيه', 'الكمية المدخلة تتجاوز الحد الأقصى: ' + max, 'warning');
+            }
+            if (value < 0) this.value = 0;
+            
+            updateCalculations();
+            updatePaidAmountAutomatically();
+        });
+    });
+    
+    // أحداث الباركودات
+    document.querySelectorAll('.barcode-checkbox').forEach(checkbox => {
+        checkbox.addEventListener('change', function() {
+            const itemId = this.getAttribute('data-item-id');
+            const itemRow = document.querySelector(`.item-row[data-item-id="${itemId}"]`);
+            const selectedCount = updateBarcodeCount(itemId);
+            
+            if (itemRow) {
+                const quantityInput = itemRow.querySelector('input[name$="-returned_quantity"]');
+                if (quantityInput) {
+                    quantityInput.value = selectedCount;
+                    quantityInput.dispatchEvent(new Event('input'));
+                }
+            }
+        });
+    });
+    
+    // نسخ الباركود
+    document.querySelectorAll('.copy-barcode-btn').forEach(button => {
+        button.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            
+            const barcode = this.getAttribute('data-barcode');
+            if (barcode) {
+                navigator.clipboard.writeText(barcode).then(() => {
+                    showSuccessToast('تم نسخ الباركود: ' + barcode);
+                    this.innerHTML = '<i class="fas fa-check"></i>';
+                    setTimeout(() => {
+                        this.innerHTML = '<i class="fas fa-copy"></i>';
+                    }, 1000);
+                }).catch(() => alert('فشل نسخ الباركود'));
+            }
+        });
+    });
+    
+    // زر تبديل الباركودات
+    const toggleBtn = document.getElementById('toggle-barcodes-btn');
+    if (toggleBtn) {
+        toggleBtn.addEventListener('click', function() {
+            window.barcodesVisible = !window.barcodesVisible;
+            document.querySelectorAll('.barcode-row').forEach(row => {
+                row.style.display = window.barcodesVisible ? 'table-row' : 'none';
+            });
+            
+            this.innerHTML = window.barcodesVisible 
+                ? '<i class="fas fa-eye-slash me-1"></i>إخفاء الباركودات'
+                : '<i class="fas fa-eye me-1"></i>إظهار الباركودات';
+        });
+    }
+    
+    // [تحديث هام] أحداث المبلغ المستلم مع رسالة تأكيد المرتجع الآجل
+    if (isCashPayment) {
+        const paidInput = document.getElementById('paid-amount');
+        const paidModifiedInput = document.getElementById('paid-amount-modified');
+        let previousPaidValue = paidInput ? paidInput.value : '0';
+        
+        if (paidInput) {
+            // حفظ القيمة السابقة عند التركيز
+            paidInput.addEventListener('focus', function() {
+                previousPaidValue = this.value;
+            });
+            
+            // معالجة الخروج من الحقل (Blur)
+            paidInput.addEventListener('blur', function() {
+                let currentValue = this.value.trim();
+                
+                // تنظيف وتصحيح القيمة
+                if (currentValue === '' || isNaN(parseFloat(currentValue))) {
+                    currentValue = '0';
+                    this.value = '0.00';
+                }
+                
+                let currentNumeric = parseFloat(currentValue) || 0;
+                
+                // [الشرط الجديد] إذا أصبح المبلغ صفراً وكانت هناك قيمة سابقة
+                const previousNumeric = parseFloat(previousPaidValue) || 0;
+                
+                if (currentNumeric === 0 && previousNumeric > 0) {
+                    // إظهار رسالة تحذير للمستخدم لتأكيد الرغبة في مرتجع آجل
+                    showPopup(
+                        'تأكيد المرتجع الآجل', 
+                        'أنت على وشك جعل المبلغ المستلم (0). هذا يعني أن المرتجع سيكون <strong>آجل</strong> وسيضاف المبلغ كرصيد للمورد. هل أنت متأكد؟',
+                        'warning',
+                        // عند التأكيد
+                        function() {
+                            window.paidAmountModified = true;
+                            if (paidModifiedInput) paidModifiedInput.value = 'true';
+                            updateRemainingAmount();
+                            showSuccessToast('تم تسجيل المرتجع كآجل');
+                        },
+                        // عند الإلغاء (استعادة القيمة القديمة)
+                        function() {
+                            paidInput.value = previousNumeric.toFixed(2);
+                            updateRemainingAmount();
+                        }
+                    );
+                } else {
+                    // تحديث عادي
+                    this.value = currentNumeric.toFixed(2);
+                    window.paidAmountModified = true;
+                    if (paidModifiedInput) paidModifiedInput.value = 'true';
+                    checkCashBalance(currentNumeric);
+                    updateRemainingAmount();
+                }
+            });
+            
+            // عند الكتابة المباشرة
+            paidInput.addEventListener('input', function(e) {
+                let value = this.value.replace(/[^0-9.-]/g, '');
+                this.value = value;
+                
+                window.paidAmountModified = true;
+                if (paidModifiedInput) paidModifiedInput.value = 'true';
+                
+                const currentValue = parseFloat(this.value) || 0;
+                checkCashBalance(currentValue);
+                updateRemainingAmount();
+            });
+            
+            fetchCashBalance();
+        }
+    }
+    
+    // أحداث الصورة
+    const imageModal = document.getElementById('imageModal');
+    const imagePreview = document.getElementById('invoice-image-preview-container');
+    const closeModal = document.querySelector('.image-modal-close');
+    
+    if (imagePreview) {
+        imagePreview.addEventListener('click', () => {
+            imageModal.style.display = 'block';
+        });
+    }
+    
+    if (closeModal) {
+        closeModal.addEventListener('click', () => {
+            imageModal.style.display = 'none';
+        });
+    }
+    
+    window.addEventListener('click', e => {
+        if (e.target === imageModal) {
+            imageModal.style.display = 'none';
+        }
+    });
+    
+    // التحقق من النموذج قبل الإرسال
+    const form = document.getElementById('purch-return-form');
+    
+    if (form) {
+        form.addEventListener('submit', function(e) {
+            let hasReturnedItems = false;
+            
+            document.querySelectorAll('.item-row').forEach(row => {
+                const quantityInput = row.querySelector('input[name$="-returned_quantity"]');
+                const value = parseFloat(quantityInput.value) || 0;
+                if (value > 0) hasReturnedItems = true;
+            });
+            
+            if (!hasReturnedItems) {
+                e.preventDefault();
+                showPopup('خطأ', 'يجب إدخال كمية مرتجعة لبند واحد على الأقل', 'error');
+                return false;
+            }
+            
+            if (isCashPayment) {
+                const paidAmountInput = document.getElementById('paid-amount');
+                let paidAmount = 0;
+                
+                if (paidAmountInput) {
+                    if (paidAmountInput.value === '' || paidAmountInput.value === null) {
+                        paidAmountInput.value = '0.00';
+                        paidAmount = 0;
+                    } else {
+                        paidAmount = parseFloat(paidAmountInput.value) || 0;
+                        if (isNaN(paidAmount)) {
+                            paidAmount = 0;
+                            paidAmountInput.value = '0.00';
+                        }
+                    }
+                }
+                
+                const grandTotal = parseFloat(document.getElementById('grand-total').textContent) || 0;
+                
+                if (paidAmount > grandTotal) {
+                    e.preventDefault();
+                    showPopup('خطأ', `المبلغ المستلم (${paidAmount}) لا يمكن أن يتجاوز إجمالي المرتجع (${grandTotal})`, 'error');
+                    return false;
+                }
+            }
+            
+            return true;
+        });
+    }
+    
+    console.log('اكتملت تهيئة الصفحة بنجاح');
+});
+</script>
+{% endblock %}

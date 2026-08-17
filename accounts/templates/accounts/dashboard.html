@@ -1,0 +1,1706 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}لوحة التحكم | {{ settings.company_name|default:"شركتك" }}{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<style>
+    :root {
+        --aqua-1: #e0f7fa;
+        --aqua-2: #b2ebf2;
+        --aqua-3: #4dd0e1;
+        --aqua-4: #0097a7;
+        --text-dark: #006064;
+        --text-light: #ffffff;
+        --shadow-sm: 0 2px 8px rgba(0, 150, 167, 0.08);
+        --shadow-md: 0 4px 12px rgba(0, 150, 167, 0.12);
+        --trend-up: #00c853;
+        --trend-down: #ff1744;
+        --trend-neutral: #78909c;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+        background-color: var(--aqua-1);
+        font-family: 'Tajawal', sans-serif;
+        font-size: 0.9rem;
+        color: var(--text-dark);
+        overflow-x: hidden;
+    }
+
+    .dashboard {
+        max-width: 1400px;
+        width: 100%;
+        margin: 0 auto;
+        padding: 0.75rem 0.5rem;
+    }
+
+    .dashboard-stats { margin-bottom: 1rem; width: 100%; }
+
+    .dashboard-content {
+        display: grid;
+        grid-template-columns: 1fr 340px;
+        gap: 1rem;
+        width: 100%;
+        margin-bottom: 1rem;
+    }
+
+    .col-right { display: flex; flex-direction: column; gap: 0.75rem; min-width: 0; }
+    .col-left { display: flex; flex-direction: column; gap: 0.75rem; min-width: 0; }
+
+    .card {
+        border: none;
+        border-radius: 12px;
+        box-shadow: var(--shadow-sm);
+        overflow: hidden;
+        background: #fff;
+        width: 100%;
+    }
+
+    .card-header {
+        background: linear-gradient(135deg, var(--aqua-4) 0%, #006064 100%);
+        color: var(--text-light);
+        padding: 0.6rem 1rem;
+        font-weight: 600;
+        font-size: 0.85rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .card-header .header-badge {
+        margin-right: auto;
+        background: rgba(255, 255, 255, 0.2);
+        padding: 0.15rem 0.6rem;
+        border-radius: 20px;
+        font-size: 0.65rem;
+        font-weight: 500;
+    }
+
+    .card-body { padding: 0.875rem; }
+    .card-body-compact { padding: 0.6rem 0.8rem; }
+
+    .dash-header {
+        background: linear-gradient(135deg, var(--aqua-4) 0%, #006064 100%);
+        color: var(--text-light);
+        padding: 0.875rem 1.25rem;
+        border-radius: 12px;
+        margin-bottom: 1rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 0.75rem;
+        box-shadow: var(--shadow-md);
+        width: 100%;
+    }
+
+    .dash-header h1 {
+        font-size: 1.3rem;
+        font-weight: 700;
+        margin: 0;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .dash-header-sub {
+        font-size: 0.75rem;
+        opacity: 0.85;
+        margin-top: 0.2rem;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        flex-wrap: wrap;
+    }
+
+    .date-chip, .user-chip {
+        background: rgba(255, 255, 255, 0.15);
+        padding: 0.2rem 0.6rem;
+        border-radius: 20px;
+        font-size: 0.7rem;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.3rem;
+    }
+
+    .btn-dash-header {
+        padding: 0.4rem 1rem;
+        font-size: 0.75rem;
+        border-radius: 8px;
+        background: linear-gradient(135deg, var(--aqua-4) 0%, #006064 100%);
+        color: white;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.3rem;
+        transition: opacity 0.2s;
+    }
+
+    .btn-dash-header:hover { opacity: 0.9; }
+
+    .stats-row {
+        display: grid;
+        grid-template-columns: repeat(5, 1fr);
+        gap: 0.75rem;
+        width: 100%;
+    }
+
+    .stat-card {
+        background: #fff;
+        border-radius: 10px;
+        box-shadow: var(--shadow-sm);
+        padding: 0.75rem;
+        display: flex;
+        align-items: center;
+        gap: 0.6rem;
+        position: relative;
+        overflow: hidden;
+        transition: all 0.2s;
+        cursor: pointer;
+    }
+
+    .stat-card::after {
+        content: '';
+        position: absolute;
+        bottom: 0;
+        right: 0;
+        left: 0;
+        height: 3px;
+    }
+
+    .stat-card:hover { transform: translateY(-2px); box-shadow: var(--shadow-md); }
+
+    .stat-icon {
+        width: 2.5rem;
+        height: 2.5rem;
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 1rem;
+        flex-shrink: 0;
+    }
+
+    .stat-info { flex: 1; }
+
+    .stat-val {
+        font-size: 1.3rem;
+        font-weight: 800;
+        color: var(--text-dark);
+        line-height: 1.2;
+    }
+
+    .stat-lbl { font-size: 0.65rem; color: #546e7a; font-weight: 500; }
+
+    .stat-trend {
+        font-size: 0.6rem;
+        font-weight: 700;
+        display: flex;
+        align-items: center;
+        gap: 2px;
+        margin-top: 2px;
+    }
+
+    .trend-up { color: var(--trend-up); }
+    .trend-down { color: var(--trend-down); }
+    .trend-neutral { color: var(--trend-neutral); }
+
+    .stat-card.c-aqua::after { background: var(--aqua-4); }
+    .stat-card.c-teal::after { background: #00897b; }
+    .stat-card.c-amber::after { background: #ffb300; }
+    .stat-card.c-purple::after { background: #8e24aa; }
+    .stat-card.c-rose::after { background: #e53935; }
+
+    .ops-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 0.5rem;
+    }
+
+    .op-link {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.6rem;
+        border-radius: 8px;
+        text-decoration: none;
+        color: var(--text-dark);
+        transition: all 0.2s;
+        border: 1px solid transparent;
+    }
+
+    .op-link:hover { background: var(--aqua-1); border-color: var(--aqua-2); }
+
+    .op-link-icon {
+        width: 2rem;
+        height: 2rem;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 0.85rem;
+        flex-shrink: 0;
+    }
+
+    .op-link-text { flex: 1; min-width: 0; }
+
+    .op-link-title {
+        font-size: 0.75rem;
+        font-weight: 600;
+        display: block;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .op-link-desc {
+        font-size: 0.6rem;
+        color: #78909c;
+        display: block;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .op-link-arrow {
+        color: var(--aqua-3);
+        font-size: 0.65rem;
+        flex-shrink: 0;
+        transition: transform 0.2s;
+    }
+
+    .op-link:hover .op-link-arrow { transform: translateX(-3px); color: var(--aqua-4); }
+
+    .quick-grid {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 0.5rem;
+    }
+
+    .quick-btn {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 0.3rem;
+        padding: 0.6rem 0.3rem;
+        border-radius: 8px;
+        text-decoration: none;
+        color: var(--text-dark);
+        background: var(--aqua-1);
+        border: 1px dashed var(--aqua-2);
+        transition: all 0.2s;
+        text-align: center;
+    }
+
+    .quick-btn:hover {
+        background: #fff;
+        border-color: var(--aqua-4);
+        border-style: solid;
+        transform: translateY(-2px);
+    }
+
+    .quick-btn-icon {
+        width: 2rem;
+        height: 2rem;
+        border-radius: 50%;
+        background: linear-gradient(135deg, var(--aqua-4) 0%, #006064 100%);
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.8rem;
+    }
+
+    .quick-btn span { font-size: 0.65rem; font-weight: 600; line-height: 1.2; }
+
+    .chart-container { position: relative; height: 220px; width: 100%; }
+
+    .chart-legend {
+        display: flex;
+        justify-content: center;
+        gap: 1rem;
+        margin-top: 0.5rem;
+        flex-wrap: wrap;
+    }
+
+    .chart-legend span {
+        font-size: 0.65rem;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.3rem;
+    }
+
+    .chart-legend-dot { display: inline-block; width: 12px; height: 12px; border-radius: 2px; }
+    .chart-legend-line { display: inline-block; width: 12px; height: 2px; }
+
+    .top-products-tabs {
+        display: flex;
+        border-bottom: 1px solid var(--aqua-1);
+    }
+
+    .top-products-tab {
+        flex: 1;
+        background: none;
+        border: none;
+        font-weight: 600;
+        cursor: pointer;
+        font-size: 0.7rem;
+        padding: 0.5rem;
+        color: #78909c;
+        border-bottom: 2px solid transparent;
+        transition: all 0.2s;
+    }
+
+    .top-products-tab.active { color: var(--text-dark); border-bottom-color: var(--aqua-4); }
+
+    .top-products-list { display: none; }
+    .top-products-list.is-active { display: block; }
+
+    .top-product-item {
+        display: flex;
+        align-items: center;
+        gap: 0.6rem;
+        padding: 0.5rem 0.75rem;
+        border-bottom: 1px solid var(--aqua-1);
+        cursor: pointer;
+    }
+
+    .top-product-rank { width: 1.8rem; text-align: center; font-weight: 700; color: var(--aqua-4); }
+
+    .top-product-thumb {
+        width: 2rem;
+        height: 2rem;
+        border-radius: 6px;
+        background: var(--aqua-1);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        overflow: hidden;
+        flex-shrink: 0;
+    }
+
+    .top-product-thumb img { width: 100%; height: 100%; object-fit: cover; }
+    .top-product-thumb i { color: var(--aqua-4); font-size: 1rem; }
+
+    .top-product-info { flex: 1; min-width: 0; }
+    .top-product-name { font-weight: 600; font-size: 0.75rem; }
+    .top-product-stats { display: flex; gap: 0.8rem; margin-top: 0.2rem; }
+    .top-product-stats span { font-size: 0.6rem; }
+    .stat-qty { color: #00c853; }
+    .stat-val-item { color: var(--aqua-4); }
+
+    .progress-bar-track {
+        width: 60px;
+        height: 3px;
+        background: var(--aqua-1);
+        border-radius: 3px;
+        overflow: hidden;
+    }
+
+    .progress-bar-fill {
+        height: 100%;
+        background: var(--aqua-4);
+        width: 0%;
+        transition: width 0.4s ease;
+    }
+
+    .top-products-empty { text-align: center; padding: 1.5rem; color: #78909c; }
+    .top-products-empty i { font-size: 1.5rem; margin-bottom: 0.3rem; display: block; }
+    .top-products-empty span { font-size: 0.7rem; }
+
+    .side-section-title {
+        font-size: 0.65rem;
+        font-weight: 700;
+        color: #78909c;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        padding: 0.4rem 0 0.3rem;
+        border-bottom: 1px solid var(--aqua-1);
+        margin-bottom: 0.3rem;
+        display: flex;
+        align-items: center;
+        gap: 0.3rem;
+    }
+
+    .side-link {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.35rem 0.5rem;
+        border-radius: 6px;
+        text-decoration: none;
+        color: var(--text-dark);
+        font-size: 0.75rem;
+        font-weight: 500;
+        transition: all 0.15s;
+    }
+
+    .side-link:hover { background: var(--aqua-1); }
+
+    .side-link-icon {
+        width: 1.5rem;
+        height: 1.5rem;
+        border-radius: 6px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.6rem;
+        color: white;
+        flex-shrink: 0;
+    }
+
+    .side-link-name { flex: 1; }
+
+    .side-link-arrow {
+        color: var(--aqua-3);
+        font-size: 0.55rem;
+        opacity: 0;
+        transition: opacity 0.15s;
+    }
+
+    .side-link:hover .side-link-arrow { opacity: 1; }
+
+    .side-link-group {
+        display: flex;
+        align-items: center;
+        gap: 0;
+        border-radius: 6px;
+        overflow: hidden;
+        transition: background 0.15s;
+    }
+
+    .side-link-group:hover { background: var(--aqua-1); }
+    .side-link-group .side-link { flex: 1; border-radius: 0; }
+
+    .side-link-group .side-add-btn {
+        width: 1.6rem;
+        height: 1.6rem;
+        border-radius: 6px;
+        background: linear-gradient(135deg, var(--aqua-4) 0%, #006064 100%);
+        color: white;
+        border: none;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.55rem;
+        cursor: pointer;
+        text-decoration: none;
+        margin-left: 0.2rem;
+        flex-shrink: 0;
+        transition: all 0.15s;
+    }
+
+    .side-link-group .side-add-btn:hover { opacity: 0.85; transform: scale(1.05); }
+    .side-divider { border-top: 1px solid var(--aqua-1); margin: 0.4rem 0; }
+
+    .alerts-list { display: flex; flex-direction: column; gap: 0.4rem; }
+
+    .alert-item {
+        display: flex;
+        gap: 0.5rem;
+        align-items: flex-start;
+        padding: 0.4rem;
+        border-radius: 8px;
+        transition: background 0.2s;
+    }
+
+    .alert-item:hover { background: var(--aqua-1); }
+    .alert-warning { border-right: 3px solid #ffb300; }
+    .alert-danger { border-right: 3px solid #e53935; }
+    .alert-info { border-right: 3px solid #00897b; }
+    .alert-success { border-right: 3px solid #00c853; }
+
+    .alert-item i { font-size: 0.8rem; margin-top: 2px; flex-shrink: 0; }
+    .alert-icon-danger { color: #e53935; }
+    .alert-icon-warning { color: #ffb300; }
+    .alert-icon-info { color: #00897b; }
+    .alert-icon-success { color: #00c853; }
+    .alert-title { font-weight: 600; color: #333; font-size: 0.7rem; }
+    .alert-message { color: #666; font-size: 0.65rem; margin: 1px 0; }
+    .alert-link { font-size: 0.6rem; color: #0097a7; text-decoration: none; }
+    .alert-divider { height: 1px; background: #eee; }
+
+    .alert-empty { text-align: center; padding: 1rem; color: #78909c; }
+    .alert-empty i { color: #00c853; font-size: 1.2rem; margin-bottom: 0.3rem; display: block; }
+    .alert-empty span { font-size: 0.7rem; }
+
+    .comments-list { display: flex; flex-direction: column; gap: 0.4rem; padding: 0.6rem; }
+
+    .comment-item {
+        display: flex;
+        gap: 0.5rem;
+        padding: 0.5rem;
+        border-radius: 8px;
+        background: var(--aqua-1);
+        transition: all 0.15s;
+    }
+
+    .comment-item:hover { background: var(--aqua-2); }
+
+    .comment-avatar { width: 1.8rem; height: 1.8rem; border-radius: 50%; object-fit: cover; flex-shrink: 0; }
+    .comment-body { flex: 1; min-width: 0; }
+
+    .comment-meta {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 0.1rem;
+    }
+
+    .comment-user { font-size: 0.65rem; font-weight: 600; }
+
+    .comment-source {
+        font-size: 0.5rem;
+        padding: 0.1rem 0.3rem;
+        border-radius: 3px;
+        color: white;
+    }
+
+    .comment-source.fb { background: #1877f2; }
+    .comment-source.tg { background: #0088cc; }
+    .comment-text { font-size: 0.6rem; color: #455a64; margin: 0; line-height: 1.3; }
+    .comment-time { font-size: 0.55rem; color: #90a4ae; margin-top: 0.1rem; }
+
+    .comments-view-all {
+        display: block;
+        text-align: center;
+        padding: 0.3rem;
+        font-size: 0.6rem;
+        color: var(--aqua-4);
+        text-decoration: none;
+        border-top: 1px solid var(--aqua-1);
+        margin-top: 0.2rem;
+    }
+
+    .ic-aqua { background: linear-gradient(135deg, var(--aqua-4), #006064); }
+    .ic-teal { background: linear-gradient(135deg, #00897b, #00695c); }
+    .ic-amber { background: linear-gradient(135deg, #ffb300, #ff8f00); }
+    .ic-red { background: linear-gradient(135deg, #e53935, #b71c1c); }
+    .ic-gray { background: linear-gradient(135deg, #6c757d, #495057); }
+    .ic-purple { background: linear-gradient(135deg, #8e24aa, #6a1b9a); }
+    .ic-cyan { background: linear-gradient(135deg, #00838f, #006064); }
+    .ic-indigo { background: linear-gradient(135deg, #3949ab, #283593); }
+    .ic-orange { background: linear-gradient(135deg, #f4511e, #d84315); }
+    .ic-pink { background: linear-gradient(135deg, #d81b60, #ad1457); }
+
+    .toast-container {
+        position: fixed;
+        top: 20px;
+        left: 20px;
+        z-index: 10000;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .custom-toast {
+        min-width: 280px;
+        max-width: 380px;
+        background: white;
+        border-radius: 10px;
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.15);
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 12px 16px;
+        transform: translateX(-150%);
+        transition: transform 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+        border-right: 4px solid transparent;
+        direction: rtl;
+    }
+
+    .custom-toast.show { transform: translateX(0); }
+    .custom-toast.success { border-right-color: #00897b; }
+    .custom-toast.success .toast-icon { background: #00897b; color: white; }
+    .custom-toast.error { border-right-color: #e53935; }
+    .custom-toast.error .toast-icon { background: #e53935; color: white; }
+    .custom-toast.warning { border-right-color: #ffb300; }
+    .custom-toast.warning .toast-icon { background: #ffb300; color: white; }
+
+    .toast-icon {
+        width: 30px;
+        height: 30px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+        font-size: 0.9rem;
+    }
+
+    .toast-content { flex: 1; }
+    .toast-title { font-weight: 700; font-size: 0.8rem; margin-bottom: 2px; color: var(--text-dark); }
+    .toast-message { font-size: 0.7rem; color: #546e7a; line-height: 1.3; }
+
+    .toast-close {
+        background: none;
+        border: none;
+        color: #b0bec5;
+        cursor: pointer;
+        font-size: 0.9rem;
+        transition: color 0.2s;
+    }
+
+    .toast-close:hover { color: var(--text-dark); }
+
+    .dash-footer {
+        text-align: center;
+        padding: 1rem;
+        margin-top: 1rem;
+        color: #78909c;
+        font-size: 0.65rem;
+        border-top: 1px solid var(--aqua-2);
+        width: 100%;
+    }
+
+    /* ===== أنماط بطاقة نظام التسعير المتكاملة ===== */
+    .pricing-system-card {
+        background: #fff;
+        border-radius: 8px;
+        border: 1px solid transparent;
+        transition: all 0.2s;
+        overflow: hidden;
+    }
+    .pricing-system-card:hover {
+        border-color: var(--aqua-2);
+        box-shadow: var(--shadow-sm);
+    }
+    .pricing-card-header {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.6rem;
+        cursor: pointer;
+        transition: background 0.2s;
+    }
+    .pricing-card-header:hover {
+        background: var(--aqua-1);
+    }
+    .pricing-badges {
+        margin-right: auto;
+        display: flex;
+        align-items: center;
+        gap: 0.4rem;
+    }
+    .badge-pw-warning {
+        background: #fff3e0;
+        color: #e65100;
+        padding: 0.15rem 0.5rem;
+        border-radius: 20px;
+        font-size: 0.6rem;
+        font-weight: 700;
+        border: 1px solid #ffe0b2;
+    }
+    .badge-pw-active {
+        background: #e8f5e9;
+        color: #2e7d32;
+        padding: 0.15rem 0.5rem;
+        border-radius: 20px;
+        font-size: 0.6rem;
+        font-weight: 700;
+        border: 1px solid #c8e6c9;
+    }
+    .pricing-arrow {
+        transition: transform 0.3s;
+        color: var(--aqua-4) !important;
+        opacity: 1 !important;
+    }
+    .pricing-arrow.rotated {
+        transform: rotate(180deg);
+    }
+    .pricing-card-body {
+        max-height: 0;
+        overflow: hidden;
+        transition: max-height 0.4s ease-out, padding 0.3s ease-out;
+        background: #fafafa;
+        border-top: 0px solid var(--aqua-2);
+    }
+    .pricing-card-body.open {
+        max-height: 300px;
+        padding: 0.8rem;
+        border-top-width: 2px;
+    }
+    .pricing-body-top {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 1rem;
+        margin-bottom: 0.8rem;
+    }
+    .btn-open-pricing {
+        display: flex;
+        align-items: center;
+        gap: 0.4rem;
+        padding: 0.45rem 1rem;
+        background: #fff;
+        border: 1px solid var(--aqua-3);
+        color: var(--aqua-4);
+        font-size: 0.75rem;
+        font-weight: 700;
+        border-radius: 6px;
+        text-decoration: none;
+        transition: all 0.2s;
+    }
+    .btn-open-pricing:hover {
+        background: var(--aqua-4);
+        color: white;
+    }
+    .pw-divider-text {
+        font-size: 0.7rem;
+        color: #b0bec5;
+        font-weight: 600;
+    }
+    .btn-change-pw {
+        background: none;
+        border: none;
+        color: var(--text-dark);
+        font-size: 0.75rem;
+        font-weight: 600;
+        cursor: pointer;
+        padding: 0.4rem 0.6rem;
+        border-radius: 4px;
+        transition: all 0.2s;
+        text-decoration: underline;
+        text-decoration-style: dashed;
+        text-underline-offset: 3px;
+    }
+    .btn-change-pw:hover {
+        color: var(--aqua-4);
+        background: rgba(0, 151, 167, 0.05);
+    }
+    .pw-form-container {
+        padding-top: 0.7rem;
+        border-top: 1px dashed var(--aqua-2);
+    }
+    .pw-status-box {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.5rem 0.7rem;
+        border-radius: 6px;
+        margin-bottom: 0.6rem;
+        font-size: 0.75rem;
+        font-weight: 600;
+    }
+    .pw-status-active {
+        background: #e8f5e9;
+        color: #2e7d32;
+    }
+    .pw-status-default {
+        background: #fff3e0;
+        color: #e65100;
+    }
+    .pw-form .form-label {
+        font-weight: 500;
+        font-size: 0.75rem;
+        margin-bottom: 0.2rem;
+        color: var(--text-dark);
+        display: block;
+    }
+    .pw-form .form-control {
+        border-radius: 4px;
+        border: 1px solid var(--aqua-2);
+        padding: 0.4rem 0.5rem;
+        font-size: 0.85rem;
+    }
+    .pw-form .form-control:focus {
+        border-color: var(--aqua-3);
+        box-shadow: 0 0 0 2px rgba(77, 208, 225, 0.2);
+    }
+    .pw-toggle-btn {
+        border-radius: 0 4px 4px 0 !important;
+        font-size: 0.75rem;
+        cursor: pointer;
+    }
+    .pw-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 0.5rem;
+    }
+    .pw-save-btn {
+        width: 100%;
+        padding: 0.45rem;
+        font-size: 0.8rem;
+        font-weight: 600;
+        border-radius: 4px;
+        border: none;
+        background: linear-gradient(135deg, var(--aqua-4) 0%, #006064 100%);
+        color: white;
+        cursor: pointer;
+        transition: all 0.2s;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.3rem;
+        margin-top: 0.5rem;
+    }
+    .pw-save-btn:hover { opacity: 0.9; transform: translateY(-1px); box-shadow: var(--shadow-md); }
+    .pw-save-btn:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+    .pw-error {
+        color: #e53935;
+        font-size: 0.7rem;
+        font-weight: 600;
+        display: none;
+        margin-bottom: 0.4rem;
+    }
+
+    @media (max-width: 1200px) {
+        .stats-row { grid-template-columns: repeat(3, 1fr); }
+    }
+
+    @media (max-width: 992px) {
+        .dashboard-content { grid-template-columns: 1fr; }
+        .ops-grid { grid-template-columns: repeat(2, 1fr); }
+    }
+
+    @media (max-width: 768px) {
+        .dashboard { padding: 0.5rem; }
+        .stats-row { grid-template-columns: repeat(2, 1fr); gap: 0.5rem; }
+        .ops-grid { grid-template-columns: repeat(2, 1fr); }
+        .quick-grid { grid-template-columns: repeat(2, 1fr); }
+        .dash-header { flex-direction: column; text-align: center; padding: 0.75rem; }
+        .dash-header-sub { justify-content: center; }
+        .stat-card { padding: 0.6rem; }
+        .stat-val { font-size: 1.1rem; }
+        .chart-container { height: 200px; }
+        .pricing-body-top { flex-direction: column; gap: 0.6rem; }
+        .pw-row { grid-template-columns: 1fr; }
+    }
+
+    @media (max-width: 576px) {
+        .stats-row { grid-template-columns: 1fr 1fr; gap: 0.5rem; }
+        .ops-grid { grid-template-columns: 1fr; }
+        .quick-grid { grid-template-columns: 1fr 1fr; }
+        .stat-card { padding: 0.5rem; }
+        .stat-val { font-size: 1rem; }
+        .stat-lbl { font-size: 0.55rem; }
+        .stat-icon { width: 2rem; height: 2rem; font-size: 0.8rem; }
+        .chart-container { height: 180px; }
+        .toast-container { left: 10px; right: 10px; top: 10px; }
+        .custom-toast { width: 100%; min-width: auto; }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="dashboard">
+
+    <header class="dash-header">
+        <div>
+            <h1><i class="fas fa-th-large"></i> لوحة التحكم</h1>
+            <div class="dash-header-sub">
+                <span class="user-chip"><i class="fas fa-user-circle"></i> {{ user.get_full_name|default:user.username }}</span>
+                <span class="date-chip"><i class="far fa-calendar-alt"></i> {% now "j F, Y" %}</span>
+            </div>
+        </div>
+        {% if user.is_staff %}
+        <a href="{% url 'accounts:register' %}" class="btn-dash-header">
+            <i class="fas fa-user-plus"></i> مستخدم جديد
+        </a>
+        {% endif %}
+    </header>
+
+    <div class="dashboard-stats">
+        <div class="stats-row">
+            <div class="stat-card c-aqua">
+                <div class="stat-icon ic-aqua"><i class="fas fa-shopping-cart"></i></div>
+                <div class="stat-info">
+                    <div class="stat-val">{{ purch_count|default:"0" }}</div>
+                    <div class="stat-lbl">فواتير الشراء</div>
+                    {% if purch_trend > 0 %}
+                    <div class="stat-trend trend-up"><i class="fas fa-arrow-up"></i> {{ purch_trend|floatformat:1 }}%</div>
+                    {% elif purch_trend < 0 %}
+                    <div class="stat-trend trend-down"><i class="fas fa-arrow-down"></i> {{ purch_trend|floatformat:1 }}%</div>
+                    {% else %}
+                    <div class="stat-trend trend-neutral"><i class="fas fa-minus"></i> 0%</div>
+                    {% endif %}
+                </div>
+            </div>
+            <div class="stat-card c-teal">
+                <div class="stat-icon ic-teal"><i class="fas fa-cash-register"></i></div>
+                <div class="stat-info">
+                    <div class="stat-val">{{ sale_count|default:"0" }}</div>
+                    <div class="stat-lbl">فواتير البيع</div>
+                    {% if sale_trend > 0 %}
+                    <div class="stat-trend trend-up"><i class="fas fa-arrow-up"></i> {{ sale_trend|floatformat:1 }}%</div>
+                    {% elif sale_trend < 0 %}
+                    <div class="stat-trend trend-down"><i class="fas fa-arrow-down"></i> {{ sale_trend|floatformat:1 }}%</div>
+                    {% else %}
+                    <div class="stat-trend trend-neutral"><i class="fas fa-minus"></i> 0%</div>
+                    {% endif %}
+                </div>
+            </div>
+            <div class="stat-card c-amber">
+                <div class="stat-icon ic-amber"><i class="fas fa-undo"></i></div>
+                <div class="stat-info">
+                    <div class="stat-val">{{ return_count|default:"0" }}</div>
+                    <div class="stat-lbl">المرتجعات</div>
+                    {% if return_trend > 0 %}
+                    <div class="stat-trend trend-up"><i class="fas fa-arrow-up"></i> {{ return_trend|floatformat:1 }}%</div>
+                    {% elif return_trend < 0 %}
+                    <div class="stat-trend trend-down"><i class="fas fa-arrow-down"></i> {{ return_trend|floatformat:1 }}%</div>
+                    {% else %}
+                    <div class="stat-trend trend-neutral"><i class="fas fa-minus"></i> 0%</div>
+                    {% endif %}
+                </div>
+            </div>
+            <div class="stat-card c-purple">
+                <div class="stat-icon ic-purple"><i class="fas fa-boxes"></i></div>
+                <div class="stat-info">
+                    <div class="stat-val">{{ product_count|default:"0" }}</div>
+                    <div class="stat-lbl">المنتجات</div>
+                    <div class="stat-trend trend-neutral"><i class="fas fa-database"></i> إجمالي</div>
+                </div>
+            </div>
+            <div class="stat-card c-rose">
+                <div class="stat-icon ic-pink"><i class="fas fa-store"></i></div>
+                <div class="stat-info">
+                    <div class="stat-val">{{ new_orders_count|default:"0" }}</div>
+                    <div class="stat-lbl">طلبات المتجر</div>
+                    <div class="stat-trend trend-neutral"><i class="fas fa-clock"></i> جديدة</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="dashboard-content">
+        <div class="col-right">
+            <div class="card">
+                <div class="card-header">
+                    <i class="fas fa-cogs"></i> العمليات الأساسية
+                    <span class="header-badge">9 عمليات</span>
+                </div>
+                <div class="card-body">
+                    <div class="ops-grid">
+                        <a href="{% url 'invoice:purch_list' %}" class="op-link">
+                            <div class="op-link-icon ic-aqua"><i class="fas fa-shopping-cart"></i></div>
+                            <div class="op-link-text">
+                                <span class="op-link-title">فواتير الشراء</span>
+                                <span class="op-link-desc">إدارة المشتريات والموردين</span>
+                            </div>
+                            <i class="fas fa-chevron-left op-link-arrow"></i>
+                        </a>
+                        <a href="{% url 'invoice:sale_list' %}" class="op-link">
+                            <div class="op-link-icon ic-teal"><i class="fas fa-cash-register"></i></div>
+                            <div class="op-link-text">
+                                <span class="op-link-title">فواتير البيع</span>
+                                <span class="op-link-desc">إدارة المبيعات والعملاء</span>
+                            </div>
+                            <i class="fas fa-chevron-left op-link-arrow"></i>
+                        </a>
+                        <a href="{% url 'invoice:product_list' %}" class="op-link">
+                            <div class="op-link-icon ic-purple"><i class="fas fa-boxes"></i></div>
+                            <div class="op-link-text">
+                                <span class="op-link-title">المنتجات</span>
+                                <span class="op-link-desc">إدارة المخزون والأصناف</span>
+                            </div>
+                            <i class="fas fa-chevron-left op-link-arrow"></i>
+                        </a>
+                        <a href="{% url 'invoice:barcode_statement' %}#barcode-section" class="op-link">
+                            <div class="op-link-icon ic-cyan"><i class="fas fa-barcode"></i></div>
+                            <div class="op-link-text">
+                                <span class="op-link-title">إدارةالباركود</span>
+                                <span class="op-link-desc">إنشاء وتتبع الباركودات</span>
+                            </div>
+                            <i class="fas fa-chevron-left op-link-arrow"></i>
+                        </a>
+                        
+                        {% if user.is_staff %}
+                        <div class="pricing-system-card">
+                            <div class="pricing-card-header" id="pricingCardToggle">
+                                <div class="op-link-icon ic-indigo"><i class="fas fa-tags"></i></div>
+                                <div class="op-link-text">
+                                    <span class="op-link-title">نظام التسعير</span>
+                                    <span class="op-link-desc">تحديث الأسعار مجمعاً</span>
+                                </div>
+                                <div class="pricing-badges">
+                                    {% if not pricing_pw_is_custom %}
+                                    <span class="badge-pw-warning"><i class="fas fa-exclamation-triangle"></i> افتراضية</span>
+                                    {% else %}
+                                    <span class="badge-pw-active"><i class="fas fa-lock"></i> محمي</span>
+                                    {% endif %}
+                                    <i class="fas fa-chevron-down op-link-arrow pricing-arrow"></i>
+                                </div>
+                            </div>
+                            <div class="pricing-card-body" id="pricingCardBody">
+                                <div class="pricing-body-top">
+                                    <a href="{% url 'invoice:product_bulk_update' %}" class="btn-open-pricing">
+                                        <i class="fas fa-external-link-alt"></i> فتح واجهة التسعير
+                                    </a>
+                                    <div class="pw-divider-text"><span>أو</span></div>
+                                    <button type="button" class="btn-change-pw" id="btnTogglePwForm">
+                                        <i class="fas fa-key"></i> تغيير كلمة مرور الحماية
+                                    </button>
+                                </div>
+                                <div class="pw-form-container" id="pwFormContainer" style="display: none;">
+                                    <div id="pricingPwStatus">
+                                        {% if pricing_pw_is_custom %}
+                                        <div class="pw-status-box pw-status-active">
+                                            <i class="fas fa-check-circle"></i>
+                                            <span>كلمة مرور مخصصة مفعّلة</span>
+                                        </div>
+                                        {% else %}
+                                        <div class="pw-status-box pw-status-default">
+                                            <i class="fas fa-exclamation-triangle"></i>
+                                            <span>يُنصح بتغيير الكلمة الافتراضية</span>
+                                        </div>
+                                        {% endif %}
+                                    </div>
+                                    <div class="pw-form">
+                                        <div class="pw-row">
+                                            <div class="pw-field">
+                                                <label class="form-label">كلمة المرور الجديدة</label>
+                                                <div class="input-group">
+                                                    <input type="password" id="newPricingPw" class="form-control" placeholder="أدخل كلمة المرور">
+                                                    <button class="btn btn-outline-secondary pw-toggle-btn" type="button" data-target="newPricingPw">
+                                                        <i class="fas fa-eye"></i>
+                                                    </button>
+                                                </div>
+                                            </div>
+                                            <div class="pw-field">
+                                                <label class="form-label">تأكيد كلمة المرور</label>
+                                                <div class="input-group">
+                                                    <input type="password" id="confirmPricingPw" class="form-control" placeholder="تأكيد المرور">
+                                                    <button class="btn btn-outline-secondary pw-toggle-btn" type="button" data-target="confirmPricingPw">
+                                                        <i class="fas fa-eye"></i>
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="pw-error" id="pricingPwError"></div>
+                                        <button type="button" class="pw-save-btn" id="btnSavePricingPw">
+                                            <i class="fas fa-save"></i> حفظ كلمة المرور
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% else %}
+                        <a href="{% url 'invoice:product_bulk_update' %}" class="op-link">
+                            <div class="op-link-icon ic-indigo"><i class="fas fa-tags"></i></div>
+                            <div class="op-link-text">
+                                <span class="op-link-title">نظام التسعير</span>
+                                <span class="op-link-desc">تحديث الأسعار مجمعاً</span>
+                            </div>
+                            <i class="fas fa-chevron-left op-link-arrow"></i>
+                        </a>
+                        {% endif %}
+
+                        <a href="{% url 'invoice:cash_transaction_list' %}" class="op-link">
+                            <div class="op-link-icon ic-orange"><i class="fas fa-wallet"></i></div>
+                            <div class="op-link-text">
+                                <span class="op-link-title">الصندوق</span>
+                                <span class="op-link-desc">إدارة الخزينة والمعاملات</span>
+                            </div>
+                            <i class="fas fa-chevron-left op-link-arrow"></i>
+                        </a>
+                        <a href="{% url 'invoice:cash_transaction_list' %}" class="op-link">
+                            <div class="op-link-icon ic-gray"><i class="fas fa-exchange-alt"></i></div>
+                            <div class="op-link-text">
+                                <span class="op-link-title">حركة الصندوق</span>
+                                <span class="op-link-desc">سجل حركات الخزينة</span>
+                            </div>
+                            <i class="fas fa-chevron-left op-link-arrow"></i>
+                        </a>
+                        <a href="{% url 'invoice:purchase_return_list' %}" class="op-link">
+                            <div class="op-link-icon ic-amber"><i class="fas fa-truck-loading"></i></div>
+                            <div class="op-link-text">
+                                <span class="op-link-title">مرتجعات الشراء</span>
+                                <span class="op-link-desc">إدارة مرتجعات المشتريات</span>
+                            </div>
+                            <i class="fas fa-chevron-left op-link-arrow"></i>
+                        </a>
+                        <a href="{% url 'invoice:sale_return_list' %}" class="op-link">
+                            <div class="op-link-icon ic-red"><i class="fas fa-receipt"></i></div>
+                            <div class="op-link-text">
+                                <span class="op-link-title">مرتجعات البيع</span>
+                                <span class="op-link-desc">إدارة مرتجعات المبيعات</span>
+                            </div>
+                            <i class="fas fa-chevron-left op-link-arrow"></i>
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <i class="fas fa-store-alt"></i> المتجر الإلكتروني
+                    <span class="header-badge">7 أقسام</span>
+                </div>
+                <div class="card-body">
+                    <div class="ops-grid">
+                        <a href="{% url 'invoice:orders_list' %}" class="op-link">
+                            <div class="op-link-icon ic-pink"><i class="fas fa-inbox"></i></div>
+                            <div class="op-link-text">
+                                <span class="op-link-title">إدارة الطلبات</span>
+                                <span class="op-link-desc">متابعة وتحويل الطلبات</span>
+                            </div>
+                            <i class="fas fa-chevron-left op-link-arrow"></i>
+                        </a>
+                        <a href="{% url 'invoice:admin_stock_notifications' %}" class="op-link">
+                            <div class="op-link-icon ic-orange"><i class="fas fa-bell"></i></div>
+                            <div class="op-link-text">
+                                <span class="op-link-title">تنبيهات المخزون</span>
+                                <span class="op-link-desc">إشعارات توفر المواد للعملاء</span>
+                            </div>
+                            <i class="fas fa-chevron-left op-link-arrow"></i>
+                        </a>
+                        <a href="{% url 'invoice:notification_archive' %}" class="op-link">
+                            <div class="op-link-icon ic-gray"><i class="fas fa-history"></i></div>
+                            <div class="op-link-text">
+                                <span class="op-link-title">أرشيف الإشعارات</span>
+                                <span class="op-link-desc">سجل الإشعارات المرسلة</span>
+                            </div>
+                            <i class="fas fa-chevron-left op-link-arrow"></i>
+                        </a>
+                        <a href="{% url 'invoice:control_store' %}" class="op-link">
+                            <div class="op-link-icon ic-indigo"><i class="fas fa-sliders-h"></i></div>
+                            <div class="op-link-text">
+                                <span class="op-link-title">التحكم بالمتجر</span>
+                                <span class="op-link-desc">إظهار/إخفاء المنتجات والشارات</span>
+                            </div>
+                            <i class="fas fa-chevron-left op-link-arrow"></i>
+                        </a>
+                        <a href="{% url 'invoice:store_front' %}" class="op-link">
+                            <div class="op-link-icon ic-gray"><i class="fas fa-external-link-alt"></i></div>
+                            <div class="op-link-text">
+                                <span class="op-link-title">واجهة المتجر</span>
+                                <span class="op-link-desc">معاينة الموقع كما يراه الزبون</span>
+                            </div>
+                            <i class="fas fa-chevron-left op-link-arrow"></i>
+                        </a>
+                        <a href="{% url 'invoice:cart_detail' %}" class="op-link">
+                            <div class="op-link-icon ic-amber"><i class="fas fa-shopping-basket"></i></div>
+                            <div class="op-link-text">
+                                <span class="op-link-title">سلة التسوق</span>
+                                <span class="op-link-desc">مراجعة المنتجات في السلة</span>
+                            </div>
+                            <i class="fas fa-chevron-left op-link-arrow"></i>
+                        </a>
+                        <a href="{% url 'invoice:checkout' %}" class="op-link">
+                            <div class="op-link-icon ic-teal"><i class="fas fa-credit-card"></i></div>
+                            <div class="op-link-text">
+                                <span class="op-link-title">صفحة الدفع</span>
+                                <span class="op-link-desc">معاينة عملية الشراء والدفع</span>
+                            </div>
+                            <i class="fas fa-chevron-left op-link-arrow"></i>
+                        </a>
+                    </div>
+                </div>
+            </div>
+            <div class="card">
+                <div class="card-header">
+                    <i class="fas fa-bolt"></i> إجراءات سريعة
+                </div>
+                <div class="card-body">
+                    <div class="quick-grid">
+                        <a href="{% url 'invoice:purch_create' %}" class="quick-btn">
+                            <div class="quick-btn-icon"><i class="fas fa-plus"></i></div>
+                            <span>فاتورة شراء</span>
+                        </a>
+                        <a href="{% url 'invoice:sale_create' %}" class="quick-btn">
+                            <div class="quick-btn-icon"><i class="fas fa-cart-plus"></i></div>
+                            <span>فاتورة بيع</span>
+                        </a>
+                        <a href="{% url 'invoice:product_create' %}" class="quick-btn">
+                            <div class="quick-btn-icon"><i class="fas fa-box"></i></div>
+                            <span>منتج جديد</span>
+                        </a>
+                        <a href="{% url 'invoice:cash_transaction_create' %}" class="quick-btn">
+                            <div class="quick-btn-icon"><i class="fas fa-hand-holding-usd"></i></div>
+                            <span>حركة مالية</span>
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <i class="fas fa-chart-line"></i> المبيعات اليومية (آخر 7 أيام)
+                    <span class="header-badge">مباشر</span>
+                </div>
+                <div class="card-body">
+                    <div class="chart-container">
+                        <canvas id="salesChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <i class="fas fa-chart-line"></i> التحليل المتكامل (آخر 30 يوماً)
+                    <span class="header-badge">مبيعات | أرباح | مصروفات</span>
+                </div>
+                <div class="card-body">
+                    <div class="chart-container">
+                        <canvas id="advancedChart"></canvas>
+                    </div>
+                    <div class="chart-legend">
+                        <span><span class="chart-legend-dot" style="background: rgba(0, 151, 167, 0.7);"></span> المبيعات</span>
+                        <span><span class="chart-legend-line" style="background: #00c853;"></span> صافي الربح</span>
+                        <span><span class="chart-legend-line" style="background: #ff1744;"></span> المصروفات</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <i class="fas fa-trophy"></i> أفضل المنتجات مبيعاً
+                    <span class="header-badge">الـ 10 الأوائل</span>
+                </div>
+                <div class="card-body" style="padding: 0;">
+                    <div class="top-products-tabs">
+                        <button class="top-products-tab active" data-tab="quantity">
+                            <i class="fas fa-chart-simple"></i> الأكثر مبيعاً (كمية)
+                        </button>
+                        <button class="top-products-tab" data-tab="value">
+                            <i class="fas fa-chart-line"></i> الأعلى قيمة (مالياً)
+                        </button>
+                    </div>
+
+                    <div id="top-products-quantity" class="top-products-list is-active">
+                        {% if top_products.top_by_quantity %}
+                            {% for product in top_products.top_by_quantity %}
+                            <div class="top-product-item">
+                                <div class="top-product-rank">#{{ forloop.counter }}</div>
+                                <div class="top-product-thumb">
+                                    {% if product.image %}
+                                    <img src="{{ product.image }}" alt="{{ product.name }}">
+                                    {% else %}
+                                    <i class="fas fa-box"></i>
+                                    {% endif %}
+                                </div>
+                                <div class="top-product-info">
+                                    <div class="top-product-name">{{ product.name }}</div>
+                                    <div class="top-product-stats">
+                                        <span class="stat-qty"><i class="fas fa-cubes"></i> {{ product.quantity|floatformat:0 }}</span>
+                                        <span class="stat-val-item"><i class="fas fa-dollar-sign"></i> {{ product.value|floatformat:0 }}</span>
+                                    </div>
+                                </div>
+                                <div class="progress-bar-track">
+                                    <div class="progress-bar-fill" data-pct="{% widthratio product.quantity top_products.top_by_quantity.0.quantity 100 %}"></div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        {% else %}
+                            <div class="top-products-empty">
+                                <i class="fas fa-chart-line"></i>
+                                <span>لا توجد مبيعات حتى الآن</span>
+                            </div>
+                        {% endif %}
+                    </div>
+
+                    <div id="top-products-value" class="top-products-list">
+                        {% if top_products.top_by_value %}
+                            {% for product in top_products.top_by_value %}
+                            <div class="top-product-item">
+                                <div class="top-product-rank">#{{ forloop.counter }}</div>
+                                <div class="top-product-thumb">
+                                    {% if product.image %}
+                                    <img src="{{ product.image }}" alt="{{ product.name }}">
+                                    {% else %}
+                                    <i class="fas fa-box"></i>
+                                    {% endif %}
+                                </div>
+                                <div class="top-product-info">
+                                    <div class="top-product-name">{{ product.name }}</div>
+                                    <div class="top-product-stats">
+                                        <span class="stat-qty"><i class="fas fa-cubes"></i> {{ product.quantity|floatformat:0 }}</span>
+                                        <span class="stat-val-item"><i class="fas fa-dollar-sign"></i> {{ product.value|floatformat:0 }}</span>
+                                    </div>
+                                </div>
+                                <div class="progress-bar-track">
+                                    <div class="progress-bar-fill" data-pct="{% widthratio product.value top_products.top_by_value.0.value 100 %}"></div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        {% else %}
+                            <div class="top-products-empty">
+                                <i class="fas fa-chart-line"></i>
+                                <span>لا توجد مبيعات حتى الآن</span>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-left">
+            <div class="card">
+                <div class="card-header">
+                    <i class="fas fa-bell"></i> تنبيهات النظام
+                    <span class="header-badge">{{ alerts|length }}</span>
+                </div>
+                <div class="card-body">
+                    {% if alerts %}
+                        <div class="alerts-list">
+                            {% for alert in alerts %}
+                            <div class="alert-item alert-{{ alert.type }}">
+                                <i class="fas {{ alert.icon }} alert-icon-{{ alert.type }}"></i>
+                                <div style="flex: 1;">
+                                    <div class="alert-title">{{ alert.title }}</div>
+                                    <div class="alert-message">{{ alert.message }}</div>
+                                    {% if alert.link %}
+                                    <a href="{{ alert.link }}" class="alert-link">
+                                        {{ alert.link_text|default:"عرض التفاصيل" }} <i class="fas fa-arrow-left"></i>
+                                    </a>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            {% if not forloop.last %}<div class="alert-divider"></div>{% endif %}
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="alert-empty">
+                            <i class="fas fa-check-circle"></i>
+                            <span>لا توجد تنبيهات جديدة</span>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <i class="fas fa-chart-pie"></i> التقارير
+                </div>
+                <div class="card-body card-body-compact">
+                    <div class="side-section-title"><i class="fas fa-chart-line"></i> تقارير مالية</div>
+                    <a href="{% url 'invoice:profit_report' %}" class="side-link">
+                        <div class="side-link-icon ic-teal"><i class="fas fa-chart-line"></i></div>
+                        <span class="side-link-name">تقرير الأرباح</span>
+                        <i class="fas fa-chevron-left side-link-arrow"></i>
+                    </a>
+                    <a href="{% url 'invoice:daily_sales_summary' %}" class="side-link">
+                        <div class="side-link-icon ic-purple"><i class="fas fa-calendar-day"></i></div>
+                        <span class="side-link-name">ملخص المبيعات اليومي</span>
+                        <i class="fas fa-chevron-left side-link-arrow"></i>
+                    </a>
+                    <a href="{% url 'invoice:sales_by_customer_report' %}" class="side-link">
+                        <div class="side-link-icon ic-aqua"><i class="fas fa-users"></i></div>
+                        <span class="side-link-name">مبيعات العملاء</span>
+                        <i class="fas fa-chevron-left side-link-arrow"></i>
+                    </a>
+                    <a href="{% url 'invoice:purchases_by_supplier_report' %}" class="side-link">
+                        <div class="side-link-icon ic-orange"><i class="fas fa-truck"></i></div>
+                        <span class="side-link-name">مشتريات الموردين</span>
+                        <i class="fas fa-chevron-left side-link-arrow"></i>
+                    </a>
+                    <a href="{% url 'invoice:unpaid_invoices_report' %}" class="side-link">
+                        <div class="side-link-icon ic-red"><i class="fas fa-file-invoice-dollar"></i></div>
+                        <span class="side-link-name">فواتير غير مسددة</span>
+                        <i class="fas fa-chevron-left side-link-arrow"></i>
+                    </a>
+                    <div class="side-section-title" style="margin-top: 0.5rem;"><i class="fas fa-warehouse"></i> تقارير المخزون</div>
+                    <a href="{% url 'invoice:unpaid_sales_report' %}" class="side-link">
+                        <div class="side-link-icon ic-red"><i class="fas fa-exclamation-triangle"></i></div>
+                        <span class="side-link-name">الديون المتراكمة</span>
+                        <i class="fas fa-chevron-left side-link-arrow"></i>
+                    </a>
+                    <a href="{% url 'invoice:dead_stock_report' %}" class="side-link">
+                        <div class="side-link-icon ic-amber"><i class="fas fa-box-open"></i></div>
+                        <span class="side-link-name">منتجات راكدة</span>
+                        <i class="fas fa-chevron-left side-link-arrow"></i>
+                    </a>
+                    <a href="{% url 'invoice:barcode_statement' %}" class="side-link">
+                        <div class="side-link-icon ic-indigo"><i class="fas fa-barcode"></i></div>
+                        <span class="side-link-name">حركة الباركود</span>
+                        <i class="fas fa-chevron-left side-link-arrow"></i>
+                    </a>
+                    <a href="{% url 'invoice:statement_report' %}" class="side-link">
+                        <div class="side-link-icon ic-aqua"><i class="fas fa-file-invoice-dollar"></i></div>
+                        <span class="side-link-name">كشف حساب</span>
+                        <i class="fas fa-chevron-left side-link-arrow"></i>
+                    </a>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <i class="fas fa-sliders-h"></i> إعدادات النظام
+                </div>
+                <div class="card-body card-body-compact">
+                    <a href="{% url 'invoice:email_settings' %}" class="side-link">
+                        <div class="side-link-icon ic-red"><i class="fas fa-envelope-open-text"></i></div>
+                        <span class="side-link-name">إعدادات البريد</span>
+                        <i class="fas fa-chevron-left side-link-arrow"></i>
+                    </a>
+                    <div class="side-link-group">
+                        <a href="{% url 'invoice:payment_method_list' %}" class="side-link">
+                            <div class="side-link-icon ic-teal"><i class="fas fa-money-bill-wave"></i></div>
+                            <span class="side-link-name">طرق الدفع</span>
+                            <i class="fas fa-chevron-left side-link-arrow"></i>
+                        </a>
+                        <a href="{% url 'invoice:payment_method_create' %}" class="side-add-btn"><i class="fas fa-plus"></i></a>
+                    </div>
+                    <div class="side-link-group">
+                        <a href="{% url 'invoice:shipping_company_list' %}" class="side-link">
+                            <div class="side-link-icon ic-cyan"><i class="fas fa-truck"></i></div>
+                            <span class="side-link-name">شركات الشحن</span>
+                            <i class="fas fa-chevron-left side-link-arrow"></i>
+                        </a>
+                        <a href="{% url 'invoice:shipping_company_create' %}" class="side-add-btn"><i class="fas fa-plus"></i></a>
+                    </div>
+                    <div class="side-link-group">
+                        <a href="{% url 'invoice:status_list' %}" class="side-link">
+                            <div class="side-link-icon ic-aqua"><i class="fas fa-flag"></i></div>
+                            <span class="side-link-name">الحالات</span>
+                            <i class="fas fa-chevron-left side-link-arrow"></i>
+                        </a>
+                        <a href="{% url 'invoice:status_create' %}" class="side-add-btn"><i class="fas fa-plus"></i></a>
+                    </div>
+                    <div class="side-link-group">
+                        <a href="{% url 'invoice:currency_list' %}" class="side-link">
+                            <div class="side-link-icon ic-gray"><i class="fas fa-dollar-sign"></i></div>
+                            <span class="side-link-name">العملات</span>
+                            <i class="fas fa-chevron-left side-link-arrow"></i>
+                        </a>
+                        <a href="{% url 'invoice:currency_create' %}" class="side-add-btn"><i class="fas fa-plus"></i></a>
+                    </div>
+                    <div class="side-link-group">
+                        <a href="{% url 'invoice:price_type_list' %}" class="side-link">
+                            <div class="side-link-icon ic-purple"><i class="fas fa-tags"></i></div>
+                            <span class="side-link-name">أنواع الأسعار</span>
+                            <i class="fas fa-chevron-left side-link-arrow"></i>
+                        </a>
+                        <a href="{% url 'invoice:price_type_create' %}" class="side-add-btn"><i class="fas fa-plus"></i></a>
+                    </div>
+
+                    <div class="side-divider"></div>
+                    <a href="{% url 'accounts:system_logs' %}" class="side-link">
+                        <div class="side-link-icon ic-gray"><i class="fas fa-file-alt"></i></div>
+                        <span class="side-link-name">سجلات النظام</span>
+                        <i class="fas fa-chevron-left side-link-arrow"></i>
+                    </a>
+                    {% if user.is_staff %}
+                    <a href="{% url 'accounts:user_list' %}" class="side-link">
+                        <div class="side-link-icon ic-indigo"><i class="fas fa-users-cog"></i></div>
+                        <span class="side-link-name">إدارة المستخدمين</span>
+                        <i class="fas fa-chevron-left side-link-arrow"></i>
+                    </a>
+                    {% endif %}
+                </div>
+
+                <a href="{% url 'user_manual' %}" target="_blank" class="btn btn-info btn-lg w-100 mb-2" style="display: flex; align-items: center; justify-content: center; gap: 8px; padding: 12px;">
+                    <i class="fas fa-book-open"></i>
+                    دليل المستخدم
+                </a>
+
+
+                <!-- ضع هذا الكود في قالب الـ dashboard في المكان المناسب -->
+                <a href="{% url 'invoice:backup_page' %}" target="_blank" class="btn btn-danger btn-lg w-100 mb-2 d-flex justify-content-center p-3">
+                    <i class="fas fa-shield-alt"></i>
+                    مركز النسخ الاحتياطي
+                </a>
+
+
+
+
+            </div>
+
+            
+        </div>
+    </div>
+
+    <div class="dash-footer">
+        <i class="fas fa-code-branch"></i> {{ settings.company_name|default:"نظام إدارة المبيعات" }} — الإصدار 2.0
+    </div>
+</div>
+<div class="toast-container" id="toastContainer"></div>
+{% endblock %}
+
+{% block extra_js %}
+{{ chart_labels|json_script:"chartLabels" }}
+{{ chart_values|json_script:"chartValues" }}
+{{ advanced_chart_data|json_script:"advancedChartData" }}
+
+<script nonce="{{ csp_nonce }}">
+function getCookie(name) {
+    var cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        var cookies = document.cookie.split(';');
+        for (var i = 0; i < cookies.length; i++) {
+            var cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+
+var csrftoken = getCookie('csrftoken');
+
+document.addEventListener('DOMContentLoaded', function() {
+
+    // ===== الرسم البياني للمبيعات اليومية =====
+    var salesChartCanvas = document.getElementById('salesChart');
+    if (salesChartCanvas) {
+        var chartLabels = JSON.parse(document.getElementById('chartLabels').textContent);
+        var chartValues = JSON.parse(document.getElementById('chartValues').textContent);
+        new Chart(salesChartCanvas, {
+            type: 'line', data: { labels: chartLabels, datasets: [{ label: 'المبيعات', data: chartValues, borderColor: '#0097a7', backgroundColor: 'rgba(0, 151, 167, 0.1)', borderWidth: 2, tension: 0.4, fill: true, pointBackgroundColor: '#ffffff', pointBorderColor: '#0097a7', pointRadius: 3, pointHoverRadius: 5 }] },
+            options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, grid: { color: '#f0f0f0' }, ticks: { font: { size: 9 } } }, x: { grid: { display: false }, ticks: { font: { size: 9 } } } } }
+        });
+    }
+
+    // ===== الرسم البياني المتكامل =====
+    var advancedCanvas = document.getElementById('advancedChart');
+    if (advancedCanvas) {
+        var advancedData = JSON.parse(document.getElementById('advancedChartData').textContent);
+        new Chart(advancedCanvas, {
+            type: 'line', data: { labels: advancedData.labels, datasets: [
+                { label: 'المبيعات', data: advancedData.sales, type: 'bar', backgroundColor: 'rgba(0, 151, 167, 0.6)', borderColor: 'rgba(0, 151, 167, 1)', borderWidth: 1, yAxisID: 'y', order: 2 },
+                { label: 'صافي الربح', data: advancedData.profit, type: 'line', borderColor: '#00c853', backgroundColor: 'transparent', borderWidth: 2, tension: 0.3, fill: false, pointBackgroundColor: '#00c853', pointBorderColor: '#fff', pointRadius: 2, pointHoverRadius: 4, yAxisID: 'y1', order: 1 },
+                { label: 'المصروفات', data: advancedData.expenses, type: 'line', borderColor: '#ff1744', backgroundColor: 'transparent', borderWidth: 2, tension: 0.3, fill: false, pointBackgroundColor: '#ff1744', pointBorderColor: '#fff', pointRadius: 2, pointHoverRadius: 4, yAxisID: 'y1', order: 0 }
+            ] },
+            options: { responsive: true, maintainAspectRatio: false, interaction: { mode: 'index', intersect: false }, plugins: { tooltip: { callbacks: { label: function(ctx) { return ctx.dataset.label + ': ' + ctx.raw.toLocaleString() + ' ل.س'; } } }, legend: { position: 'top', labels: { font: { size: 9 }, usePointStyle: true, boxWidth: 6 } } }, scales: { y: { position: 'right', title: { display: true, text: 'المبيعات', font: { size: 8 } }, ticks: { font: { size: 8 }, callback: function(v) { return v.toLocaleString(); } }, grid: { color: '#e0e0e0' } }, y1: { position: 'left', title: { display: true, text: 'الأرباح / المصروفات', font: { size: 8 } }, ticks: { font: { size: 8 }, callback: function(v) { return v.toLocaleString(); } }, grid: { display: false } }, x: { ticks: { font: { size: 8 } }, grid: { display: false } } } }
+        });
+    }
+
+    // ===== أشرطة التقدم =====
+    document.querySelectorAll('.progress-bar-fill').forEach(function(bar) {
+        var pct = bar.getAttribute('data-pct');
+        if (pct !== null) bar.style.width = pct + '%';
+    });
+
+    // ===== تبويبات أفضل المنتجات =====
+    var tabs = document.querySelectorAll('.top-products-tab');
+    var quantityList = document.getElementById('top-products-quantity');
+    var valueList = document.getElementById('top-products-value');
+    if (tabs.length && quantityList && valueList) {
+        tabs.forEach(function(tab) {
+            tab.addEventListener('click', function() {
+                tabs.forEach(function(t) { t.classList.remove('active'); });
+                this.classList.add('active');
+                var tabName = this.getAttribute('data-tab');
+                if (tabName === 'quantity') { quantityList.classList.add('is-active'); valueList.classList.remove('is-active'); } 
+                else { quantityList.classList.remove('is-active'); valueList.classList.add('is-active'); }
+                var activeList = (tabName === 'quantity') ? quantityList : valueList;
+                activeList.querySelectorAll('.progress-bar-fill').forEach(function(bar) {
+                    var pct = bar.getAttribute('data-pct');
+                    if (pct !== null) { bar.style.width = '0%'; requestAnimationFrame(function() { bar.style.width = pct + '%'; }); }
+                });
+            });
+        });
+    }
+
+    // ===== بطاقة نظام التسعير (القابل المنزلق) =====
+    var pricingCardToggle = document.getElementById('pricingCardToggle');
+    var pricingCardBody = document.getElementById('pricingCardBody');
+    var pricingArrow = document.querySelector('.pricing-arrow');
+    
+    if (pricingCardToggle) {
+        pricingCardToggle.addEventListener('click', function() {
+            pricingCardBody.classList.toggle('open');
+            pricingArrow.classList.toggle('rotated');
+        });
+    }
+
+    var btnTogglePwForm = document.getElementById('btnTogglePwForm');
+    var pwFormContainer = document.getElementById('pwFormContainer');
+    if (btnTogglePwForm) {
+        btnTogglePwForm.addEventListener('click', function() {
+            pwFormContainer.style.display = pwFormContainer.style.display === 'none' ? 'block' : 'none';
+        });
+    }
+
+    // ===== إظهار/إخفاء كلمة مرور التسعير =====
+    document.querySelectorAll('.pw-toggle-btn').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+            var targetId = this.dataset.target;
+            var input = document.getElementById(targetId);
+            var icon = this.querySelector('i');
+            if (input.type === 'password') { input.type = 'text'; icon.classList.remove('fa-eye'); icon.classList.add('fa-eye-slash'); } 
+            else { input.type = 'password'; icon.classList.remove('fa-eye-slash'); icon.classList.add('fa-eye'); }
+        });
+    });
+
+    // ===== حفظ كلمة مرور التسعير =====
+    var btnSavePw = document.getElementById('btnSavePricingPw');
+    if (btnSavePw) {
+        btnSavePw.addEventListener('click', function() {
+            var pw = document.getElementById('newPricingPw').value;
+            var confirm = document.getElementById('confirmPricingPw').value;
+            var errorDiv = document.getElementById('pricingPwError');
+            var btn = this;
+
+            errorDiv.style.display = 'none';
+
+            if (!pw) { errorDiv.textContent = 'كلمة المرور مطلوبة'; errorDiv.style.display = 'block'; return; }
+            if (pw.length < 4) { errorDiv.textContent = 'كلمة المرور قصيرة جداً (4 أحرف على الأقل)'; errorDiv.style.display = 'block'; return; }
+            if (pw !== confirm) { errorDiv.textContent = 'كلمتا المرور غير متطابقتين'; errorDiv.style.display = 'block'; return; }
+
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري الحفظ...';
+
+            fetch("{% url 'invoice:save_pricing_password' %}", {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrftoken },
+                body: JSON.stringify({ password: pw, confirm: confirm })
+            }).then(function(r) { return r.json(); }).then(function(data) {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fas fa-save"></i> حفظ كلمة المرور';
+                if (data.success) {
+                    document.getElementById('newPricingPw').value = '';
+                    document.getElementById('confirmPricingPw').value = '';
+                    var statusDiv = document.getElementById('pricingPwStatus');
+                    statusDiv.innerHTML = '<div class="pw-status-box pw-status-active"><i class="fas fa-check-circle"></i><span>كلمة مرور مخصصة مفعّلة</span></div>';
+                    
+                    var badge = document.querySelector('.badge-pw-warning');
+                    if (badge) {
+                        badge.className = 'badge-pw-active';
+                        badge.innerHTML = '<i class="fas fa-lock"></i> محمي';
+                    }
+                    
+                    showToast('تم بنجاح', 'تم حفظ كلمة مرور نظام التسعير', 'success');
+                } else {
+                    errorDiv.textContent = data.message;
+                    errorDiv.style.display = 'block';
+                }
+            }).catch(function() {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fas fa-save"></i> حفظ كلمة المرور';
+                errorDiv.textContent = 'خطأ في الاتصال بالخادم';
+                errorDiv.style.display = 'block';
+            });
+        });
+    }
+});
+
+function showToast(title, message, type) {
+    type = type || 'success';
+    var container = document.getElementById('toastContainer');
+    var iconClass = 'fa-check-circle';
+    var bgColor = '#00897b';
+    if (type === 'error') { iconClass = 'fa-times-circle'; bgColor = '#e53935'; }
+    else if (type === 'warning') { iconClass = 'fa-exclamation-circle'; bgColor = '#ffb300'; }
+
+    var toast = document.createElement('div');
+    toast.className = 'custom-toast ' + type;
+    toast.innerHTML = '<div class="toast-icon" style="background:' + bgColor + ';"><i class="fas ' + iconClass + '"></i></div>' +
+        '<div class="toast-content"><div class="toast-title">' + title + '</div>' +
+        '<div class="toast-message">' + message + '</div></div>' +
+        '<button class="toast-close"><i class="fas fa-times"></i></button>';
+
+    toast.querySelector('.toast-close').addEventListener('click', function() {
+        toast.classList.remove('show');
+        setTimeout(function() { toast.remove(); }, 400);
+    });
+
+    container.appendChild(toast);
+    setTimeout(function() { toast.classList.add('show'); }, 10);
+    setTimeout(function() {
+        if (toast.parentElement) { toast.classList.remove('show'); setTimeout(function() { toast.remove(); }, 400); }
+    }, 4000);
+}
+</script>
+{% endblock %}

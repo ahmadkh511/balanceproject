@@ -1,0 +1,976 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}تفاصيل مرتجع مشتريات - {{ purchase_return.uniqueId }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* ============================================
+       نظام الأزوردي - Aqua Design System
+       المرجع الكامل للمطورين
+    ============================================ */
+    :root {
+        --aqua-1: #e0f7fa;
+        --aqua-2: #b2ebf2;
+        --aqua-3: #4dd0e1;
+        --aqua-4: #0097a7;
+        --text-dark: #006064;
+        --text-light: #ffffff;
+        --shadow-sm: 0 2px 8px rgba(0, 150, 167, 0.08);
+        --shadow-md: 0 4px 12px rgba(0, 150, 167, 0.12);
+        --color-success: #00897b;
+        --color-warning: #ffb300;
+        --color-danger: #e53935;
+        --color-info: #0288d1;
+        --color-return: #0288d1;
+        --color-print: #6c757d;
+        --color-view: #0097a7;
+        --color-edit: #ffb300;
+        --color-delete: #e53935;
+    }
+
+    * { box-sizing: border-box; }
+
+    /* ===== زر الطباعة (FAB) ===== */
+    .print-fab {
+        position: fixed;
+        bottom: 1.5rem;
+        left: 1.5rem;
+        z-index: 1050;
+        padding: 0.65rem 1.25rem;
+        border-radius: 50px;
+        box-shadow: 0 5px 18px rgba(0, 150, 167, 0.35);
+        font-size: 0.85rem;
+        font-weight: 700;
+        background: linear-gradient(135deg, var(--aqua-4) 0%, #006064 100%);
+        color: white;
+        border: none;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    .print-fab:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 8px 25px rgba(0, 150, 167, 0.45);
+    }
+
+    /* ===== نافذة إعدادات الطباعة (Modal) ===== */
+    .modal-overlay {
+        display: none;
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 96, 100, 0.5);
+        z-index: 9999;
+        justify-content: center;
+        align-items: center;
+        backdrop-filter: blur(4px);
+    }
+    .modal-overlay.active { display: flex; }
+    
+    .modal-box {
+        background: white;
+        border-radius: 12px;
+        width: 550px;
+        max-width: 95vw;
+        max-height: 90vh;
+        overflow-y: auto;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
+        animation: modalIn 0.25s ease;
+    }
+    
+    @keyframes modalIn {
+        from { transform: translateY(20px); opacity: 0; }
+        to { transform: translateY(0); opacity: 1; }
+    }
+    
+    .modal-close {
+        width: 32px;
+        height: 32px;
+        border: none;
+        background: rgba(255,255,255,0.2);
+        border-radius: 6px;
+        cursor: pointer;
+        font-size: 1.1rem;
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.2s;
+    }
+    .modal-close:hover { background: rgba(255,255,255,0.3); }
+    
+    .section-title {
+        font-size: 0.75rem;
+        font-weight: 700;
+        color: var(--text-dark);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin: 1rem 0 0.6rem;
+        padding-bottom: 0.3rem;
+        border-bottom: 2px dashed var(--aqua-2);
+    }
+    .section-title:first-child { margin-top: 0; }
+    
+    .hf-input-group {
+        margin-bottom: 0.75rem;
+    }
+    
+    .hf-input-group label {
+        display: block;
+        font-size: 0.75rem;
+        font-weight: 600;
+        color: var(--text-dark);
+        margin-bottom: 0.25rem;
+    }
+    
+    .hf-input-group input,
+    .hf-input-group textarea {
+        width: 100%;
+        padding: 0.5rem;
+        border: 1.5px solid var(--aqua-2);
+        border-radius: 8px;
+        font-family: 'Tajawal', sans-serif;
+        font-size: 0.8rem;
+        transition: all 0.2s;
+    }
+    
+    .hf-input-group input:focus,
+    .hf-input-group textarea:focus {
+        border-color: var(--aqua-3);
+        outline: none;
+        box-shadow: 0 0 0 3px rgba(77, 208, 225, 0.2);
+    }
+    
+    .btn-group {
+        display: flex;
+        gap: 0.25rem;
+        background: var(--aqua-1);
+        padding: 0.2rem;
+        border-radius: 8px;
+        margin-bottom: 1rem;
+    }
+    
+    .btn-opt {
+        flex: 1;
+        padding: 0.35rem 0.6rem;
+        border: none;
+        background: transparent;
+        border-radius: 6px;
+        font-size: 0.78rem;
+        cursor: pointer;
+        font-family: 'Tajawal', sans-serif;
+        color: var(--aqua-4);
+        font-weight: 600;
+        transition: all 0.2s;
+        text-align: center;
+    }
+    .btn-opt.active {
+        background: white;
+        color: var(--text-dark);
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+    
+    .toggle-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0.5rem 0;
+    }
+    
+    .toggle-switch {
+        position: relative;
+        width: 38px;
+        height: 20px;
+        cursor: pointer;
+    }
+    
+    .toggle-switch input { display: none; }
+    
+    .toggle-slider {
+        position: absolute;
+        inset: 0;
+        background: var(--aqua-2);
+        border-radius: 10px;
+        transition: 0.2s;
+    }
+    
+    .toggle-slider::before {
+        content: '';
+        position: absolute;
+        width: 16px;
+        height: 16px;
+        background: white;
+        border-radius: 50%;
+        top: 2px;
+        left: 2px;
+        transition: 0.2s;
+    }
+    
+    .toggle-switch input:checked + .toggle-slider { background: var(--aqua-4); }
+    .toggle-switch input:checked + .toggle-slider::before { left: 20px; }
+    
+    .toast {
+        position: fixed;
+        bottom: 1.5rem;
+        left: 50%;
+        transform: translateX(-50%) translateY(80px);
+        background: var(--text-dark);
+        color: white;
+        padding: 0.6rem 1.2rem;
+        border-radius: 8px;
+        font-size: 0.82rem;
+        z-index: 99999;
+        opacity: 0;
+        transition: all 0.3s;
+        pointer-events: none;
+    }
+    .toast.show {
+        transform: translateX(-50%) translateY(0);
+        opacity: 1;
+    }
+    
+    /* ===== أنماط الطباعة ===== */
+    @media print {
+        .no-print { display: none !important; }
+        * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+        body { background: white; }
+        .card { box-shadow: none; margin: 0; }
+        @page { margin: 10mm; }
+    }
+    
+    .print-header-area, .print-footer-area { display: none; }
+
+    /* ===== الأنماط الأساسية ===== */
+    .info-strip {
+        background: var(--aqua-1);
+        padding: 0.75rem 1rem;
+        border-bottom: 1px solid var(--aqua-2);
+        font-size: 0.82rem;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 1.5rem;
+    }
+
+    .info-strip-item {
+        display: flex;
+        align-items: center;
+        gap: 0.4rem;
+    }
+
+    .info-strip-item i {
+        color: var(--aqua-4);
+        font-size: 0.85rem;
+    }
+
+    .info-strip-label {
+        color: var(--text-dark);
+        font-weight: 500;
+    }
+
+    .info-strip-value {
+        font-weight: 600;
+        color: var(--text-dark);
+    }
+
+    .info-strip-value a {
+        color: var(--color-return);
+        text-decoration: none;
+    }
+
+    .info-strip-value a:hover {
+        text-decoration: underline;
+    }
+
+    .financial-summary {
+        padding: 1rem;
+        background: white;
+        border-bottom: 1px solid var(--aqua-2);
+    }
+
+    .financial-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 0.75rem;
+    }
+
+    .financial-card {
+        background: var(--aqua-1);
+        padding: 0.75rem;
+        border-radius: 8px;
+        border-right: 3px solid var(--aqua-3);
+        display: flex;
+        flex-direction: column;
+        gap: 0.3rem;
+    }
+
+    .financial-card.primary { border-right-color: var(--aqua-4); }
+    .financial-card.success { border-right-color: var(--color-success); }
+    .financial-card.warning { border-right-color: var(--color-warning); }
+
+    .financial-label {
+        font-size: 0.75rem;
+        color: var(--text-dark);
+        font-weight: 500;
+        display: flex;
+        align-items: center;
+        gap: 0.3rem;
+    }
+
+    .financial-value {
+        font-size: 1.2rem;
+        font-weight: 700;
+        color: var(--text-dark);
+        font-family: 'Courier New', monospace;
+        direction: ltr;
+        text-align: right;
+    }
+
+    .financial-card.primary .financial-value { color: var(--aqua-4); }
+    .financial-card.success .financial-value { color: var(--color-success); }
+    .financial-card.warning .financial-value { color: var(--color-warning); }
+
+    .badge-status {
+        padding: 0.28rem 0.65rem;
+        border-radius: 20px;
+        font-size: 0.68rem;
+        font-weight: 700;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.3rem;
+    }
+
+    .badge-status.success { background: #e0f2f1; color: var(--color-success); border: 1px solid var(--color-success); }
+    .badge-status.warning { background: #fff8e1; color: var(--color-warning); border: 1px solid var(--color-warning); }
+    .badge-status.danger { background: #ffebee; color: var(--color-danger); border: 1px solid var(--color-danger); }
+    .badge-status.info { background: #e1f5fe; color: var(--color-info); border: 1px solid var(--color-info); }
+
+    .barcode-list {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.3rem;
+        margin-top: 0.3rem;
+    }
+
+    .barcode-tag {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.2rem;
+        padding: 0.1rem 0.4rem;
+        background: white;
+        border: 1px solid var(--aqua-2);
+        border-radius: 4px;
+        font-size: 0.65rem;
+        font-family: 'Courier New', monospace;
+        color: var(--text-dark);
+        direction: ltr;
+    }
+
+    .barcode-tag i {
+        color: var(--aqua-4);
+        font-size: 0.6rem;
+    }
+
+    .notes-box {
+        background: var(--aqua-1);
+        border-right: 4px solid var(--aqua-4);
+        padding: 0.5rem 0.7rem;
+        border-radius: 0 6px 6px 0;
+        margin: 0;
+        font-size: 0.75rem;
+        color: var(--text-dark);
+        display: flex;
+        align-items: flex-start;
+        gap: 0.4rem;
+    }
+
+    .notes-box i {
+        color: var(--aqua-4);
+        margin-top: 0.1rem;
+        font-size: 0.7rem;
+    }
+    
+    .general-notes-highlight {
+        background: #fff3e0;
+        border-right: 4px solid var(--color-warning);
+        margin-bottom: 0.5rem;
+    }
+    
+    .general-notes-highlight i {
+        color: var(--color-warning);
+    }
+
+    /* ===== أزرار الإجراءات ===== */
+    .btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.4rem;
+        padding: 0.4rem 0.9rem;
+        font-size: 0.8rem;
+        font-weight: 600;
+        border-radius: 6px;
+        border: none;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        text-decoration: none;
+    }
+    
+    .btn-sm { padding: 0.3rem 0.7rem; font-size: 0.75rem; }
+    
+    .btn-primary {
+        background: linear-gradient(135deg, var(--aqua-4) 0%, #006064 100%);
+        color: white;
+    }
+    
+    .btn-secondary {
+        background: linear-gradient(135deg, #6c757d 0%, #495057 100%);
+        color: white;
+    }
+    
+    .btn-success {
+        background: linear-gradient(135deg, var(--color-success) 0%, #00695c 100%);
+        color: white;
+    }
+    
+    .btn-danger {
+        background: linear-gradient(135deg, var(--color-danger) 0%, #b71c1c 100%);
+        color: white;
+    }
+    
+    .btn-warning {
+        background: linear-gradient(135deg, var(--color-warning) 0%, #ff8f00 100%);
+        color: white;
+    }
+    
+    .btn-outline {
+        background: white;
+        color: var(--text-dark);
+        border: 1.5px solid var(--aqua-2);
+    }
+    
+    .btn-outline:hover {
+        background: var(--aqua-1);
+        border-color: var(--aqua-3);
+    }
+    
+    .btn:hover { transform: translateY(-1px); box-shadow: var(--shadow-sm); }
+
+    /* ===== تنسيق الجدول ===== */
+    .table {
+        font-size: 0.82rem;
+        margin-bottom: 0;
+    }
+    
+    .table thead th {
+        background: linear-gradient(135deg, var(--aqua-3), var(--aqua-4));
+        color: white;
+        padding: 0.7rem;
+        font-weight: 600;
+        text-align: center;
+        white-space: nowrap;
+    }
+    
+    .table tbody td {
+        padding: 0.6rem;
+        vertical-align: middle;
+        border-bottom: 1px solid var(--aqua-1);
+    }
+    
+    .table tbody tr:hover {
+        background-color: var(--aqua-1);
+    }
+    
+    .card-header {
+        background: linear-gradient(135deg, var(--aqua-4) 0%, #006064 100%);
+        color: var(--text-light);
+        padding: 0.9rem 1.2rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    
+    .card-header h5 {
+        margin: 0;
+        font-size: 1rem;
+        font-weight: 600;
+    }
+    
+    .card {
+        background: white;
+        border-radius: 12px;
+        box-shadow: var(--shadow-sm);
+        overflow: hidden;
+        margin: 0.5rem;
+    }
+    
+    .container-fluid {
+        max-width: 1400px;
+        margin: 0 auto;
+    }
+    
+    @media (max-width: 768px) {
+        .financial-grid { grid-template-columns: 1fr; }
+        .info-strip { flex-direction: column; gap: 0.5rem; }
+        .d-flex { flex-wrap: wrap; }
+        .table thead th { font-size: 0.7rem; padding: 0.4rem; }
+        .table tbody td { font-size: 0.7rem; padding: 0.4rem; }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-3">
+
+    <!-- ===== زر الطباعة المتقدم (كما في دليل التصميم) ===== -->
+    <button class="print-fab no-print" id="openPrintModalBtn">
+        <i class="fas fa-print"></i>  طباعة
+    </button>
+
+    <!-- ===== رأس الطباعة ===== -->
+    <div class="print-header-area no-print" id="printHeaderArea" style="display:none;">
+        <table style="width:100%; border-collapse:collapse;">
+            <tr>
+                <td style="width:60px; vertical-align:middle;">
+                    <img src="" alt="شعار" id="phLogoImg" style="display:none; max-height:40px;">
+                    <span id="phLogoPlaceholder" style="font-size:8pt; color:#999;">شعار</span>
+                </td>
+                <td style="vertical-align:middle; text-align:center;">
+                    <div id="phCompanyName" style="font-size:12pt; font-weight:700;">اسم الشركة</div>
+                    <div id="phCompanyDetails" style="font-size:8pt;"></div>
+                </td>
+            </tr>
+         </table>
+    </div>
+
+    <!-- ===== تذييل الطباعة ===== -->
+    <div class="print-footer-area no-print" id="printFooterArea" style="display:none;">
+        <span id="phFooterText"></span>
+    </div>
+
+    <div class="card" id="invoiceCard">
+        <div class="card-header">
+            <div class="d-flex align-items-center gap-2">
+                <i class="fas fa-undo-alt"></i>
+                <h5 class="mb-0">تفاصيل مرتجع مشتريات: {{ purchase_return.uniqueId }}</h5>
+            </div>
+            <div>
+                <span class="badge-status 
+                    {% if purchase_return.settlement_status == 'settled' %}success
+                    {% elif purchase_return.settlement_status == 'partial' %}warning
+                    {% else %}danger{% endif %}">
+                    <i class="fas 
+                        {% if purchase_return.settlement_status == 'settled' %}fa-check-circle
+                        {% elif purchase_return.settlement_status == 'partial' %}fa-clock
+                        {% else %}fa-times-circle{% endif %}">
+                    </i>
+                    {{ purchase_return.get_settlement_status_display }}
+                </span>
+            </div>
+        </div>
+
+        <!-- شريط الإجراءات العلوي -->
+        <div class="p-3 d-flex justify-content-between align-items-center border-bottom" style="flex-wrap: wrap; gap: 0.5rem;">
+            <div class="d-flex gap-2" style="flex-wrap: wrap;">
+                <a href="{% url 'invoice:purchase_return_list' %}" class="btn btn-secondary btn-sm">
+                    <i class="fas fa-arrow-right"></i> العودة للقائمة
+                </a>
+            </div>
+
+           
+
+        </div>
+
+        <!-- شريط المعلومات الأساسية -->
+        <div class="info-strip">
+            <div class="info-strip-item">
+                <i class="fas fa-file-invoice"></i>
+                <span class="info-strip-label">الفاتورة الأصلية:</span>
+                <span class="info-strip-value">
+                    {% if purchase_return.original_purchase %}
+                    <a href="{% url 'invoice:purch_detail' slug=purchase_return.original_purchase.slug %}">
+                        {{ purchase_return.original_purchase.uniqueId }}
+                    </a>
+                    {% else %} - {% endif %}
+                </span>
+            </div>
+            <div class="info-strip-item">
+                <i class="fas fa-calendar-alt"></i>
+                <span class="info-strip-label">تاريخ المرتجع:</span>
+                <span class="info-strip-value">{{ purchase_return.return_date|date:"Y/m/d" }}</span>
+            </div>
+            <div class="info-strip-item">
+                <i class="fas fa-user-tie"></i>
+                <span class="info-strip-label">المورد:</span>
+                <span class="info-strip-value">{{ purchase_return.purch_supplier.get_full_name|default:purchase_return.purch_supplier.username }}</span>
+            </div>
+            <div class="info-strip-item">
+                <i class="fas fa-money-bill-wave"></i>
+                <span class="info-strip-label">العملة:</span>
+                <span class="info-strip-value">{{ purchase_return.purch_currency.name|default:"ريال" }}</span>
+            </div>
+            <div class="info-strip-item">
+                <i class="fas fa-user"></i>
+                <span class="info-strip-label">المستخدم:</span>
+                <span class="info-strip-value">{{ purchase_return.created_by.get_full_name|default:purchase_return.created_by.username }}</span>
+            </div>
+        </div>
+
+        <!-- القسم المالي -->
+        <div class="financial-summary">
+            <div class="financial-grid">
+                <div class="financial-card primary">
+                    <div class="financial-label"><i class="fas fa-file-invoice-dollar"></i> إجمالي المرتجع</div>
+                    <div class="financial-value">{{ purchase_return.return_final_total|floatformat:2 }}</div>
+                </div>
+                <div class="financial-card success">
+                    <div class="financial-label"><i class="fas fa-hand-holding-usd"></i> المبلغ المستلم</div>
+                    <div class="financial-value">{{ purchase_return.paid_amount|floatformat:2 }}</div>
+                </div>
+                <div class="financial-card warning">
+                    <div class="financial-label"><i class="fas fa-clock"></i> المتبقي غير المسدد</div>
+                    <div class="financial-value">{{ purchase_return.remaining_amount|floatformat:2 }}</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ===== جدول البنود المرتجعة ===== -->
+        <!-- تم نقل محتوى purchase_return.return_notes إلى صف منفصل في الجدول -->
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-bordered mb-0">
+                    <thead>
+                        <tr>
+                            <th width="5%">#</th>
+                            <th width="25%">المنتج والباركودات</th>
+                            <th width="8%">الكمية</th>
+                            <th width="10%">سعر الوحدة</th>
+                            <th width="12%">إجمالي البند</th>
+                            <th width="40%">📝 ملاحظات البند</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- ===== صف خاص بالملاحظات العامة (تم نقلها من حقل return_notes) ===== -->
+                        {% if purchase_return.return_notes %}
+                        
+                        {% endif %}
+                        
+                        <!-- البنود المرتجعة -->
+                        {% for item in items %}
+                        <tr>
+                            <td class="text-center align-middle">{{ forloop.counter }}</td>
+                            <td class="align-middle">
+                                <strong style="color: var(--aqua-4);">{{ item.product.product_name|default:"---" }}</strong>
+                                {% if item.returned_barcodes.all.exists %}
+                                <div class="barcode-list">
+                                    {% for b_code in item.returned_barcodes.all %}
+                                    <span class="barcode-tag"><i class="fas fa-barcode"></i> {{ b_code.barcode.barcode_in }}</span>
+                                    {% endfor %}
+                                </div>
+                                {% endif %}
+                            </td>
+                            <td class="text-center align-middle">
+                                <span class="badge-status info" style="font-size: 0.75rem;">
+                                    {{ item.returned_quantity }}
+                                </span>
+                            </td>
+                            <td class="text-center align-middle" style="font-family: 'Courier New'; direction: ltr;">{{ item.return_unit_price|floatformat:2 }}</td>
+                            <td class="text-center align-middle font-weight-bold" style="font-family: 'Courier New'; direction: ltr; color: var(--text-dark);">
+                                {{ item.return_total|floatformat:2 }}
+                            </td>
+                            <td class="align-middle">
+                                <div class="notes-box">
+                                    <i class="fas fa-sticky-note"></i>
+                                    <span style="font-size: 0.75rem;">
+                                        {% if item.notes %}
+                                            {{ item.notes|linebreaksbr }}
+                                        {% else %}
+                                           {{ purchase_return.return_notes|linebreaksbr }}
+                                        {% endif %}
+                                    </span>
+                                </div>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="6" class="text-center p-4 text-muted">
+                                <i class="fas fa-box-open fa-2x mb-2 d-block" style="opacity: 0.3;"></i>
+                                لا توجد بنود مرتجعة
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- تم حذف قسم الملاحظات العامة المنفصل كما هو مطلوب -->
+        
+    </div>
+</div>
+
+<!-- ===== نافذة إعدادات الطباعة (Modal) ===== -->
+<div class="modal-overlay no-print" id="printModal">
+    <div class="modal-box">
+        <div class="card-header" style="display: flex; justify-content: space-between; border-radius: 12px 12px 0 0;">
+            <span style="display: flex; align-items: center; gap: 0.5rem;">
+                <i class="fas fa-cog"></i> إعدادات الطباعة المتقدمة
+            </span>
+            <button class="modal-close" id="closeModalBtn">&times;</button>
+        </div>
+        <div class="card-body">
+            <div class="section-title">
+                <i class="fas fa-heading"></i> هيدر وفوتر صفحة الطباعة
+            </div>
+            <p style="font-size:0.7rem; color: var(--aqua-4); margin-bottom: 0.75rem;">
+                <i class="fas fa-info-circle"></i> تظهر فقط عند الطباعة وتتكرر مع كل صفحة
+            </p>
+            
+            <div class="hf-input-group">
+                <label><i class="fas fa-building"></i> اسم الشركة</label>
+                <input type="text" id="companyNameInput" placeholder="مثال: مؤسسة الأزوردي">
+            </div>
+            <div class="hf-input-group">
+                <label><i class="fas fa-align-right"></i> بيانات إضافية (هاتف / عنوان)</label>
+                <textarea id="companyDetailsInput" rows="2" placeholder="هاتف: 011xxx | عنوان: دمشق"></textarea>
+            </div>
+            <div class="hf-input-group">
+                <label><i class="fas fa-shoe-prints"></i> نص الفوتر المتكرر</label>
+                <input type="text" id="footerTextInput" placeholder="شكراً لتعاملكم معنا">
+            </div>
+
+            <div class="section-title">
+                <i class="fas fa-print"></i> حجم الورق
+            </div>
+            <div class="btn-group" id="paperSizeGroup">
+                <button class="btn-opt active" data-value="a4">A4</button>
+                <button class="btn-opt" data-value="a5">A5</button>
+                <button class="btn-opt" data-value="thermal">حراري 80mm</button>
+                <button class="btn-opt" data-value="half-a4">نصف A4</button>
+            </div>
+
+            <div class="section-title">
+                <i class="fas fa-arrows-alt"></i> الهوامش
+            </div>
+            <div class="btn-group" id="marginGroup">
+                <button class="btn-opt" data-value="minimal">أقل</button>
+                <button class="btn-opt active" data-value="normal">عادي</button>
+                <button class="btn-opt" data-value="wide">واسع</button>
+            </div>
+
+            <div class="section-title">
+                <i class="fas fa-palette"></i> خيارات إضافية
+            </div>
+            <div class="toggle-row">
+                <label style="font-size: 0.8rem;">طباعة بالألوان</label>
+                <label class="toggle-switch">
+                    <input type="checkbox" id="printColors" checked>
+                    <span class="toggle-slider"></span>
+                </label>
+            </div>
+            <div class="toggle-row">
+                <label style="font-size: 0.8rem;">إظهار خطوط فاصلة بين الصفوف</label>
+                <label class="toggle-switch">
+                    <input type="checkbox" id="printLines" checked>
+                    <span class="toggle-slider"></span>
+                </label>
+            </div>
+        </div>
+        <div class="card-header" style="display: flex; justify-content: flex-end; border-radius: 0 0 12px 12px;">
+            <button class="btn btn-primary" id="executePrintBtn">
+                <i class="fas fa-print"></i> طباعة الآن
+            </button>
+        </div>
+    </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script nonce="{{ csp_nonce }}">
+(function() {
+    'use strict';
+
+    // عناصر DOM
+    const printModal = document.getElementById('printModal');
+    const toastEl = document.getElementById('toast');
+    const invoiceCard = document.getElementById('invoiceCard');
+    
+    let printState = { paperSize: 'a4', marginSize: 'normal', logoDataUrl: '' };
+
+    // إظهار الإشعارات
+    function showToast(msg) {
+        toastEl.textContent = msg;
+        toastEl.classList.add('show');
+        setTimeout(() => toastEl.classList.remove('show'), 2000);
+    }
+
+    // فتح نافذة إعدادات الطباعة
+    document.getElementById('openPrintModalBtn')?.addEventListener('click', () => {
+        printModal.classList.add('active');
+    });
+
+    // إغلاق نافذة إعدادات الطباعة
+    document.getElementById('closeModalBtn')?.addEventListener('click', () => {
+        printModal.classList.remove('active');
+    });
+
+    // إغلاق عند النقر خارج المودال
+    printModal?.addEventListener('click', (e) => {
+        if (e.target === printModal) printModal.classList.remove('active');
+    });
+
+    // إغلاق بزر Escape
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && printModal?.classList.contains('active')) {
+            printModal.classList.remove('active');
+        }
+        // اختصار Ctrl+P
+        if ((e.ctrlKey || e.metaKey) && e.key === 'p') {
+            e.preventDefault();
+            if (printModal) printModal.classList.add('active');
+        }
+    });
+
+    // خيارات حجم الورق
+    document.querySelectorAll('#paperSizeGroup .btn-opt').forEach(btn => {
+        btn.addEventListener('click', function() {
+            document.querySelectorAll('#paperSizeGroup .btn-opt').forEach(b => b.classList.remove('active'));
+            this.classList.add('active');
+            printState.paperSize = this.dataset.value;
+        });
+    });
+
+    // خيارات الهوامش
+    document.querySelectorAll('#marginGroup .btn-opt').forEach(btn => {
+        btn.addEventListener('click', function() {
+            document.querySelectorAll('#marginGroup .btn-opt').forEach(b => b.classList.remove('active'));
+            this.classList.add('active');
+            printState.marginSize = this.dataset.value;
+        });
+    });
+
+    // تغيير إعدادات الصفحة للطباعة
+    function changePrintPage() {
+        let existingStyle = document.getElementById('dynamic-page-style');
+        if (existingStyle) existingStyle.remove();
+        
+        let style = document.createElement('style');
+        style.id = 'dynamic-page-style';
+        
+        let marginValue = '10mm';
+        let sizeValue = '';
+        
+        if (printState.marginSize === 'minimal') marginValue = '3mm';
+        else if (printState.marginSize === 'normal') marginValue = '8mm';
+        else if (printState.marginSize === 'wide') marginValue = '15mm';
+        
+        if (printState.paperSize === 'thermal') { 
+            marginValue = '2mm'; 
+            sizeValue = 'size: 80mm auto;'; 
+        } else if (printState.paperSize === 'half-a4') { 
+            marginValue = '8mm'; 
+            sizeValue = 'size: A4 landscape;'; 
+        }
+        
+        style.textContent = '@page { margin: ' + marginValue + '; ' + sizeValue + ' }';
+        document.head.appendChild(style);
+    }
+
+    // تنفيذ الطباعة
+    document.getElementById('executePrintBtn')?.addEventListener('click', function() {
+        const headerArea = document.getElementById('printHeaderArea');
+        const footerArea = document.getElementById('printFooterArea');
+        
+        // تعبئة بيانات الهيدر والفوتر
+        const companyName = document.getElementById('companyNameInput')?.value || 'اسم الشركة';
+        const companyDetails = document.getElementById('companyDetailsInput')?.value || '';
+        const footerText = document.getElementById('footerTextInput')?.value || '';
+        
+        const phCompanyName = document.getElementById('phCompanyName');
+        const phCompanyDetails = document.getElementById('phCompanyDetails');
+        const phFooterText = document.getElementById('phFooterText');
+        
+        if (phCompanyName) phCompanyName.textContent = companyName;
+        if (phCompanyDetails) phCompanyDetails.textContent = companyDetails;
+        if (phFooterText) phFooterText.textContent = footerText;
+        
+        // إظهار الهيدر والفوتر
+        if (headerArea) {
+            headerArea.style.display = 'block';
+            headerArea.classList.remove('no-print');
+        }
+        if (footerArea) {
+            footerArea.style.display = 'block';
+            footerArea.classList.remove('no-print');
+        }
+        
+        // تطبيق إعدادات الطباعة على البطاقة
+        const printColors = document.getElementById('printColors');
+        const printLines = document.getElementById('printLines');
+        
+        if (invoiceCard) {
+            if (!printColors?.checked) {
+                invoiceCard.classList.add('print-grayscale');
+            } else {
+                invoiceCard.classList.remove('print-grayscale');
+            }
+            
+            if (!printLines?.checked) {
+                invoiceCard.classList.add('print-no-lines');
+            } else {
+                invoiceCard.classList.remove('print-no-lines');
+            }
+            
+            invoiceCard.classList.remove('print-a4', 'print-a5', 'print-thermal', 'print-half-a4');
+            invoiceCard.classList.add('print-' + printState.paperSize);
+        }
+        
+        // تغيير إعدادات الصفحة
+        changePrintPage();
+        
+        // إخفاء العناصر غير المرغوب طباعتها
+        document.querySelectorAll('.no-print').forEach(el => {
+            if (!el.closest('.modal-overlay')) {
+                el.style.display = 'none';
+            }
+        });
+        
+        // إغلاق المودال
+        printModal?.classList.remove('active');
+        showToast('🖨️ جارٍ الطباعة...');
+        
+        setTimeout(() => {
+            window.print();
+            
+            setTimeout(() => {
+                // استعادة العناصر
+                if (headerArea) {
+                    headerArea.style.display = 'none';
+                    headerArea.classList.add('no-print');
+                }
+                if (footerArea) {
+                    footerArea.style.display = 'none';
+                    footerArea.classList.add('no-print');
+                }
+                
+                document.querySelectorAll('.no-print').forEach(el => {
+                    el.style.display = '';
+                });
+                
+                if (invoiceCard) {
+                    invoiceCard.classList.remove('print-a4', 'print-a5', 'print-thermal', 'print-half-a4', 'print-grayscale', 'print-no-lines');
+                }
+                
+                let dynStyle = document.getElementById('dynamic-page-style');
+                if (dynStyle) dynStyle.remove();
+            }, 500);
+        }, 300);
+    });
+
+})();
+</script>
+{% endblock %}2222

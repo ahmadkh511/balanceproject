@@ -1,0 +1,1074 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block content %}
+<style>
+:root {
+    --primary-1: #e0f7fa;
+    --primary-2: #b2ebf2;
+    --primary-3: #4dd0e1;
+    --primary-4: #0097a7;
+    --primary-dark: #006064;
+    --text-dark: #006064;
+    --text-light: #ffffff;
+    --shadow-sm: 0 2px 8px rgba(0, 150, 167, 0.08);
+    --shadow-md: 0 4px 12px rgba(0, 150, 167, 0.12);
+    --radius: 8px;
+    --radius-sm: 4px;
+    --ease: cubic-bezier(0.4, 0, 0.2, 1);
+    --print-margin: 10mm;
+}
+
+.print-fab {
+    position: fixed;
+    bottom: 1.5rem;
+    left: 1.5rem;
+    z-index: 1050;
+    padding: 0.6rem 1.2rem;
+    border-radius: 50px;
+    box-shadow: 0 4px 15px rgba(0, 150, 167, 0.35);
+    font-size: 0.85rem;
+    font-weight: 600;
+    background: linear-gradient(135deg, var(--primary-4) 0%, #006064 100%);
+    color: white;
+    border: none;
+    cursor: pointer;
+    transition: all 0.3s;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-family: 'Tajawal', sans-serif;
+}
+.print-fab:hover {
+    transform: scale(1.05);
+    box-shadow: 0 6px 20px rgba(0, 150, 167, 0.5);
+}
+
+.modal-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.5);
+    z-index: 9999;
+    justify-content: center;
+    align-items: center;
+    backdrop-filter: blur(3px);
+}
+.modal-overlay.active { display: flex; }
+.modal-box {
+    background: white;
+    border-radius: 8px;
+    width: 700px;
+    max-width: 95vw;
+    max-height: 90vh;
+    overflow-y: auto;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+    animation: modalIn 0.25s ease;
+}
+@keyframes modalIn {
+    from { transform: translateY(20px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+}
+.modal-close {
+    width: 30px;
+    height: 30px;
+    border: none;
+    background: var(--primary-1);
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 1.2rem;
+    color: var(--text-dark);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+}
+.modal-close:hover { background: var(--primary-2); }
+
+.print-header-area { display: none; padding: 6pt 10mm; border-bottom: 1.5pt solid #333; background: white; text-align: center; }
+.print-header-area .ph-logo { max-height: 30pt; vertical-align: middle; }
+.print-header-area .ph-company { font-size: 12pt; font-weight: 700; color: #000; }
+.print-header-area .ph-details { font-size: 8pt; color: #444; }
+.print-footer-area { display: none; padding: 4pt 10mm; border-top: 1pt solid #999; background: white; text-align: center; font-size: 7pt; color: #666; }
+
+.invoice-print-area { padding: 0; }
+
+.toast {
+    position: fixed;
+    bottom: 2rem;
+    left: 50%;
+    transform: translateX(-50%) translateY(80px);
+    background: linear-gradient(135deg, #1a252f, #2c3e50);
+    color: white;
+    padding: 0.8rem 1.8rem;
+    border-radius: 50px;
+    font-size: 0.9rem;
+    z-index: 99999;
+    opacity: 0;
+    transition: all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+    pointer-events: none;
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.2);
+    font-weight: 600;
+    letter-spacing: 0.3px;
+    white-space: nowrap;
+    direction: rtl;
+}
+.toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
+.toast-success { background: linear-gradient(135deg, #059669, #047857); }
+.toast-error { background: linear-gradient(135deg, #dc2626, #b91c1c); }
+.toast-info { background: linear-gradient(135deg, #2563eb, #1d4ed8); }
+
+.section-title { font-size: 0.75rem; font-weight: 700; color: var(--text-dark); text-transform: uppercase; letter-spacing: 0.5px; margin: 1rem 0 0.5rem; padding-bottom: 0.3rem; border-bottom: 1px dashed var(--primary-2); }
+.section-title:first-child { margin-top: 0; }
+.field-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.25rem; }
+.field-check { display: flex; align-items: center; gap: 0.4rem; padding: 0.3rem 0.4rem; border-radius: 4px; cursor: pointer; transition: background 0.15s; font-size: 0.8rem; }
+.field-check:hover { background: var(--primary-1); }
+.field-check input[type="checkbox"] { width: 15px; height: 15px; accent-color: var(--primary-4); cursor: pointer; }
+.field-key { color: var(--primary-4); font-size: 0.65rem; font-family: monospace; background: var(--primary-1); padding: 0.05rem 0.3rem; border-radius: 3px; margin-right: auto; }
+
+.btn-group { display: flex; gap: 0.25rem; background: var(--primary-1); padding: 0.2rem; border-radius: 4px; flex-wrap: wrap; }
+.btn-opt { flex: 1; padding: 0.3rem; border: none; background: transparent; border-radius: 4px; font-size: 0.78rem; cursor: pointer; font-family: 'Tajawal', sans-serif; color: var(--primary-4); font-weight: 600; transition: all 0.2s; text-align: center; min-width: 60px; }
+.btn-opt.active { background: white; color: var(--text-dark); box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+.toggle-row { display: flex; align-items: center; justify-content: space-between; padding: 0.4rem 0; }
+.toggle-row label { font-size: 0.8rem; margin: 0; }
+.toggle-switch { position: relative; width: 38px; height: 20px; cursor: pointer; }
+.toggle-switch input { display: none; }
+.toggle-slider { position: absolute; inset: 0; background: var(--primary-2); border-radius: 10px; transition: 0.2s; }
+.toggle-slider::before { content: ''; position: absolute; width: 16px; height: 16px; background: white; border-radius: 50%; top: 2px; left: 2px; transition: 0.2s; }
+.toggle-switch input:checked + .toggle-slider { background: var(--primary-4); }
+.toggle-switch input:checked + .toggle-slider::before { left: 20px; }
+
+.header-footer-inputs { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; }
+.hf-input-group label { display: block; font-size: 0.75rem; font-weight: 600; color: var(--text-dark); margin-bottom: 0.2rem; }
+.hf-input-group input, .hf-input-group textarea { width: 100%; border: 1px solid var(--primary-2); border-radius: 4px; padding: 0.35rem 0.5rem; font-size: 0.8rem; font-family: 'Tajawal', sans-serif; transition: all 0.2s; }
+.hf-input-group input:focus, .hf-input-group textarea:focus { border-color: var(--primary-3); box-shadow: 0 0 0 2px rgba(77, 208, 225, 0.2); outline: none; }
+.hf-preview-box { background: var(--primary-1); border: 1px dashed var(--primary-2); border-radius: 4px; padding: 0.5rem; text-align: center; margin-top: 0.3rem; cursor: pointer; }
+.hf-preview-box img { max-height: 50px; border-radius: 4px; }
+
+.container-fluid { padding: 0.5rem 1rem 1rem; }
+.card { border: none; border-radius: var(--radius); box-shadow: var(--shadow-sm); margin-bottom: 0; overflow: hidden; }
+.card-header { background: linear-gradient(135deg, var(--primary-4), var(--primary-dark)); color: var(--text-light); padding: 0.45rem 0.85rem; font-weight: 600; font-size: 0.82rem; display: flex; align-items: center; gap: 0.4rem; }
+.card-body { padding: 0.6rem 0.75rem; }
+
+.btn { border-radius: var(--radius-sm); padding: 0.28rem 0.55rem; font-weight: 600; font-size: 0.78rem; border: none; transition: all 0.2s var(--ease); display: inline-flex; align-items: center; gap: 0.25rem; font-family: 'Tajawal', sans-serif; cursor: pointer; }
+.btn-primary { background: linear-gradient(135deg, var(--primary-4), var(--primary-dark)); color: #fff; }
+.btn-success { background: linear-gradient(135deg, #00897b, #00695c); color: #fff; }
+.btn-warning { background: linear-gradient(135deg, #ffb300, #ff8f00); color: #fff; }
+.btn-danger { background: linear-gradient(135deg, #e53935, #b71c1c); color: #fff; }
+.btn-secondary { background: linear-gradient(135deg, #78909c, #546e7a); color: #fff; }
+.btn-outline-primary { background: transparent; color: var(--primary-4); border: 1px solid var(--primary-4); }
+.btn-outline-success { background: transparent; color: #00897b; border: 1px solid #00897b; }
+.btn-outline-danger { background: transparent; color: #e53935; border: 1px solid #e53935; }
+.btn-outline-warning { background: transparent; color: #ff8f00; border: 1px solid #ff8f00; }
+.btn-outline-info { background: transparent; color: #01579b; border: 1px solid #01579b; }
+.btn:hover { transform: translateY(-1px); box-shadow: var(--shadow-md); }
+.btn:active { transform: translateY(0); }
+
+.summary-card { transition: transform 0.2s, box-shadow 0.2s; cursor: default; border: none !important; box-shadow: var(--shadow-sm); }
+.summary-card:hover { transform: translateY(-5px); box-shadow: var(--shadow-md); }
+.summary-card .card-body { padding: 0.75rem; }
+.summary-value { font-size: 1.5rem; font-weight: 700; }
+
+.table-responsive { border-radius: var(--radius); overflow: hidden; }
+.table { font-size: 0.78rem; }
+.table thead th { border-bottom: 2px solid var(--primary-2); font-weight: 600; text-align: center; background: linear-gradient(135deg, var(--primary-3), var(--primary-4)); color: white; }
+.table tbody tr { transition: background-color 0.15s; }
+.table tbody tr:hover td { background: rgba(224, 247, 250, 0.5); }
+.table tbody tr.table-warning:hover td { background: #fff3cd; }
+.table tbody tr.table-success:hover td { background: #d4edda; }
+.table tbody tr.table-info:hover td { background: #d1ecf1; }
+.table td { vertical-align: middle; text-align: center; }
+.table a { color: var(--primary-4); text-decoration: none; font-weight: 500; }
+.table a:hover { color: var(--primary-dark); text-decoration: underline; }
+
+.badge { font-size: 0.7rem; padding: 0.2rem 0.45rem; border-radius: 20px; }
+.badge-success { background: linear-gradient(135deg, #00897b, #00695c); color: white; }
+.badge-warning { background: linear-gradient(135deg, #ffb300, #ff8f00); color: white; }
+.badge-danger { background: linear-gradient(135deg, #e53935, #b71c1c); color: white; }
+.badge-info { background: linear-gradient(135deg, #0288d1, #01579b); color: white; }
+
+.text-success { color: #00897b !important; }
+.text-danger { color: #e53935 !important; }
+.text-warning { color: #ffb300 !important; }
+.font-weight-bold { font-weight: 700 !important; }
+
+.filter-section { display: flex; gap: 0.5rem; flex-wrap: wrap; padding: 0.5rem 0; }
+.filter-section .btn { font-size: 0.7rem; padding: 0.2rem 0.6rem; cursor: pointer; }
+
+tfoot .table-success td, tfoot .table-danger td, tfoot .table-primary td { font-size: 1rem; border-top: 2px solid var(--primary-2); background: var(--primary-1); }
+
+@media print {
+    * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+    body { background: white !important; font-size: 10pt !important; color: #000 !important; padding: 0 !important; }
+    .no-print { display: none !important; }
+    .card { box-shadow: none !important; border: 1px solid #ddd !important; border-radius: 0 !important; }
+    .card-header { background: #f5f5f5 !important; color: #000 !important; border-bottom: 1px solid #ddd !important; }
+    .summary-card:hover { transform: none !important; }
+    .summary-card { border: 1px solid #ddd !important; }
+    .table thead th { background: #e0e0e0 !important; color: #000 !important; border-bottom: 2px solid #999 !important; }
+    .table tfoot .table-success td, .table tfoot .table-danger td, .table tfoot .table-primary td { background: #f5f5f5 !important; }
+    .badge { border: 1px solid #999 !important; background: transparent !important; color: #000 !important; }
+    .badge-success { color: #00897b !important; border-color: #00897b !important; }
+    .badge-danger { color: #e53935 !important; border-color: #e53935 !important; }
+    .badge-warning { color: #ff8f00 !important; border-color: #ff8f00 !important; }
+    .badge-info { color: #01579b !important; border-color: #01579b !important; }
+    .print-header-area { display: block !important; position: fixed !important; top: 0 !important; left: 0 !important; right: 0 !important; z-index: 10000 !important; }
+    .print-footer-area { display: block !important; position: fixed !important; bottom: 0 !important; left: 0 !important; right: 0 !important; z-index: 10000 !important; }
+    .invoice-print-area { padding-top: 45pt !important; padding-bottom: 25pt !important; }
+    [data-print-hidden="true"] { display: none !important; }
+    .print-grayscale * { filter: grayscale(100%) !important; }
+    .print-no-lines .table td, .print-no-lines .table th { border: none !important; }
+    .toast { display: none !important; }
+}
+@page { margin: var(--print-margin, 10mm); }
+@media (max-width: 992px) { .modal-box { width: 95vw; } }
+@media (max-width: 768px) { .field-grid { grid-template-columns: 1fr; } .header-footer-inputs { grid-template-columns: 1fr; } .modal-box { width: 98vw; max-height: 95vh; } .toast { font-size: 0.8rem; padding: 0.6rem 1.2rem; white-space: normal; max-width: 90%; } .table { font-size: 0.65rem; } .summary-card .card-body { padding: 0.5rem; } .summary-value { font-size: 1.1rem; } }
+@media (max-width: 576px) { .container-fluid { padding: 0.25rem; } .card-body { padding: 0.4rem; } .summary-value { font-size: 1rem; } }
+@media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; } }
+.btn:focus-visible, .form-control:focus-visible, .form-select:focus-visible, [role="button"]:focus-visible { outline: 2px solid var(--primary-3); outline-offset: 2px; }
+html { scroll-behavior: smooth; }
+</style>
+
+<!-- زر الطباعة -->
+<button class="print-fab no-print" id="openPrintModalBtn">
+    <i class="fas fa-print"></i> طباعة
+</button>
+
+<!-- منطقة الطباعة -->
+<div class="invoice-print-area" id="printableArea">
+    
+    <!-- الهيدر -->
+    <div class="print-header-area no-print" id="printHeaderArea">
+        <table style="width:100%; border-collapse:collapse;">
+            <tr>
+                <td style="width:60px; vertical-align:middle;">
+                    <img src="" alt="شعار" class="ph-logo" id="phLogoImg" style="display:none;">
+                    <span id="phLogoPlaceholder" style="font-size:8pt; color:#999;">بدون شعار</span>
+                </td>
+                <td style="vertical-align:middle; text-align:center;">
+                    <div class="ph-company" id="phCompanyName">اسم الشركة</div>
+                    <div class="ph-details" id="phCompanyDetails"></div>
+                </td>
+                <td style="width:60px;"></td>
+            </tr>
+        </table>
+    </div>
+
+    <!-- الفوتر -->
+    <div class="print-footer-area no-print" id="printFooterArea">
+        <span id="phFooterText"></span>
+    </div>
+
+    <!-- المحتوى الأساسي -->
+    <div class="container-fluid mt-2" data-page="debt-report">
+        <div class="card shadow">
+            <!-- Header -->
+            <div class="card-header">
+                <i class="fas fa-exclamation-triangle ml-2"></i>
+                <span>تقرير الفواتير غير المسددة (المستحقات)</span>
+                <span class="mr-auto">
+                    <span class="badge badge-light">{{ transactions|length }}</span>
+                    {% if total_returns_count %}
+                    <span class="badge badge-warning mr-1">
+                        <i class="fas fa-undo-alt"></i> {{ total_returns_count }} مرتجع
+                    </span>
+                    {% endif %}
+                </span>
+            </div>
+            
+            <!-- Card Body -->
+            <div class="card-body">
+                <!-- Summary Cards -->
+                <div class="row text-center mb-4" id="summary-cards">
+                    <div class="col-md-3">
+                        <div class="card border-success h-100 summary-card" data-balance-type="customer">
+                            <div class="card-body">
+                                <h6 class="text-muted">لنا عند العملاء (مبيعات)</h6>
+                                <h3 class="text-success summary-value" data-balance-value="{{ total_customers_debt|floatformat:2 }}">
+                                    {{ total_customers_debt|floatformat:2 }}
+                                </h3>
+                                <small class="text-muted">
+                                    <i class="fas fa-file-invoice"></i> {{ sales_count }} فاتورة
+                                </small>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-3">
+                        <div class="card border-danger h-100 summary-card" data-balance-type="supplier">
+                            <div class="card-body">
+                                <h6 class="text-muted">علينا للموردين (مشتريات)</h6>
+                                <h3 class="text-danger summary-value" data-balance-value="{{ total_suppliers_debt|floatformat:2 }}">
+                                    {{ total_suppliers_debt|floatformat:2 }}
+                                </h3>
+                                <small class="text-muted">
+                                    <i class="fas fa-file-invoice"></i> {{ purchases_count }} فاتورة
+                                </small>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-3">
+                        <div class="card border-primary h-100 summary-card" data-balance-type="net">
+                            <div class="card-body">
+                                <h6 class="text-muted">صافي الرصيد</h6>
+                                <h3 class="summary-value net-balance {% if net_balance >= 0 %}text-success{% else %}text-danger{% endif %}" 
+                                    data-balance-value="{{ net_balance|floatformat:2 }}"
+                                    data-is-positive="{% if net_balance >= 0 %}true{% else %}false{% endif %}">
+                                    {{ net_balance|floatformat:2 }}
+                                </h3>
+                                <small class="net-label">
+                                    {% if net_balance >= 0 %}صافي لصالحنا 🟢{% else %}صافي ضدنا 🔴{% endif %}
+                                </small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-md-3">
+                        <div class="card border-info h-100 summary-card">
+                            <div class="card-body">
+                                <h6 class="text-muted">ملخص المعاملات</h6>
+                                <h5 class="text-info summary-value" style="font-size:1.2rem;">
+                                    {{ transactions|length }}
+                                </h5>
+                                <small class="text-muted">
+                                    <i class="fas fa-users"></i> {{ unique_parties }} طرف
+                                </small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <hr>
+
+                <!-- أزرار التصفية -->
+                <div class="filter-section no-print" id="filterSection">
+                    <button class="btn btn-sm btn-outline-primary active" data-filter="all">
+                        <i class="fas fa-list"></i> الكل
+                    </button>
+                    <button class="btn btn-sm btn-outline-success" data-filter="sale">
+                        <i class="fas fa-file-invoice"></i> فواتير المبيعات
+                    </button>
+                    <button class="btn btn-sm btn-outline-danger" data-filter="purchase">
+                        <i class="fas fa-file-invoice"></i> فواتير المشتريات
+                    </button>
+                    <button class="btn btn-sm btn-outline-warning" data-filter="return">
+                        <i class="fas fa-undo-alt"></i> المرتجعات فقط
+                    </button>
+                    <button class="btn btn-sm btn-outline-secondary" data-filter="party">
+                        <i class="fas fa-users"></i> تجميع حسب الطرف
+                    </button>
+                </div>
+
+                <!-- الجدول الموحد -->
+                <div class="transactions-section">
+                    <h5 class="text-right mb-3 text-primary">
+                        <i class="fas fa-list-ul ml-1"></i>
+                        قائمة المعاملات غير المسددة 
+                        <span class="badge badge-primary ml-2">{{ transactions|length }}</span>
+                    </h5>
+                    
+                    {% if transactions %}
+                    <div class="table-responsive" id="transactionsTable">
+                        <table class="table table-sm table-bordered table-hover">
+                            <thead>
+                                <tr>
+                                    <th>#</th>
+                                    <th data-print-field="col-type">النوع</th>
+                                    <th data-print-field="col-number">رقم الفاتورة/المرتجع</th>
+                                    <th data-print-field="col-party">الطرف</th>
+                                    <th data-print-field="col-date">التاريخ</th>
+                                    <th data-print-field="col-total">الإجمالي</th>
+                                    <th data-print-field="col-paid">المدفوع</th>
+                                    <th data-print-field="col-balance">الرصيد</th>
+                                    <th data-print-field="col-status">الحالة</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for transaction in transactions %}
+                                <tr class="{% if transaction.is_return %}table-warning{% elif transaction.type == 'sale' %}table-info{% elif transaction.type == 'purchase' %}table-light{% endif %}"
+                                    data-transaction-type="{{ transaction.type }}"
+                                    data-has-returns="{% if transaction.has_returns %}true{% else %}false{% endif %}"
+                                    data-party="{{ transaction.party_name }}">
+                                    <td>{{ forloop.counter }}</td>
+                                    <td data-print-field="col-type">
+                                        <span class="badge {% if transaction.type == 'sale' %}badge-success{% elif transaction.type == 'purchase' %}badge-danger{% elif transaction.is_return %}badge-warning{% endif %}">
+                                            {{ transaction.type_icon }} {{ transaction.type_label }}
+                                        </span>
+                                    </td>
+                                    <td data-print-field="col-number">
+                                        {% if transaction.is_return %}
+                                            <!-- مرتجع يظهر كسطر منفصل برقمه الخاص -->
+                                            <div>
+                                                <a href="{{ transaction.url }}" class="text-warning font-weight-bold">
+                                                    {{ transaction.display_number }}
+                                                </a>
+                                                <br>
+                                                <small class="text-muted">
+                                                    <i class="fas fa-undo-alt text-warning"></i> مرتجع لـ: 
+                                                    <a href="{% if transaction.type == 'sale_return' %}{% url 'invoice:sale_detail' transaction.invoice.slug %}{% else %}{% url 'invoice:purch_detail' transaction.invoice.slug %}{% endif %}" class="text-primary">
+                                                        {{ transaction.original_invoice_number }}
+                                                    </a>
+                                                </small>
+                                            </div>
+                                        {% else %}
+                                            <!-- فاتورة تظهر كسطر منفصل برقمها الخاص -->
+                                            <a href="{{ transaction.url }}" class="font-weight-bold">
+                                                {{ transaction.display_number }}
+                                            </a>
+                                        {% endif %}
+                                    </td>
+                                    <td data-print-field="col-party">
+                                        <strong>{{ transaction.party_name }}</strong>
+                                        {% if transaction.party_phone %}
+                                        <br>
+                                        <small class="text-muted">{{ transaction.party_phone }}</small>
+                                        {% endif %}
+                                    </td>
+                                    <td data-print-field="col-date">{{ transaction.date|date:"Y-m-d" }}</td>
+                                    <td class="text-center total-cell" data-print-field="col-total">
+                                        {{ transaction.original_total|floatformat:2 }}
+                                    </td>
+                                    <td class="text-center paid-cell" data-print-field="col-paid">
+                                        {{ transaction.paid_amount|floatformat:2 }}
+                                    </td>
+                                    <td class="text-center balance-cell 
+                                        {% if transaction.balance < 0 %}text-success
+                                        {% elif transaction.is_return %}text-warning
+                                        {% else %}text-danger{% endif %}" 
+                                        data-print-field="col-balance">
+                                        <strong>
+                                            {{ transaction.balance|floatformat:2 }}
+                                        </strong>
+                                        {% if transaction.is_return %}
+                                            <i class="fas fa-undo-alt text-warning" title="مرتجع"></i>
+                                        {% endif %}
+                                        {% if transaction.balance < 0 %}
+                                            <i class="fas fa-info-circle text-success" title="رصيد دائن (زيادة دفع)"></i>
+                                        {% endif %}
+                                    </td>
+                                    <td data-print-field="col-status">
+                                        {% if transaction.is_return %}
+                                            {% if transaction.balance == 0 %}
+                                            <span class="badge badge-success">
+                                                <i class="fas fa-check-circle"></i> مرتجع مسدد
+                                            </span>
+                                            {% else %}
+                                            <span class="badge badge-warning">
+                                                <i class="fas fa-exclamation-circle"></i> مرتجع غير مسدد
+                                            </span>
+                                            {% endif %}
+                                        {% elif transaction.balance > 0 %}
+                                        <span class="badge badge-danger">
+                                            <i class="fas fa-exclamation-circle"></i> غير مسدد
+                                        </span>
+                                        {% elif transaction.balance < 0 %}
+                                        <span class="badge badge-success">
+                                            <i class="fas fa-check-circle"></i> رصيد دائن
+                                        </span>
+                                        {% else %}
+                                        <span class="badge badge-success">
+                                            <i class="fas fa-check-circle"></i> مسدد
+                                        </span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                            <tfoot>
+                                <tr class="table-success">
+                                    <td colspan="7" class="text-left font-weight-bold">
+                                        <i class="fas fa-users"></i> صافي المستحق للعملاء (مبيعات)
+                                    </td>
+                                    <td class="text-danger font-weight-bold text-center">{{ total_customers_debt|floatformat:2 }}</td>
+                                    <td></td>
+                                </tr>
+                                {% if total_sale_returns > 0 %}
+                                <tr class="table-warning">
+                                    <td colspan="7" class="text-left font-weight-bold">
+                                        <i class="fas fa-undo-alt"></i> إجمالي أرصدة مرتجعات المبيعات
+                                    </td>
+                                    <td class="text-warning font-weight-bold text-center">{{ total_sale_returns|floatformat:2 }}</td>
+                                    <td></td>
+                                </tr>
+                                <tr class="table-info">
+                                    <td colspan="7" class="text-left font-weight-bold">
+                                        <i class="fas fa-calculator"></i> صافي ديون العملاء (بعد المرتجعات)
+                                    </td>
+                                    <td class="text-success font-weight-bold text-center">{{ net_customer_debt|floatformat:2 }}</td>
+                                    <td></td>
+                                </tr>
+                                {% endif %}
+                                <tr class="table-danger">
+                                    <td colspan="7" class="text-left font-weight-bold">
+                                        <i class="fas fa-truck"></i> صافي المستحق للموردين (مشتريات)
+                                    </td>
+                                    <td class="text-danger font-weight-bold text-center">{{ total_suppliers_debt|floatformat:2 }}</td>
+                                    <td></td>
+                                </tr>
+                                {% if total_purchase_returns > 0 %}
+                                <tr class="table-warning">
+                                    <td colspan="7" class="text-left font-weight-bold">
+                                        <i class="fas fa-undo-alt"></i> إجمالي أرصدة مرتجعات المشتريات
+                                    </td>
+                                    <td class="text-warning font-weight-bold text-center">{{ total_purchase_returns|floatformat:2 }}</td>
+                                    <td></td>
+                                </tr>
+                                <tr class="table-info">
+                                    <td colspan="7" class="text-left font-weight-bold">
+                                        <i class="fas fa-calculator"></i> صافي ديون الموردين (بعد المرتجعات)
+                                    </td>
+                                    <td class="text-success font-weight-bold text-center">{{ net_supplier_debt|floatformat:2 }}</td>
+                                    <td></td>
+                                </tr>
+                                {% endif %}
+                                <tr class="table-primary">
+                                    <td colspan="7" class="text-left font-weight-bold">
+                                        <i class="fas fa-calculator"></i> صافي الرصيد النهائي (فرق المبيعات - المشتريات)
+                                    </td>
+                                    <td class="font-weight-bold text-center {% if net_balance >= 0 %}text-success{% else %}text-danger{% endif %}">
+                                        {{ net_balance|floatformat:2 }}
+                                    </td>
+                                    <td></td>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+
+                    <!-- عرض المجموعات حسب الطرف -->
+                    <div id="partyGroupView" style="display:none;">
+                        <h5 class="text-right mb-3 text-primary">
+                            <i class="fas fa-users ml-1"></i>
+                            تجميع المعاملات حسب الطرف
+                            <span class="badge badge-primary ml-2">{{ unique_parties }}</span>
+                        </h5>
+                        {% for group in party_groups %}
+                        <div class="card mb-2">
+                            <div class="card-header bg-light">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <span class="font-weight-bold">
+                                        <i class="fas fa-user"></i> {{ group.party_name }}
+                                        <span class="badge badge-secondary">{{ group.transactions|length }}</span>
+                                        {% if group.sale_count %}
+                                        <span class="badge badge-success">{{ group.sale_count }} مبيعات</span>
+                                        {% endif %}
+                                        {% if group.purchase_count %}
+                                        <span class="badge badge-danger">{{ group.purchase_count }} مشتريات</span>
+                                        {% endif %}
+                                        {% if group.return_count %}
+                                        <span class="badge badge-warning">{{ group.return_count }} مرتجعات</span>
+                                        {% endif %}
+                                    </span>
+                                    <span class="font-weight-bold {% if group.total_balance >= 0 %}text-success{% else %}text-danger{% endif %}">
+                                        {{ group.total_balance|floatformat:2 }}
+                                    </span>
+                                </div>
+                            </div>
+                            <div class="card-body p-0">
+                                <div class="table-responsive">
+                                    <table class="table table-sm table-bordered mb-0">
+                                        <thead>
+                                            <tr>
+                                                <th>#</th>
+                                                <th>النوع</th>
+                                                <th>الرقم</th>
+                                                <th>التاريخ</th>
+                                                <th>الإجمالي</th>
+                                                <th>المدفوع</th>
+                                                <th>الرصيد</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {% for t in group.transactions %}
+                                            <tr class="{% if t.is_return %}table-warning{% endif %}">
+                                                <td>{{ forloop.counter }}</td>
+                                                <td>
+                                                    <span class="badge {% if t.type == 'sale' %}badge-success{% elif t.type == 'purchase' %}badge-danger{% elif t.is_return %}badge-warning{% endif %}">
+                                                        {{ t.type_icon }} {{ t.type_label }}
+                                                    </span>
+                                                </td>
+                                                <td>{{ t.display_number }}</td>
+                                                <td>{{ t.date|date:"Y-m-d" }}</td>
+                                                <td>{{ t.original_total|floatformat:2 }}</td>
+                                                <td>{{ t.paid_amount|floatformat:2 }}</td>
+                                                <td class="{% if t.is_return %}text-warning{% elif t.balance < 0 %}text-success{% else %}text-danger{% endif %}">
+                                                    <strong>{{ t.balance_display }}</strong>
+                                                </td>
+                                            </tr>
+                                            {% endfor %}
+                                        </tbody>
+                                        <tfoot>
+                                            <tr class="table-primary">
+                                                <td colspan="6" class="text-left font-weight-bold">
+                                                    <i class="fas fa-calculator"></i> إجمالي الطرف
+                                                </td>
+                                                <td class="font-weight-bold text-center {% if group.total_balance >= 0 %}text-success{% else %}text-danger{% endif %}">
+                                                    {{ group.total_balance|floatformat:2 }}
+                                                </td>
+                                            </tr>
+                                        </tfoot>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                        {% empty %}
+                        <div class="alert alert-info text-center">
+                            <i class="fas fa-info-circle"></i> لا توجد مجموعات للعرض
+                        </div>
+                        {% endfor %}
+                    </div>
+
+                    {% else %}
+                    <div class="alert alert-success text-center py-4">
+                        <i class="fas fa-check-circle fa-2x"></i>
+                        <h5 class="mt-2">لا توجد معاملات غير مسددة</h5>
+                        <p class="text-muted">جميع الفواتير مسددة بالكامل</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Data attributes -->
+<div class="d-none" 
+     data-customer-debt="{{ total_customers_debt|floatformat:2 }}"
+     data-supplier-debt="{{ total_suppliers_debt|floatformat:2 }}"
+     data-net-balance="{{ net_balance|floatformat:2 }}"
+     data-net-positive="{% if net_balance >= 0 %}true{% else %}false{% endif %}">
+</div>
+
+<!-- مودال الطباعة -->
+<div class="modal-overlay" id="printModal">
+    <div class="modal-box">
+        <div class="card-header" style="display:flex; justify-content:space-between; align-items:center;">
+            <span style="display:flex; align-items:center; gap:0.4rem;"><i class="fas fa-cog"></i> إعدادات الطباعة</span>
+            <button class="modal-close" id="closeModalBtn">&times;</button>
+        </div>
+        <div class="card-body">
+            <div class="section-title">هيدر وفوتر صفحة الطباعة</div>
+            <p style="font-size:0.75rem; color:var(--primary-4); margin-bottom:0.5rem;">
+                <i class="fas fa-info-circle"></i> تظهر فقط عند الطباعة وتتكرر مع كل صفحة.
+            </p>
+            <div class="header-footer-inputs">
+                <div class="hf-input-group">
+                    <label><i class="fas fa-image"></i> شعار الشركة</label>
+                    <input type="file" id="logoInput" accept="image/*" style="display:none;">
+                    <div class="hf-preview-box" id="logoPreviewBox">
+                        <span id="logoPlaceholderText" style="font-size:0.75rem; color:var(--primary-4);">اضغط لرفع الشعار</span>
+                        <img id="logoPreviewImg" src="" alt="" style="display:none;">
+                    </div>
+                </div>
+                <div class="hf-input-group">
+                    <label><i class="fas fa-building"></i> اسم الشركة</label>
+                    <input type="text" id="companyNameInput" placeholder="مثال: مؤسسة التوريدات">
+                </div>
+                <div class="hf-input-group" style="grid-column: 1 / -1;">
+                    <label><i class="fas fa-align-right"></i> بيانات إضافية</label>
+                    <textarea id="companyDetailsInput" rows="2" placeholder="هاتف: 011xxx | عنوان: المنطقة التجارية"></textarea>
+                </div>
+                <div class="hf-input-group" style="grid-column: 1 / -1;">
+                    <label><i class="fas fa-shoe-prints"></i> نص الفوتر المتكرر</label>
+                    <input type="text" id="footerTextInput" placeholder="شكراً لتعاملكم معنا">
+                </div>
+            </div>
+
+            <div class="section-title">حجم الورق</div>
+            <div class="btn-group" id="paperSizeGroup">
+                <button class="btn-opt active" data-value="a4">A4</button>
+                <button class="btn-opt" data-value="a5">A5</button>
+                <button class="btn-opt" data-value="thermal">حراري 80mm</button>
+                <button class="btn-opt" data-value="half-a4">نصف A4</button>
+            </div>
+
+            <div class="section-title">الهوامش</div>
+            <div class="btn-group" id="marginGroup">
+                <button class="btn-opt" data-value="minimal">أقل</button>
+                <button class="btn-opt active" data-value="normal">عادي</button>
+                <button class="btn-opt" data-value="wide">واسع</button>
+            </div>
+
+            <div class="section-title">أعمدة الجدول</div>
+            <div class="field-grid">
+                <label class="field-check"><input type="checkbox" checked data-target="col-type"> النوع <span class="field-key">نوع</span></label>
+                <label class="field-check"><input type="checkbox" checked data-target="col-number"> رقم الفاتورة/المرتجع <span class="field-key">رقم</span></label>
+                <label class="field-check"><input type="checkbox" checked data-target="col-party"> الطرف <span class="field-key">طرف</span></label>
+                <label class="field-check"><input type="checkbox" checked data-target="col-date"> التاريخ <span class="field-key">تاريخ</span></label>
+                <label class="field-check"><input type="checkbox" checked data-target="col-total"> الإجمالي <span class="field-key">إجمالي</span></label>
+                <label class="field-check"><input type="checkbox" checked data-target="col-paid"> المدفوع <span class="field-key">مدفوع</span></label>
+                <label class="field-check"><input type="checkbox" checked data-target="col-balance"> الرصيد <span class="field-key">رصيد</span></label>
+                <label class="field-check"><input type="checkbox" checked data-target="col-status"> الحالة <span class="field-key">حالة</span></label>
+            </div>
+
+            <div class="section-title">خيارات إضافية</div>
+            <div class="toggle-row">
+                <label>طباعة بالألوان</label>
+                <label class="toggle-switch"><input type="checkbox" id="printColors" checked><span class="toggle-slider"></span></label>
+            </div>
+            <div class="toggle-row">
+                <label>إظهار خطوط فاصلة بين الصفوف</label>
+                <label class="toggle-switch"><input type="checkbox" id="printLines" checked><span class="toggle-slider"></span></label>
+            </div>
+        </div>
+        <div class="card-header" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:0.5rem;">
+            <div style="display:flex; gap:0.35rem; flex-wrap:wrap;">
+                <button class="btn btn-secondary" id="selectAllBtn"><i class="fas fa-check-double"></i> تحديد الكل</button>
+                <button class="btn btn-secondary" id="deselectAllBtn"><i class="fas fa-times"></i> إلغاء الكل</button>
+            </div>
+            <button class="btn btn-primary" id="executePrintBtn" style="padding:0.45rem 1.5rem;">
+                <i class="fas fa-print"></i> طباعة الآن
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<!-- ============================================
+     JavaScript
+     ============================================ -->
+<script nonce="{{ csp_nonce }}">
+// ==========================================
+// دالة التصفية
+// ==========================================
+function filterTransactions(filterType) {
+    console.log('🔍 Filtering:', filterType);
+    
+    var buttons = document.querySelectorAll('#filterSection .btn');
+    buttons.forEach(function(btn) {
+        btn.classList.remove('active');
+        if (btn.dataset.filter === filterType) {
+            btn.classList.add('active');
+        }
+    });
+    
+    var partyGroupView = document.getElementById('partyGroupView');
+    var transactionsTable = document.getElementById('transactionsTable');
+    
+    if (filterType === 'party') {
+        if (partyGroupView) partyGroupView.style.display = 'block';
+        if (transactionsTable) transactionsTable.style.display = 'none';
+        return;
+    } else {
+        if (partyGroupView) partyGroupView.style.display = 'none';
+        if (transactionsTable) transactionsTable.style.display = 'block';
+    }
+    
+    var rows = document.querySelectorAll('#transactionsTable tbody tr');
+    console.log('📊 Total rows:', rows.length);
+    
+    rows.forEach(function(row) {
+        var rowType = row.dataset.transactionType || '';
+        var showRow = false;
+        
+        switch(filterType) {
+            case 'all': showRow = true; break;
+            case 'sale': showRow = rowType === 'sale'; break;
+            case 'purchase': showRow = rowType === 'purchase'; break;
+            case 'return': showRow = rowType.includes('return'); break;
+            default: showRow = true;
+        }
+        
+        row.style.display = showRow ? '' : 'none';
+    });
+    
+    console.log('✅ Filter applied:', filterType);
+}
+
+// ==========================================
+// نظام الطباعة
+// ==========================================
+(function() {
+    var printState = {
+        paperSize: 'a4',
+        marginSize: 'normal',
+        logoDataUrl: ''
+    };
+
+    var printModal = document.getElementById('printModal');
+    var printableArea = document.getElementById('printableArea');
+    var toastEl = document.getElementById('toast');
+    var toastTimeout = null;
+
+    function showToast(msg, type, duration) {
+        duration = duration || 2500;
+        type = type || 'info';
+        if (!toastEl) return;
+        toastEl.textContent = msg;
+        toastEl.className = 'toast toast-' + type + ' show';
+        if (toastTimeout) clearTimeout(toastTimeout);
+        toastTimeout = setTimeout(function() {
+            toastEl.classList.remove('show');
+        }, duration);
+    }
+
+    document.getElementById('openPrintModalBtn').addEventListener('click', function() {
+        printModal.classList.add('active');
+    });
+
+    document.getElementById('closeModalBtn').addEventListener('click', function() {
+        printModal.classList.remove('active');
+    });
+
+    printModal.addEventListener('click', function(e) {
+        if (e.target === printModal) printModal.classList.remove('active');
+    });
+
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') printModal.classList.remove('active');
+        if ((e.ctrlKey || e.metaKey) && e.key === 'p') {
+            e.preventDefault();
+            printModal.classList.add('active');
+        }
+    });
+
+    document.querySelectorAll('.btn-group').forEach(function(group) {
+        group.querySelectorAll('.btn-opt').forEach(function(btn) {
+            btn.addEventListener('click', function() {
+                group.querySelectorAll('.btn-opt').forEach(function(b) {
+                    b.classList.remove('active');
+                });
+                this.classList.add('active');
+                if (group.id === 'paperSizeGroup') printState.paperSize = this.dataset.value;
+                if (group.id === 'marginGroup') printState.marginSize = this.dataset.value;
+            });
+        });
+    });
+
+    document.getElementById('selectAllBtn').addEventListener('click', function() {
+        printModal.querySelectorAll('input[type="checkbox"][data-target]').forEach(function(cb) {
+            cb.checked = true;
+        });
+        showToast('✅ تم تحديد جميع الحقول', 'success', 1500);
+    });
+
+    document.getElementById('deselectAllBtn').addEventListener('click', function() {
+        printModal.querySelectorAll('input[type="checkbox"][data-target]').forEach(function(cb) {
+            cb.checked = false;
+        });
+        showToast('✅ تم إلغاء تحديد جميع الحقول', 'success', 1500);
+    });
+
+    var logoInput = document.getElementById('logoInput');
+    var logoPreviewImg = document.getElementById('logoPreviewImg');
+    var logoPlaceholderText = document.getElementById('logoPlaceholderText');
+
+    document.getElementById('logoPreviewBox').addEventListener('click', function() {
+        logoInput.click();
+    });
+
+    logoInput.addEventListener('change', function() {
+        if (this.files && this.files[0]) {
+            var reader = new FileReader();
+            reader.onload = function(e) {
+                printState.logoDataUrl = e.target.result;
+                logoPreviewImg.src = e.target.result;
+                logoPreviewImg.style.display = 'block';
+                logoPlaceholderText.style.display = 'none';
+                showToast('✅ تم رفع الشعار بنجاح', 'success', 1500);
+            };
+            reader.readAsDataURL(this.files[0]);
+        }
+    });
+
+    function changePrintPage() {
+        var existingStyle = document.getElementById('dynamic-page-style');
+        if (existingStyle) existingStyle.remove();
+
+        var style = document.createElement('style');
+        style.id = 'dynamic-page-style';
+
+        var marginValue = '10mm';
+        var sizeValue = '';
+
+        if (printState.marginSize === 'minimal') marginValue = '3mm';
+        else if (printState.marginSize === 'normal') marginValue = '8mm';
+        else if (printState.marginSize === 'wide') marginValue = '15mm';
+
+        if (printState.paperSize === 'thermal') {
+            marginValue = '2mm';
+            sizeValue = 'size: 80mm auto;';
+        } else if (printState.paperSize === 'half-a4') {
+            marginValue = '8mm';
+            sizeValue = 'size: A4 landscape;';
+        }
+
+        style.textContent = '@page { margin: ' + marginValue + '; ' + sizeValue + ' }';
+        document.head.appendChild(style);
+    }
+
+    var hiddenBaseElements = [];
+
+    function hideBaseElements() {
+        var selectors = ['nav', 'aside', '.navbar', '.sidebar', '.side-bar', '.breadcrumb',
+            '.breadcrumbs', 'footer', '.footer', '.top-bar', '.topbar',
+            '.header-area', '[role="navigation"]'
+        ];
+        selectors.forEach(function(sel) {
+            document.querySelectorAll(sel).forEach(function(el) {
+                if (el.closest('.invoice-print-area') || el.closest('.modal-overlay') ||
+                    el.closest('.print-fab')) return;
+                hiddenBaseElements.push({ el: el, display: el.style.display });
+                el.style.display = 'none';
+            });
+        });
+    }
+
+    function showBaseElements() {
+        hiddenBaseElements.forEach(function(item) {
+            item.el.style.display = item.display;
+        });
+        hiddenBaseElements = [];
+    }
+
+    document.getElementById('executePrintBtn').addEventListener('click', function() {
+        var headerArea = document.getElementById('printHeaderArea');
+        var footerArea = document.getElementById('printFooterArea');
+        var printBtn = this;
+
+        printBtn.disabled = true;
+        printBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري التجهيز...';
+
+        document.getElementById('phCompanyName').textContent = document.getElementById('companyNameInput').value || 'اسم الشركة';
+        document.getElementById('phCompanyDetails').textContent = document.getElementById('companyDetailsInput').value || '';
+        document.getElementById('phFooterText').textContent = document.getElementById('footerTextInput').value || '';
+
+        if (printState.logoDataUrl) {
+            document.getElementById('phLogoImg').src = printState.logoDataUrl;
+            document.getElementById('phLogoImg').style.display = 'block';
+            document.getElementById('phLogoPlaceholder').style.display = 'none';
+        } else {
+            document.getElementById('phLogoImg').style.display = 'none';
+            document.getElementById('phLogoPlaceholder').style.display = 'inline';
+        }
+
+        headerArea.style.display = 'block';
+        headerArea.classList.remove('no-print');
+        footerArea.style.display = 'block';
+        footerArea.classList.remove('no-print');
+
+        printModal.querySelectorAll('input[type="checkbox"][data-target]').forEach(function(cb) {
+            var target = cb.dataset.target;
+            printableArea.querySelectorAll('[data-print-field="' + target + '"]').forEach(function(el) {
+                el.setAttribute('data-print-hidden', cb.checked ? 'false' : 'true');
+            });
+        });
+
+        if (!document.getElementById('printColors').checked) {
+            printableArea.classList.add('print-grayscale');
+        } else {
+            printableArea.classList.remove('print-grayscale');
+        }
+
+        if (!document.getElementById('printLines').checked) {
+            printableArea.classList.add('print-no-lines');
+        } else {
+            printableArea.classList.remove('print-no-lines');
+        }
+
+        printableArea.classList.remove('print-a4', 'print-a5', 'print-thermal', 'print-half-a4');
+        printableArea.classList.add('print-' + printState.paperSize);
+
+        changePrintPage();
+        hideBaseElements();
+        printModal.classList.remove('active');
+
+        showToast('🖨️ جاري الطباعة...', 'info', 3000);
+
+        setTimeout(function() {
+            window.print();
+
+            setTimeout(function() {
+                headerArea.style.display = 'none';
+                headerArea.classList.add('no-print');
+                footerArea.style.display = 'none';
+                footerArea.classList.add('no-print');
+
+                printableArea.querySelectorAll('[data-print-field]').forEach(function(el) {
+                    el.removeAttribute('data-print-hidden');
+                });
+
+                printableArea.classList.remove('print-a4', 'print-a5', 'print-thermal',
+                    'print-half-a4', 'print-grayscale', 'print-no-lines');
+
+                showBaseElements();
+
+                var dynStyle = document.getElementById('dynamic-page-style');
+                if (dynStyle) dynStyle.remove();
+
+                printBtn.disabled = false;
+                printBtn.innerHTML = '<i class="fas fa-print"></i> طباعة الآن';
+
+                showToast('✅ تمت الطباعة بنجاح', 'success', 2500);
+            }, 500);
+        }, 400);
+    });
+
+})();
+
+// ==========================================
+// تحديث البيانات
+// ==========================================
+(function() {
+    var dataDiv = document.querySelector('.d-none');
+    if (dataDiv) {
+        var customerDebt = parseFloat(dataDiv.dataset.customerDebt) || 0;
+        var supplierDebt = parseFloat(dataDiv.dataset.supplierDebt) || 0;
+        var netBalance = parseFloat(dataDiv.dataset.netBalance) || 0;
+        
+        var netBalanceElement = document.querySelector('.net-balance');
+        var netLabelElement = document.querySelector('.net-label');
+        
+        if (netBalanceElement) {
+            netBalanceElement.className = 'summary-value net-balance ' + 
+                (netBalance >= 0 ? 'text-success' : 'text-danger');
+        }
+        
+        if (netLabelElement) {
+            netLabelElement.textContent = netBalance >= 0 ? 'صافي لصالحنا 🟢' : 'صافي ضدنا 🔴';
+        }
+        
+        console.log('📊 Customer Debt: ' + customerDebt.toFixed(2));
+        console.log('📊 Supplier Debt: ' + supplierDebt.toFixed(2));
+        console.log('📊 Net Balance: ' + netBalance.toFixed(2));
+    }
+})();
+
+// ==========================================
+// التنقل بالنقر على الصفوف والتصفية
+// ==========================================
+document.addEventListener('DOMContentLoaded', function() {
+    
+    // تفعيل أزرار التصفية بطريقة Event Delegation لتجنب مشاكل الـ CSP
+    const filterSection = document.getElementById('filterSection');
+    if (filterSection) {
+        filterSection.addEventListener('click', function(e) {
+            const btn = e.target.closest('button[data-filter]');
+            if (!btn) return;
+            filterTransactions(btn.dataset.filter);
+        });
+    }
+
+    // التنقل بالنقر على الصفوف
+    document.querySelectorAll('.table tbody tr').forEach(function(row) {
+        if (row.querySelector('a')) {
+            row.style.cursor = 'pointer';
+            row.addEventListener('click', function(e) {
+                if (e.target.tagName !== 'A' && e.target.tagName !== 'I') {
+                    var link = this.querySelector('a');
+                    if (link) {
+                        window.location.href = link.href;
+                    }
+                }
+            });
+        }
+    });
+    
+    console.log('✅ Debt report initialized successfully');
+    console.log('📊 Total Transactions: ' + document.querySelectorAll('.table tbody tr').length);
+});
+</script>
+
+{% endblock %}

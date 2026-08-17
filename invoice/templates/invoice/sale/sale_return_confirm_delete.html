@@ -1,0 +1,188 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}حذف مرتجع {{ sale_return.uniqueId }}{% endblock %}
+
+{% block extra_css %}
+<style>
+:root {
+  --aqua-1: #e0f7fa;
+  --aqua-2: #b2ebf2;
+  --aqua-3: #4dd0e1;
+  --aqua-4: #0097a7;
+  --text-dark: #006064;
+  --return-color: #ff9800;
+  --return-light: #fff3e0;
+  --danger-color: #e53935;
+}
+
+body {
+  background-color: var(--aqua-1);
+  font-family: 'Tajawal', sans-serif;
+  display: flex;
+  align-items: center;
+  min-height: 100vh;
+}
+
+.delete-card {
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+  max-width: 500px;
+  margin: 0 auto;
+  overflow: hidden;
+}
+
+.delete-header {
+  background: linear-gradient(135deg, var(--danger-color) 0%, #b71c1c 100%);
+  color: white;
+  padding: 1.5rem;
+  text-align: center;
+}
+
+.delete-header i {
+  font-size: 3rem;
+  margin-bottom: 1rem;
+}
+
+.delete-header h2 {
+  margin: 0;
+  font-size: 1.3rem;
+  font-weight: 600;
+}
+
+.delete-body {
+  padding: 2rem;
+  text-align: center;
+}
+
+.warning-text {
+  color: var(--danger-color);
+  font-weight: 600;
+  margin-bottom: 1.5rem;
+}
+
+.info-box {
+  background: #f8f9fa;
+  border: 1px solid var(--aqua-2);
+  border-radius: 8px;
+  padding: 1rem;
+  margin: 1.5rem 0;
+  text-align: right;
+}
+
+.info-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 0.5rem 0;
+  border-bottom: 1px dashed var(--aqua-2);
+}
+
+.info-row:last-child {
+  border-bottom: none;
+}
+
+.info-label {
+  color: #666;
+  font-size: 0.9rem;
+}
+
+.info-value {
+  font-weight: 600;
+  color: var(--text-dark);
+}
+
+.action-buttons {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+  margin-top: 2rem;
+}
+
+.btn {
+  padding: 0.6rem 1.5rem;
+  border-radius: 6px;
+  font-weight: 600;
+  font-size: 0.9rem;
+  border: none;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  text-decoration: none;
+}
+
+.btn-danger {
+  background: linear-gradient(135deg, var(--danger-color) 0%, #b71c1c 100%);
+  color: white;
+}
+
+.btn-secondary {
+  background: #6c757d;
+  color: white;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="delete-card">
+        <div class="delete-header">
+            <i class="fas fa-exclamation-triangle"></i>
+            <h2>تأكيد حذف مرتجع المبيعات</h2>
+        </div>
+        
+        <div class="delete-body">
+            <div class="warning-text">
+                هل أنت متأكد من حذف مرتجع المبيعات <strong>{{ sale_return.uniqueId }}</strong>؟
+            </div>
+            
+            <p class="text-muted">
+                هذا الإجراء لا يمكن التراجع عنه وسيؤدي إلى:
+            </p>
+            
+            <ul style="text-align: right; color: #666; font-size: 0.9rem;">
+                <li>حذف جميع بنود المرتجع المرتبطة</li>
+                <li>إعادة الباركودات إلى حالة البيع</li>
+                <li>سحب الكميات من المخزون مرة أخرى</li>
+                <li>حذف حركات الصندوق المرتبطة</li>
+            </ul>
+            
+            <div class="info-box">
+                <div class="info-row">
+                    <span class="info-label">رقم المرتجع:</span>
+                    <span class="info-value">{{ sale_return.uniqueId }}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">الفاتورة الأصلية:</span>
+                    <span class="info-value">{{ sale_return.original_sale.uniqueId }}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">تاريخ المرتجع:</span>
+                    <span class="info-value">{{ sale_return.return_date|date:"Y-m-d" }}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">إجمالي المرتجع:</span>
+                    <span class="info-value">{{ sale_return.return_final_total|floatformat:2 }}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">عدد البنود:</span>
+                    <span class="info-value">{{ sale_return.total_items_count }}</span>
+                </div>
+            </div>
+            
+            <form method="post">
+                {% csrf_token %}
+                <div class="action-buttons">
+                    <button type="submit" class="btn btn-danger">
+                        <i class="fas fa-trash"></i> نعم، احذف
+                    </button>
+                    <a href="{% url 'invoice:sale_return_detail' sale_return.slug %}" class="btn btn-secondary">
+                        <i class="fas fa-times"></i> إلغاء
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

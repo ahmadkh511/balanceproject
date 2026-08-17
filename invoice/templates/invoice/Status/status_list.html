@@ -1,0 +1,212 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}قائمة الحالات{% endblock %}
+
+{% block extra_css %}
+    <link rel="stylesheet" href="{% static 'css/print_system.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="container py-4 invoice-print-area" id="printableArea">
+    
+    <div class="d-flex justify-content-between align-items-center mb-4 no-print">
+        <h2>قائمة الحالات</h2>
+        <a href="{% url 'invoice:status_create' %}" class="btn btn-primary no-print">
+            <i class="fas fa-plus ms-1"></i>إضافة حالة جديدة
+        </a>
+    </div>
+    
+    <div class="card" data-print-field="statuses-table">
+        <div class="card-body">
+            {% if statuses %}
+            <div class="table-responsive">
+                <table class="table table-hover" id="statusTable">
+                    <thead>
+                        <tr>
+                            <th data-sort="index"># <span class="sort-icon"><i class="fas fa-sort"></i></span></th>
+                            <th data-sort="name" data-print-field="col-name">الاسم <span class="sort-icon"><i class="fas fa-sort"></i></span></th>
+                            <th data-sort="notes" data-print-field="col-notes">ملاحظات <span class="sort-icon"><i class="fas fa-sort"></i></span></th>
+                            <th data-sort="date" data-print-field="col-date">تاريخ الإنشاء <span class="sort-icon"><i class="fas fa-sort"></i></span></th>
+                            <th class="no-print">الإجراءات</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tableBody">
+                        {% for status in statuses %}
+                        <tr data-status-id="{{ status.pk }}" data-name="{{ status.name }}" data-notes="{{ status.notes|default:'' }}" data-date="{{ status.date_created|date:'Y-m-d H:i' }}">
+                            <td>{{ forloop.counter }}</td>
+                            <td data-print-field="col-name"><strong>{{ status.name }}</strong></td>
+                            <td data-print-field="col-notes">{{ status.notes|default:"-"|truncatechars:50 }}</td>
+                            <td data-print-field="col-date">{{ status.date_created|date:"Y-m-d H:i" }}</td>
+                            <td class="no-print">
+                                <div class="btn-group" role="group">
+                                    <a href="{% url 'invoice:status_detail' status.pk %}" class="btn btn-sm btn-outline-primary">
+                                        <i class="fas fa-eye"></i>
+                                    </a>
+                                    <a href="{% url 'invoice:status_edit' status.pk %}" class="btn btn-sm btn-outline-secondary">
+                                        <i class="fas fa-edit"></i>
+                                    </a>
+                                    <a href="{% url 'invoice:status_delete' status.pk %}" class="btn btn-sm btn-outline-danger">
+                                        <i class="fas fa-trash"></i>
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            
+            <!-- Pagination -->
+            {% if is_paginated %}
+            <nav aria-label="Page navigation" class="no-print">
+                <ul class="pagination justify-content-center">
+                    {% if page_obj.has_previous %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page=1" aria-label="First">
+                            <span aria-hidden="true">&laquo;&laquo;</span>
+                        </a>
+                    </li>
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page_obj.previous_page_number }}" aria-label="Previous">
+                            <span aria-hidden="true">&laquo;</span>
+                        </a>
+                    </li>
+                    {% endif %}
+                    
+                    {% for num in page_obj.paginator.page_range %}
+                    {% if page_obj.number == num %}
+                    <li class="page-item active">
+                        <span class="page-link">{{ num }}</span>
+                    </li>
+                    {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ num }}">{{ num }}</a>
+                    </li>
+                    {% endif %}
+                    {% endfor %}
+                    
+                    {% if page_obj.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page_obj.next_page_number }}" aria-label="Next">
+                            <span aria-hidden="true">&raquo;</span>
+                        </a>
+                    </li>
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}" aria-label="Last">
+                            <span aria-hidden="true">&raquo;&raquo;</span>
+                        </a>
+                    </li>
+                    {% endif %}
+                </ul>
+            </nav>
+            {% endif %}
+            {% else %}
+            <div class="alert alert-info" data-print-field="empty-message">
+                لا توجد حالات حالياً. <a href="{% url 'invoice:status_create' %}" class="no-print">إضافة حالة جديدة</a>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    {# استدعاء قالب نظام الطباعة الموحد #}
+    {% include 'includes/print_system.html' %}
+
+</div>
+{% endblock %}
+
+{% block extra_js %}
+    {# استدعاء ملف نظام الطباعة الموحد #}
+    <script src="{% static 'js/print_system.js' %}"></script>
+    
+    {# كود الفرز الخاص بالجدول (مستقل عن الطباعة) #}
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        var tableBody = document.getElementById('tableBody');
+        var table = document.getElementById('statusTable');
+        
+        if (!table || !tableBody) return;
+        
+        var headers = table.querySelectorAll('thead th[data-sort]');
+        var currentSort = {
+            column: null,
+            direction: 'asc'
+        };
+
+        function sortTable(column, direction) {
+            var rows = Array.from(tableBody.querySelectorAll('tr'));
+            
+            function getSortValue(row) {
+                switch(column) {
+                    case 'index':
+                        return parseInt(row.querySelector('td:first-child')?.textContent || '0');
+                    case 'name':
+                        return row.getAttribute('data-name') || '';
+                    case 'notes':
+                        return row.getAttribute('data-notes') || '';
+                    case 'date':
+                        return row.getAttribute('data-date') || '';
+                    default:
+                        return '';
+                }
+            }
+
+            rows.sort(function(a, b) {
+                var valA = getSortValue(a);
+                var valB = getSortValue(b);
+                
+                if (column === 'index') {
+                    valA = parseFloat(valA) || 0;
+                    valB = parseFloat(valB) || 0;
+                    return direction === 'asc' ? valA - valB : valB - valA;
+                }
+                
+                if (typeof valA === 'string') valA = valA.toLowerCase();
+                if (typeof valB === 'string') valB = valB.toLowerCase();
+                
+                if (valA < valB) return direction === 'asc' ? -1 : 1;
+                if (valA > valB) return direction === 'asc' ? 1 : -1;
+                return 0;
+            });
+
+            rows.forEach(function(row) {
+                tableBody.appendChild(row);
+            });
+        }
+
+        headers.forEach(function(header) {
+            header.addEventListener('click', function(e) {
+                e.stopPropagation();
+                
+                var column = this.getAttribute('data-sort');
+                
+                var direction = 'asc';
+                if (currentSort.column === column && currentSort.direction === 'asc') {
+                    direction = 'desc';
+                } else if (currentSort.column === column && currentSort.direction === 'desc') {
+                    direction = 'asc';
+                }
+                
+                currentSort.column = column;
+                currentSort.direction = direction;
+                
+                headers.forEach(function(th) {
+                    th.classList.remove('active-sort');
+                    var icon = th.querySelector('.sort-icon i');
+                    if (icon) {
+                        icon.className = 'fas fa-sort';
+                    }
+                });
+                
+                this.classList.add('active-sort');
+                var icon = this.querySelector('.sort-icon i');
+                if (icon) {
+                    icon.className = direction === 'asc' ? 'fas fa-sort-up' : 'fas fa-sort-down';
+                }
+                
+                sortTable(column, direction);
+            });
+        });
+    });
+    </script>
+{% endblock %}

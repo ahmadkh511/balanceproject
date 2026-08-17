@@ -1,0 +1,337 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}إعدادات الشركة | نظام إدارة المبيعات{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-10">
+            <div class="card shadow-sm">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-building ml-2"></i>
+                        إعدادات الشركة والفوتـر
+                    </h5>
+                    <small class="d-block mt-1 opacity-75">
+                        <i class="fas fa-info-circle"></i> 
+                        هذه الإعدادات تظهر في الشريط العلوي وتذييل الصفحة لجميع المستخدمين
+                    </small>
+                </div>
+                <div class="card-body">
+                    <form method="post" enctype="multipart/form-data">
+                        {% csrf_token %}
+                        
+                        <!-- ========== القسم 1: معلومات الشركة ========== -->
+                        <div class="card mb-4 border">
+                            <div class="card-header bg-light">
+                                <h6 class="mb-0"><i class="fas fa-building"></i> معلومات الشركة</h6>
+                            </div>
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-md-8 mb-3">
+                                        <label class="form-label fw-bold">{{ form.company_name.label }}</label>
+                                        {{ form.company_name }}
+                                    </div>
+                                    <div class="col-md-4 mb-3">
+                                        <label class="form-label fw-bold">{{ form.company_logo.label }}</label>
+                                        {{ form.company_logo }}
+                                        {% if settings.company_logo %}
+                                            <div class="mt-2">
+                                                <img src="{{ settings.company_logo.url }}" style="max-height: 60px;">
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- ========== القسم 2: معلومات الاتصال ========== -->
+                        <div class="card mb-4 border">
+                            <div class="card-header bg-light">
+                                <h6 class="mb-0"><i class="fas fa-address-card"></i> معلومات الاتصال</h6>
+                            </div>
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label fw-bold">{{ form.contact_email.label }}</label>
+                                        {{ form.contact_email }}
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label fw-bold">{{ form.contact_phone.label }}</label>
+                                        {{ form.contact_phone }}
+                                    </div>
+                                    <div class="col-12 mb-3">
+                                        <label class="form-label fw-bold">{{ form.contact_address.label }}</label>
+                                        {{ form.contact_address }}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- ========== القسم 3: إعدادات واتساب الدعم الفني ========== -->
+                        <div class="card mb-4 border">
+                            <div class="card-header bg-light">
+                                <h6 class="mb-0">
+                                    <i class="fab fa-whatsapp text-success"></i> إعدادات واتساب الدعم الفني
+                                </h6>
+                                <small class="text-muted">تفعيل زر واتساب عائم في المتجر للتواصل المباشر مع العملاء</small>
+                            </div>
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-md-5 mb-3">
+                                        <label class="form-label fw-bold">{{ form.whatsapp_number.label }}</label>
+                                        {{ form.whatsapp_number }}
+                                        <small class="text-muted d-block mt-1">أدخل الرقم مع رمز الدولة بدون علامة + (مثال: 966501234567)</small>
+                                    </div>
+                                    <div class="col-md-7 mb-3">
+                                        <label class="form-label fw-bold">{{ form.whatsapp_message.label }}</label>
+                                        {{ form.whatsapp_message }}
+                                        <small class="text-muted d-block mt-1">هذه الرسالة ستكون جاهزة للإرسال عند ضغط العميل على الزر</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- ========== القسم 4: دمج صفحة الفيسبوك ========== -->
+                        <div class="card mb-4 border border-primary">
+                            <div class="card-header bg-light text-primary">
+                                <h6 class="mb-0">
+                                    <i class="fab fa-facebook fa-lg"></i> ربط صفحة الفيسبوك (لعرض المنشورات في لوحة التحكم)
+                                </h6>
+                            </div>
+                            <div class="card-body">
+                                
+                                <!-- حقول الإدخال -->
+                                <div class="row">
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label fw-bold">{{ form.fb_page_id.label }}</label>
+                                        {{ form.fb_page_id }}
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label fw-bold">{{ form.fb_access_token.label }}</label>
+                                        {{ form.fb_access_token }}
+                                    </div>
+                                </div>
+
+                                <!-- الحل النهائي: فتح الشرح في نافذة منفصلة (لا يمكن لأي كود في النظام التدخل فيها) -->
+                                <div style="margin-top: 15px;">
+                                    <button type="button" id="openFbGuide" class="btn btn-sm btn-outline-info w-100 text-start">
+                                        <i class="fas fa-question-circle me-1"></i> كيف أحصل على (معرف الصفحة) و (رمز الوصول)؟ اضغط هنا لعرض الخطوات في نافذة منفصلة
+                                    </button>
+                                </div>
+
+                            </div>
+                        </div>
+                        
+                        <!-- ========== القسم 5: روابط التواصل الاجتماعي ========== -->
+                        <div class="card mb-4 border">
+                            <div class="card-header bg-light">
+                                <h6 class="mb-0"><i class="fas fa-share-alt"></i> روابط التواصل الاجتماعي</h6>
+                            </div>
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label fw-bold">{{ form.social_facebook.label }}</label>
+                                        {{ form.social_facebook }}
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label fw-bold">{{ form.social_twitter.label }}</label>
+                                        {{ form.social_twitter }}
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label fw-bold">{{ form.social_instagram.label }}</label>
+                                        {{ form.social_instagram }}
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label fw-bold">{{ form.social_linkedin.label }}</label>
+                                        {{ form.social_linkedin }}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- ========== القسم 6: روابط سريعة ========== -->
+                        <div class="card mb-4 border">
+                            <div class="card-header bg-light">
+                                <h6 class="mb-0"><i class="fas fa-link"></i> روابط سريعة</h6>
+                                <small class="text-muted">تظهر في قسم "{{ form.footer_quick_links_title.value|default:'روابط سريعة' }}" في التذييل</small>
+                            </div>
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-md-4 mb-3">
+                                        <label class="form-label fw-bold">{{ form.quick_link_support.label }}</label>
+                                        {{ form.quick_link_support }}
+                                        <small class="text-muted">رابط صفحة الدعم الفني</small>
+                                    </div>
+                                    <div class="col-md-4 mb-3">
+                                        <label class="form-label fw-bold">{{ form.quick_link_guide.label }}</label>
+                                        {{ form.quick_link_guide }}
+                                        <small class="text-muted">رابط دليل الاستخدام</small>
+                                    </div>
+                                    <div class="col-md-4 mb-3">
+                                        <label class="form-label fw-bold">{{ form.quick_link_faq.label }}</label>
+                                        {{ form.quick_link_faq }}
+                                        <small class="text-muted">رابط الأسئلة الشائعة</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- ========== القسم 7: روابط المميزات ========== -->
+                        <div class="card mb-4 border">
+                            <div class="card-header bg-light">
+                                <h6 class="mb-0"><i class="fas fa-star"></i> روابط المميزات</h6>
+                                <small class="text-muted">تظهر في قسم "{{ form.footer_features_title.value|default:'المميزات' }}" في التذييل</small>
+                            </div>
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-md-4 mb-3">
+                                        <label class="form-label fw-bold">{{ form.feature_invoices.label }}</label>
+                                        {{ form.feature_invoices }}
+                                        <small class="text-muted">رابط صفحة إدارة الفواتير</small>
+                                    </div>
+                                    <div class="col-md-4 mb-3">
+                                        <label class="form-label fw-bold">{{ form.feature_inventory.label }}</label>
+                                        {{ form.feature_inventory }}
+                                        <small class="text-muted">رابط صفحة إدارة المخزون</small>
+                                    </div>
+                                    <div class="col-md-4 mb-3">
+                                        <label class="form-label fw-bold">{{ form.feature_reports.label }}</label>
+                                        {{ form.feature_reports }}
+                                        <small class="text-muted">رابط صفحة التقارير الذكية</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- ========== القسم 8: تخصيص التذييل ========== -->
+                        <div class="card mb-4 border">
+                            <div class="card-header bg-light">
+                                <h6 class="mb-0"><i class="fas fa-paint-brush"></i> تخصيص التذييل</h6>
+                            </div>
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label fw-bold">{{ form.footer_quick_links_title.label }}</label>
+                                        {{ form.footer_quick_links_title }}
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label fw-bold">{{ form.footer_features_title.label }}</label>
+                                        {{ form.footer_features_title }}
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label fw-bold">{{ form.footer_contact_title.label }}</label>
+                                        {{ form.footer_contact_title }}
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label fw-bold">{{ form.footer_copyright_text.label }}</label>
+                                        {{ form.footer_copyright_text }}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="d-flex justify-content-between mt-4">
+                            <a href="{% url 'index' %}" class="btn btn-secondary">
+                                <i class="fas fa-times"></i> إلغاء
+                            </a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save"></i> حفظ الإعدادات
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- === كود زر الشرح المنفصل عن النظام (محمي 100% من أي تداخل) === -->
+<script nonce="{{ csp_nonce }}">
+    document.addEventListener('click', function(e) {
+        // التأكد أن الضغط كان على زرنا وليس على أي شيء آخر
+        if (e.target.closest('#openFbGuide')) {
+            e.preventDefault();
+            
+            // نص الشرح الكامل كصفحة HTML كاملة داخل الذاكرة
+            var htmlContent = `
+            <!DOCTYPE html>
+            <html dir="rtl">
+            <head>
+                <meta charset="UTF-8">
+                <title>شرح ربط الفيسبوك</title>
+                <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.rtl.min.css" rel="stylesheet">
+                <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+                <style>
+                    body {
+                        font-family: 'Tajawal', sans-serif;
+                        background-color: #f8f9fa;
+                        padding: 30px;
+                        margin: 0;
+                        color: #333;
+                    }
+                    .close-popup {
+                        float: left;
+                        background: none;
+                        border: none;
+                        font-size: 28px;
+                        cursor: pointer;
+                        color: #dc3545;
+                    }
+                    .close-popup:hover { color: #000; }
+                    h5 { color: #0d6efd; margin-bottom: 20px; }
+                    ol { font-size: 14px; line-height: 2; padding-right: 20px; }
+                    a { color: #0d6efd; font-weight: bold; }
+                    .note-box {
+                        margin-top: 25px;
+                        padding: 12px;
+                        background: white;
+                        border: 1px solid #ddd;
+                        border-right: 4px solid #ffc107;
+                        border-radius: 5px;
+                        font-size: 13px;
+                        color: #555;
+                    }
+                </style>
+            </head>
+            <body>
+                <button class="close-popup" onclick="window.close()">✕</button>
+                <h5><i class="fas fa-book-open"></i> شرح الحصول على البيانات خطوة بخطوة:</h5>
+                <hr>
+                
+                <p style="font-weight:bold; color:#0d6efd;">أولاً: للحصول على (معرف الصفحة - Page ID):</p>
+                <ol>
+                    <li>ادخل إلى صفحتك على فيسبوك من الحاسوب.</li>
+                    <li>من القائمة الجانبية اليسرى، اضغط على <strong>"معلومات" (About)</strong>.</li>
+                    <li>انتقل لأسفل حتى تجد قسم <strong>"معرف الصفحة" (Page ID)</strong>.</li>
+                    <li>انسخ الرقم فقط وضعه في الحقل الأول.</li>
+                </ol>
+
+                <p style="margin-top:15px; font-weight:bold; color:#0d6efd;">ثانياً: للحصول على (رمز الوصول - Access Token):</p>
+                <ol>
+                    <li>اضغط على هذا الرابط: <a href="https://developers.facebook.com/tools/explorer/" target="_blank">موقع مطوري فيسبوك (اضغط هنا)</a></li>
+                    <li>في الأعلى، ستجد قائمة منسدلة مكتوب فيها "User or Page"، اضغط عليها واختر <strong>اسم صفحتك</strong>.</li>
+                    <li>بجانب القائمة المنسدلة، اضغط على أيقونة <strong>"i" (معلومات)</strong> ثم اذهب إلى تبويب <strong>"الأذونات" (Permissions)</strong>.</li>
+                    <li>ابحث عن الخيار <strong>pages_read_engagement</strong> وفعّله (اضغط عليه).</li>
+                    <li>اضغط على الزر الأزرق في الأسفل <strong>"Generate Access Token"</strong> (توليد رمز الوصول).</li>
+                    <li>قد يطلب منك تسجيل الدخول أو الموافقة، وافق على كل شيء.</li>
+                    <li>سيظهر لك رمز طويل جداً يبدأ بـ <strong>EAA...</strong>، قم بنسخه بالكامل وضعه في الحقل الثاني.</li>
+                </ol>
+                <div class="note-box">
+                    <i class="fas fa-exclamation-triangle" style="color: #ffc107;"></i>
+                    <strong>ملاحظة هامة:</strong> هذا الرمز يكون صالحاً عادة لمدة 60 يوماً. إذا توقف عرض المنشورات، كل ما عليك هو إعادة الخطوات السابقة للحصول على رمز جديد.
+                </div>
+            </body>
+            </html>
+            `;
+            
+            // فتح نافذة منبثقة صغيرة ونظيفة وكتابة المحتوى بداخلها
+            var guideWindow = window.open('', '_blank', 'width=650,height=750,scrollbars=yes,top=50,left=200');
+            guideWindow.document.write(htmlContent);
+            guideWindow.document.close(); // نغلق مجرى الكتابة لضمان تطابق المحتوى تماماً
+        }
+    });
+</script>
+
+{% endblock %}

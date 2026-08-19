@@ -118,7 +118,7 @@ if IS_LOCAL:
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.mysql',
-            'NAME': 'accounting_db',
+            'NAME': 'balanceiq_db',
             'USER': 'root',
             'PASSWORD': os.getenv('DB_PASSWORD', ''),
             'HOST': '127.0.0.1',
@@ -198,6 +198,7 @@ PASSWORD_RESET_TIMEOUT = 86400  # 24 ساعة
 
 # ✅ تم التعديل: إضافة الدومين الجديد
 SITE_URL = 'http://localhost:8000' if IS_LOCAL else 'https://balanceiqsoft.com'
+
 
 # ==========================================
 # 12. إعدادات الأمان (تم تحديثها لسد ثغرات check --deploy و Mozilla)

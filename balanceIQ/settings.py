@@ -118,11 +118,11 @@ if IS_LOCAL:
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.mysql',
-            'NAME': 'balanceiq_db',
-            'USER': 'root',
+            'NAME': os.getenv('DB_NAME', 'balanceiq_db'),
+            'USER': os.getenv('DB_USER', 'root'),
             'PASSWORD': os.getenv('DB_PASSWORD', ''),
-            'HOST': '127.0.0.1',
-            'PORT': '3306',
+            'HOST': os.getenv('DB_HOST', '127.0.0.1'),
+            'PORT': os.getenv('DB_PORT', '3306'),
             'OPTIONS': {
                 'charset': 'utf8mb4',
                 'init_command': "SET sql_mode='STRICT_TRANS_TABLES'",
@@ -142,7 +142,7 @@ else:
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.mysql',
-            'NAME': os.getenv('DB_NAME', 'accounting_db'),
+            'NAME': os.getenv('DB_NAME', 'balanceiq_db'),
             'USER': os.getenv('DB_USER', 'root'),
             'PASSWORD': DB_PASSWORD,
             'HOST': os.getenv('DB_HOST', 'localhost'),
@@ -152,7 +152,7 @@ else:
                 'init_command': "SET sql_mode='STRICT_TRANS_TABLES'",
             },
             'TEST': {
-                'NAME': f"test_{os.getenv('DB_NAME', 'accounting_db')}",
+                'NAME': f"test_{os.getenv('DB_NAME', 'balanceiq_db')}",
             },
         }
     }
@@ -199,7 +199,6 @@ PASSWORD_RESET_TIMEOUT = 86400  # 24 ساعة
 # ✅ تم التعديل: إضافة الدومين الجديد
 SITE_URL = 'http://localhost:8000' if IS_LOCAL else 'https://balanceiqsoft.com'
 
-
 # ==========================================
 # 12. إعدادات الأمان (تم تحديثها لسد ثغرات check --deploy و Mozilla)
 # ==========================================
@@ -211,14 +210,14 @@ if IS_LOCAL:
     SECURE_HSTS_SECONDS = 0
 else:
     # ===== على السيرفر (VPS): نطبق أعلى معايير الأمان =====
-    
+
     # 1. حماية الكوكيز
     CSRF_COOKIE_SECURE = True
     SESSION_COOKIE_SECURE = True
-    
+
     # 2. التحويل الإجباري لـ HTTPS
     SECURE_SSL_REDIRECT = True
-    
+
     # 3. دعم الـ Proxy (لـ Nginx)
     SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 
@@ -227,7 +226,7 @@ else:
         'https://balanceiqsoft.com',
         'https://www.balanceiqsoft.com',
     ]
-    
+
     # 5. إعداد HSTS
     SECURE_HSTS_SECONDS = 31536000  # سنة كاملة
     SECURE_HSTS_INCLUDE_SUBDOMAINS = True
@@ -335,24 +334,13 @@ if IS_LOCAL:
         }
     }
 else:
-    # ✅ على السيرفر: نحاول Redis إن وجد، وإلا نستخدم الملفات
-    try:
-        CACHES = {
-            'default': {
-                'BACKEND': 'django_redis.cache.RedisCache',
-                'LOCATION': 'redis://127.0.0.1:6379/1',
-                'OPTIONS': {
-                    'CLIENT_CLASS': 'django_redis.client.DefaultClient',
-                }
-            }
+    # ✅ على السيرفر: استخدام Cache بالملفات (آمن ومستقر)
+    CACHES = {
+        'default': {
+            'BACKEND': 'django.core.cache.backends.filebased.FileBasedCache',
+            'LOCATION': os.path.join(BASE_DIR, 'cache'),
         }
-    except:
-        CACHES = {
-            'default': {
-                'BACKEND': 'django.core.cache.backends.filebased.FileBasedCache',
-                'LOCATION': os.path.join(BASE_DIR, 'cache'),
-            }
-        }
+    }
 
 # ==========================================
 # 15. إعدادات خاصة بالنظام

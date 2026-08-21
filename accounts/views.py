@@ -1030,3 +1030,6 @@ def user_manual(request):
     return render(request, 'accounts/user_manual.html', {
         'manual_content': manual_content
     })
+
+
+    

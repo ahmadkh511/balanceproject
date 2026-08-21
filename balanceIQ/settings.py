@@ -369,3 +369,11 @@ DEFAULT_FROM_EMAIL = os.getenv('DEFAULT_FROM_EMAIL', 'admin@balanceiqsoft.com')
 # CSP_STYLE_SRC = ("'self'", "'unsafe-inline'", "https://fonts.googleapis.com")
 # CSP_IMG_SRC = ("'self'", "data:", "https:")
 # CSP_FONT_SRC = ("'self'", "https://fonts.gstatic.com")
+
+
+
+# ==========================================
+# ✅ تم الرفع إلى الاستضافة بتاريخ: 2026-08-21
+# ✅ آخر تعديل: إضافة ALLOWED_HOSTS وإعدادات الأمان
+# ✅ تمت المراجعة بواسطة: (اسمك)
+# ==========================================

@@ -1,0 +1,91 @@
+/* استيراد خط Tajawal من جوجل */
+@import url('https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700&display=swap');
+
+/* تطبيق ألوان Aqua Design System الأساسية */
+:root {
+  --md-primary-fg-color:        #0097a7; /* aqua-4 */
+  --md-primary-fg-color--light: #4dd0e1; /* aqua-3 */
+  --md-primary-fg-color--dark:  #006064; /* text-dark */
+  
+  --md-accent-fg-color:         #0097a7; /* aqua-4 */
+  
+  --md-default-bg-color:        #e0f7fa; /* aqua-1 خلفية الصفحة */
+}
+
+/* ✨ التعديل المطلوب: تطبيق التدرج اللوني (Gradient) على الشريط العلوي (Header) */
+.md-header {
+  background: linear-gradient(135deg, var(--md-primary-fg-color) 0%, #006064 100%) !important;
+}
+
+/* ✨ إضافة احترافية: تطبيق نفس التدرج على القائمة الجانبية */
+.md-sidebar--primary .md-sidebar__scrollwrap {
+  background: linear-gradient(180deg, var(--md-primary-fg-color) 0%, #006064 100%) !important;
+}
+
+/* جعل نص القائمة الجانبية أبيض ليظهر بوضوح على الخلفية المتدرجة الداكنة */
+.md-sidebar--primary .md-nav__link,
+.md-sidebar--primary .md-nav__item .md-nav__link {
+  color: rgba(255, 255, 255, 0.85) !important;
+}
+
+/* تحسين ظهور اسم الصفحة الحالية (العنصر النشط) في القائمة الجانبية */
+.md-sidebar--primary .md-nav__item--active > .md-nav__link {
+  color: #ffffff !important; /* أبيض ناصع لضمان الوضوح التام */
+  font-weight: 700 !important; /* خط أكثر سماكة */
+  background-color: rgba(255, 255, 255, 0.1) !important; /* خلفية بيضاء شفافة جداً لتمييز السطر بالكامل */
+  border-radius: 4px; /* حواف دائرية ناعمة للخلفية */
+}
+
+/* تغيير خط الموقع بالكامل إلى Tajawal */
+body, input, textarea, button, .md-typeset {
+  font-family: 'Tajawal', sans-serif !important;
+}
+
+/* تحسين شكل العناوين */
+.md-typeset h1, .md-typeset h2, .md-typeset h3 {
+  color: #006064; /* text-dark */
+  font-weight: 700;
+}
+
+/* تنسيق الروابط */
+.md-typeset a {
+  color: #0097a7;
+}
+.md-typeset a:hover {
+  color: #006064;
+  text-decoration: underline;
+}
+
+/* تنسيق صناديق الأكواد */
+.md-typeset code {
+  background-color: #b2ebf2; /* aqua-2 */
+  color: #006064;
+}
+
+
+/* ============================================
+   تنسيقات الفوتر (Footer)
+   ============================================ */
+
+/* تطبيق نفس التدرج اللوني الخاص بالهيدر على الفوتر */
+.md-footer-meta {
+    background: linear-gradient(135deg, var(--md-primary-fg-color) 0%, #006064 100%) !important;
+}
+
+/* جعل لون النص الافتراضي في الفوتر أبيض ليظهر على الخلفية الداكنة */
+.md-footer-copyright {
+    color: #ffffff !important;
+}
+
+/* تنسيق الرابط داخل الفوتر */
+.md-footer-copyright a {
+    color: #e0f7fa !important; /* لون تركوازي فاتح (aqua-1) لتمييز الرابط */
+    font-weight: bold;
+    text-decoration: none;
+}
+
+/* تأثير عند مرور الماوس على الرابط */
+.md-footer-copyright a:hover {
+    text-decoration: underline !important;
+    color: #ffffff !important;
+}

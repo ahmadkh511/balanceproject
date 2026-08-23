@@ -1,4 +1,4 @@
-site_name: نظام الأزوردي - دليل المستخدم
+site_name: نظام BalanceIQ - دليل المستخدم
 site_url: http://localhost/docs/
 use_directory_urls: false  # ضروري جداً لكي تعمل الروابط داخل Django بدون خطأ 404
 
@@ -36,4 +36,4 @@ nav:
   - 🏠 العودة للتطبيق: /  # رابط العودة لصفحة Django الرئيسية
 
 
-copyright: "© 2026 <a href='/' target='_blank'>نظام الأزوردي</a> - جميع الحقوق محفوظة"
+copyright: "© 2026 <a href='/' target='_blank'>نظام BalanceIQ</a> - جميع الحقوق محفوظة"

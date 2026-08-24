@@ -5,6 +5,10 @@ from .models import Trial
 
 thread_local = threading.local()
 
+def get_current_trial_db():
+    # دالة مساعدة ليقرأ منها الـ Router
+    return getattr(thread_local, 'trial_db', None)
+
 class TrialMiddleware:
     def __init__(self, get_response):
         self.get_response = get_response
@@ -13,7 +17,7 @@ class TrialMiddleware:
         # تهيئة المتغير
         thread_local.trial_db = None
         
-        # جلب معرف المستخدم مباشرة من الجلسة (Session) لتجنب استعلامات الـ DB
+        # جلب معرف المستخدم مباشرة من الجلسة (Session)
         user_id = request.session.get('_auth_user_id')
         if user_id:
             try:

@@ -72,13 +72,14 @@ MIDDLEWARE = [
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
+     # ================= من اجل الفترة التجريبية  =================
+    'trials.middleware.TrialMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     # ================= تمت الإضافة: سياسة أمان المحتوى (CSP) =================
     'balanceIQ.middlewares.CustomCSPMiddleware',
-    # ================= من اجل الفترة التجريبية  =================
-    'trials.middleware.TrialMiddleware',
+   
 ]
 
 ROOT_URLCONF = 'balanceIQ.urls'

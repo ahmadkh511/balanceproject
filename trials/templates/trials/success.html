@@ -1,12 +1,147 @@
-<!DOCTYPE html>
-<html lang="ar" dir="rtl">
-<head>
-    <meta charset="UTF-8">
-    <title>تم بنجاح</title>
-</head>
-<body>
-    <h2>تم إنشاء حسابك التجريبي بنجاح! 🎉</h2>
-    <p>لديك 10 أيام لتجربة النظام بكامل ميزاته.</p>
-    <a href="{% url 'accounts:login' %}">اضغط هنا لتسجيل الدخول</a>
-</body>
-</html>
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}تم إنشاء حسابك التجريبي{% endblock %}
+
+{% block extra_css %}
+<style nonce="{{ csp_nonce }}">
+    .success-container {
+        display: flex; justify-content: center; align-items: center;
+        min-height: calc(100vh - 40px); padding: 20px;
+    }
+    .success-box { 
+        background: rgba(255,255,255,0.95); 
+        padding: 40px; 
+        border-radius: 24px; 
+        box-shadow: 0 20px 60px rgba(0,96,100,0.22); 
+        text-align: center; 
+        max-width: 500px; 
+        width: 100%;
+    }
+    .success-icon {
+        width: 80px; height: 80px; background: #f0fdf4; border-radius: 50%;
+        display: flex; align-items: center; justify-content: center; margin: 0 auto 20px;
+        font-size: 2.5rem; color: #22c55e;
+    }
+    .credentials { 
+        background: #f8fafc; 
+        padding: 20px; 
+        border-radius: 10px; 
+        margin: 20px 0; 
+        border: 1px dashed #94a3b8; 
+        direction: ltr; 
+        text-align: left; 
+        font-family: monospace;
+        font-size: 1.1rem;
+    }
+    .btn-action { 
+        background: linear-gradient(135deg, #0097a7 0%, #006064 100%); 
+        color: #fff; 
+        padding: 12px 24px; 
+        text-decoration: none; 
+        border-radius: 6px; 
+        display: inline-flex; 
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        font-weight: bold; 
+        transition: transform 0.2s;
+        border: none;
+        cursor: pointer;
+        width: 100%;
+        font-size: 1rem;
+        margin-top: 10px;
+    }
+    .btn-action:hover { transform: translateY(-2px); }
+    .btn-secondary {
+        background: #fff;
+        color: #006064;
+        border: 1.5px solid #0097a7;
+    }
+    .btn-secondary:hover {
+        background: #e0f7fa;
+    }
+    .alert-box {
+        background: #fffbeb;
+        border: 1px solid #fcd34d;
+        color: #92400e;
+        padding: 15px;
+        border-radius: 8px;
+        margin: 20px 0;
+        font-size: 0.9rem;
+        display: flex;
+        align-items: flex-start;
+        gap: 10px;
+        text-align: right;
+    }
+    .alert-box i { margin-top: 3px; }
+</style>
+{% endblock %}
+
+{% block auth_content %}
+<div class="success-container">
+    <div class="success-box">
+        <div class="success-icon"><i class="fas fa-check-circle"></i></div>
+        <h2 style="color: #006064; margin-bottom: 10px;">تم إعداد نظامك التجريبي بنجاح!</h2>
+        
+        <div class="alert-box">
+            <i class="fas fa-exclamation-triangle"></i>
+            <div>
+                <strong>تنبيه هام:</strong> فترتك التجريبية مدتها <strong>10 أيام</strong> فقط. 
+                يرجى حفظ بيانات الدخول أدناه، حيث سيتم حذف النظام والبيانات التجريبية بالكامل بعد انتهاء هذه المدة.
+            </div>
+        </div>
+        
+        <p style="color: #64748b;">استخدم بيانات الدخول التالية للوصول إلى نظامك:</p>
+        
+        {% if credentials %}
+        <div class="credentials">
+            <p style="margin: 0 0 10px;"><strong>Username:</strong> <span id="usernameVal">{{ credentials.username }}</span></p>
+            <p style="margin: 0;"><strong>Password:</strong> <span id="passwordVal">{{ credentials.password }}</span></p>
+        </div>
+        
+        <button class="btn-action btn-secondary" onclick="copyCredentials()">
+            <i class="fas fa-copy"></i> نسخ البيانات
+        </button>
+        
+        <button class="btn-action btn-secondary" onclick="downloadCredentials()">
+            <i class="fas fa-download"></i> تنزيل بيانات الدخول (TXT)
+        </button>
+        {% endif %}
+
+        <a href="{% url 'accounts:login' %}" class="btn-action">
+            <i class="fas fa-sign-in-alt"></i> اضغط هنا لتسجيل الدخول
+        </a>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script nonce="{{ csp_nonce }}">
+    function copyCredentials() {
+        const username = document.getElementById('usernameVal').innerText;
+        const password = document.getElementById('passwordVal').innerText;
+        const text = `BalanceIQ System Login\nUsername: ${username}\nPassword: ${password}`;
+        
+        navigator.clipboard.writeText(text).then(() => {
+            alert('تم نسخ البيانات بنجاح!');
+        }).catch(err => {
+            alert('فشل النسخ، يرجى النسخ يدوياً.');
+        });
+    }
+
+    function downloadCredentials() {
+        const username = document.getElementById('usernameVal').innerText;
+        const password = document.getElementById('passwordVal').innerText;
+        const text = `=================================\nBalanceIQ System Login\n=================================\n\nUsername: ${username}\nPassword: ${password}\n\nTrial Duration: 10 Days\n\nNote: Please keep this information safe.\n`;
+        
+        const blob = new Blob([text], {type: "text/plain;charset=utf-8"});
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(blob);
+        link.download = 'BalanceIQ_Login_Info.txt';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    }
+</script>
+{% endblock %}

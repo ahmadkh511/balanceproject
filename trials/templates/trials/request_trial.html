@@ -1,35 +1,431 @@
-<!DOCTYPE html>
-<html lang="ar" dir="rtl">
-<head>
-    <meta charset="UTF-8">
-    <title>طلب فترة تجريبية</title>
-    <style>
-        body { font-family: sans-serif; background: #f4f4f4; display: flex; justify-content: center; padding-top: 50px; }
-        .form-box { background: #fff; padding: 30px; border-radius: 8px; box-shadow: 0 0 10px rgba(0,0,0,0.1); width: 400px; }
-        input { width: 100%; padding: 10px; margin: 10px 0; box-sizing: border-box; }
-        button { background: #007bff; color: #fff; border: none; padding: 10px; width: 100%; cursor: pointer; }
-    </style>
-</head>
-<body>
-    <div class="form-box">
-        <h2>اطلب نسختك التجريبية الآن</h2>
-        {% if messages %}
-            <ul style="color: red;">
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}طلب فترة تجريبية | BalanceIQ{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/intl-tel-input@18.2.1/build/css/intlTelInput.css">
+<style nonce="{{ csp_nonce }}">
+    :root {
+        --aqua-1: #e0f7fa; --aqua-2: #b2ebf2; --aqua-3: #4dd0e1; --aqua-4: #0097a7;
+        --text-dark: #006064; --text-light: #ffffff;
+        --shadow-xl: 0 20px 60px rgba(0,96,100,0.22);
+        --radius-sm: 6px; --radius-md: 10px; --radius-xl: 24px;
+    }
+
+    body {
+        background: linear-gradient(160deg, #e0f7fa 0%, #b2ebf2 30%, #80deea 60%, #4dd0e1 100%) !important;
+        min-height: 100vh; margin: 0; padding: 20px;
+        font-family: 'Tajawal', sans-serif;
+    }
+
+    .auth-container {
+        display: flex; justify-content: center; align-items: center;
+        min-height: calc(100vh - 40px); padding: 20px;
+        position: relative;
+    }
+
+    .auth-container::before, .auth-container::after {
+        content: ''; position: fixed; border-radius: 50%; pointer-events: none; z-index: 0;
+    }
+    .auth-container::before {
+        top: -20%; right: -10%; width: 500px; height: 500px;
+        background: radial-gradient(circle, rgba(255,255,255,0.25) 0%, transparent 70%);
+        animation: fb1 18s ease-in-out infinite;
+    }
+    .auth-container::after {
+        bottom: -15%; left: -5%; width: 400px; height: 400px;
+        background: radial-gradient(circle, rgba(0,150,167,0.12) 0%, transparent 70%);
+        animation: fb2 22s ease-in-out infinite;
+    }
+    @keyframes fb1 { 0%,100%{transform:translate(0,0) scale(1)} 50%{transform:translate(-30px,20px) scale(1.08)} }
+    @keyframes fb2 { 0%,100%{transform:translate(0,0)} 50%{transform:translate(20px,-30px) scale(1.05)} }
+
+    .auth-card {
+        background: rgba(255,255,255,0.92); backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px);
+        border-radius: var(--radius-xl); box-shadow: var(--shadow-xl);
+        width: 100%; max-width: 520px; overflow: hidden;
+        border: 1px solid rgba(255,255,255,0.6); position: relative; z-index: 1;
+        animation: cardEntrance 0.7s cubic-bezier(0.22,1,0.36,1) both;
+    }
+    @keyframes cardEntrance { from{opacity:0;transform:translateY(40px) scale(0.96)} to{opacity:1;transform:translateY(0) scale(1)} }
+
+    .auth-header {
+        background: linear-gradient(135deg, var(--aqua-4) 0%, var(--text-dark) 100%);
+        color: var(--text-light); padding: 2.5rem 2rem 2rem; text-align: center;
+        position: relative; overflow: hidden;
+    }
+    .auth-header::before {
+        content: ''; position: absolute; top: -60%; right: -30%; width: 200%; height: 200%;
+        background: radial-gradient(circle, rgba(255,255,255,0.07) 0%, transparent 60%);
+        animation: headerGlow 25s linear infinite;
+    }
+    @keyframes headerGlow { from{transform:rotate(0deg)} to{transform:rotate(360deg)} }
+
+    .auth-icon-wrap {
+        width: 72px; height: 72px; background: rgba(255,255,255,0.15);
+        border-radius: 50%; display: flex; align-items: center; justify-content: center;
+        margin: 0 auto 1rem; border: 2px solid rgba(255,255,255,0.25);
+        position: relative; z-index: 1; animation: iconPulse 3s ease-in-out infinite;
+    }
+    @keyframes iconPulse { 0%,100%{transform:scale(1);box-shadow:0 0 0 0 rgba(255,255,255,0.2)} 50%{transform:scale(1.05);box-shadow:0 0 0 10px rgba(255,255,255,0)} }
+    .auth-icon-wrap i { font-size: 1.8rem; }
+    .auth-header h2 { font-weight: 700; font-size: 1.5rem; margin-bottom: 0.3rem; position: relative; z-index: 1; }
+    .auth-header p { margin: 0; opacity: 0.85; font-size: 0.9rem; position: relative; z-index: 1; }
+
+    .auth-body { padding: 2rem; }
+
+    .auth-form-group { margin-bottom: 1.25rem; position: relative; }
+    .auth-label {
+        display: flex; align-items: center; gap: 0.35rem;
+        font-weight: 600; font-size: 0.82rem; color: var(--text-dark); margin-bottom: 0.4rem;
+    }
+    .auth-label i { font-size: 0.75rem; color: var(--aqua-4); }
+    .auth-label .required-star { color: #dc2626; font-size: 0.7rem; }
+
+    .auth-input-wrap { position: relative; display: flex; align-items: center; }
+    .auth-input-icon {
+        position: absolute; right: 14px; color: #94a3b8; font-size: 0.9rem;
+        transition: color 0.3s; pointer-events: none; z-index: 2;
+    }
+    .auth-input-wrap:focus-within .auth-input-icon { color: var(--aqua-4); }
+
+    .auth-input {
+        width: 100%; border: 1.5px solid var(--aqua-2); border-radius: var(--radius-sm);
+        padding: 0.65rem 2.5rem 0.65rem 0.65rem; font-size: 0.9rem;
+        font-family: 'Tajawal', sans-serif; background: #fff; color: #334155;
+        transition: all 0.25s; outline: none;
+    }
+    .auth-input::placeholder { color: #b0bec5; font-size: 0.85rem; }
+    .auth-input:focus { border-color: var(--aqua-3); box-shadow: 0 0 0 3px rgba(77,208,225,0.18); }
+    .auth-input.is-valid { border-color: #22c55e; }
+    .auth-input.is-invalid { border-color: #dc2626; }
+
+    .auth-textarea {
+        min-height: 80px; resize: vertical; padding-top: 0.65rem;
+    }
+
+    .field-error {
+        color: #dc2626; font-size: 0.75rem; margin-top: 0.3rem;
+        display: flex; align-items: center; gap: 0.3rem; animation: fadeInDown 0.3s ease;
+    }
+    @keyframes fadeInDown { from{opacity:0;transform:translateY(-5px)} to{opacity:1;transform:translateY(0)} }
+
+    .auth-alert {
+        border-radius: var(--radius-md); padding: 0.85rem 1rem; font-size: 0.85rem;
+        display: flex; align-items: flex-start; gap: 0.6rem; margin-bottom: 1.5rem; border: none;
+    }
+    .auth-alert-success {
+        background: linear-gradient(135deg, #f0fdf4 0%, #d1fae5 100%);
+        color: #065f46; border-right: 4px solid #22c55e;
+    }
+    .auth-alert-danger {
+        background: linear-gradient(135deg, #fff5f5 0%, #fee2e2 100%);
+        color: #b91c1c; border-right: 4px solid #dc2626;
+        animation: alertShake 0.5s ease-in-out;
+    }
+    @keyframes alertShake {
+        0%,100%{transform:translateX(0)} 15%,45%,75%{transform:translateX(-4px)} 30%,60%,90%{transform:translateX(4px)}
+    }
+    .auth-alert i { margin-top: 2px; flex-shrink: 0; }
+
+    /* ===== تحسين مظهر الـ Checkboxes ===== */
+    .form-check {
+        padding-right: 0; display: flex; align-items: center; gap: 0.5rem;
+    }
+    .form-check-input {
+        margin-right: 0; margin-left: 0.5rem; width: 18px; height: 18px;
+        border-radius: 4px; border: 2px solid var(--aqua-2); background: #fff;
+        cursor: pointer; transition: all 0.2s; flex-shrink: 0; position: relative;
+        appearance: none; -webkit-appearance: none;
+    }
+    .form-check-input:checked { background: var(--aqua-4); border-color: var(--aqua-4); }
+    .form-check-input:checked::after {
+        content: '\f00c'; font-family: 'Font Awesome 6 Free'; font-weight: 900;
+        color: white; font-size: 0.6rem; position: absolute; top: 50%; left: 50%;
+        transform: translate(-50%, -50%);
+    }
+    .form-check-input:focus {
+        box-shadow: 0 0 0 3px rgba(77,208,225,0.18); border-color: var(--aqua-3); outline: none;
+    }
+    .form-check-label { font-size: 0.85rem; color: #475569; cursor: pointer; display: flex; align-items: center; gap: 0.3rem; }
+
+    .auth-btn {
+        display: flex; align-items: center; justify-content: center; gap: 0.5rem;
+        width: 100%; padding: 0.75rem; border-radius: var(--radius-sm);
+        font-family: 'Tajawal', sans-serif; font-weight: 700; font-size: 0.95rem;
+        border: none; cursor: pointer; transition: all 0.25s ease; position: relative; overflow: hidden;
+    }
+    .auth-btn-primary {
+        background: linear-gradient(135deg, var(--aqua-4) 0%, var(--text-dark) 100%);
+        color: var(--text-light); box-shadow: 0 4px 14px rgba(0,150,167,0.3);
+    }
+    .auth-btn-primary:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(0,150,167,0.4); }
+    .auth-btn-primary::before {
+        content: ''; position: absolute; top: 0; left: -100%; width: 100%; height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(255,255,255,0.15), transparent);
+        transition: left 0.5s;
+    }
+    .auth-btn-primary:hover:not(:disabled)::before { left: 100%; }
+    .auth-btn-primary:disabled { opacity: 0.5; cursor: not-allowed; transform: none; box-shadow: none; }
+
+    .trial-features {
+        display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem;
+        margin: 1.5rem 0; background: var(--aqua-1); border-radius: var(--radius-sm);
+        padding: 0.75rem 1rem; border: 1px solid var(--aqua-2);
+    }
+    .trial-features li {
+        list-style: none; display: flex; align-items: center; gap: 0.4rem;
+        font-size: 0.8rem; color: var(--text-dark); font-weight: 500;
+    }
+    .trial-features li i { color: var(--aqua-4); }
+
+    .auth-card-footer {
+        text-align: center; padding-top: 1.5rem; margin-top: 1.5rem;
+        border-top: 1px solid var(--aqua-2); font-size: 0.88rem; color: #64748b;
+    }
+    .auth-card-footer a { color: var(--aqua-4); text-decoration: none; font-weight: 700; }
+
+    /* ===== intl-tel-input ===== */
+    .iti { width: 100%; direction: ltr; }
+    .iti__flag-container { direction: ltr; position: absolute; left: 0; right: auto; top: 0; bottom: 0; display: flex; align-items: center; padding: 0 4px 0 6px; background: #fff; border-left: 1.5px solid var(--aqua-2); border-radius: 0 var(--radius-sm) var(--radius-sm) 0; z-index: 5; }
+    .iti--separate-dial-code .iti__selected-flag { padding: 0 4px 0 0 !important; border: none !important; background: transparent !important; }
+    .iti .auth-input.iti__tel-input { padding-left: 105px !important; padding-right: 0.65rem !important; direction: ltr; text-align: left; }
+    .auth-input-wrap:has(.iti) .auth-input-icon { display: none; }
+    .iti__country-list { border-radius: 10px; box-shadow: 0 10px 30px rgba(0,0,0,0.15); max-height: 240px; border: 1px solid var(--aqua-2); margin-top: 4px; font-family: 'Tajawal', sans-serif; }
+    .iti__country-list .iti__country { padding: 7px 12px; font-size: 0.84rem; font-family: 'Tajawal', sans-serif; }
+    .iti__country-list .iti__highlight { background: var(--aqua-1); }
+    .iti__search-input { border-radius: 8px; padding: 8px 12px; font-size: 0.82rem; margin: 6px; direction: ltr; font-family: 'Tajawal', sans-serif; border: 1.5px solid var(--aqua-2); background: #fff; }
+
+    /* ===== العلم الجديد لسوريا (علم الاستقلال - 3 نجوم حمراء) ===== */
+    .iti__flag.iti__sy,
+    .iti__country-list .iti__flag.iti__sy {
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 900 600'%3E%3Crect fill='%23007A3D' width='900' height='200'/%3E%3Crect fill='%23ffffff' width='900' height='200' y='200'/%3E%3Crect fill='%2323211F' width='900' height='200' y='400'/%3E%3Cg fill='%23CE1126' transform='translate(450,300)'%3E%3Cpolygon id='s' points='0,-38 10.5,-12.2 40.5,-12.2 16.5,4.8 25,34 0,14.5 -25,34 -16.5,4.8 -40.5,-12.2 -10.5,-12.2'/%3E%3Cuse href='%23s' x='-100'/%3E%3Cuse href='%23s' x='100'/%3E%3C/g%3E%3C/svg%3E") !important;
+        background-size: 100% 100% !important;
+        background-position: center !important;
+        background-repeat: no-repeat !important;
+    }
+
+    /* ===== التجاوب ===== */
+    @media (max-width: 480px) {
+        .auth-card { max-width: 100%; border-radius: var(--radius-md); }
+        .auth-header { padding: 2rem 1.5rem 1.5rem; }
+        .auth-body { padding: 1.5rem; }
+        .auth-header h2 { font-size: 1.3rem; }
+        .trial-features { grid-template-columns: 1fr; }
+        .iti .auth-input.iti__tel-input { padding-left: 90px !important; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+        *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
+    }
+</style>
+{% endblock %}
+
+{% block auth_content %}
+<div class="auth-container">
+    <div class="auth-card">
+        <div class="auth-header">
+            <div class="auth-icon-wrap"><i class="fas fa-rocket"></i></div>
+            <h2>طلب فترة تجريبية مجانية</h2>
+            <p>ابدأ رحلتك مع BalanceIQ لمدة 10 أيام مجاناً</p>
+        </div>
+
+        <div class="auth-body">
+            {% if messages %}
                 {% for message in messages %}
-                    <li>{{ message }}</li>
+                <div class="auth-alert auth-alert-{% if message.tags == 'success' %}success{% else %}danger{% endif %}">
+                    <i class="fas {% if message.tags == 'success' %}fa-check-circle{% else %}fa-exclamation-circle{% endif %}"></i>
+                    <div>{{ message }}</div>
+                </div>
                 {% endfor %}
+            {% endif %}
+
+            <ul class="trial-features">
+                <li><i class="fas fa-check-circle"></i> 10 أيام مجاناً</li>
+                <li><i class="fas fa-check-circle"></i> جميع الوحدات متاحة</li>
+                <li><i class="fas fa-check-circle"></i> دعم فني متواصل</li>
+                <li><i class="fas fa-check-circle"></i> بدون بطاقة دفع</li>
             </ul>
-        {% endif %}
-        <form method="POST">
-            {% csrf_token %}
-            <label>اسم المستخدم:</label>
-            <input type="text" name="username" required>
-            <label>البريد الإلكتروني:</label>
-            <input type="email" name="email" required>
-            <label>كلمة المرور:</label>
-            <input type="password" name="password" required>
-            <button type="submit">بدء التجربة المجانية</button>
-        </form>
+
+            <form method="post" id="trialForm" novalidate>
+                {% csrf_token %}
+
+                <!-- اسم المتجر / الشركة -->
+                <div class="auth-form-group">
+                    <label class="auth-label" for="company_name">
+                        <i class="fas fa-building"></i> اسم المتجر / الشركة <span class="required-star">*</span>
+                    </label>
+                    <div class="auth-input-wrap">
+                        <input type="text" class="auth-input" name="company_name" id="company_name" placeholder="مثال: متجر النور" required autocomplete="organization">
+                        <i class="fas fa-building auth-input-icon"></i>
+                    </div>
+                </div>
+
+                <!-- الاسم الكامل -->
+                <div class="auth-form-group">
+                    <label class="auth-label" for="full_name">
+                        <i class="fas fa-user"></i> الاسم الكامل <span class="required-star">*</span>
+                    </label>
+                    <div class="auth-input-wrap">
+                        <input type="text" class="auth-input" name="full_name" id="full_name" placeholder="مثال: أحمد محمد" required autocomplete="name">
+                        <i class="fas fa-user auth-input-icon"></i>
+                    </div>
+                </div>
+
+                <!-- البريد الإلكتروني -->
+                <div class="auth-form-group">
+                    <label class="auth-label" for="email">
+                        <i class="fas fa-envelope"></i> البريد الإلكتروني <span class="required-star">*</span>
+                    </label>
+                    <div class="auth-input-wrap">
+                        <input type="email" class="auth-input" name="email" id="email" placeholder="example@domain.com" required autocomplete="email" dir="ltr" style="text-align:right;">
+                        <i class="fas fa-envelope auth-input-icon"></i>
+                    </div>
+                </div>
+
+                <!-- رقم الهاتف - مع intl-tel-input -->
+                <div class="auth-form-group">
+                    <label class="auth-label" for="trialPhoneInput">
+                        <i class="fas fa-phone"></i> رقم الهاتف <span class="required-star">*</span>
+                    </label>
+                    <div class="auth-input-wrap">
+                        <input type="tel" class="auth-input" name="phone_number" id="trialPhoneInput" placeholder="رقم الهاتف" required autocomplete="tel">
+                        <i class="fas fa-phone auth-input-icon"></i>
+                    </div>
+                    <div class="field-error" id="trialPhoneError" style="display:none;">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        <span>رقم الهاتف غير صالح</span>
+                    </div>
+                </div>
+
+                <!-- ===== هل الرقم واتساب؟ ===== -->
+                <div class="auth-form-group">
+                    <div class="form-check">
+                        <input type="checkbox" name="is_whatsapp" class="form-check-input" id="isWhatsapp">
+                        <label class="form-check-label" for="isWhatsapp">
+                            <i class="fab fa-whatsapp" style="color: #25D366;"></i> هل هذا الرقم واتساب؟
+                        </label>
+                    </div>
+                </div>
+
+                <!-- ===== الاشتراك بنشرة الواتساب ===== -->
+                <div class="auth-form-group">
+                    <div class="form-check">
+                        <input type="checkbox" name="subscribe_whatsapp" class="form-check-input" id="subWhatsapp">
+                        <label class="form-check-label" for="subWhatsapp">
+                            <i class="fas fa-bell" style="color: var(--aqua-4);"></i> أوافق على استلام العروض عبر الواتساب
+                        </label>
+                    </div>
+                </div>
+
+                <!-- ===== الاشتراك بالنشرة البريدية ===== -->
+                <div class="auth-form-group">
+                    <div class="form-check">
+                        <input type="checkbox" name="subscribe_email" class="form-check-input" id="subEmail">
+                        <label class="form-check-label" for="subEmail">
+                            <i class="fas fa-envelope" style="color: var(--aqua-4);"></i> أوافق على الاشتراك بالنشرة البريدية
+                        </label>
+                    </div>
+                </div>
+
+                <!-- ملاحظات إضافية (اختياري) -->
+                <div class="auth-form-group">
+                    <label class="auth-label" for="notes">
+                        <i class="fas fa-comment"></i> ملاحظات إضافية <span style="color:#94a3b8;font-weight:400;font-size:0.75rem;">(اختياري)</span>
+                    </label>
+                    <div class="auth-input-wrap">
+                        <textarea class="auth-input auth-textarea" name="notes" id="notes" placeholder="أخبرنا عن احتياجاتك الخاصة..." style="padding-right:0.65rem;"></textarea>
+                    </div>
+                </div>
+
+                <button type="submit" class="auth-btn auth-btn-primary" id="submitBtn">
+                    <i class="fas fa-rocket"></i>
+                    <span>اطلب الفترة التجريبية مجاناً</span>
+                </button>
+            </form>
+
+            <div class="auth-card-footer">
+                لديك حساب بالفعل؟ <a href="{% url 'accounts:login' %}">تسجيل الدخول</a>
+                <br>
+                <span style="font-size:0.78rem;color:#94a3b8;">لا تريد فترة تجريبية؟ <a href="{% url 'accounts:register' %}">إنشاء حساب مباشر</a></span>
+            </div>
+        </div>
     </div>
-</body>
-</html>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/intl-tel-input@18.2.1/build/js/intlTelInput.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/intl-tel-input@18.2.1/build/js/utils.js"></script>
+<script nonce="{{ csp_nonce }}">
+document.addEventListener('DOMContentLoaded', function() {
+    const submitBtn = document.getElementById('submitBtn');
+    const form = document.getElementById('trialForm');
+    const phoneInput = document.getElementById('trialPhoneInput');
+    const phoneError = document.getElementById('trialPhoneError');
+
+    // ===== تهيئة intl-tel-input =====
+    let iti = null;
+    if (phoneInput) {
+        iti = window.intlTelInput(phoneInput, {
+            separateDialCode: true,
+            preferredCountries: ['sy', 'sa', 'ae', 'jo', 'iq', 'kw', 'bh', 'om', 'qa', 'lb', 'eg'],
+            initialCountry: 'sa',
+            utilsScript: 'https://cdn.jsdelivr.net/npm/intl-tel-input@18.2.1/build/js/utils.js',
+            hiddenInput: 'full_phone_number',
+            formatOnDisplay: true,
+            autoPlaceholder: 'polite',
+        });
+
+        // تحقق من صحة الرقم عند الكتابة
+        phoneInput.addEventListener('input', function() {
+            if (phoneInput.value.trim().length > 0) {
+                if (iti.isValidNumber()) {
+                    phoneInput.classList.remove('is-invalid');
+                    phoneInput.classList.add('is-valid');
+                    phoneError.style.display = 'none';
+                } else {
+                    phoneInput.classList.remove('is-valid');
+                    phoneInput.classList.add('is-invalid');
+                    phoneError.style.display = 'flex';
+                }
+            } else {
+                phoneInput.classList.remove('is-valid', 'is-invalid');
+                phoneError.style.display = 'none';
+            }
+        });
+
+        // إزالة حالة الخطأ عند تغيير الدولة
+        phoneInput.addEventListener('countrychange', function() {
+            if (phoneInput.value.trim().length > 0) {
+                if (iti.isValidNumber()) {
+                    phoneInput.classList.remove('is-invalid');
+                    phoneInput.classList.add('is-valid');
+                    phoneError.style.display = 'none';
+                }
+            }
+        });
+    }
+
+    // ===== التحقق من النموذج قبل الإرسال =====
+    form?.addEventListener('submit', function(e) {
+        // التحقق من صحة رقم الهاتف
+        if (phoneInput && iti) {
+            const phoneValue = phoneInput.value.trim();
+            if (!phoneValue || !iti.isValidNumber()) {
+                e.preventDefault();
+                phoneInput.classList.add('is-invalid');
+                phoneError.style.display = 'flex';
+                phoneInput.focus();
+                return false;
+            }
+        }
+
+        // تعطيل الزر ومنع التكرار (مع تأخير بسيط جداً ليُكمل الإرسال)
+        submitBtn.classList.add('loading');
+        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري إنشاء نظامك...';
+        setTimeout(() => { submitBtn.disabled = true; }, 10);
+    });
+});
+</script>
+{% endblock %}

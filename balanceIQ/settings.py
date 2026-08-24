@@ -61,6 +61,7 @@ INSTALLED_APPS = [
     'accounts.apps.AccountsConfig',
     'invoice.apps.InvoiceConfig',
     'markdownify',
+    'trials',
 ]
 
 # ==========================================
@@ -76,6 +77,8 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     # ================= تمت الإضافة: سياسة أمان المحتوى (CSP) =================
     'balanceIQ.middlewares.CustomCSPMiddleware',
+    # ================= من اجل الفترة التجريبية  =================
+    'trials.middleware.TrialMiddleware',
 ]
 
 ROOT_URLCONF = 'balanceIQ.urls'
@@ -360,6 +363,15 @@ EMAIL_USE_TLS = True
 EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER', '')
 EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD', '')
 DEFAULT_FROM_EMAIL = os.getenv('DEFAULT_FROM_EMAIL', 'admin@balanceiqsoft.com')
+
+
+
+# ================= تمت الإضافة: سياسة أمان المحتوى (CSP) =================
+DATABASE_ROUTERS = ['trials.router.TrialRouter']
+TRIAL_DAYS = 10
+
+
+
 
 # ==========================================
 # 17. إعدادات CSP (Content Security Policy) - اختيارية

@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <title>طلب فترة تجريبية</title>
+    <style>
+        body { font-family: sans-serif; background: #f4f4f4; display: flex; justify-content: center; padding-top: 50px; }
+        .form-box { background: #fff; padding: 30px; border-radius: 8px; box-shadow: 0 0 10px rgba(0,0,0,0.1); width: 400px; }
+        input { width: 100%; padding: 10px; margin: 10px 0; box-sizing: border-box; }
+        button { background: #007bff; color: #fff; border: none; padding: 10px; width: 100%; cursor: pointer; }
+    </style>
+</head>
+<body>
+    <div class="form-box">
+        <h2>اطلب نسختك التجريبية الآن</h2>
+        {% if messages %}
+            <ul style="color: red;">
+                {% for message in messages %}
+                    <li>{{ message }}</li>
+                {% endfor %}
+            </ul>
+        {% endif %}
+        <form method="POST">
+            {% csrf_token %}
+            <label>اسم المستخدم:</label>
+            <input type="text" name="username" required>
+            <label>البريد الإلكتروني:</label>
+            <input type="email" name="email" required>
+            <label>كلمة المرور:</label>
+            <input type="password" name="password" required>
+            <button type="submit">بدء التجربة المجانية</button>
+        </form>
+    </div>
+</body>
+</html>

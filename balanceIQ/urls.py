@@ -53,6 +53,7 @@ urlpatterns = [
     path('invoice/', include('invoice.urls')),
 
     path('docs/', user_manual, name='user_manual'),
+    path('trials/', include('trials.urls')),
 ]
 
 # 🔥 التعديل النهائي - الطريقة الموصى بها

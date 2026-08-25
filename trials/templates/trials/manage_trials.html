@@ -1,0 +1,200 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}إدارة الفترات التجريبية | BalanceIQ{% endblock %}
+
+{% block content %}
+<div class="dashboard">
+
+    <header class="dash-header">
+        <div>
+            <h1><i class="fas fa-rocket"></i> إدارة العملاء التجريبيين</h1>
+            <div class="dash-header-sub">
+                <span class="user-chip"><i class="fas fa-user-shield"></i> لوحة تحكم المدير</span>
+            </div>
+        </div>
+    </header>
+
+    <!-- بطاقات الإحصائيات -->
+    <div class="row g-3 mb-4">
+        <div class="col-md-4">
+            <div class="card text-white bg-success shadow-sm border-0">
+                <div class="card-body d-flex align-items-center">
+                    <div class="me-3"><i class="fas fa-users fa-2x"></i></div>
+                    <div>
+                        <h4 class="mb-0 fw-bold">{{ active_trials.count }}</h4>
+                        <span>تجارب نشطة حالياً</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card text-white bg-warning shadow-sm border-0">
+                <div class="card-body d-flex align-items-center">
+                    <div class="me-3"><i class="fas fa-hourglass-end fa-2x"></i></div>
+                    <div>
+                        <h4 class="mb-0 fw-bold">{{ expired_trials.count }}</h4>
+                        <span>تجارب منتهية (تنتظر الحذف)</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card text-white bg-secondary shadow-sm border-0">
+                <div class="card-body d-flex align-items-center">
+                    <div class="me-3"><i class="fas fa-ban fa-2x"></i></div>
+                    <div>
+                        <h4 class="mb-0 fw-bold">{{ stopped_trials.count }}</h4>
+                        <span>تجارب متوقفة يدوياً</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- جدول التجارب النشطة -->
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-header bg-light d-flex justify-content-between align-items-center">
+            <span class="fw-bold text-dark"><i class="fas fa-play-circle text-success me-2"></i> التجارب النشطة</span>
+            <span class="badge bg-success rounded-pill">{{ active_trials.count }}</span>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>العميل</th>
+                            <th>قاعدة البيانات</th>
+                            <th>تاريخ الانتهاء</th>
+                            <th class="text-center">إجراءات</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for trial in active_trials %}
+                        <tr>
+                            <td>
+                                <strong>{{ trial.full_name }}</strong><br>
+                                <small class="text-muted">{{ trial.email }}</small>
+                            </td>
+                            <td><code class="text-primary">{{ trial.db_name }}</code></td>
+                            <td><span class="badge bg-success bg-opacity-75">{{ trial.expiry_date|date:"Y-m-d" }}</span></td>
+                            <td class="text-center">
+                                <div class="btn-group">
+                                    <form method="post" action="{% url 'trials:stop_trial' trial.id %}">
+                                        {% csrf_token %}
+                                        <button type="submit" class="btn btn-sm btn-outline-warning" title="إيقاف يدوي">
+                                            <i class="fas fa-stop"></i> إيقاف
+                                        </button>
+                                    </form>
+                                    <button class="btn btn-sm btn-outline-danger disabled" title="لا يمكن الحذف حتى تنتهي الفترة">
+                                        <i class="fas fa-trash"></i> حذف
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="4" class="text-center text-muted p-5">
+                                <i class="fas fa-info-circle fa-2x mb-3 d-block"></i>
+                                لا يوجد عملاء تجريبيون نشطون حالياً.
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- جدول التجارب المتوقفة يدوياً -->
+    {% if stopped_trials %}
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-header bg-secondary bg-opacity-10 d-flex justify-content-between align-items-center">
+            <span class="fw-bold text-secondary"><i class="fas fa-ban me-2"></i> تجارب متوقفة يدوياً</span>
+            <span class="badge bg-secondary rounded-pill">{{ stopped_trials.count }}</span>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>العميل</th>
+                            <th>قاعدة البيانات</th>
+                            <th class="text-center">الحالة</th>
+                            <th class="text-center">حذف نهائي</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for trial in stopped_trials %}
+                        <tr class="table-secondary">
+                            <td>
+                                <strong>{{ trial.full_name }}</strong><br>
+                                <small class="text-muted">{{ trial.email }}</small>
+                            </td>
+                            <td><code>{{ trial.db_name }}</code></td>
+                            <td class="text-center">
+                                <span class="badge bg-secondary"><i class="fas fa-ban"></i> متوقف</span>
+                            </td>
+                            <td class="text-center">
+                                <form method="post" action="{% url 'trials:delete_trial' trial.id %}" onsubmit="return confirm('هل أنت متأكد من حذف قاعدة البيانات نهائياً؟ لا يمكن التراجع.');">
+                                    {% csrf_token %}
+                                    <button type="submit" class="btn btn-sm btn-danger" title="حذف قاعدة البيانات نهائياً">
+                                        <i class="fas fa-trash"></i> حذف
+                                    </button>
+                                </form>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- جدول التجارب المنتهية -->
+    {% if expired_trials %}
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-header bg-danger bg-opacity-10 d-flex justify-content-between align-items-center">
+            <span class="fw-bold text-danger"><i class="fas fa-exclamation-triangle me-2"></i> تجارب منتهية (جاهزة للحذف التلقائي)</span>
+            <span class="badge bg-danger rounded-pill">{{ expired_trials.count }}</span>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>العميل</th>
+                            <th>قاعدة البيانات</th>
+                            <th>انتهت في</th>
+                            <th class="text-center">حذف نهائي</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for trial in expired_trials %}
+                        <tr class="table-danger">
+                            <td>
+                                <strong>{{ trial.full_name }}</strong><br>
+                                <small class="text-muted">{{ trial.email }}</small>
+                            </td>
+                            <td><code class="text-danger">{{ trial.db_name }}</code></td>
+                            <td>{{ trial.expiry_date|date:"Y-m-d" }}</td>
+                            <td class="text-center">
+                                <form method="post" action="{% url 'trials:delete_trial' trial.id %}" onsubmit="return confirm('هل أنت متأكد من حذف قاعدة البيانات نهائياً؟ لا يمكن التراجع عن هذا الإجراء.');">
+                                    {% csrf_token %}
+                                    <button type="submit" class="btn btn-sm btn-danger" title="حذف قاعدة البيانات نهائياً">
+                                        <i class="fas fa-trash"></i> حذف نهائي
+                                    </button>
+                                </form>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+</div>
+{% endblock %}

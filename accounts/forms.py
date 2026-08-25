@@ -109,7 +109,7 @@ class CustomUserCreationForm(UserCreationForm):
         return user
 
 
-
+#======================للحذف ===========================
 
 class TrialRequestForm(forms.ModelForm):
     # حقول الشروط (Checkboxes)
@@ -162,6 +162,7 @@ class TrialRequestForm(forms.ModelForm):
             raise forms.ValidationError("لديك طلب تجريبي قيد المراجعة بالفعل على هذا البريد الإلكتروني.")
         return email
 
+#======================للحذف ===========================
 
 
 

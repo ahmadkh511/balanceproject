@@ -7,260 +7,358 @@
 <style nonce="{{ csp_nonce }}">
     /* ===== متغيرات التصميم ===== */
     :root {
-        --primary-1: #e0f7fa;
-        --primary-2: #b2ebf2;
-        --primary-3: #4dd0e1;
-        --primary-4: #0097a7;
-        --primary-dark: #006064;
-        --text-dark: #006064;
-        --text-light: #ffffff;
-        --shadow-sm: 0 2px 8px rgba(0, 150, 167, 0.08);
-        --shadow-md: 0 4px 16px rgba(0, 150, 167, 0.12);
-        --shadow-lg: 0 8px 32px rgba(0, 150, 167, 0.18);
-        --radius: 10px;
-        --radius-sm: 6px;
+        --gradient-start: #667eea;
+        --gradient-end: #764ba2;
+        --primary: #5B6ABF;
+        --primary-light: #7C8CDB;
+        --primary-dark: #3D4A9A;
+        --success: #10B981;
+        --warning: #F59E0B;
+        --danger: #EF4444;
+        --gray-50: #F8FAFC;
+        --gray-100: #F1F5F9;
+        --gray-200: #E2E8F0;
+        --gray-300: #CBD5E1;
+        --gray-400: #94A3B8;
+        --gray-500: #64748B;
+        --gray-600: #475569;
+        --gray-700: #334155;
+        --gray-800: #1E293B;
+        --gray-900: #0F172A;
+        --radius: 12px;
+        --radius-sm: 8px;
         --radius-lg: 16px;
-        --ease: cubic-bezier(0.4, 0, 0.2, 1);
-        --transition: 0.3s var(--ease);
-        --font: 'Tajawal', 'Segoe UI', system-ui, sans-serif;
+        --shadow-sm: 0 1px 3px rgba(0,0,0,0.06);
+        --shadow: 0 4px 20px rgba(0,0,0,0.08);
+        --shadow-lg: 0 10px 40px rgba(0,0,0,0.12);
+        --shadow-xl: 0 20px 60px rgba(0,0,0,0.15);
+        --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     }
 
-    /* ===== إعادة ضبط عام ===== */
+    /* ===== التنسيق العام ===== */
     * {
         box-sizing: border-box;
-    }
-
-    body {
-        font-family: var(--font);
-        background: #f4f7fb;
         margin: 0;
         padding: 0;
     }
 
-    /* ===== حاوية اللوحة ===== */
-    .dashboard-container {
-        max-width: 1400px;
+    body {
+        font-family: 'Tajawal', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        background: var(--gray-50);
+        min-height: 100vh;
+        position: relative;
+    }
+
+    /* ===== خلفية متحركة ===== */
+    .bg-pattern {
+        position: fixed;
+        inset: 0;
+        z-index: -1;
+        background: 
+            radial-gradient(ellipse at 10% 20%, rgba(102, 126, 234, 0.08) 0%, transparent 50%),
+            radial-gradient(ellipse at 90% 80%, rgba(118, 75, 162, 0.08) 0%, transparent 50%),
+            radial-gradient(ellipse at 50% 50%, rgba(102, 126, 234, 0.03) 0%, transparent 70%);
+        animation: bgFloat 20s ease-in-out infinite alternate;
+    }
+
+    @keyframes bgFloat {
+        0% { transform: scale(1) rotate(0deg); }
+        100% { transform: scale(1.05) rotate(2deg); }
+    }
+
+    /* ===== الحاوية الرئيسية ===== */
+    .dashboard-wrapper {
+        max-width: 1440px;
         margin: 0 auto;
-        padding: 1.25rem;
+        padding: 1.5rem;
+        position: relative;
+        z-index: 1;
     }
 
     /* ===== الهيدر ===== */
-    .dash-header {
-        background: linear-gradient(135deg, var(--primary-4) 0%, var(--primary-dark) 100%);
-        color: white;
-        padding: 1.75rem 2rem;
+    .dashboard-header {
+        background: linear-gradient(135deg, var(--gradient-start), var(--gradient-end));
         border-radius: var(--radius-lg);
-        box-shadow: var(--shadow-md);
+        padding: 2rem 2.5rem;
         margin-bottom: 2rem;
+        position: relative;
+        overflow: hidden;
+        box-shadow: var(--shadow-lg);
+    }
+
+    .dashboard-header::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        right: -20%;
+        width: 400px;
+        height: 400px;
+        background: rgba(255, 255, 255, 0.05);
+        border-radius: 50%;
+        animation: floatShape 8s ease-in-out infinite;
+    }
+
+    .dashboard-header::after {
+        content: '';
+        position: absolute;
+        bottom: -40%;
+        left: -10%;
+        width: 300px;
+        height: 300px;
+        background: rgba(255, 255, 255, 0.04);
+        border-radius: 50%;
+        animation: floatShape 10s ease-in-out infinite reverse;
+    }
+
+    @keyframes floatShape {
+        0%, 100% { transform: translate(0, 0) scale(1); }
+        50% { transform: translate(30px, -20px) scale(1.1); }
+    }
+
+    .header-content {
+        position: relative;
+        z-index: 1;
         display: flex;
         justify-content: space-between;
         align-items: center;
         flex-wrap: wrap;
         gap: 1rem;
-        position: relative;
-        overflow: hidden;
     }
-    .dash-header::after {
-        content: '';
-        position: absolute;
-        top: -50%;
-        right: -20%;
-        width: 300px;
-        height: 300px;
-        background: rgba(255, 255, 255, 0.05);
-        border-radius: 50%;
-        pointer-events: none;
-    }
-    .dash-header h1 {
+
+    .header-text h1 {
+        color: white;
+        font-size: 1.75rem;
+        font-weight: 800;
         margin: 0;
-        font-size: 1.6rem;
-        font-weight: 700;
         display: flex;
         align-items: center;
         gap: 0.75rem;
-        position: relative;
-        z-index: 1;
+        letter-spacing: -0.5px;
     }
-    .dash-header h1 i {
-        font-size: 1.8rem;
+
+    .header-text h1 i {
+        font-size: 2rem;
         opacity: 0.9;
+        animation: rocketFloat 3s ease-in-out infinite;
     }
-    .dash-header p {
+
+    @keyframes rocketFloat {
+        0%, 100% { transform: translateY(0) rotate(-5deg); }
+        50% { transform: translateY(-8px) rotate(5deg); }
+    }
+
+    .header-text p {
+        color: rgba(255, 255, 255, 0.85);
+        font-size: 0.95rem;
         margin: 0.3rem 0 0;
-        font-size: 0.9rem;
-        opacity: 0.85;
-        position: relative;
-        z-index: 1;
+        font-weight: 400;
     }
-    .dash-header .header-actions {
+
+    .header-badge {
         display: flex;
+        align-items: center;
         gap: 0.75rem;
-        flex-wrap: wrap;
-        position: relative;
-        z-index: 1;
-    }
-    .dash-header .header-actions .btn {
         background: rgba(255, 255, 255, 0.15);
-        color: white;
-        border: 1px solid rgba(255, 255, 255, 0.2);
-        padding: 0.5rem 1.2rem;
+        backdrop-filter: blur(10px);
+        padding: 0.5rem 1.25rem;
         border-radius: 50px;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+
+    .header-badge span {
+        color: white;
         font-size: 0.85rem;
         font-weight: 600;
-        cursor: pointer;
-        transition: var(--transition);
-        backdrop-filter: blur(4px);
-        font-family: var(--font);
-        text-decoration: none;
-        display: inline-flex;
-        align-items: center;
-        gap: 0.5rem;
     }
-    .dash-header .header-actions .btn:hover {
-        background: rgba(255, 255, 255, 0.25);
-        transform: translateY(-2px);
-        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
+
+    .header-badge .dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: #34D399;
+        animation: pulse 2s infinite;
     }
-    .dash-header .header-actions .btn-primary {
-        background: white;
-        color: var(--primary-dark);
-        border-color: white;
-    }
-    .dash-header .header-actions .btn-primary:hover {
-        background: var(--primary-2);
-        border-color: var(--primary-2);
+
+    @keyframes pulse {
+        0%, 100% { opacity: 1; transform: scale(1); }
+        50% { opacity: 0.5; transform: scale(0.8); }
     }
 
     /* ===== بطاقات الإحصائيات ===== */
     .stats-grid {
         display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
         gap: 1.25rem;
         margin-bottom: 2rem;
     }
+
     .stat-card {
         background: white;
-        border-radius: var(--radius-lg);
-        padding: 1.25rem 1.5rem;
-        box-shadow: var(--shadow-sm);
+        border-radius: var(--radius);
+        padding: 1.5rem;
         display: flex;
         align-items: center;
-        gap: 1rem;
+        gap: 1.25rem;
+        box-shadow: var(--shadow);
         transition: var(--transition);
-        border-right: 4px solid var(--primary-3);
         position: relative;
         overflow: hidden;
+        border: 1px solid rgba(226, 232, 240, 0.5);
+        cursor: default;
     }
+
     .stat-card::before {
         content: '';
         position: absolute;
         top: 0;
         left: 0;
         right: 0;
-        bottom: 0;
-        background: linear-gradient(135deg, rgba(255, 255, 255, 0.5), transparent);
-        pointer-events: none;
+        height: 4px;
+        background: linear-gradient(90deg, var(--gradient-start), var(--gradient-end));
+        opacity: 0;
+        transition: var(--transition);
     }
+
     .stat-card:hover {
-        transform: translateY(-4px);
-        box-shadow: var(--shadow-md);
+        transform: translateY(-4px) scale(1.01);
+        box-shadow: var(--shadow-lg);
+        border-color: transparent;
     }
-    .stat-card.bg-success {
-        border-right-color: #00c853;
+
+    .stat-card:hover::before {
+        opacity: 1;
     }
-    .stat-card.bg-warning {
-        border-right-color: #ffb300;
-    }
-    .stat-card.bg-danger {
-        border-right-color: #ff1744;
-    }
-    .stat-icon {
-        width: 52px;
-        height: 52px;
-        border-radius: 50%;
+
+    .stat-card .stat-icon-wrapper {
+        width: 56px;
+        height: 56px;
+        border-radius: var(--radius);
         display: flex;
         align-items: center;
         justify-content: center;
-        font-size: 1.4rem;
-        color: white;
+        font-size: 1.5rem;
         flex-shrink: 0;
-        position: relative;
-        z-index: 1;
+        color: white;
     }
-    .stat-icon.ic-success {
-        background: linear-gradient(135deg, #00c853, #00e676);
+
+    .stat-card:nth-child(1) .stat-icon-wrapper {
+        background: linear-gradient(135deg, #10B981, #34D399);
     }
-    .stat-icon.ic-warning {
-        background: linear-gradient(135deg, #ffb300, #ffca28);
+
+    .stat-card:nth-child(2) .stat-icon-wrapper {
+        background: linear-gradient(135deg, #F59E0B, #FBBF24);
     }
-    .stat-icon.ic-danger {
-        background: linear-gradient(135deg, #ff1744, #ff5252);
+
+    .stat-card:nth-child(3) .stat-icon-wrapper {
+        background: linear-gradient(135deg, #EF4444, #F87171);
     }
+
     .stat-info {
-        position: relative;
-        z-index: 1;
         flex: 1;
         min-width: 0;
     }
-    .stat-info h3 {
-        margin: 0;
-        font-size: 1.6rem;
+
+    .stat-info .stat-number {
+        font-size: 1.75rem;
         font-weight: 800;
-        color: #1a2332;
+        color: var(--gray-900);
         line-height: 1.2;
+        letter-spacing: -0.5px;
     }
-    .stat-info p {
-        margin: 0.1rem 0 0;
+
+    .stat-info .stat-label {
         font-size: 0.8rem;
-        color: #6b7a8f;
+        color: var(--gray-500);
         font-weight: 500;
+        margin: 0;
+        display: flex;
+        align-items: center;
+        gap: 0.4rem;
+    }
+
+    .stat-info .stat-change {
+        font-size: 0.7rem;
+        font-weight: 700;
+        padding: 0.15rem 0.6rem;
+        border-radius: 50px;
+        display: inline-block;
+    }
+
+    .stat-change.positive {
+        background: #D1FAE5;
+        color: #065F46;
+    }
+
+    .stat-change.negative {
+        background: #FEE2E2;
+        color: #991B1B;
     }
 
     /* ===== بطاقات البيانات ===== */
     .data-card {
         background: white;
         border-radius: var(--radius-lg);
-        box-shadow: var(--shadow-sm);
-        margin-bottom: 1.75rem;
+        box-shadow: var(--shadow);
+        margin-bottom: 1.5rem;
         overflow: hidden;
-        border: 1px solid rgba(0, 0, 0, 0.04);
+        border: 1px solid rgba(226, 232, 240, 0.5);
         transition: var(--transition);
     }
+
     .data-card:hover {
-        box-shadow: var(--shadow-md);
+        box-shadow: var(--shadow-lg);
+        border-color: transparent;
     }
+
     .data-card-header {
-        background: var(--primary-1);
-        padding: 0.9rem 1.5rem;
-        font-weight: 700;
-        color: var(--text-dark);
+        padding: 1.25rem 1.5rem;
+        background: white;
+        border-bottom: 1px solid var(--gray-200);
         display: flex;
         justify-content: space-between;
         align-items: center;
-        border-bottom: 1px solid var(--primary-2);
-        font-size: 0.95rem;
         flex-wrap: wrap;
-        gap: 0.5rem;
+        gap: 0.75rem;
     }
-    .data-card-header i {
-        margin-left: 0.5rem;
+
+    .data-card-header .card-title {
+        display: flex;
+        align-items: center;
+        gap: 0.6rem;
+        font-weight: 700;
+        font-size: 1rem;
+        color: var(--gray-800);
     }
-    .data-card-header .badge {
-        padding: 0.3rem 0.9rem;
+
+    .data-card-header .card-title i {
+        color: var(--primary);
+        font-size: 1.1rem;
+    }
+
+    .data-card-header .card-badge {
+        padding: 0.3rem 1rem;
         border-radius: 50px;
         font-size: 0.75rem;
-        font-weight: 600;
-        background: var(--primary-3);
-        color: var(--primary-dark);
+        font-weight: 700;
+        background: var(--gray-100);
+        color: var(--gray-600);
     }
-    .data-card-header .badge.bg-danger {
-        background: #ffcdd2;
-        color: #c62828;
+
+    .card-badge.active-badge {
+        background: #D1FAE5;
+        color: #065F46;
     }
-    .data-card-header .badge.bg-secondary {
-        background: #e0e0e0;
-        color: #424242;
+
+    .card-badge.warning-badge {
+        background: #FEF3C7;
+        color: #92400E;
     }
+
+    .card-badge.danger-badge {
+        background: #FEE2E2;
+        color: #991B1B;
+    }
+
     .data-card-body {
         padding: 0;
         overflow: hidden;
@@ -270,67 +368,86 @@
     .table-responsive {
         overflow-x: auto;
         -webkit-overflow-scrolling: touch;
-        scroll-behavior: smooth;
+        padding: 0;
     }
+
     .table {
         width: 100%;
-        border-collapse: collapse;
+        border-collapse: separate;
+        border-spacing: 0;
         font-size: 0.85rem;
-        margin: 0;
         min-width: 600px;
     }
+
     .table thead th {
-        background: var(--primary-2);
-        color: var(--text-dark);
-        padding: 0.8rem 1rem;
-        text-align: right;
+        background: var(--gray-50);
+        color: var(--gray-600);
         font-weight: 700;
-        border-bottom: 2px solid var(--primary-3);
-        white-space: nowrap;
-        font-size: 0.8rem;
+        font-size: 0.7rem;
         text-transform: uppercase;
-        letter-spacing: 0.3px;
+        letter-spacing: 0.5px;
+        padding: 0.8rem 1.25rem;
+        text-align: right;
+        border-bottom: 2px solid var(--gray-200);
         position: sticky;
         top: 0;
-        z-index: 2;
+        z-index: 5;
     }
+
     .table tbody td {
-        padding: 0.8rem 1rem;
-        border-bottom: 1px solid #f0f2f5;
-        color: #2d3748;
+        padding: 0.8rem 1.25rem;
+        color: var(--gray-700);
+        border-bottom: 1px solid var(--gray-100);
         vertical-align: middle;
-        font-size: 0.85rem;
+        transition: var(--transition);
     }
+
+    .table tbody tr {
+        transition: var(--transition);
+    }
+
+    .table tbody tr:hover {
+        background: var(--gray-50);
+    }
+
     .table tbody tr:last-child td {
         border-bottom: none;
     }
-    .table tbody tr:hover {
-        background: var(--primary-1);
+
+    .table .customer-info {
+        display: flex;
+        flex-direction: column;
     }
-    .table tbody tr:active {
-        background: var(--primary-2);
+
+    .table .customer-info .name {
+        font-weight: 600;
+        color: var(--gray-800);
     }
-    .table .text-muted {
-        color: #718096;
+
+    .table .customer-info .email {
         font-size: 0.75rem;
+        color: var(--gray-400);
     }
-    .table code {
-        background: var(--primary-1);
-        padding: 0.15rem 0.5rem;
-        border-radius: 4px;
+
+    .table .db-name {
+        font-family: 'JetBrains Mono', 'Cascadia Code', monospace;
         font-size: 0.8rem;
-        color: var(--primary-4);
+        background: var(--gray-100);
+        padding: 0.2rem 0.6rem;
+        border-radius: 4px;
+        color: var(--primary);
         direction: ltr;
         display: inline-block;
     }
-    .table code.text-danger {
-        background: #ffebee;
-        color: #c62828;
+
+    .table .db-name.danger {
+        background: #FEE2E2;
+        color: #DC2626;
     }
 
     /* ===== الشارات ===== */
     .badge {
-        padding: 0.3rem 0.8rem;
+        padding: 0.25rem 0.75rem;
         border-radius: 50px;
         font-size: 0.7rem;
         font-weight: 600;
@@ -338,144 +455,180 @@
         align-items: center;
         gap: 0.3rem;
     }
-    .badge.bg-info {
-        background: var(--primary-2);
-        color: var(--primary-dark);
+
+    .badge-primary {
+        background: #E0E7FF;
+        color: #4338CA;
     }
-    .badge.bg-success {
-        background: #c8e6c9;
-        color: #2e7d32;
+
+    .badge-success {
+        background: #D1FAE5;
+        color: #065F46;
     }
-    .badge.bg-danger {
-        background: #ffcdd2;
-        color: #c62828;
+
+    .badge-warning {
+        background: #FEF3C7;
+        color: #92400E;
     }
-    .badge.bg-secondary {
-        background: #e0e0e0;
-        color: #424242;
+
+    .badge-danger {
+        background: #FEE2E2;
+        color: #991B1B;
     }
-    .badge.bg-warning {
-        background: #fff3e0;
-        color: #e65100;
+
+    .badge-secondary {
+        background: var(--gray-200);
+        color: var(--gray-600);
+    }
+
+    .badge-info {
+        background: #DBEAFE;
+        color: #1E40AF;
     }
 
     /* ===== أزرار الإجراءات ===== */
-    .btn-group {
+    .action-group {
         display: flex;
         gap: 0.4rem;
         flex-wrap: wrap;
         justify-content: center;
     }
-    .btn-group .btn {
-        padding: 0.35rem 0.8rem;
+
+    .btn-action {
+        padding: 0.3rem 0.7rem;
         border-radius: var(--radius-sm);
-        font-size: 0.75rem;
+        font-size: 0.7rem;
         font-weight: 600;
         border: none;
         cursor: pointer;
         transition: var(--transition);
-        font-family: var(--font);
+        font-family: 'Tajawal', sans-serif;
         display: inline-flex;
         align-items: center;
-        gap: 0.35rem;
+        gap: 0.3rem;
         text-decoration: none;
         white-space: nowrap;
     }
-    .btn-group .btn i {
-        font-size: 0.8rem;
-    }
-    .btn-outline-warning {
-        background: #fff8e1;
-        color: #f57f17;
-        border: 1px solid #ffe082;
-    }
-    .btn-outline-warning:hover {
-        background: #ffecb3;
-        transform: translateY(-1px);
-    }
-    .btn-outline-primary {
-        background: var(--primary-1);
-        color: var(--primary-4);
-        border: 1px solid var(--primary-2);
-    }
-    .btn-outline-primary:hover {
-        background: var(--primary-2);
-        transform: translateY(-1px);
-    }
-    .btn-outline-info {
-        background: #e3f2fd;
-        color: #0d47a1;
-        border: 1px solid #90caf9;
-    }
-    .btn-outline-info:hover {
-        background: #bbdefb;
-        transform: translateY(-1px);
-    }
-    .btn-danger {
-        background: #ef5350;
-        color: white;
-        border: 1px solid #ef5350;
-    }
-    .btn-danger:hover {
-        background: #d32f2f;
-        transform: translateY(-1px);
-        box-shadow: 0 4px 12px rgba(239, 83, 80, 0.3);
-    }
-    .btn-outline-danger {
-        background: transparent;
-        color: #ef5350;
-        border: 1px solid #ef5350;
-        opacity: 0.6;
-        cursor: not-allowed;
-    }
-    .btn-outline-danger.disabled {
-        opacity: 0.5;
-        pointer-events: none;
+
+    .btn-action i {
+        font-size: 0.75rem;
     }
 
-    /* ===== رسالة فارغة ===== */
+    .btn-action:hover {
+        transform: translateY(-2px);
+        box-shadow: var(--shadow);
+    }
+
+    .btn-action:active {
+        transform: scale(0.95);
+    }
+
+    .btn-stop {
+        background: #FEF3C7;
+        color: #92400E;
+    }
+
+    .btn-stop:hover {
+        background: #FDE68A;
+    }
+
+    .btn-resume {
+        background: #DBEAFE;
+        color: #1E40AF;
+    }
+
+    .btn-resume:hover {
+        background: #BFDBFE;
+    }
+
+    .btn-reset {
+        background: #E0E7FF;
+        color: #4338CA;
+    }
+
+    .btn-reset:hover {
+        background: #C7D2FE;
+    }
+
+    .btn-delete {
+        background: #FEE2E2;
+        color: #991B1B;
+    }
+
+    .btn-delete:hover {
+        background: #FECACA;
+    }
+
+    .btn-disabled {
+        background: var(--gray-100);
+        color: var(--gray-400);
+        cursor: not-allowed;
+        opacity: 0.6;
+    }
+
+    .btn-disabled:hover {
+        transform: none;
+        box-shadow: none;
+    }
+
+    /* ===== الحالة الفارغة ===== */
     .empty-state {
         text-align: center;
-        padding: 2.5rem 1.5rem;
-        color: #8898aa;
+        padding: 3rem 1.5rem;
     }
-    .empty-state i {
-        font-size: 3rem;
-        color: var(--primary-2);
+
+    .empty-state .empty-icon {
+        font-size: 3.5rem;
+        color: var(--gray-300);
         margin-bottom: 0.75rem;
-        display: block;
     }
+
+    .empty-state h4 {
+        color: var(--gray-600);
+        font-weight: 600;
+        font-size: 1rem;
+        margin: 0 0 0.25rem;
+    }
+
     .empty-state p {
-        font-size: 0.95rem;
+        color: var(--gray-400);
+        font-size: 0.85rem;
         margin: 0;
     }
 
     /* ===== زر الطباعة العائم ===== */
     .print-fab {
         position: fixed;
-        bottom: 1.5rem;
-        left: 1.5rem;
-        z-index: 1050;
-        padding: 0.7rem 1.5rem;
+        bottom: 2rem;
+        left: 2rem;
+        z-index: 1000;
+        padding: 0.8rem 1.6rem;
         border-radius: 50px;
-        box-shadow: 0 4px 20px rgba(0, 150, 167, 0.35);
-        font-size: 0.9rem;
-        font-weight: 600;
-        background: linear-gradient(135deg, var(--primary-4) 0%, var(--primary-dark) 100%);
+        background: linear-gradient(135deg, var(--gradient-start), var(--gradient-end));
         color: white;
         border: none;
         cursor: pointer;
-        transition: var(--transition);
+        font-family: 'Tajawal', sans-serif;
+        font-weight: 700;
+        font-size: 0.9rem;
         display: inline-flex;
         align-items: center;
         gap: 0.6rem;
-        font-family: var(--font);
-        backdrop-filter: blur(4px);
+        box-shadow: 0 4px 25px rgba(102, 126, 234, 0.4);
+        transition: var(--transition);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.2);
     }
+
     .print-fab:hover {
-        transform: scale(1.05) translateY(-3px);
-        box-shadow: 0 6px 30px rgba(0, 150, 167, 0.5);
+        transform: scale(1.05) translateY(-4px);
+        box-shadow: 0 8px 40px rgba(102, 126, 234, 0.5);
     }
+
+    .print-fab:active {
+        transform: scale(0.95);
+    }
+
     .print-fab i {
         font-size: 1.1rem;
     }
@@ -485,60 +638,60 @@
         display: none;
         position: fixed;
         inset: 0;
-        background: rgba(0, 0, 0, 0.5);
+        background: rgba(15, 23, 42, 0.6);
+        backdrop-filter: blur(8px);
         z-index: 9999;
         justify-content: center;
         align-items: center;
-        backdrop-filter: blur(4px);
-        animation: modalOverlayIn 0.3s var(--ease);
         padding: 1rem;
+        animation: fadeIn 0.3s ease;
     }
+
     .modal-overlay.active {
         display: flex;
     }
-    @keyframes modalOverlayIn {
-        from {
-            opacity: 0;
-        }
-        to {
-            opacity: 1;
-        }
+
+    @keyframes fadeIn {
+        from { opacity: 0; }
+        to { opacity: 1; }
     }
 
     .modal-box {
         background: white;
         border-radius: var(--radius-lg);
-        width: 740px;
+        width: 780px;
         max-width: 100%;
         max-height: 92vh;
         overflow-y: auto;
-        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.25);
-        animation: modalBoxIn 0.3s var(--ease);
+        box-shadow: var(--shadow-xl);
+        animation: slideUp 0.3s ease;
     }
-    @keyframes modalBoxIn {
+
+    @keyframes slideUp {
         from {
-            transform: translateY(30px) scale(0.96);
             opacity: 0;
+            transform: translateY(30px) scale(0.96);
         }
         to {
-            transform: translateY(0) scale(1);
             opacity: 1;
+            transform: translateY(0) scale(1);
         }
     }
 
-    .modal-header-custom {
+    .modal-header {
+        background: linear-gradient(135deg, var(--gradient-start), var(--gradient-end));
+        padding: 1.25rem 1.75rem;
+        border-radius: var(--radius-lg) var(--radius-lg) 0 0;
         display: flex;
         justify-content: space-between;
         align-items: center;
-        padding: 1rem 1.5rem;
-        background: linear-gradient(135deg, var(--primary-4), var(--primary-dark));
-        color: white;
-        border-radius: var(--radius-lg) var(--radius-lg) 0 0;
         position: sticky;
         top: 0;
         z-index: 10;
     }
-    .modal-header-custom h3 {
+
+    .modal-header h3 {
+        color: white;
         font-size: 1.1rem;
         font-weight: 700;
         margin: 0;
@@ -546,67 +699,94 @@
         align-items: center;
         gap: 0.6rem;
     }
+
     .modal-close {
-        width: 34px;
-        height: 34px;
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
         border: none;
         background: rgba(255, 255, 255, 0.15);
-        border-radius: 50%;
-        cursor: pointer;
-        font-size: 1.2rem;
         color: white;
+        font-size: 1.2rem;
+        cursor: pointer;
+        transition: var(--transition);
         display: flex;
         align-items: center;
         justify-content: center;
-        transition: var(--transition);
-        flex-shrink: 0;
     }
+
     .modal-close:hover {
         background: rgba(255, 255, 255, 0.3);
         transform: rotate(90deg);
     }
 
-    .modal-body-custom {
-        padding: 1.25rem 1.5rem;
+    .modal-body {
+        padding: 1.5rem 1.75rem;
     }
-    .modal-footer-custom {
+
+    .modal-footer {
+        padding: 1rem 1.75rem;
+        background: var(--gray-50);
+        border-top: 1px solid var(--gray-200);
+        border-radius: 0 0 var(--radius-lg) var(--radius-lg);
         display: flex;
         justify-content: space-between;
         align-items: center;
         flex-wrap: wrap;
         gap: 0.75rem;
-        padding: 0.75rem 1.5rem;
-        background: var(--primary-1);
-        border-radius: 0 0 var(--radius-lg) var(--radius-lg);
-        border-top: 1px solid var(--primary-2);
         position: sticky;
         bottom: 0;
         z-index: 10;
     }
 
-    /* ===== أقسام المودال ===== */
+    /* ===== مكونات المودال ===== */
     .section-title {
-        font-size: 0.75rem;
+        font-size: 0.7rem;
         font-weight: 700;
-        color: var(--text-dark);
         text-transform: uppercase;
         letter-spacing: 0.5px;
-        margin: 1.2rem 0 0.6rem;
-        padding-bottom: 0.3rem;
-        border-bottom: 2px solid var(--primary-2);
+        color: var(--gray-500);
+        margin: 1.25rem 0 0.6rem;
+        padding-bottom: 0.4rem;
+        border-bottom: 2px solid var(--gray-200);
         display: flex;
         align-items: center;
         gap: 0.5rem;
     }
+
     .section-title:first-child {
         margin-top: 0;
     }
 
+    .section-title i {
+        color: var(--primary);
+        font-size: 0.8rem;
+    }
+
+    .info-box {
+        background: linear-gradient(135deg, #F0FDF4, #ECFDF5);
+        border-right: 4px solid #10B981;
+        padding: 0.75rem 1rem;
+        border-radius: var(--radius-sm);
+        font-size: 0.8rem;
+        color: #065F46;
+        display: flex;
+        align-items: center;
+        gap: 0.6rem;
+        margin-bottom: 0.75rem;
+    }
+
+    .info-box i {
+        color: #10B981;
+        font-size: 1rem;
+    }
+
     .field-grid {
         display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+        grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
         gap: 0.3rem;
     }
+
     .field-check {
         display: flex;
         align-items: center;
@@ -614,100 +794,109 @@
         padding: 0.3rem 0.6rem;
         border-radius: var(--radius-sm);
         cursor: pointer;
-        transition: background 0.15s var(--ease);
+        transition: var(--transition);
         font-size: 0.8rem;
-        background: #f8fafc;
+        background: var(--gray-50);
         border: 1px solid transparent;
     }
+
     .field-check:hover {
-        background: var(--primary-1);
-        border-color: var(--primary-2);
+        background: #E0E7FF;
+        border-color: #C7D2FE;
     }
+
     .field-check input[type="checkbox"] {
         width: 16px;
         height: 16px;
-        accent-color: var(--primary-4);
+        accent-color: var(--primary);
         cursor: pointer;
         flex-shrink: 0;
     }
+
     .field-key {
-        color: var(--primary-4);
         font-size: 0.55rem;
-        font-family: monospace;
-        background: var(--primary-1);
+        font-family: 'JetBrains Mono', monospace;
+        background: var(--gray-200);
         padding: 0.05rem 0.35rem;
         border-radius: 3px;
+        color: var(--gray-500);
         margin-right: auto;
         direction: ltr;
     }
 
-    /* ===== أزرار الخيارات ===== */
     .btn-group-print {
         display: flex;
-        gap: 0.25rem;
-        background: var(--primary-1);
+        gap: 0.3rem;
+        background: var(--gray-100);
         padding: 0.2rem;
         border-radius: var(--radius-sm);
         flex-wrap: wrap;
     }
+
     .btn-opt {
-        flex: 1;
-        padding: 0.3rem 0.6rem;
+        padding: 0.3rem 0.7rem;
         border: none;
         background: transparent;
         border-radius: var(--radius-sm);
         font-size: 0.75rem;
         cursor: pointer;
-        font-family: var(--font);
-        color: var(--primary-4);
+        font-family: 'Tajawal', sans-serif;
+        color: var(--gray-600);
         font-weight: 600;
         transition: var(--transition);
         text-align: center;
-        min-width: 50px;
+        min-width: 48px;
     }
+
     .btn-opt:hover {
         background: rgba(255, 255, 255, 0.5);
     }
+
     .btn-opt.active {
         background: white;
-        color: var(--text-dark);
-        box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+        color: var(--gray-900);
+        box-shadow: var(--shadow-sm);
     }
 
-    /* ===== مفاتيح التبديل ===== */
     .toggle-row {
         display: flex;
         align-items: center;
         justify-content: space-between;
         padding: 0.4rem 0;
-        border-bottom: 1px solid #f0f2f5;
+        border-bottom: 1px solid var(--gray-100);
     }
+
     .toggle-row:last-child {
         border-bottom: none;
     }
+
     .toggle-row label {
         font-size: 0.8rem;
-        margin: 0;
+        color: var(--gray-700);
         cursor: pointer;
-        color: #2d3748;
+        margin: 0;
     }
+
     .toggle-switch {
         position: relative;
-        width: 42px;
+        width: 44px;
         height: 24px;
         cursor: pointer;
         flex-shrink: 0;
     }
+
     .toggle-switch input {
         display: none;
     }
+
     .toggle-slider {
         position: absolute;
         inset: 0;
-        background: #ccc;
+        background: var(--gray-300);
         border-radius: 12px;
-        transition: 0.25s var(--ease);
+        transition: var(--transition);
     }
+
     .toggle-slider::before {
         content: '';
         position: absolute;
@@ -717,55 +906,61 @@
         border-radius: 50%;
         top: 3px;
         left: 3px;
-        transition: 0.25s var(--ease);
+        transition: var(--transition);
         box-shadow: 0 1px 4px rgba(0, 0, 0, 0.15);
     }
+
     .toggle-switch input:checked+.toggle-slider {
-        background: var(--primary-4);
-    }
-    .toggle-switch input:checked+.toggle-slider::before {
-        left: 21px;
+        background: var(--primary);
     }
 
-    /* ===== حقول الهيدر والفوتر ===== */
+    .toggle-switch input:checked+.toggle-slider::before {
+        left: 23px;
+    }
+
     .header-footer-inputs {
         display: grid;
         grid-template-columns: 1fr 1fr;
         gap: 0.75rem;
     }
+
     .hf-input-group label {
         display: block;
         font-size: 0.75rem;
         font-weight: 600;
-        color: var(--text-dark);
+        color: var(--gray-700);
         margin-bottom: 0.2rem;
     }
+
     .hf-input-group input,
     .hf-input-group textarea {
         width: 100%;
-        border: 1px solid var(--primary-2);
-        border-radius: var(--radius-sm);
         padding: 0.4rem 0.6rem;
+        border: 1px solid var(--gray-200);
+        border-radius: var(--radius-sm);
         font-size: 0.8rem;
-        font-family: var(--font);
+        font-family: 'Tajawal', sans-serif;
         transition: var(--transition);
         background: white;
-        color: #1a2332;
+        color: var(--gray-800);
     }
+
     .hf-input-group input:focus,
     .hf-input-group textarea:focus {
-        border-color: var(--primary-3);
-        box-shadow: 0 0 0 3px rgba(77, 208, 225, 0.2);
+        border-color: var(--primary);
+        box-shadow: 0 0 0 3px rgba(91, 106, 191, 0.15);
         outline: none;
     }
+
     .hf-input-group input:read-only,
     .hf-input-group textarea:read-only {
-        background: #f5f7fa;
+        background: var(--gray-50);
         cursor: default;
     }
+
     .hf-preview-box {
-        background: var(--primary-1);
-        border: 2px dashed var(--primary-2);
+        background: var(--gray-50);
+        border: 2px dashed var(--gray-300);
         border-radius: var(--radius-sm);
         padding: 0.5rem;
         text-align: center;
@@ -773,37 +968,20 @@
         display: flex;
         align-items: center;
         justify-content: center;
-        transition: var(--transition);
     }
+
     .hf-preview-box img {
         border-radius: var(--radius-sm);
         object-fit: contain;
-        max-height: 65px;
+        max-height: 60px;
         max-width: 100%;
     }
+
     .hf-preview-box span {
-        font-size: 0.8rem;
-        color: #999;
+        font-size: 0.75rem;
+        color: var(--gray-400);
     }
 
-    .company-info-box {
-        margin: 0.5rem 0 1rem;
-        padding: 0.6rem 1rem;
-        background: #e8f5e9;
-        border-radius: var(--radius-sm);
-        border-right: 3px solid #4caf50;
-        font-size: 0.8rem;
-        color: #1b5e20;
-        display: flex;
-        align-items: center;
-        gap: 0.5rem;
-        flex-wrap: wrap;
-    }
-    .company-info-box i {
-        color: #2e7d32;
-    }
-
-    /* ===== أزرار المودال ===== */
     .btn {
         padding: 0.4rem 1rem;
         border-radius: var(--radius-sm);
@@ -812,32 +990,36 @@
         border: none;
         cursor: pointer;
         transition: var(--transition);
-        font-family: var(--font);
+        font-family: 'Tajawal', sans-serif;
         display: inline-flex;
         align-items: center;
         gap: 0.4rem;
         text-decoration: none;
         white-space: nowrap;
     }
-    .btn-primary-print {
-        background: linear-gradient(135deg, var(--primary-4), var(--primary-dark));
+
+    .btn-primary {
+        background: linear-gradient(135deg, var(--gradient-start), var(--gradient-end));
         color: white;
-        box-shadow: 0 3px 12px rgba(0, 150, 167, 0.3);
+        box-shadow: 0 2px 12px rgba(102, 126, 234, 0.3);
     }
-    .btn-primary-print:hover {
+
+    .btn-primary:hover {
         transform: translateY(-2px);
-        box-shadow: 0 6px 24px rgba(0, 150, 167, 0.4);
+        box-shadow: 0 4px 20px rgba(102, 126, 234, 0.4);
         color: white;
     }
-    .btn-secondary-print {
-        background: linear-gradient(135deg, #78909c, #546e7a);
-        color: white;
+
+    .btn-secondary {
+        background: var(--gray-200);
+        color: var(--gray-700);
     }
-    .btn-secondary-print:hover {
+
+    .btn-secondary:hover {
+        background: var(--gray-300);
         transform: translateY(-2px);
-        box-shadow: 0 4px 16px rgba(120, 144, 156, 0.3);
-        color: white;
     }
+
     .btn-group-actions {
         display: flex;
         gap: 0.35rem;
@@ -845,42 +1027,49 @@
     }
 
     /* ===== توست ===== */
-    .toast {
+    .toast-container {
         position: fixed;
         bottom: 2rem;
         left: 50%;
-        transform: translateX(-50%) translateY(80px);
-        background: linear-gradient(135deg, #1a252f, #2c3e50);
-        color: white;
-        padding: 0.7rem 1.8rem;
-        border-radius: 50px;
-        font-size: 0.9rem;
+        transform: translateX(-50%);
         z-index: 100000;
-        opacity: 0;
-        transition: all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
         pointer-events: none;
-        box-shadow: 0 8px 30px rgba(0, 0, 0, 0.2);
-        font-weight: 600;
-        letter-spacing: 0.3px;
-        white-space: nowrap;
-        direction: rtl;
-        font-family: var(--font);
-        display: none;
     }
+
+    .toast {
+        background: var(--gray-900);
+        color: white;
+        padding: 0.75rem 1.5rem;
+        border-radius: 50px;
+        font-size: 0.85rem;
+        font-weight: 600;
+        box-shadow: var(--shadow-lg);
+        pointer-events: auto;
+        opacity: 0;
+        transform: translateY(20px) scale(0.95);
+        transition: all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+        display: none;
+        font-family: 'Tajawal', sans-serif;
+        direction: rtl;
+        text-align: center;
+    }
+
     .toast.show {
         display: block;
-        transform: translateX(-50%) translateY(0);
         opacity: 1;
-        pointer-events: auto;
+        transform: translateY(0) scale(1);
     }
+
     .toast-success {
         background: linear-gradient(135deg, #059669, #047857);
     }
+
     .toast-error {
-        background: linear-gradient(135deg, #dc2626, #b91c1c);
+        background: linear-gradient(135deg, #DC2626, #B91C1C);
     }
+
     .toast-info {
-        background: linear-gradient(135deg, #2563eb, #1d4ed8);
+        background: linear-gradient(135deg, #2563EB, #1D4ED8);
     }
 
     /* ===== مكونات الطباعة ===== */
@@ -891,27 +1080,22 @@
         background: white;
         text-align: center;
     }
-    .print-logo-small .ph-logo {
-        max-height: 20pt !important;
-        max-width: 35pt !important;
-    }
-    .print-logo-medium .ph-logo {
-        max-height: 35pt !important;
-        max-width: 60pt !important;
-    }
-    .print-logo-large .ph-logo {
-        max-height: 45pt !important;
-        max-width: 70pt !important;
-    }
+
+    .print-logo-small .ph-logo { max-height: 20pt !important; max-width: 35pt !important; }
+    .print-logo-medium .ph-logo { max-height: 35pt !important; max-width: 60pt !important; }
+    .print-logo-large .ph-logo { max-height: 45pt !important; max-width: 70pt !important; }
+
     .print-header-area .ph-logo {
         vertical-align: middle;
         object-fit: contain;
     }
+
     .print-header-area .ph-company {
         font-size: 12pt;
         font-weight: 700;
         color: #000;
     }
+
     .print-header-area .ph-details {
         font-size: 8pt;
         color: #444;
@@ -924,89 +1108,89 @@
         text-align: center;
         border-top: 1pt solid #ddd;
     }
+
     .print-last-page-notes {
         display: none;
     }
+
     .print-watermark {
         display: none;
     }
 
     /* ===== تنسيقات PDF ===== */
-    .pdf-export-instructions {
+    .pdf-instructions {
         text-align: center;
         padding: 0.5rem 0;
     }
-    .pdf-export-instructions .icon {
-        font-size: 3rem;
-        color: var(--primary-4);
+
+    .pdf-instructions .pdf-icon {
+        font-size: 3.5rem;
+        color: var(--primary);
         margin-bottom: 0.75rem;
     }
-    .pdf-export-instructions h4 {
+
+    .pdf-instructions h4 {
         font-size: 1.1rem;
-        color: var(--text-dark);
+        color: var(--gray-800);
         margin: 0 0 0.3rem;
     }
-    .pdf-export-instructions p {
+
+    .pdf-instructions p {
         font-size: 0.85rem;
-        color: #555;
+        color: var(--gray-500);
         margin: 0 0 1rem;
         line-height: 1.6;
     }
+
     .pdf-steps {
         text-align: right;
-        background: #f8f9fa;
+        background: var(--gray-50);
         padding: 1rem 1.5rem;
         border-radius: var(--radius-sm);
         margin: 0 0 0.5rem;
         list-style: none;
     }
+
     .pdf-steps li {
         margin-bottom: 0.4rem;
         font-size: 0.85rem;
-        color: #444;
+        color: var(--gray-600);
         padding-right: 0.5rem;
-        position: relative;
     }
+
     .pdf-steps li::before {
         content: '•';
-        color: var(--primary-4);
+        color: var(--primary);
         font-weight: 700;
         margin-left: 0.5rem;
     }
 
     /* ===== التجاوب ===== */
-    @media (max-width: 992px) {
-        .dash-header h1 {
-            font-size: 1.3rem;
+    @media (max-width: 1024px) {
+        .dashboard-wrapper {
+            padding: 1rem;
         }
-        .stat-info h3 {
-            font-size: 1.3rem;
-        }
-        .modal-box {
-            width: 95vw;
+        .dashboard-header {
+            padding: 1.5rem;
         }
     }
 
     @media (max-width: 768px) {
-        .dashboard-container {
-            padding: 0.75rem;
+        .dashboard-header {
+            padding: 1.25rem;
+            border-radius: var(--radius);
         }
-        .dash-header {
-            padding: 1.25rem 1.25rem;
-            flex-direction: column;
-            align-items: stretch;
-            text-align: center;
+        .header-text h1 {
+            font-size: 1.3rem;
         }
-        .dash-header h1 {
-            font-size: 1.1rem;
-            justify-content: center;
+        .header-text p {
+            font-size: 0.8rem;
         }
-        .dash-header .header-actions {
-            justify-content: center;
+        .header-badge {
+            padding: 0.3rem 1rem;
         }
-        .dash-header .header-actions .btn {
+        .header-badge span {
             font-size: 0.75rem;
-            padding: 0.4rem 0.9rem;
         }
         .stats-grid {
             grid-template-columns: 1fr 1fr;
@@ -1017,42 +1201,47 @@
             flex-direction: column;
             text-align: center;
         }
-        .stat-icon {
-            width: 44px;
-            height: 44px;
-            font-size: 1.1rem;
-        }
-        .stat-info h3 {
+        .stat-card .stat-icon-wrapper {
+            width: 48px;
+            height: 48px;
             font-size: 1.2rem;
         }
+        .stat-info .stat-number {
+            font-size: 1.4rem;
+        }
         .data-card-header {
-            padding: 0.7rem 1rem;
+            padding: 0.9rem 1rem;
+        }
+        .data-card-header .card-title {
             font-size: 0.85rem;
         }
         .table {
             font-size: 0.75rem;
-            min-width: 480px;
+            min-width: 500px;
         }
         .table thead th,
         .table tbody td {
-            padding: 0.5rem 0.6rem;
+            padding: 0.5rem 0.75rem;
         }
-        .btn-group .btn {
-            font-size: 0.65rem;
-            padding: 0.25rem 0.5rem;
+        .action-group .btn-action {
+            font-size: 0.6rem;
+            padding: 0.2rem 0.5rem;
+        }
+        .action-group .btn-action i {
+            font-size: 0.6rem;
         }
         .modal-box {
             width: 98vw;
             max-height: 95vh;
         }
-        .modal-body-custom {
+        .modal-body {
             padding: 1rem;
         }
-        .modal-footer-custom {
+        .modal-footer {
             flex-direction: column;
             align-items: stretch;
         }
-        .modal-footer-custom .btn-group-actions {
+        .modal-footer .btn-group-actions {
             justify-content: center;
         }
         .field-grid {
@@ -1064,25 +1253,19 @@
         .print-fab {
             bottom: 1rem;
             left: 1rem;
-            padding: 0.5rem 1rem;
-            font-size: 0.75rem;
+            padding: 0.6rem 1.2rem;
+            font-size: 0.8rem;
         }
         .print-fab i {
             font-size: 0.9rem;
         }
         .toast {
             font-size: 0.75rem;
-            padding: 0.5rem 1.2rem;
-            white-space: normal;
+            padding: 0.5rem 1rem;
             max-width: 90%;
-            bottom: 1rem;
-        }
-        .company-info-box {
-            font-size: 0.7rem;
-            padding: 0.4rem 0.8rem;
         }
         .section-title {
-            font-size: 0.65rem;
+            font-size: 0.6rem;
         }
         .btn-opt {
             font-size: 0.65rem;
@@ -1093,7 +1276,7 @@
             font-size: 0.7rem;
         }
         .toggle-switch {
-            width: 36px;
+            width: 38px;
             height: 20px;
         }
         .toggle-slider::before {
@@ -1103,17 +1286,32 @@
             left: 3px;
         }
         .toggle-switch input:checked+.toggle-slider::before {
-            left: 19px;
+            left: 21px;
         }
         .hf-preview-box {
             min-height: 55px;
         }
         .hf-preview-box img {
-            max-height: 50px;
+            max-height: 45px;
         }
     }
 
     @media (max-width: 480px) {
+        .dashboard-wrapper {
+            padding: 0.75rem;
+        }
+        .dashboard-header {
+            padding: 1rem;
+        }
+        .header-text h1 {
+            font-size: 1.1rem;
+        }
+        .header-text h1 i {
+            font-size: 1.3rem;
+        }
+        .header-text p {
+            font-size: 0.7rem;
+        }
         .stats-grid {
             grid-template-columns: 1fr 1fr;
             gap: 0.5rem;
@@ -1121,67 +1319,79 @@
         .stat-card {
             padding: 0.75rem;
         }
-        .stat-icon {
-            width: 36px;
-            height: 36px;
-            font-size: 0.9rem;
-        }
-        .stat-info h3 {
+        .stat-card .stat-icon-wrapper {
+            width: 40px;
+            height: 40px;
             font-size: 1rem;
         }
-        .stat-info p {
+        .stat-info .stat-number {
+            font-size: 1.1rem;
+        }
+        .stat-info .stat-label {
             font-size: 0.65rem;
         }
-        .dash-header h1 {
-            font-size: 0.95rem;
-        }
-        .dash-header p {
-            font-size: 0.75rem;
-        }
         .data-card-header {
+            padding: 0.6rem 0.75rem;
+        }
+        .data-card-header .card-title {
             font-size: 0.75rem;
-            padding: 0.5rem 0.75rem;
+        }
+        .data-card-header .card-badge {
+            font-size: 0.6rem;
+            padding: 0.15rem 0.6rem;
         }
         .table {
             font-size: 0.65rem;
-            min-width: 360px;
+            min-width: 380px;
         }
         .table thead th,
         .table tbody td {
-            padding: 0.3rem 0.4rem;
+            padding: 0.3rem 0.5rem;
         }
-        .btn-group .btn {
+        .table .db-name {
+            font-size: 0.65rem;
+        }
+        .badge {
             font-size: 0.55rem;
             padding: 0.15rem 0.4rem;
         }
-        .btn-group .btn i {
-            font-size: 0.6rem;
+        .action-group {
+            gap: 0.2rem;
+        }
+        .action-group .btn-action {
+            font-size: 0.5rem;
+            padding: 0.15rem 0.35rem;
+        }
+        .action-group .btn-action i {
+            font-size: 0.5rem;
         }
         .field-grid {
             grid-template-columns: 1fr;
         }
-        .modal-header-custom h3 {
+        .modal-header h3 {
             font-size: 0.9rem;
         }
-        .modal-footer-custom .btn {
+        .modal-footer .btn {
             font-size: 0.7rem;
             padding: 0.3rem 0.6rem;
-        }
-        .modal-body-custom {
-            padding: 0.75rem;
         }
         .print-fab {
             bottom: 0.75rem;
             left: 0.75rem;
-            padding: 0.4rem 0.8rem;
-            font-size: 0.65rem;
+            padding: 0.4rem 0.9rem;
+            font-size: 0.7rem;
         }
         .print-fab i {
             font-size: 0.75rem;
         }
-        .badge {
-            font-size: 0.55rem;
-            padding: 0.15rem 0.5rem;
+        .empty-state .empty-icon {
+            font-size: 2.5rem;
+        }
+        .empty-state h4 {
+            font-size: 0.85rem;
+        }
+        .empty-state p {
+            font-size: 0.75rem;
         }
     }
 
@@ -1197,12 +1407,15 @@
             color: #000 !important;
             padding: 0 !important;
             margin: 0 !important;
-            font-family: var(--font) !important;
+            font-family: 'Tajawal', sans-serif !important;
+        }
+        .bg-pattern {
+            display: none !important;
         }
         .modal-overlay,
-        .modal-backdrop,
         .print-fab,
-        .no-print {
+        .no-print,
+        .toast-container {
             display: none !important;
             visibility: hidden !important;
             opacity: 0 !important;
@@ -1255,14 +1468,6 @@
             display: block;
             color: #444 !important;
         }
-        .print-logo-large .ph-logo {
-            max-height: 45pt !important;
-            max-width: 70pt !important;
-        }
-        .ph-logo {
-            max-height: 45pt !important;
-            max-width: 70pt !important;
-        }
         .invoice-print-area {
             padding-top: 50pt !important;
             padding-bottom: 10pt !important;
@@ -1287,9 +1492,6 @@
             padding: 8pt 12pt !important;
             font-size: 11pt !important;
         }
-        .toast {
-            display: none !important;
-        }
         .data-card {
             box-shadow: none !important;
             border: 1px solid #ddd !important;
@@ -1300,11 +1502,14 @@
             background: #f0f0f0 !important;
             border-bottom: 1px solid #ccc !important;
         }
-        .pagination {
-            display: none !important;
+        .stat-card {
+            box-shadow: none !important;
+            border: 1px solid #ddd !important;
         }
-        .btn-group .btn {
-            display: none !important;
+        .dashboard-header {
+            background: #5B6ABF !important;
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
         }
         .table thead th {
             background: #e8e8e8 !important;
@@ -1313,20 +1518,8 @@
         .table tbody tr:hover {
             background: transparent !important;
         }
-        .stat-card {
-            box-shadow: none !important;
-            border: 1px solid #ddd !important;
-        }
-        .dash-header {
-            background: #006064 !important;
-            -webkit-print-color-adjust: exact !important;
-            print-color-adjust: exact !important;
-        }
         .badge {
             border: 1px solid #999 !important;
-        }
-        code {
-            background: #f5f5f5 !important;
         }
         .table-responsive {
             overflow: visible !important;
@@ -1343,22 +1536,41 @@
         .print-fab {
             display: none !important;
         }
+        .header-badge {
+            display: none !important;
+        }
+        .action-group .btn-action {
+            display: none !important;
+        }
+        .btn-disabled {
+            display: none !important;
+        }
+        .btn-group {
+            display: none !important;
+        }
     }
 </style>
 {% endblock %}
 
 {% block content %}
-<div class="dashboard-container">
-    <!-- ===== هيدر اللوحة ===== -->
-    <div class="dash-header">
-        <div>
-            <h1><i class="fas fa-rocket"></i> إدارة الفترات التجريبية</h1>
-            <p>لوحة تحكم شاملة لمراقبة وإدارة العملاء التجريبيين</p>
-        </div>
-        <div class="header-actions">
-            <button class="btn btn-primary" id="openPrintModalBtn">
-                <i class="fas fa-print"></i> طباعة
-            </button>
+<!-- خلفية متحركة -->
+<div class="bg-pattern"></div>
+
+<div class="dashboard-wrapper">
+    <!-- ===== الهيدر ===== -->
+    <div class="dashboard-header">
+        <div class="header-content">
+            <div class="header-text">
+                <h1>
+                    <i class="fas fa-rocket"></i>
+                    إدارة الفترات التجريبية
+                </h1>
+                <p>لوحة تحكم متطورة لمراقبة وإدارة العملاء التجريبيين بكل سهولة</p>
+            </div>
+            <div class="header-badge">
+                <span class="dot"></span>
+                <span>نظام نشط</span>
+            </div>
         </div>
     </div>
 
@@ -1367,25 +1579,40 @@
 
         <!-- ===== بطاقات الإحصائيات ===== -->
         <div class="stats-grid">
-            <div class="stat-card bg-success">
-                <div class="stat-icon ic-success"><i class="fas fa-users"></i></div>
+            <div class="stat-card">
+                <div class="stat-icon-wrapper">
+                    <i class="fas fa-users"></i>
+                </div>
                 <div class="stat-info">
-                    <h3>{{ active_trials.count }}</h3>
-                    <p>تجارب نشطة</p>
+                    <div class="stat-number">{{ active_trials.count }}</div>
+                    <p class="stat-label">
+                        تجارب نشطة
+                        <span class="stat-change positive">✓ نشطة</span>
+                    </p>
                 </div>
             </div>
-            <div class="stat-card bg-warning">
-                <div class="stat-icon ic-warning"><i class="fas fa-hourglass-end"></i></div>
+            <div class="stat-card">
+                <div class="stat-icon-wrapper">
+                    <i class="fas fa-hourglass-end"></i>
+                </div>
                 <div class="stat-info">
-                    <h3>{{ expired_trials.count }}</h3>
-                    <p>تجارب منتهية</p>
+                    <div class="stat-number">{{ expired_trials.count }}</div>
+                    <p class="stat-label">
+                        تجارب منتهية
+                        <span class="stat-change negative">✗ منتهية</span>
+                    </p>
                 </div>
             </div>
-            <div class="stat-card bg-danger">
-                <div class="stat-icon ic-danger"><i class="fas fa-ban"></i></div>
+            <div class="stat-card">
+                <div class="stat-icon-wrapper">
+                    <i class="fas fa-ban"></i>
+                </div>
                 <div class="stat-info">
-                    <h3>{{ stopped_trials.count }}</h3>
-                    <p>تجارب متوقفة</p>
+                    <div class="stat-number">{{ stopped_trials.count }}</div>
+                    <p class="stat-label">
+                        تجارب متوقفة
+                        <span class="stat-change negative">⏸ متوقفة</span>
+                    </p>
                 </div>
             </div>
         </div>
@@ -1393,8 +1620,14 @@
         <!-- ===== التجارب النشطة ===== -->
         <div class="data-card">
             <div class="data-card-header">
-                <span><i class="fas fa-play-circle"></i> التجارب النشطة</span>
-                <span class="badge">{{ active_trials.count }}</span>
+                <div class="card-title">
+                    <i class="fas fa-play-circle"></i>
+                    التجارب النشطة
+                </div>
+                <span class="card-badge active-badge">
+                    <i class="fas fa-circle" style="font-size:0.5rem;"></i>
+                    {{ active_trials.count }}
+                </span>
             </div>
             <div class="data-card-body">
                 <div class="table-responsive">
@@ -1404,29 +1637,36 @@
                                 <th data-print-field="col-customer">العميل</th>
                                 <th data-print-field="col-db">قاعدة البيانات</th>
                                 <th data-print-field="col-remaining">المتبقي</th>
-                                <th class="no-print" style="text-align:center;">إجراءات</th>
+                                <th class="no-print" style="text-align:center;">الإجراءات</th>
                             </tr>
                         </thead>
                         <tbody>
                             {% for trial in active_trials %}
                             <tr>
                                 <td data-print-field="col-customer">
-                                    <strong>{{ trial.full_name }}</strong><br>
-                                    <span class="text-muted">{{ trial.email }}</span>
+                                    <div class="customer-info">
+                                        <span class="name">{{ trial.full_name }}</span>
+                                        <span class="email">{{ trial.email }}</span>
+                                    </div>
                                 </td>
-                                <td data-print-field="col-db"><code>{{ trial.db_name }}</code></td>
+                                <td data-print-field="col-db">
+                                    <span class="db-name">{{ trial.db_name }}</span>
+                                </td>
                                 <td data-print-field="col-remaining">
-                                    <span class="badge bg-info">{{ trial.expiry_date|timeuntil }}</span>
+                                    <span class="badge badge-info">
+                                        <i class="fas fa-clock"></i>
+                                        {{ trial.expiry_date|timeuntil }}
+                                    </span>
                                 </td>
                                 <td class="no-print" style="text-align:center;">
-                                    <div class="btn-group">
+                                    <div class="action-group">
                                         <form method="post" action="{% url 'trials:stop_trial' trial.id %}" style="display:inline;">
                                             {% csrf_token %}
-                                            <button type="submit" class="btn btn-outline-warning" title="إيقاف يدوي">
+                                            <button type="submit" class="btn-action btn-stop" title="إيقاف يدوي">
                                                 <i class="fas fa-stop"></i> إيقاف
                                             </button>
                                         </form>
-                                        <button class="btn btn-outline-danger disabled" title="لا يمكن الحذف حتى تنتهي الفترة">
+                                        <button class="btn-action btn-disabled" title="لا يمكن الحذف حتى تنتهي الفترة">
                                             <i class="fas fa-trash"></i> حذف
                                         </button>
                                     </div>
@@ -1436,8 +1676,9 @@
                             <tr>
                                 <td colspan="4">
                                     <div class="empty-state">
-                                        <i class="fas fa-inbox"></i>
-                                        <p>لا يوجد عملاء تجريبيون نشطون حالياً.</p>
+                                        <div class="empty-icon"><i class="fas fa-inbox"></i></div>
+                                        <h4>لا يوجد تجارب نشطة</h4>
+                                        <p>جميع التجارب منتهية أو متوقفة حالياً</p>
                                     </div>
                                 </td>
                             </tr>
@@ -1452,8 +1693,14 @@
         {% if stopped_trials %}
         <div class="data-card">
             <div class="data-card-header">
-                <span><i class="fas fa-ban"></i> تجارب متوقفة يدوياً</span>
-                <span class="badge bg-secondary">{{ stopped_trials.count }}</span>
+                <div class="card-title">
+                    <i class="fas fa-pause-circle"></i>
+                    تجارب متوقفة يدوياً
+                </div>
+                <span class="card-badge warning-badge">
+                    <i class="fas fa-pause"></i>
+                    {{ stopped_trials.count }}
+                </span>
             </div>
             <div class="data-card-body">
                 <div class="table-responsive">
@@ -1463,45 +1710,56 @@
                                 <th data-print-field="col-customer">العميل</th>
                                 <th data-print-field="col-db">قاعدة البيانات</th>
                                 <th data-print-field="col-status">الحالة</th>
-                                <th data-print-field="col-remaining">المتبقي (عند الاستعادة)</th>
-                                <th class="no-print" style="text-align:center;">إجراءات</th>
+                                <th data-print-field="col-remaining">المتبقي</th>
+                                <th class="no-print" style="text-align:center;">الإجراءات</th>
                             </tr>
                         </thead>
                         <tbody>
                             {% for trial in stopped_trials %}
                             <tr>
                                 <td data-print-field="col-customer">
-                                    <strong>{{ trial.full_name }}</strong><br>
-                                    <span class="text-muted">{{ trial.email }}</span>
+                                    <div class="customer-info">
+                                        <span class="name">{{ trial.full_name }}</span>
+                                        <span class="email">{{ trial.email }}</span>
+                                    </div>
                                 </td>
-                                <td data-print-field="col-db"><code>{{ trial.db_name }}</code></td>
+                                <td data-print-field="col-db">
+                                    <span class="db-name">{{ trial.db_name }}</span>
+                                </td>
                                 <td data-print-field="col-status">
-                                    <span class="badge bg-secondary"><i class="fas fa-pause"></i> متوقف</span>
+                                    <span class="badge badge-secondary">
+                                        <i class="fas fa-ban"></i> متوقف
+                                    </span>
                                 </td>
                                 <td data-print-field="col-remaining">
                                     {% if trial.expiry_date > now %}
-                                        <span class="badge bg-info">{{ trial.expiry_date|timeuntil }}</span>
+                                        <span class="badge badge-info">
+                                            <i class="fas fa-clock"></i>
+                                            {{ trial.expiry_date|timeuntil }}
+                                        </span>
                                     {% else %}
-                                        <span class="badge bg-danger">انتهت مدته</span>
+                                        <span class="badge badge-danger">
+                                            <i class="fas fa-exclamation-circle"></i> انتهت
+                                        </span>
                                     {% endif %}
                                 </td>
                                 <td class="no-print" style="text-align:center;">
-                                    <div class="btn-group">
+                                    <div class="action-group">
                                         <form method="post" action="{% url 'trials:resume_trial' trial.id %}" style="display:inline;">
                                             {% csrf_token %}
-                                            <button type="submit" class="btn btn-outline-primary" title="استعادة بنفس الفترة المتبقية">
+                                            <button type="submit" class="btn-action btn-resume" title="استعادة بنفس الفترة المتبقية">
                                                 <i class="fas fa-play"></i> استعادة
                                             </button>
                                         </form>
                                         <form method="post" action="{% url 'trials:reset_trial' trial.id %}" style="display:inline;" onsubmit="return confirm('سيتم إعادة ضبط الفترة لتبدأ من جديد لمدة 10 أيام. هل أنت متأكد؟');">
                                             {% csrf_token %}
-                                            <button type="submit" class="btn btn-outline-info" title="إعادة ضبط الفترة (10 أيام جديدة)">
+                                            <button type="submit" class="btn-action btn-reset" title="إعادة ضبط الفترة (10 أيام جديدة)">
                                                 <i class="fas fa-redo"></i> ضبط
                                             </button>
                                         </form>
                                         <form method="post" action="{% url 'trials:delete_trial' trial.id %}" style="display:inline;" onsubmit="return confirm('هل أنت متأكد من حذف قاعدة البيانات نهائياً؟ لا يمكن التراجع.');">
                                             {% csrf_token %}
-                                            <button type="submit" class="btn btn-danger" title="حذف قاعدة البيانات نهائياً">
+                                            <button type="submit" class="btn-action btn-delete" title="حذف قاعدة البيانات نهائياً">
                                                 <i class="fas fa-trash"></i> حذف
                                             </button>
                                         </form>
@@ -1520,8 +1778,14 @@
         {% if expired_trials %}
         <div class="data-card">
             <div class="data-card-header">
-                <span><i class="fas fa-exclamation-triangle"></i> تجارب منتهية (جاهزة للحذف)</span>
-                <span class="badge bg-danger">{{ expired_trials.count }}</span>
+                <div class="card-title">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    تجارب منتهية
+                </div>
+                <span class="card-badge danger-badge">
+                    <i class="fas fa-exclamation-circle"></i>
+                    {{ expired_trials.count }}
+                </span>
             </div>
             <div class="data-card-body">
                 <div class="table-responsive">
@@ -1531,25 +1795,36 @@
                                 <th data-print-field="col-customer">العميل</th>
                                 <th data-print-field="col-db">قاعدة البيانات</th>
                                 <th data-print-field="col-expired">انتهت في</th>
-                                <th class="no-print" style="text-align:center;">حذف نهائي</th>
+                                <th class="no-print" style="text-align:center;">الإجراءات</th>
                             </tr>
                         </thead>
                         <tbody>
                             {% for trial in expired_trials %}
                             <tr>
                                 <td data-print-field="col-customer">
-                                    <strong>{{ trial.full_name }}</strong><br>
-                                    <span class="text-muted">{{ trial.email }}</span>
+                                    <div class="customer-info">
+                                        <span class="name">{{ trial.full_name }}</span>
+                                        <span class="email">{{ trial.email }}</span>
+                                    </div>
                                 </td>
-                                <td data-print-field="col-db"><code class="text-danger">{{ trial.db_name }}</code></td>
-                                <td data-print-field="col-expired">{{ trial.expiry_date|date:"Y-m-d" }}</td>
+                                <td data-print-field="col-db">
+                                    <span class="db-name danger">{{ trial.db_name }}</span>
+                                </td>
+                                <td data-print-field="col-expired">
+                                    <span class="badge badge-danger">
+                                        <i class="fas fa-calendar-times"></i>
+                                        {{ trial.expiry_date|date:"Y-m-d" }}
+                                    </span>
+                                </td>
                                 <td class="no-print" style="text-align:center;">
-                                    <form method="post" action="{% url 'trials:delete_trial' trial.id %}" style="display:inline;" onsubmit="return confirm('هل أنت متأكد من حذف قاعدة البيانات نهائياً؟ لا يمكن التراجع عن هذا الإجراء.');">
-                                        {% csrf_token %}
-                                        <button type="submit" class="btn btn-danger" title="حذف قاعدة البيانات نهائياً">
-                                            <i class="fas fa-trash"></i> حذف نهائي
-                                        </button>
-                                    </form>
+                                    <div class="action-group">
+                                        <form method="post" action="{% url 'trials:delete_trial' trial.id %}" style="display:inline;" onsubmit="return confirm('هل أنت متأكد من حذف قاعدة البيانات نهائياً؟ لا يمكن التراجع عن هذا الإجراء.');">
+                                            {% csrf_token %}
+                                            <button type="submit" class="btn-action btn-delete" title="حذف قاعدة البيانات نهائياً">
+                                                <i class="fas fa-trash"></i> حذف نهائي
+                                            </button>
+                                        </form>
+                                    </div>
                                 </td>
                             </tr>
                             {% endfor %}
@@ -1561,7 +1836,7 @@
         {% endif %}
 
     </div><!-- /printableArea -->
-</div><!-- /dashboard-container -->
+</div><!-- /dashboard-wrapper -->
 
 <!-- ===== مكونات الطباعة ===== -->
 <script id="companyData" type="application/json" nonce="{{ csp_nonce }}">
@@ -1602,23 +1877,24 @@
 <div class="print-watermark" id="watermarkText">شركة تجريبية</div>
 
 <!-- ===== زر الطباعة العائم ===== -->
-<button class="print-fab no-print" id="openPrintModalBtnFab">
-    <i class="fas fa-print"></i> طباعة
+<button class="print-fab no-print" id="openPrintModalBtn">
+    <i class="fas fa-print"></i>
+    طباعة
 </button>
 
 <!-- ===== مودال الطباعة ===== -->
 <div class="modal-overlay no-print" id="printModal" style="display:none;">
     <div class="modal-box">
-        <div class="modal-header-custom">
-            <h3><i class="fas fa-cog"></i> إعدادات الطباعة</h3>
+        <div class="modal-header">
+            <h3><i class="fas fa-print"></i> إعدادات الطباعة</h3>
             <button class="modal-close" id="closeModalBtn"><i class="fas fa-times"></i></button>
         </div>
-        <div class="modal-body-custom">
+        <div class="modal-body">
             <!-- معلومات الشركة -->
-            <div class="section-title"><i class="fas fa-building"></i> هيدر وفوتر الطباعة</div>
-            <div class="company-info-box">
+            <div class="section-title"><i class="fas fa-building"></i> الهيدر والفوتر</div>
+            <div class="info-box">
                 <i class="fas fa-info-circle"></i>
-                <span><strong>ملاحظة:</strong> بيانات الشركة مأخوذة تلقائياً من الإعدادات. الملاحظات ستظهر في آخر صفحة فقط.</span>
+                <span>بيانات الشركة مأخوذة تلقائياً. الملاحظات ستظهر في آخر صفحة فقط.</span>
             </div>
             <div class="header-footer-inputs">
                 <div class="hf-input-group">
@@ -1637,7 +1913,7 @@
                     <input type="text" id="companyDetailsInput" readonly>
                 </div>
                 <div class="hf-input-group" style="grid-column:1 / -1;">
-                    <label><i class="fas fa-pen"></i> ملاحظات إضافية للطباعة</label>
+                    <label><i class="fas fa-pen"></i> ملاحظات إضافية</label>
                     <textarea id="printNotes" rows="3" placeholder="أضف ملاحظاتك هنا..."></textarea>
                 </div>
             </div>
@@ -1691,16 +1967,16 @@
                 <label class="toggle-switch"><input type="checkbox" id="showWatermark" checked><span class="toggle-slider"></span></label>
             </div>
         </div>
-        <div class="modal-footer-custom">
+        <div class="modal-footer">
             <div class="btn-group-actions">
-                <button class="btn btn-secondary-print" id="selectAllBtn"><i class="fas fa-check-double"></i> تحديد الكل</button>
-                <button class="btn btn-secondary-print" id="deselectAllBtn"><i class="fas fa-times"></i> إلغاء الكل</button>
-                <button class="btn btn-secondary-print" id="saveSettingsBtn"><i class="fas fa-save"></i> حفظ</button>
-                <button class="btn btn-secondary-print" id="resetSettingsBtn"><i class="fas fa-undo"></i> استعادة</button>
+                <button class="btn btn-secondary" id="selectAllBtn"><i class="fas fa-check-double"></i> تحديد الكل</button>
+                <button class="btn btn-secondary" id="deselectAllBtn"><i class="fas fa-times"></i> إلغاء الكل</button>
+                <button class="btn btn-secondary" id="saveSettingsBtn"><i class="fas fa-save"></i> حفظ</button>
+                <button class="btn btn-secondary" id="resetSettingsBtn"><i class="fas fa-undo"></i> استعادة</button>
             </div>
             <div style="display:flex; gap:0.5rem; flex-wrap:wrap;">
-                <button class="btn btn-secondary-print" id="exportPdfBtn"><i class="fas fa-file-pdf"></i> PDF</button>
-                <button class="btn btn-primary-print" id="executePrintBtn"><i class="fas fa-print"></i> طباعة الآن</button>
+                <button class="btn btn-secondary" id="exportPdfBtn"><i class="fas fa-file-pdf"></i> PDF</button>
+                <button class="btn btn-primary" id="executePrintBtn"><i class="fas fa-print"></i> طباعة الآن</button>
             </div>
         </div>
     </div>
@@ -1708,25 +1984,25 @@
 
 <!-- ===== مودال تصدير PDF ===== -->
 <div class="modal-overlay no-print" id="pdfExportModal" style="display:none;">
-    <div class="modal-box" style="width:500px;">
-        <div class="modal-header-custom">
-            <h3><i class="fas fa-file-pdf"></i> تصدير كملف PDF</h3>
+    <div class="modal-box" style="width:520px;">
+        <div class="modal-header">
+            <h3><i class="fas fa-file-pdf"></i> تصدير PDF</h3>
             <button class="modal-close" id="closePdfModalBtn"><i class="fas fa-times"></i></button>
         </div>
-        <div class="modal-body-custom">
-            <div class="pdf-export-instructions">
-                <div class="icon"><i class="fas fa-file-arrow-down"></i></div>
+        <div class="modal-body">
+            <div class="pdf-instructions">
+                <div class="pdf-icon"><i class="fas fa-file-arrow-down"></i></div>
                 <h4>جاهز لتصدير المستند</h4>
-                <p>لضمان الحفاظ على جودة النصوص العربية، يعتمد النظام على محرك الطباعة المتقدم.</p>
+                <p>سيتم فتح نافذة الطباعة، اختر <strong>حفظ كـ PDF</strong> من قائمة الطابعات.</p>
                 <ul class="pdf-steps">
-                    <li>سيتم فتح نافذة الطباعة الخاصة بمتصفحك.</li>
-                    <li>من قائمة "الطابعة" (Printer)، اختر <strong>حفظ كـ PDF (Save as PDF)</strong>.</li>
-                    <li>اضغط على <strong>حفظ (Save)</strong> لتنزيل الملف.</li>
+                    <li>افتح نافذة الطباعة</li>
+                    <li>اختر <strong>حفظ كـ PDF (Save as PDF)</strong></li>
+                    <li>اضغط <strong>حفظ (Save)</strong> لتنزيل الملف</li>
                 </ul>
             </div>
         </div>
-        <div class="modal-footer-custom" style="justify-content:center;">
-            <button class="btn btn-primary-print" id="confirmPdfExportBtn" style="padding:0.6rem 2.5rem; font-size:0.9rem;">
+        <div class="modal-footer" style="justify-content:center;">
+            <button class="btn btn-primary" id="confirmPdfExportBtn" style="padding:0.6rem 2.5rem;">
                 <i class="fas fa-print"></i> فتح نافذة الحفظ
             </button>
         </div>
@@ -1734,7 +2010,9 @@
 </div>
 
 <!-- ===== توست ===== -->
-<div class="toast no-print" id="toast"></div>
+<div class="toast-container no-print">
+    <div class="toast" id="toast"></div>
+</div>
 
 {% endblock %}
 
@@ -1749,7 +2027,7 @@ document.addEventListener('DOMContentLoaded', function() {
         grid.innerHTML = '';
         const headers = document.querySelectorAll('#printableArea th[data-print-field]');
         if (headers.length === 0) {
-            grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;color:#999;font-size:0.75rem;padding:0.5rem;">لا توجد أعمدة قابلة للطباعة</div>';
+            grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;color:var(--gray-400);font-size:0.75rem;padding:0.5rem;">لا توجد أعمدة</div>';
             return;
         }
         headers.forEach(th => {
@@ -1874,11 +2152,9 @@ document.addEventListener('DOMContentLoaded', function() {
         if (!toastEl) return;
         toastEl.textContent = msg;
         toastEl.className = 'toast toast-' + type + ' show';
-        toastEl.style.display = 'block';
         if (toastTimeout) clearTimeout(toastTimeout);
         toastTimeout = setTimeout(function() {
             toastEl.classList.remove('show');
-            setTimeout(function() { toastEl.style.display = 'none'; }, 400);
         }, duration);
     }
 
@@ -2111,11 +2387,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // ===== أحداث الأزرار =====
     document.getElementById('openPrintModalBtn').addEventListener('click', function(e) {
-        e.preventDefault();
-        openModal('printModal');
-        loadPrintSettings();
-    });
-    document.getElementById('openPrintModalBtnFab').addEventListener('click', function(e) {
         e.preventDefault();
         openModal('printModal');
         loadPrintSettings();

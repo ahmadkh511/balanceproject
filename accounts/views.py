@@ -551,7 +551,7 @@ class CustomLoginForm(AuthenticationForm):
 
 
 
-
+#======================للحذف ===========================
 # دالة مساعدة لجلب الـ IP الحقيقي للمستخدم
 
 def get_client_ip(request):
@@ -589,6 +589,8 @@ def trial_request_view(request):
         'form': form,  # ✅ استخدم 'form' لأن القالب يستخدم 'form'
     }
     return render(request, 'accounts/Trial Request Page.html', context)
+
+#======================للحذف ===========================
 
 # ============================================
 # استعادة كلمة المرور (Password Reset)

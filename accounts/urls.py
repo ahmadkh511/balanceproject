@@ -110,6 +110,9 @@ urlpatterns = [
     path('company-settings/', views.company_settings_view, name='company_settings'),
 
 
+
+    #======================للحذف ===========================
+
     path('trial-request/', views.trial_request_view, name='trial_request'),
 
     

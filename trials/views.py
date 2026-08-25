@@ -5,11 +5,12 @@ from django.core.cache import cache
 from django.db import connection
 from django.contrib.auth.decorators import login_required
 from django.utils import timezone
+from datetime import timedelta
+from django.conf import settings
 from django.http import HttpResponseForbidden
 from .utils import provision_trial_database
 from .models import Trial
 
-# دالة مساعدة لجلب الـ IP الحقيقي للمستخدم
 def get_client_ip(request):
     x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
     if x_forwarded_for:
@@ -18,7 +19,6 @@ def get_client_ip(request):
         ip = request.META.get('REMOTE_ADDR')
     return ip
 
-# ===== صفحة طلب الفترة التجريبية =====
 def request_trial(request):
     if request.method == 'POST':
         ip_address = get_client_ip(request)
@@ -47,15 +47,12 @@ def request_trial(request):
             }
 
             user, generated_password, db_name = provision_trial_database(form_data)
-            
             request.session['trial_credentials'] = {
                 'username': user.username,
                 'password': generated_password
             }
-
             cache.set(cache_key, request_count + 1, 60)
             return redirect('trials:trial_success')
-            
         except Exception as e:
             messages.error(request, f'حدث خطأ أثناء إنشاء التجربة: {str(e)}')
             cache.set(cache_key, request_count + 1, 60)
@@ -63,32 +60,23 @@ def request_trial(request):
 
     return render(request, 'trials/request_trial.html')
 
-# ===== صفحة نجاح التسجيل =====
 def trial_success(request):
     credentials = request.session.pop('trial_credentials', None)
     return render(request, 'trials/success.html', {'credentials': credentials})
 
+# ===== دوال الإدارة =====
 
-# ======================================
-# ===== دوال الإدارة (الواجهة الأمامية) =====
-# ==========================================
-
-# دالة مساعدة للتحقق من الصلاحيات (تمنع العملاء التجريبيين وتسمح للمدير)
 def check_admin_access(request):
-    # 1. منع العميل التجريبي من الدخول (حتى لو كان سوبر يوزر في قاعدته)
     if Trial.objects.filter(user_id=request.user.id).exists():
         return False
-    # 2. السماح فقط للمدير الأساسي الذي يملك is_staff
     return request.user.is_staff
 
-# ===== صفحة إدارة التجارب =====
 @login_required
 def manage_trials(request):
     if not check_admin_access(request):
         return HttpResponseForbidden("ليس لديك صلاحية للوصول إلى هذه الصفحة.")
         
     all_trials = Trial.objects.all().order_by('-start_date')
-    
     active_trials = all_trials.filter(is_active=True, expiry_date__gte=timezone.now())
     expired_trials = all_trials.filter(is_active=True, expiry_date__lt=timezone.now())
     stopped_trials = all_trials.filter(is_active=False)
@@ -97,57 +85,75 @@ def manage_trials(request):
         'active_trials': active_trials,
         'expired_trials': expired_trials,
         'stopped_trials': stopped_trials,
+        'now': timezone.now(), # نرسل الوقت الحالي للقالب لنعرف المتبقي
     }
     return render(request, 'trials/manage_trials.html', context)
 
-# ===== إيقاف تجربة يدوياً =====
 @login_required
 def stop_trial(request, trial_id):
     if not check_admin_access(request):
         return HttpResponseForbidden("ليس لديك صلاحية.")
-        
     if request.method == 'POST':
         trial = get_object_or_404(Trial, id=trial_id)
         if trial.is_active:
             trial.is_active = False
             trial.save()
-            
             user = trial.user
             user.is_active = False
             user.save()
-            
             messages.success(request, f'تم إيقاف التجربة للمستخدم {trial.full_name} بنجاح.')
     return redirect('trials:manage_trials')
 
-# ===== حذف قاعدة بيانات تجربة نهائياً =====
+@login_required
+def resume_trial(request, trial_id):
+    if not check_admin_access(request):
+        return HttpResponseForbidden("ليس لديك صلاحية.")
+    if request.method == 'POST':
+        trial = get_object_or_404(Trial, id=trial_id)
+        if not trial.is_active:
+            trial.is_active = True
+            trial.save()
+            user = trial.user
+            user.is_active = True
+            user.save()
+            messages.success(request, f'تم إعادة تفعيل المستخدم {trial.full_name}.')
+    return redirect('trials:manage_trials')
+
+@login_required
+def reset_trial(request, trial_id):
+    if not check_admin_access(request):
+        return HttpResponseForbidden("ليس لديك صلاحية.")
+    if request.method == 'POST':
+        trial = get_object_or_404(Trial, id=trial_id)
+        trial.is_active = True
+        trial.expiry_date = timezone.now() + timedelta(days=settings.TRIAL_DAYS)
+        trial.save()
+        
+        user = trial.user
+        user.is_active = True
+        user.save()
+        messages.success(request, f'تم إعادة ضبط الفترة للمستخدم {trial.full_name} لتبدأ من جديد لمدة 10 أيام.')
+    return redirect('trials:manage_trials')
+
 @login_required
 def delete_trial(request, trial_id):
     if not check_admin_access(request):
         return HttpResponseForbidden("ليس لديك صلاحية.")
-        
     if request.method == 'POST':
         trial = get_object_or_404(Trial, id=trial_id)
-        
-        # حماية: لا يمكن حذف قاعدة بيانات عميل لا تزال فترته نشطة
         if trial.expiry_date > timezone.now() and trial.is_active:
             messages.error(request, 'لا يمكن حذف قاعدة بيانات عميل لا تزال فترته التجريبية نشطة!')
             return redirect('trials:manage_trials')
         
         db_name = trial.db_name
         try:
-            # 1. حذف قاعدة البيانات المعزولة من MySQL
             with connection.cursor() as cursor:
                 cursor.execute(f"DROP DATABASE IF EXISTS `{db_name}`;")
-            
-            # 2. تعطيل المستخدم في القاعدة الرئيسية
             user = trial.user
             user.is_active = False
             user.save()
-            
-            # 3. حذف سجل التجربة من جدول Trials
             trial.delete()
             messages.success(request, f'تم حذف قاعدة البيانات {db_name} والعميل {trial.full_name} نهائياً.')
         except Exception as e:
             messages.error(request, f'حدث خطأ أثناء الحذف: {str(e)}')
-            
     return redirect('trials:manage_trials')

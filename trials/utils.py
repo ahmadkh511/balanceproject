@@ -1,6 +1,7 @@
 import uuid
 import copy
 import secrets
+import re
 from django.conf import settings
 from django.db import connection
 from django.contrib.auth.models import User
@@ -11,8 +12,11 @@ def provision_trial_database(form_data):
     """
     تقوم بإنشاء قاعدة بيانات معزولة ومستخدم تجريبي بناءً على بيانات النموذج
     """
-    # 1. توليد اسم قاعدة البيانات وكلمة المرور
-    db_name = f"trial_{uuid.uuid4().hex[:10]}"
+    # 1. توليد اسم قاعدة البيانات بناءً على اسم المستخدم (البريد)
+    base_name = form_data['email'].split('@')[0]
+    # إزالة أي رموز غير مسموح بها في اسم قاعدة البيانات وتحويلها لاحرف صغيرة
+    clean_name = re.sub(r'[^a-zA-Z0-9_]', '', base_name).lower()
+    db_name = f"trial_{clean_name}_{uuid.uuid4().hex[:4]}"  # مثال: trial_ahmed_a1b2
     generated_password = secrets.token_urlsafe(8)
     
     # 2. إنشاء قاعدة البيانات في MySQL

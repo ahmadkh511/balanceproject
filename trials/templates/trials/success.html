@@ -17,74 +17,71 @@
         text-align: center; 
         max-width: 500px; 
         width: 100%;
+        animation: cardEntrance 0.5s cubic-bezier(0.22,1,0.36,1) both;
     }
+    @keyframes cardEntrance { from{opacity:0;transform:translateY(20px)} to{opacity:1;transform:translateY(0)} }
+
     .success-icon {
-        width: 80px; height: 80px; background: #f0fdf4; border-radius: 50%;
-        display: flex; align-items: center; justify-content: center; margin: 0 auto 20px;
-        font-size: 2.5rem; color: #22c55e;
+        width: 80px; height: 80px; background: linear-gradient(135deg, #f0fdf4, #dcfce7);
+        border-radius: 50%; display: flex; align-items: center; justify-content: center;
+        margin: 0 auto 20px; font-size: 2.5rem; color: #22c55e;
+        box-shadow: 0 10px 30px rgba(34,197,94,0.2);
     }
     .credentials { 
-        background: #f8fafc; 
-        padding: 20px; 
-        border-radius: 10px; 
-        margin: 20px 0; 
-        border: 1px dashed #94a3b8; 
-        direction: ltr; 
-        text-align: left; 
-        font-family: monospace;
-        font-size: 1.1rem;
+        background: #f8fafc; padding: 20px; border-radius: 12px; margin: 20px 0; 
+        border: 1px dashed #94a3b8; direction: ltr; text-align: left; 
+        font-family: monospace; font-size: 1.1rem;
     }
     .btn-action { 
         background: linear-gradient(135deg, #0097a7 0%, #006064 100%); 
-        color: #fff; 
-        padding: 12px 24px; 
-        text-decoration: none; 
-        border-radius: 6px; 
-        display: inline-flex; 
-        align-items: center;
-        justify-content: center;
-        gap: 8px;
-        font-weight: bold; 
-        transition: transform 0.2s;
-        border: none;
-        cursor: pointer;
-        width: 100%;
-        font-size: 1rem;
-        margin-top: 10px;
+        color: #fff; padding: 12px 24px; text-decoration: none; border-radius: 8px; 
+        display: flex; align-items: center; justify-content: center; gap: 8px;
+        font-weight: 700; transition: all 0.2s; border: none; cursor: pointer;
+        width: 100%; font-size: 1rem; margin-top: 10px;
     }
-    .btn-action:hover { transform: translateY(-2px); }
+    .btn-action:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,151,167,0.3); }
     .btn-secondary {
-        background: #fff;
-        color: #006064;
-        border: 1.5px solid #0097a7;
+        background: #fff; color: #006064; border: 1.5px solid #0097a7;
     }
-    .btn-secondary:hover {
-        background: #e0f7fa;
+    .btn-secondary:hover { background: #e0f7fa; }
+
+    /* ===== تنسيق التنبيه الأحمر ===== */
+    .danger-alert {
+        background: linear-gradient(135deg, #fff5f5 0%, #fee2e2 100%);
+        border: 1px solid #fca5a5; color: #b91c1c;
+        padding: 15px; border-radius: 12px; margin: 20px 0;
+        font-size: 0.9rem; display: flex; align-items: flex-start; gap: 10px; text-align: right;
+        box-shadow: 0 2px 8px rgba(220, 38, 38, 0.1);
     }
-    .alert-box {
-        background: #fffbeb;
-        border: 1px solid #fcd34d;
-        color: #92400e;
-        padding: 15px;
-        border-radius: 8px;
-        margin: 20px 0;
-        font-size: 0.9rem;
-        display: flex;
-        align-items: flex-start;
-        gap: 10px;
-        text-align: right;
+    .danger-alert i { margin-top: 3px; font-size: 1.1rem; }
+
+    /* ===== تنسيق الـ Toast ===== */
+    .toast-container {
+        position: fixed; top: 20px; left: 50%; transform: translateX(-50%);
+        z-index: 1055; width: auto;
     }
-    .alert-box i { margin-top: 3px; }
 </style>
 {% endblock %}
 
 {% block auth_content %}
+<!-- حاوية إشعارات البوتستراب -->
+<div class="toast-container">
+    <div id="copyToast" class="toast align-items-center text-white bg-success border-0" role="alert" aria-live="assertive" aria-atomic="true">
+      <div class="d-flex">
+        <div class="toast-body">
+          <i class="fas fa-check-circle me-2"></i> تم نسخ البيانات بنجاح!
+        </div>
+        <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="إغلاق"></button>
+      </div>
+    </div>
+</div>
+
 <div class="success-container">
     <div class="success-box">
         <div class="success-icon"><i class="fas fa-check-circle"></i></div>
-        <h2 style="color: #006064; margin-bottom: 10px;">تم إعداد نظامك التجريبي بنجاح!</h2>
+        <h2 style="color: #006064; margin-bottom: 10px; font-weight: 800;">تم إعداد نظامك التجريبي بنجاح!</h2>
         
-        <div class="alert-box">
+        <div class="danger-alert">
             <i class="fas fa-exclamation-triangle"></i>
             <div>
                 <strong>تنبيه هام:</strong> فترتك التجريبية مدتها <strong>10 أيام</strong> فقط. 
@@ -92,7 +89,7 @@
             </div>
         </div>
         
-        <p style="color: #64748b;">استخدم بيانات الدخول التالية للوصول إلى نظامك:</p>
+        <p style="color: #64748b; margin-bottom: 0;">استخدم بيانات الدخول التالية للوصول إلى نظامك:</p>
         
         {% if credentials %}
         <div class="credentials">
@@ -100,11 +97,11 @@
             <p style="margin: 0;"><strong>Password:</strong> <span id="passwordVal">{{ credentials.password }}</span></p>
         </div>
         
-        <button class="btn-action btn-secondary" onclick="copyCredentials()">
+        <button class="btn-action btn-secondary" id="copyBtn">
             <i class="fas fa-copy"></i> نسخ البيانات
         </button>
         
-        <button class="btn-action btn-secondary" onclick="downloadCredentials()">
+        <button class="btn-action btn-secondary" id="downloadBtn">
             <i class="fas fa-download"></i> تنزيل بيانات الدخول (TXT)
         </button>
         {% endif %}
@@ -118,30 +115,44 @@
 
 {% block extra_js %}
 <script nonce="{{ csp_nonce }}">
-    function copyCredentials() {
-        const username = document.getElementById('usernameVal').innerText;
-        const password = document.getElementById('passwordVal').innerText;
-        const text = `BalanceIQ System Login\nUsername: ${username}\nPassword: ${password}`;
-        
-        navigator.clipboard.writeText(text).then(() => {
-            alert('تم نسخ البيانات بنجاح!');
-        }).catch(err => {
-            alert('فشل النسخ، يرجى النسخ يدوياً.');
-        });
-    }
+    document.addEventListener('DOMContentLoaded', function() {
+        const copyBtn = document.getElementById('copyBtn');
+        const downloadBtn = document.getElementById('downloadBtn');
+        const usernameEl = document.getElementById('usernameVal');
+        const passwordEl = document.getElementById('passwordVal');
+        const toastLiveExample = document.getElementById('copyToast');
 
-    function downloadCredentials() {
-        const username = document.getElementById('usernameVal').innerText;
-        const password = document.getElementById('passwordVal').innerText;
-        const text = `=================================\nBalanceIQ System Login\n=================================\n\nUsername: ${username}\nPassword: ${password}\n\nTrial Duration: 10 Days\n\nNote: Please keep this information safe.\n`;
-        
-        const blob = new Blob([text], {type: "text/plain;charset=utf-8"});
-        const link = document.createElement('a');
-        link.href = URL.createObjectURL(blob);
-        link.download = 'BalanceIQ_Login_Info.txt';
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-    }
+        if (copyBtn) {
+            copyBtn.addEventListener('click', function() {
+                const username = usernameEl.innerText;
+                const password = passwordEl.innerText;
+                const text = `BalanceIQ System Login\nUsername: ${username}\nPassword: ${password}`;
+                
+                navigator.clipboard.writeText(text).then(() => {
+                    // إظهار إشعار البوتستراب بدلاً من نافذة الويندوز
+                    const toast = new bootstrap.Toast(toastLiveExample, { delay: 3000 });
+                    toast.show();
+                }).catch(err => {
+                    console.error('Failed to copy: ', err);
+                });
+            });
+        }
+
+        if (downloadBtn) {
+            downloadBtn.addEventListener('click', function() {
+                const username = usernameEl.innerText;
+                const password = passwordEl.innerText;
+                const text = `=================================\nBalanceIQ System Login\n=================================\n\nUsername: ${username}\nPassword: ${password}\n\nTrial Duration: 10 Days\n\nNote: Please keep this information safe.\n`;
+                
+                const blob = new Blob([text], {type: "text/plain;charset=utf-8"});
+                const link = document.createElement('a');
+                link.href = URL.createObjectURL(blob);
+                link.download = 'BalanceIQ_Login_Info.txt';
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+            });
+        }
+    });
 </script>
 {% endblock %}

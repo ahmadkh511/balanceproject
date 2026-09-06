@@ -4913,6 +4913,8 @@ def profit_report_view(request):
 
 
 
+
+
 @login_required
 @permission_required('invoice.view_report', raise_exception=True)
 def sales_by_customer_report(request):
@@ -4949,6 +4951,14 @@ def sales_by_customer_report(request):
     }
     
     return render(request, 'invoice/reports/sales_by_customer_report.html', context)
+
+
+
+
+
+
+
+
 
 
 @login_required
@@ -5025,6 +5035,13 @@ def purchases_by_supplier_report(request):
 
 
 
+import datetime
+from django.contrib.auth.decorators import login_required, permission_required
+from django.utils import timezone
+from django.db.models import Sum
+from decimal import Decimal
+from django.shortcuts import render
+# تأكد من استيراد الموديلات (Sale, CashTransaction) في أعلى الملف
 
 @login_required
 @permission_required('invoice.view_report', raise_exception=True)
@@ -5032,6 +5049,7 @@ def daily_sales_summary_report(request):
     """ملخص مبيعات يومي"""
     today = timezone.now().date()
     selected_date_str = request.GET.get('date')
+    
     if selected_date_str:
         try:
             selected_date = timezone.datetime.strptime(selected_date_str, '%Y-%m-%d').date()
@@ -5040,16 +5058,27 @@ def daily_sales_summary_report(request):
     else:
         selected_date = today
 
+    # 1. المبيعات
     sales_today = Sale.objects.filter(sale_date=selected_date)
     total_sales = sales_today.aggregate(total=Sum('sale_final_total'))['total'] or Decimal('0.00')
     cash_received = sales_today.aggregate(total=Sum('paid_amount'))['total'] or Decimal('0.00')
     invoices_count = sales_today.count()
 
+    # 2. المصروفات (الحل النهائي النظيف)
+    start_of_day_naive = datetime.datetime.combine(selected_date, datetime.time.min)
+    end_of_day_naive = datetime.datetime.combine(selected_date + datetime.timedelta(days=1), datetime.time.min)
+    
+    # تحويل الأوقات إلى توقيت مُدرك (Timezone aware) لتجنب تحذيرات جانجو
+    start_of_day = timezone.make_aware(start_of_day_naive, timezone.get_current_timezone())
+    end_of_day = timezone.make_aware(end_of_day_naive, timezone.get_current_timezone())
+
     expenses_today = CashTransaction.objects.filter(
-        transaction_date__date=selected_date,
+        transaction_date__gte=start_of_day,
+        transaction_date__lt=end_of_day,
         transaction_type__in=['expense', 'withdrawal']
     )
     total_expenses = expenses_today.aggregate(total=Sum('amount_out'))['total'] or Decimal('0.00')
+    
     net_cash = cash_received - total_expenses
 
     context = {
@@ -5063,8 +5092,6 @@ def daily_sales_summary_report(request):
     }
     
     return render(request, 'invoice/reports/daily_sales_summary.html', context)
-
-
 
 
 @login_required

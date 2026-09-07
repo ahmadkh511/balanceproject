@@ -56,6 +56,7 @@
             padding: 0.5rem 1.2rem; border-radius: 50px; font-family: 'Tajawal', sans-serif;
             font-size: 0.9rem; font-weight: 600; text-decoration: none;
             transition: all 0.3s ease; display: inline-flex; align-items: center; gap: 6px;
+            white-space: nowrap;
         }
         .landing-btn-primary {
             background: linear-gradient(135deg, var(--aqua-4) 0%, #006064 100%);
@@ -172,11 +173,16 @@
         .fade-up { opacity: 0; transform: translateY(30px); transition: all 0.8s cubic-bezier(0.4, 0, 0.2, 1); }
         .fade-up.visible { opacity: 1; transform: translateY(0); }
 
+        /* التجاوب مع الشاشات */
         @media (max-width: 991px) {
-            .landing-nav-actions { gap: 6px; }
-            .landing-btn { padding: 0.4rem 0.8rem; font-size: 0.8rem; }
+            .landing-nav-actions { gap: 8px; }
+            /* تصغير الأزرار وإخفاء نصوصها (ما عدا التجربة المجانية) */
+            .landing-btn { padding: 0.5rem 0.8rem; font-size: 0.85rem; }
             .landing-btn .btn-text-full { display: none; }
+            .landing-btn-trial-anim .btn-text-full { display: inline !important; font-size: 0.85rem; }
+            .landing-btn-trial-anim { padding: 0.5rem 1rem; }
         }
+        
         @media (max-width: 768px) {
             .hero-slider { height: 80vh; }
             .slide-title { font-size: 1.8rem; }
@@ -186,31 +192,29 @@
             .slider-prev { left: 10px; } .slider-next { right: 10px; }
             .landing-navbar { padding: 10px 15px; }
             .brand-logo { font-size: 1.2rem; }
-            /* إصلاح مشكلة إخفاء شعار العلامة التجارية في الموبايل */
             .brand-logo span { display: inline-block; } 
             
-            /* إصلاح مشكلة اختفاء أزرار الموبايل: تم إزالة position: absolute 
-               التي كانت تدفع الأزرار خارج الشاشة وجعلها تظهر بجانب الشعار */
-            .landing-nav-actions {
-                display: flex;
-                align-items: center;
-                gap: 5px;
-                flex-wrap: nowrap;
-                position: relative;
-                bottom: auto;
-                left: auto;
-                top: auto;
-                transform: none;
-                width: auto;
-                background: transparent;
-                backdrop-filter: none;
-                padding: 0;
-                border-radius: 0;
-                box-shadow: none;
-            }
             .scroll-indicator { bottom: 140px; } 
             .section-title { font-size: 1.5rem; }
             .final-cta-section h2 { font-size: 1.8rem; }
+
+            /* ضبط أحجام الأزرار على الموبايل */
+            .landing-nav-actions { gap: 6px; }
+            .landing-btn { padding: 0.4rem 0.6rem; font-size: 0.8rem; }
+            
+            /* إبراز زر التجربة المجانية ليكون واضحاً وكبير نسبياً */
+            .landing-btn-trial-anim { 
+                padding: 0.5rem 0.9rem; 
+                font-size: 0.85rem; 
+                font-weight: 700;
+            }
+            .landing-btn-trial-anim .btn-text-full { display: inline !important; }
+        }
+
+        @media (max-width: 360px) {
+            /* في الشاشات الصغيرة جداً، نقوم بتصغير زر التجربة المجانية قليلاً لضمان عدم خروجه عن الشاشة */
+            .brand-logo { font-size: 1rem; }
+            .landing-btn-trial-anim { padding: 0.4rem 0.7rem; font-size: 0.75rem; }
         }
     </style>
 </head>
@@ -219,24 +223,18 @@
     <!-- الشريط العلوي -->
     <div class="landing-navbar" id="landingNav">
         <a href="/" class="brand-logo">
-            <!---
-            <i class="fas fa-scale-balanced"></i>  الشعار 
-            --->
             <span>BalanceIQ</span>
         </a>
-        <div class="landing-nav-actions">
-            <a href="{% url 'accounts:login' %}" class="landing-btn landing-btn-primary">
+        <div class="landing-nav-actions" id="navActions">
+            <a href="{% url 'accounts:login' %}" class="landing-btn landing-btn-primary" title="تسجيل الدخول">
                 <i class="fas fa-sign-in-alt"></i> <span class="btn-text-full">تسجيل الدخول</span>
             </a>
-            <a href="{% url 'accounts:register' %}" class="landing-btn landing-btn-ghost">
+            <a href="{% url 'accounts:register' %}" class="landing-btn landing-btn-ghost" title="حساب جديد">
                 <i class="fas fa-user-plus"></i> <span class="btn-text-full">حساب جديد</span>
             </a>
-
             <a href="{% url 'trials:request_trial' %}" class="landing-btn landing-btn-trial-anim">
-              <i class="fas fa-rocket"></i> <span class="btn-text-full">تجربة مجانية </span>
+              <i class="fas fa-rocket"></i> <span class="btn-text-full">تجربة مجانية</span>
            </a>
-            
-
         </div>
     </div>
 

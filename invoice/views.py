@@ -4831,36 +4831,50 @@ def dead_stock_report(request):
     
     return render(request, 'invoice/reports/dead_stock_report.html', context)
 
-
+import datetime
+from django.contrib.auth.decorators import login_required, permission_required
+from django.utils import timezone
+from django.db.models import Sum
+from decimal import Decimal
+from django.shortcuts import render
+# تأكد من استيراد الموديلات (Sale, SaleReturn, SaleItem, CashTransaction)
 
 @login_required
 @permission_required('invoice.view_report', raise_exception=True)
 def profit_report_view(request):
-    """تقرير الأرباح والخسائر - مصحح محاسبياً"""
-    start_date = request.GET.get('start_date')
-    end_date = request.GET.get('end_date')
+    """تقرير الأرباح والخسائر - مصحح محاسبياً وزمنياً"""
+    start_date_str = request.GET.get('start_date')
+    end_date_str = request.GET.get('end_date')
     
     context = {
-        'start_date': start_date,
-        'end_date': end_date,
+        'start_date': start_date_str,
+        'end_date': end_date_str,
         'show_results': False,
     }
 
-    if start_date and end_date:
+    if start_date_str and end_date_str:
+        try:
+            # تحويل النصوص إلى كائنات تاريخ
+            start_date = timezone.datetime.strptime(start_date_str, '%Y-%m-%d').date()
+            end_date = timezone.datetime.strptime(end_date_str, '%Y-%m-%d').date()
+        except ValueError:
+            # في حال إدخال تاريخ خاطئ
+            return render(request, 'invoice/reports/profit_report.html', context)
+
         # ==========================================
-        # 1. المبيعات والخصومات
+        # 1. المبيعات والخصومات (بافتراض أن sale_date هو DateField)
         # ==========================================
         sales_qs = Sale.objects.filter(sale_date__range=[start_date, end_date])
         total_sales = sales_qs.aggregate(total=Sum('sale_final_total'))['total'] or Decimal('0.00')
         total_sales_discount = sales_qs.aggregate(total=Sum('sale_discount'))['total'] or Decimal('0.00')
         
         # ==========================================
-        # 2. مرتجعات المبيعات (إضافتها لخفض الإيراد)
+        # 2. مرتجعات المبيعات
         # ==========================================
         sales_returns_qs = SaleReturn.objects.filter(return_date__range=[start_date, end_date])
         total_sales_returns = sales_returns_qs.aggregate(total=Sum('return_final_total'))['total'] or Decimal('0.00')
 
-        # صافي المبيعات = إجمالي المبيعات - الخصومات - المرتجعات
+        # صافي المبيعات
         net_sales = total_sales - total_sales_discount - total_sales_returns
 
         # ==========================================
@@ -4873,17 +4887,26 @@ def profit_report_view(request):
             total_cost += (item.sold_quantity * cost_price)
         
         # ==========================================
-        # 4. المصاريف التشغيلية والسحوبات (فصل السحوبات)
+        # 4. المصاريف التشغيلية والسحوبات (إصلاح مشكلة Timezone)
         # ==========================================
+        # تحويل الفترة الزمنية إلى DateTime مدرك للتوقيت
+        start_datetime_naive = datetime.datetime.combine(start_date, datetime.time.min)
+        end_datetime_naive = datetime.datetime.combine(end_date + datetime.timedelta(days=1), datetime.time.min)
+        
+        start_datetime = timezone.make_aware(start_datetime_naive, timezone.get_current_timezone())
+        end_datetime = timezone.make_aware(end_datetime_naive, timezone.get_current_timezone())
+
         operational_expenses_qs = CashTransaction.objects.filter(
-            transaction_date__date__range=[start_date, end_date],
-            transaction_type='expense' # مصاريف تشغيلية فقط
+            transaction_date__gte=start_datetime,
+            transaction_date__lt=end_datetime,
+            transaction_type='expense'
         )
         total_expenses = operational_expenses_qs.aggregate(total=Sum('amount_out'))['total'] or Decimal('0.00')
 
         withdrawals_qs = CashTransaction.objects.filter(
-            transaction_date__date__range=[start_date, end_date],
-            transaction_type='withdrawal' # سحوبات شخصية
+            transaction_date__gte=start_datetime,
+            transaction_date__lt=end_datetime,
+            transaction_type='withdrawal'
         )
         total_withdrawals = withdrawals_qs.aggregate(total=Sum('amount_out'))['total'] or Decimal('0.00')
 
@@ -4892,7 +4915,6 @@ def profit_report_view(request):
         # ==========================================
         gross_profit = net_sales - total_cost
         net_operating_profit = gross_profit - total_expenses
-        # صافي الربح الفعلي المتبقي للمنشأة (بعد خصم السحوبات الشخصية)
         net_profit = net_operating_profit - total_withdrawals
 
         context.update({
@@ -4910,9 +4932,6 @@ def profit_report_view(request):
         })
 
     return render(request, 'invoice/reports/profit_report.html', context)
-
-
-
 
 
 @login_required

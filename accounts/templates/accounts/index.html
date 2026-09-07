@@ -186,11 +186,27 @@
             .slider-prev { left: 10px; } .slider-next { right: 10px; }
             .landing-navbar { padding: 10px 15px; }
             .brand-logo { font-size: 1.2rem; }
-            .brand-logo span { display: none; }
+            /* إصلاح مشكلة إخفاء شعار العلامة التجارية في الموبايل */
+            .brand-logo span { display: inline-block; } 
+            
+            /* إصلاح مشكلة اختفاء أزرار الموبايل: تم إزالة position: absolute 
+               التي كانت تدفع الأزرار خارج الشاشة وجعلها تظهر بجانب الشعار */
             .landing-nav-actions {
-                position: absolute; bottom: 80px; left: 50%; transform: translateX(-50%);
-                top: auto; width: 90%; justify-content: center; flex-wrap: wrap;
-                background: rgba(0,0,0,0.6); backdrop-filter: blur(10px); padding: 10px; border-radius: 12px;
+                display: flex;
+                align-items: center;
+                gap: 5px;
+                flex-wrap: nowrap;
+                position: relative;
+                bottom: auto;
+                left: auto;
+                top: auto;
+                transform: none;
+                width: auto;
+                background: transparent;
+                backdrop-filter: none;
+                padding: 0;
+                border-radius: 0;
+                box-shadow: none;
             }
             .scroll-indicator { bottom: 140px; } 
             .section-title { font-size: 1.5rem; }
@@ -244,7 +260,7 @@
                 <div class="glass-card">
                     <span class="slide-subtitle">تقارير دقيقة</span>
                     <h1 class="slide-title">لوحة تحكم تفاعلية لاتخاذ القرار</h1>
-                    <p class="slide-desc">تابع إيراداتك ومصروفاتك لحظة بلحظة من خلال رسوم بيانية واضحة ومحدثة تلقائياً.</p>
+                    <p class="slide-desc">تابع إيراداتك ومصروفاتك لحظة بلحظة من خلال رسوم بيائية واضحة ومحدثة تلقائياً.</p>
                 </div>
             </div>
         </div>
@@ -302,7 +318,7 @@
                     <div class="feature-card">
                         <div class="feature-icon"><i class="fas fa-chart-pie"></i></div>
                         <h5>تقارير تفصيلية</h5>
-                        <p>لوحة تحكم متكاملة تعرض لك الأرباح، الخسائر، والحركة التشغيلية بشكل رسوم بيانية واضحة.</p>
+                        <p>لوحة تحكم متكاملة تعرض لك الأرباح، الخسائر، والحركة التشغيلية بشكل رسوم بيائية واضحة.</p>
                     </div>
                 </div>
                 <div class="col-lg-4 col-md-6 fade-up">

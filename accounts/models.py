@@ -37,7 +37,20 @@ class Profile(models.Model):
         verbose_name="المستخدم",
         related_name="profile" # يسهل الوصول من خلال user.profile
     )
+
+
+
     
+    trial_db_name = models.CharField(
+        max_length=100, 
+        blank=True, 
+        null=True, 
+        verbose_name="قاعدة بيانات الشركة التجريبية"
+    )
+
+    
+
+
     is_customer = models.BooleanField(default=True, verbose_name="زبون")
     is_supplier = models.BooleanField(default=False, verbose_name="مورد")
 

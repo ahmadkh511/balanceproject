@@ -447,6 +447,8 @@ def get_client_ip(request):
 
 # accounts/views.py
 
+from trials.middleware import get_current_trial_db # أضف هذا الاستيراد في أعلى الملف
+
 def register_view(request):
     if request.method == 'POST':
         ip_address = get_client_ip(request)
@@ -459,12 +461,35 @@ def register_view(request):
         else:
             form = CustomUserCreationForm(request.POST)
             if form.is_valid():
-                # حفظ المستخدم
+                # حفظ المستخدم في القاعدة المعزولة
                 user = form.save()
                 user.is_active = False
                 user.save(update_fields=['is_active'])
 
-                # إعداد رابط التفعيل
+                # === إضافة المستخدم الظليل (Shadow User) في القاعدة الرئيسية ===
+                trial_db = get_current_trial_db()
+                if trial_db:
+                    # إنشاء نسخة من المستخدم في القاعدة الرئيسية لكي يتمكن من تسجيل الدخول لاحقاً
+                    from django.contrib.auth.models import User
+                    shadow_user = User(
+                        id=user.id,
+                        username=user.username,
+                        email=user.email,
+                        password=user.password, # كلمة المرور مشفرة
+                        is_active=False, # يبقى غير مفعل حتى يفعل بالبريد
+                        is_staff=False,
+                        is_superuser=False
+                    )
+                    shadow_user.save(using='default')
+                    
+                    # ربط المستخدم الظليل بقاعدة بيانات الشركة التجريبية
+                    Profile.objects.using('default').get_or_create(
+                        user_id=shadow_user.id,
+                        defaults={'trial_db_name': trial_db}
+                    )
+                # === نهاية الإضافة ===
+
+                # إعداد رابط التفعيل (كما كان في كودك الأصلي)
                 uid = urlsafe_base64_encode(force_bytes(user.pk))
                 token = default_token_generator.make_token(user)
                 current_site = get_current_site(request)
@@ -482,7 +507,7 @@ def register_view(request):
                 subject = ''.join(subject.splitlines())
                 html_message = render_to_string('accounts/activation_email.html', context)
 
-                # إرسال الإيميل
+                # إرسال الإيميل (كما كان في كودك الأصلي)
                 try:
                     from_email = 'noreply@example.com'
                     email = EmailMessage(subject, html_message, from_email, [user.email])
@@ -500,17 +525,20 @@ def register_view(request):
         form = CustomUserCreationForm()
 
     context = {
-        'register_form': form,  # ✅ استخدم register_form بدلاً من form
-        'trial_form': TrialRequestForm(),  # ✅ أضف trial_form
+        'register_form': form,
+        'trial_form': TrialRequestForm(),
         'open_register_modal': request.method == 'POST' and not form.is_valid()
     }
     return render(request, 'accounts/register.html', context)
 
+
 # === دالة التفعيل مع أوامر التشخيص ===
+
 def activate_view(request, uidb64, token):
     try:
         uid = force_str(urlsafe_base64_decode(uidb64))
-        user = CustomUser.objects.get(pk=uid)
+        # نبحث عن المستخدم في القاعدة الرئيسية دائماً
+        user = CustomUser.objects.using('default').get(pk=uid)
         print(f"=== ACTIVATE DEBUG | User found: {user.username} | Is Active: {user.is_active} ===")
     except (TypeError, ValueError, OverflowError, CustomUser.DoesNotExist) as e:
         user = None
@@ -521,14 +549,25 @@ def activate_view(request, uidb64, token):
         print(f"=== ACTIVATE DEBUG | Token Valid: {token_valid} ===")
         
         if token_valid:
+            # 1. تفعيل الحساب في القاعدة الرئيسية
             user.is_active = True
-            user.save()
+            user.save(using='default')
+            
+            # 2. تفعيل الحساب في قاعدة بيانات الشركة المعزولة (إذا كان مستخدم تجريبي)
+            if hasattr(user, 'profile') and user.profile.trial_db_name:
+                trial_db = user.profile.trial_db_name
+                try:
+                    trial_user = CustomUser.objects.using(trial_db).get(pk=user.id)
+                    trial_user.is_active = True
+                    trial_user.save(using=trial_db)
+                except CustomUser.DoesNotExist:
+                    pass
+
             print(f"=== ACTIVATE DEBUG | Account Activated! ===")
             login(request, user, backend='django.contrib.auth.backends.ModelBackend')
             messages.success(request, 'تم تفعيل حسابك بنجاح! مرحباً بك في نظام الأزوردي.')
             return redirect('index')
     
-    # إذا كان الرابط خاطئاً أو منتهي الصلاحية
     print("=== ACTIVATE DEBUG | Activation Failed! ===")
     messages.error(request, 'رابط التفعيل غير صالح أو منتهي الصلاحية.')
     return redirect('accounts:login')
@@ -821,6 +860,7 @@ def user_list_view(request):
 
 
 
+from trials.middleware import get_current_trial_db # أضف هذا الاستيراد في أعلى الملف إذا لم يكن موجوداً
 
 @login_required
 @user_passes_test(is_staff_user)
@@ -846,8 +886,25 @@ def user_edit_view(request, pk):
         )
 
         if form.is_valid() and profile_form.is_valid():
-            form.save()
+            form.save() # يتم الحفظ في القاعدة التجريبية المعزولة
             profile_form.save()
+
+            # === مزامنة حالة التفعيل وكلمة المرور مع القاعدة الرئيسية (Shadow User) ===
+            trial_db = get_current_trial_db()
+            if trial_db:
+                try:
+                    # جلب المستخدم الظليل من القاعدة الرئيسية
+                    shadow_user = User.objects.using('default').get(pk=user.pk)
+                    # تحديث حالة التفعيل وكلمة المرور والإيميل لتطابق القاعدة التجريبية
+                    shadow_user.is_active = user.is_active
+                    shadow_user.password = user.password
+                    shadow_user.email = user.email
+                    shadow_user.is_staff = user.is_staff
+                    shadow_user.is_superuser = user.is_superuser
+                    shadow_user.save(using='default')
+                except User.DoesNotExist:
+                    pass
+            # ==================================================================
 
             # === حفظ المجموعة ===
             group_id = request.POST.get('group_id', '')
@@ -881,6 +938,8 @@ def user_edit_view(request, pk):
         'current_group_permissions': current_group_permissions,
     }
     return render(request, 'accounts/user_edit.html', context)
+
+
 
 
 @login_required

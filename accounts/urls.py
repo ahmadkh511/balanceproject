@@ -7,7 +7,7 @@ from django.conf import settings
 
 from . import views
 from .views import CustomLoginForm
-
+from .views import CustomPasswordChangeView
 
 
 app_name = 'accounts' 
@@ -87,12 +87,9 @@ urlpatterns = [
     
     
     # === مسارات تغيير كلمة المرور (الأسلوب الموصى به) ===
-    path('change-password/', 
-         auth_views.PasswordChangeView.as_view(
-             template_name='accounts/change_password.html',
-             success_url=reverse_lazy('accounts:change_password_done')
-         ), 
-         name='change_password'),
+
+    path('change-password/', CustomPasswordChangeView.as_view(), name='change_password'),
+    
 
     path('change-password/done/', 
          auth_views.PasswordChangeDoneView.as_view(

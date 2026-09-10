@@ -54,6 +54,12 @@ from .forms import (
     TrialRequestForm, UserProfileUpdateForm, UserUpdateForm
 )
 
+
+from django.contrib.auth.views import PasswordChangeView
+from django.urls import reverse_lazy
+from django.contrib.auth.models import User
+from trials.middleware import get_current_trial_db
+
 # ==================== متغيرات عامة ====================
 CustomUser = get_user_model()
 
@@ -683,7 +689,7 @@ class CustomPasswordResetView(SuccessMessageMixin, PasswordResetView):
 
 
 # ============================================
-# الملف الشخصي (profile)
+# الملف الشخصي (profile) و تغير كلمة المرور 
 # ============================================
 
 
@@ -712,6 +718,32 @@ def profile_view(request):
 
 
 
+
+class CustomPasswordChangeView(PasswordChangeView):
+    """كلاس مخصص لتغيير كلمة المرور ومزامنتها مع القاعدة الرئيسية للعملاء التجريبيين"""
+    template_name = 'accounts/change_password.html'
+    success_url = reverse_lazy('accounts:change_password_done')
+
+    def form_valid(self, form):
+        # 1. حفظ كلمة المرور الجديدة في قاعدة بيانات العميل المعزولة بشكل طبيعي
+        response = super().form_valid(form)
+        
+        # 2. مزامنة كلمة المرور مع القاعدة الرئيسية (Shadow User)
+        trial_db = get_current_trial_db()
+        if trial_db:
+            try:
+                # جلب المستخدم الظليل من القاعدة الرئيسية
+                shadow_user = User.objects.using('default').get(pk=self.request.user.pk)
+                # نسخ كلمة المرور المشفرة الجديدة
+                shadow_user.password = self.request.user.password
+                shadow_user.save(using='default', update_fields=['password'])
+            except User.DoesNotExist:
+                pass
+                
+        return response
+
+
+        
 # ============================================
 # سجلات النظام (system logs)
 # ============================================

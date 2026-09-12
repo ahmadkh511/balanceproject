@@ -902,13 +902,54 @@ class Sale(models.Model):
         self.sale_addition, self.paid_amount = Decimal(str(addition)), Decimal(str(paid_amount))
         self.calculate_and_save_totals()
     
+    # ==========================================================
+    # ✅✅✅ تسوية حركات الصندوق — حركة واحدة فقط تعكس paid_amount
+    # ==========================================================
+    def reconcile_cash_transactions(self):
+        """
+        ضمان وجود حركة صندوق واحدة فقط لهذه الفاتورة تعكس paid_amount بدقة.
+        - نقدية + مدفوع > 0 → حركة واحدة بمبلغ paid_amount (تُنشأ أو تُحدَّث)
+        - غير ذلك (غير نقدية أو صفر) → حذف كل حركات الفاتورة من الصندوق
+        - إن وُجدت عدة حركات (بيانات قديمة) → تُوحَّد في واحدة ويحذف الباقي
+        تفحص is_cash داخلياً — آمنة للاستدعاء من أي مكان.
+        """
+        is_cash = self.sale_payment_method and self.sale_payment_method.is_cash
+        new_paid = self.paid_amount or Decimal('0.00')
+
+        tx_qs = CashTransaction.objects.filter(
+            sale_invoice=self, transaction_type='sale_receipt'
+        ).order_by('transaction_date')  # الأقدم أولاً
+
+        # غير نقدية أو غير مدفوعة → إزالة حركات الفاتورة من الصندوق
+        if not is_cash or new_paid <= 0:
+            tx_qs.delete()
+            return
+
+        txs = list(tx_qs)
+
+        if not txs:
+            # لا توجد حركة → إنشاء واحدة كاملة
+            CashTransaction.objects.create(
+                transaction_date=timezone.now(),
+                amount_in=new_paid,
+                transaction_type='sale_receipt',
+                payment_method=self.sale_payment_method,
+                sale_invoice=self,
+                notes=f"تحصيل مقابل فاتورة بيع {self.uniqueId}",
+                created_by=self.created_by,
+            )
+        else:
+            # توجد حركة أو أكثر → توحيدها: الأقدم تحمل المبلغ الكامل، والبقية تُحذف
+            first = txs[0]
+            first.amount_in = new_paid
+            first.payment_method = self.sale_payment_method
+            first.save(update_fields=['amount_in', 'payment_method'])
+            for extra in txs[1:]:
+                extra.delete()
+
+    # ⚠️ محفوظة للتوافق مع أي استدعاء خارجي قديم
     def create_cash_transaction(self):
-        existing = CashTransaction.objects.filter(sale_invoice=self, transaction_type='sale_receipt').first()
-        if not existing and self.paid_amount > 0:
-            CashTransaction.objects.create(transaction_date=timezone.now(), amount_in=self.paid_amount, transaction_type='sale_receipt', payment_method=self.sale_payment_method, sale_invoice=self, notes=f"تحصيل مقابل فاتورة بيع {self.uniqueId}", created_by=self.created_by)
-        elif existing and existing.amount_in != self.paid_amount:
-            existing.amount_in = self.paid_amount
-            existing.save()
+        self.reconcile_cash_transactions()
 
     @property
     def total_items_count(self): return self.saleitem_set.count() if self.pk else 0

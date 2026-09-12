@@ -1448,11 +1448,6 @@ def purchase_return_delete_view(request, slug):
 
 
 
-
-
-
-
-
 @login_required
 @permission_required('invoice.add_sale', raise_exception=True)
 def sale_create(request):
@@ -1607,7 +1602,8 @@ def sale_create(request):
                     sale.calculate_and_save_totals()
 
                     # التحقق من المبلغ المدفوع
-                    paid_amt = Decimal(str(request.POST.get('paid_amount', '0')))
+                    # ✅ [تحسين] قراءة من cleaned_data (يدعم الفواصل العربية) بدلاً من POST مباشرة
+                    paid_amt = form.cleaned_data.get('paid_amount') or Decimal('0.00')
                     if paid_amt > sale.sale_final_total:
                         raise ValidationError("المبلغ المدفوع لا يمكن أن يتجاوز الإجمالي النهائي للفاتورة")
 
@@ -1616,9 +1612,8 @@ def sale_create(request):
                     sale.is_paid = sale.balance_due <= 0
                     sale.save(update_fields=['paid_amount', 'balance_due', 'is_paid'])
 
-                    # إنشاء حركة الصندوق إذا كانت نقدية
-                    if sale.paid_amount > 0 and sale.sale_payment_method and sale.sale_payment_method.is_cash:
-                        sale.create_cash_transaction()
+                    # ✅✅✅ [تغيير] تسوية حركة الصندوق بمنطق الفرق — بدل الاستدعاء القديم
+                    sale.reconcile_cash_transactions()
                     
                     messages.success(request, 'تم إنشاء فاتورة البيع بنجاح وتحديث المخزون')
                     return redirect('invoice:sale_detail', slug=sale.slug)
@@ -1642,20 +1637,57 @@ def sale_create(request):
 
 
 def handle_sale_cash_transaction(sale):
-    """دالة مساعدة ولا تحتاج لديكوريتورات"""
+    """
+    تسوية حركات الصندوق مع paid_amount النهائي.
+    تعمل بالفرق لتجنب الازدواجية مع التحصيلات اللاحقة.
+    """
     from .models import CashTransaction
-    existing = CashTransaction.objects.filter(sale_invoice=sale, transaction_type='sale_receipt').first()
-    is_cash = sale.sale_payment_method and sale.sale_payment_method.is_cash
-    if sale.paid_amount > 0 and is_cash:
-        if existing:
-            existing.amount_in = sale.paid_amount
-            existing.save()
-        else:
-            CashTransaction.objects.create(transaction_date=timezone.now(), amount_in=sale.paid_amount, transaction_type='sale_receipt', payment_method=sale.sale_payment_method, sale_invoice=sale, notes=f"تحصيل فاتورة {sale.uniqueId}", created_by=sale.created_by)
-    else:
-        if existing:
-            existing.delete()
+    from django.db.models import Sum
 
+    is_cash = sale.sale_payment_method and sale.sale_payment_method.is_cash
+    new_paid = sale.paid_amount or Decimal('0.00')
+
+    # غير نقدية أو غير مدفوعة → حذف كل الحركات المرتبطة
+    if not is_cash or new_paid <= 0:
+        CashTransaction.objects.filter(
+            sale_invoice=sale, transaction_type='sale_receipt'
+        ).delete()
+        return
+
+    # مجموع الحركات المسجلة فعلياً في الصندوق
+    current_sum = CashTransaction.objects.filter(
+        sale_invoice=sale, transaction_type='sale_receipt'
+    ).aggregate(s=Sum('amount_in'))['s'] or Decimal('0.00')
+
+    diff = new_paid - current_sum
+
+    if diff > 0:
+        # 💰 زيادة → حركة جديدة بالفرق فقط (تحفظ تاريخ الدفعات)
+        CashTransaction.objects.create(
+            transaction_date=timezone.now(),
+            amount_in=diff,
+            transaction_type='sale_receipt',
+            payment_method=sale.sale_payment_method,
+            sale_invoice=sale,
+            notes=f"تسوية تحصيل فاتورة {sale.uniqueId}",
+            created_by=sale.created_by,
+        )
+    elif diff < 0:
+        # 🔻 نقص (تعديل للأسفل) → نخصم من الأحدث للأقدم
+        to_remove = -diff
+        for tx in CashTransaction.objects.filter(
+            sale_invoice=sale, transaction_type='sale_receipt'
+        ).order_by('-transaction_date'):
+            if to_remove <= 0:
+                break
+            if tx.amount_in <= to_remove:
+                to_remove -= tx.amount_in
+                tx.delete()
+            else:
+                tx.amount_in -= to_remove
+                tx.save(update_fields=['amount_in'])
+                to_remove = Decimal('0.00')
+    # diff == 0 → لا شيء ✓
 
 @login_required
 @permission_required('invoice.view_sale', raise_exception=True)
@@ -1680,6 +1712,7 @@ def sale_detail(request, slug):
     
     context = {'sale': sale, 'items_with_barcodes': items_with_barcodes, 'total_items': total_items, 'total_quantity': total_quantity, 'title': f'تفاصيل فاتورة البيع {sale.uniqueId}'}
     return render(request, 'invoice/sale/sale_detail.html', context)
+
 
 
 @login_required
@@ -1969,11 +2002,8 @@ def sale_edit(request, slug):
                     updated_sale.is_paid = updated_sale.balance_due <= 0
                     updated_sale.save(update_fields=['paid_amount', 'balance_due', 'is_paid'])
                     
-                    # معالجة حركات الصندوق
-                    if updated_sale.paid_amount > 0 and updated_sale.sale_payment_method and updated_sale.sale_payment_method.is_cash:
-                        updated_sale.create_cash_transaction()
-                    else:
-                        CashTransaction.objects.filter(sale_invoice=updated_sale, transaction_type='sale_receipt').delete()
+                    # ✅✅✅ [تغيير] تسوية حركات الصندوق بمنطق الفرق — بدل الفرعين القديمين
+                    updated_sale.reconcile_cash_transactions()
                     
                     messages.success(request, 'تم تعديل فاتورة البيع بنجاح')
                     return redirect('invoice:sale_detail', slug=updated_sale.slug)
@@ -2046,9 +2076,6 @@ def sale_edit(request, slug):
         'title': f'تعديل فاتورة بيع: {sale.uniqueId}'
     }
     return render(request, 'invoice/sale/sale_form_edit.html', context)
-
-
-
 
 
 

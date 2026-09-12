@@ -451,14 +451,42 @@ class Purch(models.Model):
         self.purch_addition, self.paid_amount = Decimal(str(addition)), Decimal(str(paid_amount))
         self.calculate_and_save_totals()
     
+    # ★★★ الدالة الوحيدة المعدلة في هذا الكلاس ★★★
     def create_cash_transaction(self):
-        # تم حذف from .models import CashTransaction لأنها تسبب خطأ قاتل
-        existing_transaction = CashTransaction.objects.filter(purchase_invoice=self, transaction_type='purchase_payment').first()
-        if not existing_transaction and self.paid_amount > 0:
-            CashTransaction.objects.create(transaction_date=timezone.now(), amount_out=self.paid_amount, transaction_type='purchase_payment', payment_method=self.purch_payment_method, purchase_invoice=self, notes=f"دفعة مقابل فاتورة شراء {self.uniqueId}", created_by=self.created_by)
-        elif existing_transaction and existing_transaction.amount_out != self.paid_amount:
-            existing_transaction.amount_out = self.paid_amount
-            existing_transaction.save()
+        """
+        إنشاء أو تحديث أو حذف حركة الصندوق المرتبطة بفاتورة الشراء.
+        
+        القاعدة الموحدة بين مساري الإنشاء والتعديل:
+        - دفع نقدي بمبلغ أكبر من صفر → إنشاء الحركة أو تحديث مبلغها
+        - أي حالة أخرى (آجل، أو مدفوع صفر) → حذف أي حركة قديمة بدل تركها صفرية
+        
+        ملاحظة تاريخية: الكود القديم كان عند التحويل إلى آجل يحدّث الحركة بمبلغ صفر،
+        فترفضها clean() في CashTransaction (داخل=صفر وخارج=صفر) ويفشل الحفظ كلياً.
+        """
+        existing_transaction = CashTransaction.objects.filter(
+            purchase_invoice=self, transaction_type='purchase_payment'
+        ).first()
+
+        is_cash = self.purch_payment_method and self.purch_payment_method.is_cash
+        should_have_transaction = is_cash and self.paid_amount > 0
+
+        if should_have_transaction:
+            if not existing_transaction:
+                CashTransaction.objects.create(
+                    transaction_date=timezone.now(),
+                    amount_out=self.paid_amount,
+                    transaction_type='purchase_payment',
+                    payment_method=self.purch_payment_method,
+                    purchase_invoice=self,
+                    notes=f"دفعة مقابل فاتورة شراء {self.uniqueId}",
+                    created_by=self.created_by
+                )
+            elif existing_transaction.amount_out != self.paid_amount:
+                existing_transaction.amount_out = self.paid_amount
+                existing_transaction.save()
+        elif existing_transaction:
+            # تحولت الفاتورة إلى آجل أو أصبح المدفوع صفراً → حذف الحركة
+            existing_transaction.delete()
 
     @property
     def total_items_count(self):

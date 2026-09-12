@@ -527,26 +527,28 @@ def purch_detail(request, slug):
     return render(request, 'invoice/purchase/purch_detail.html', context)
 
 
-
 @login_required
 @permission_required('invoice.change_purch', raise_exception=True)
 def purch_edit(request, slug):
     """تعديل فاتورة شراء موجودة - النسخة الآمنة والمتوافقة مع F()"""
     from django.db.models import Q, Sum
     from decimal import Decimal
-    from django.core.exceptions import PermissionDenied
+    from django.core.exceptions import PermissionDenied, ValidationError
     import json
-    
+
     purchase = get_object_or_404(Purch, slug=slug)
-    
+
     if purchase.created_by and purchase.created_by != request.user and not request.user.is_superuser:
         raise PermissionDenied(_("ليس لديك صلاحية للوصول إلى هذه الفاتورة"))
-    
+
     logger.info(f"بدء تعديل فاتورة: {purchase.uniqueId}")
-    
+
+    # ★ كشف طلبات AJAX (نفس آلية الإنشاء - آمن حتى لو القالب لا يستخدم AJAX)
+    is_ajax = request.headers.get('X-Requested-With') == 'XMLHttpRequest'
+
     reset_date = purchase.last_updated
-    
-    # ★★★ إصلاح حساس: حساب الكميات الفعالة والأرصدة المرتجعة (بدون شرط التاريخ لحساب الإجمالي الصحيح) ★★★
+
+    # ★★★ حساب الكميات الفعالة والأرصدة المرتجعة (بدون شرط التاريخ لحساب الإجمالي الصحيح) ★★★
     effective_quantities = {}
     total_returned_per_item = {}
     for item in purchase.purchitem_set.all():
@@ -554,11 +556,11 @@ def purch_edit(request, slug):
         total_returned = item.returned_items.all().aggregate(total=Sum('returned_quantity'))['total'] or Decimal('0.00')
         effective_quantities[item.id] = item.purchased_quantity - total_returned
         total_returned_per_item[item.id] = total_returned
-    
+
     if request.method == 'POST':
         post_data = request.POST.copy()
         files_data = request.FILES
-        
+
         # معالجة حقل المورد إذا جاء من حقل البحث
         supplier_search_value = post_data.get('supplier-search-input', '')
         if supplier_search_value and supplier_search_value != '':
@@ -576,7 +578,7 @@ def purch_edit(request, slug):
                         post_data['purch_supplier'] = str(supplier.id)
             except Exception as e:
                 logger.error(f"خطأ في البحث عن المورد: {e}")
-        
+
         # معالجة بيانات البنود والمنتجات
         total_forms = int(post_data.get('items-TOTAL_FORMS', 0))
         for i in range(total_forms):
@@ -601,27 +603,30 @@ def purch_edit(request, slug):
                                 post_data[f'items-{i}-item_name'] = product_search
                     except Product.DoesNotExist:
                         post_data[f'items-{i}-item_name'] = product_search
-        
+
         form = PurchEditForm(post_data, files_data, instance=purchase)
         formset = PurchItemEditFormSet(
-            post_data, files_data, instance=purchase, 
+            post_data, files_data, instance=purchase,
             prefix='items', original_purchase=purchase,
             returned_items_data=effective_quantities
         )
-        
+
+        # ★ رسالة خطأ المعاملة الذرية (بدل الخطأ العام المبتلع)
+        transaction_error = None
+
         if form.is_valid() and formset.is_valid():
             try:
                 with transaction.atomic():
                     saved_purchase = form.save()
                     saved_items = formset.save(commit=False)
-                    
+
                     for i, item_form in enumerate(formset):
                         item = item_form.instance
                         original_item = None
                         old_effective_quantity = Decimal('0.00')
                         old_product = None
                         item_total_returned = Decimal('0.00')
-                        
+
                         if item.pk:
                             try:
                                 original_item = PurchItem.objects.get(id=item.id)
@@ -630,54 +635,54 @@ def purch_edit(request, slug):
                                 old_product = original_item.product
                             except PurchItem.DoesNotExist:
                                 pass
-                        
+
                         item.purch = saved_purchase
-                        
+
                         # رفع الصور
                         if f'items-{i}-product_image_upload' in files_data:
                             uploaded_file = files_data[f'items-{i}-product_image_upload']
                             if uploaded_file:
                                 item.purch_item_image = uploaded_file
-                        
+
                         if not item.item_name and item.product:
                             item.item_name = item.product.product_name
                         elif not item.item_name:
                             item_name_from_form = item_form.cleaned_data.get('item_name', '')
                             if item_name_from_form:
                                 item.item_name = item_name_from_form
-                        
+
                         # ★ الحصول على الكمية الفعالة من الفورم
                         submitted_effective_quantity = item_form.cleaned_data.get('purchased_quantity')
                         unit_price_new = item_form.cleaned_data.get('unit_price')
-                        
+
                         if submitted_effective_quantity is not None:
                             if unit_price_new is not None:
                                 item.unit_price = unit_price_new
-                            
+
                             # ★ حساب purchased_quantity الكلي = فعالة + مرتجع
                             item.purchased_quantity = submitted_effective_quantity + item_total_returned
-                            
+
                             if item.purchased_quantity and item.unit_price:
                                 item.purch_total = item.purchased_quantity * item.unit_price
-                        
+
                         item.save()
-                        
+
                         # ==========================================
                         # ★ تحديث المخزون بناءً على تغيير الكمية الفعالة
                         # ==========================================
                         if item.product:
                             product = item.product
                             product.refresh_from_db()
-                            
+
                             if original_item:
                                 # حساب الفرق في الكمية الفعالة
                                 stock_difference = submitted_effective_quantity - old_effective_quantity
-                                
+
                                 if old_product and product.id != old_product.id:
                                     # تم تغيير المنتج
                                     old_product.current_stock_quantity = F('current_stock_quantity') - old_effective_quantity
                                     old_product.save(update_fields=['current_stock_quantity'])
-                                    
+
                                     product.current_stock_quantity = F('current_stock_quantity') + submitted_effective_quantity
                                     product.save(update_fields=['current_stock_quantity'])
                                     product.refresh_from_db()
@@ -687,7 +692,7 @@ def purch_edit(request, slug):
                                     # نفس المنتج، تغيرت الكمية الفعالة
                                     product.current_stock_quantity = F('current_stock_quantity') + stock_difference
                                     product.save(update_fields=['current_stock_quantity'])
-                                    
+
                                     if stock_difference > 0:
                                         product.refresh_from_db()
                                         if product.current_stock_quantity > 0:
@@ -700,30 +705,30 @@ def purch_edit(request, slug):
                                 product.current_stock_quantity = F('current_stock_quantity') + submitted_effective_quantity
                                 product.save(update_fields=['current_stock_quantity'])
                                 product.refresh_from_db()
-                                
+
                                 if product.current_stock_quantity > 0:
                                     old_total_value = (product.current_stock_quantity - submitted_effective_quantity) * product.average_purchase_cost
                                     new_total_value = old_total_value + (submitted_effective_quantity * item.unit_price_base_currency)
                                     product.average_purchase_cost = (new_total_value / product.current_stock_quantity).quantize(Decimal('0.01'))
                                     product.save()
-                            
+
                             product.last_operation_type = 'purchase'
                             product.save(update_fields=['last_operation_type'])
                             logger.info(f"✅ تم تحديث مخزون المنتج {product.product_name}")
-                        
+
                         # ==========================================
                         # ★ معالجة الباركودات - التعامل فقط مع النشطة
                         # ==========================================
                         barcode_keys = [k for k in post_data.keys() if k.startswith(f'item_{i}_barcodes[')]
                         new_barcodes = [post_data.get(k, '').strip() for k in barcode_keys if post_data.get(k, '').strip()]
-                        
+
                         # ★ حماية الباركودات المرتجعة من الحذف
                         active_item_barcodes = item.item_barcodes.filter(barcode_status='active')
-                        
+
                         for existing_barcode in active_item_barcodes:
                             if existing_barcode.barcode.barcode_in not in new_barcodes:
                                 existing_barcode.delete()
-                        
+
                         for barcode_value in new_barcodes:
                             if not active_item_barcodes.filter(barcode__barcode_in=barcode_value).exists():
                                 try:
@@ -737,34 +742,83 @@ def purch_edit(request, slug):
                                     )
                                 except Exception as e:
                                     logger.error(f"خطأ في معالجة الباركود: {e}")
-                    
+
                     # حذف البنود المحذوفة
                     for item in formset.deleted_objects:
                         item.delete()
-                    
+
                     # إعادة حساب الإجماليات
                     saved_purchase.calculate_and_save_totals()
-                    
-                    if saved_purchase.paid_amount > 0:
-                        saved_purchase.create_cash_transaction()
-                    
+
+                    # ★★★ إصلاح 1: فحص المدفوع مقابل الإجمالي الحقيقي (نفس منطق الإنشاء تماماً) ★★★
+                    if saved_purchase.paid_amount > saved_purchase.purch_final_total:
+                        raise ValidationError(_("المبلغ المدفوع لا يمكن أن يتجاوز الإجمالي النهائي للفاتورة"))
+
+                    # ★★★ إصلاح 2: حركة الصندوق - الدالة نفسها تحدد السلوك الصحيح ★★★
+                    # (نقدي + مدفوع > 0 → إنشاء/تحديث، وإلا → حذف أي حركة قديمة)
+                    saved_purchase.create_cash_transaction()
+
                     messages.success(request, _('✅ تم تعديل فاتورة الشراء بنجاح وتحديث المخزون والباركودات'))
                     return redirect('invoice:purch_detail', slug=saved_purchase.slug)
 
+            except ValidationError as e:
+                # ★ إصلاح 3: عرض رسالة الرفض الحقيقية بدل الخطأ العام
+                transaction_error = str(e.messages[0]) if e.messages else str(e)
+                logger.warning(f"تم رفض حفظ تعديل فاتورة الشراء {purchase.uniqueId}: {transaction_error}")
             except Exception as e:
                 logger.error(f"خطأ في تعديل فاتورة الشراء: {e}", exc_info=True)
-                messages.error(request, _('❌ حدث خطأ أثناء الحفظ، يرجى المحاولة مرة أخرى'))
-        else:
-            # ★★★ إصلاح إبراز أخطاء الفورم للمستخدم (خاصة المبلغ المدفوع) ★★★
-            if form.errors.get('paid_amount'):
-                for error in form.errors['paid_amount']:
-                    messages.error(request, f"❌ {error}")
+                transaction_error = 'حدث خطأ أثناء الحفظ، يرجى المحاولة مرة أخرى.'
+
+        # ============================================================
+        # ★★★ الوصول إلى هنا = فشل الحفظ - جمع كل الأخطاء الحقيقية ★★★
+        # ============================================================
+        error_list = []
+
+        if transaction_error:
+            error_list.append(transaction_error)
+
+        # أخطاء الفورم الرئيسي
+        for field, errors in form.errors.items():
+            if field == '__all__':
+                for err in errors:
+                    error_list.append(str(err))
             else:
-                messages.error(request, _('❌ يرجى تصحيح الأخطاء في النموذج'))
+                label = (form.fields[field].label if field in form.fields else None) or field
+                for err in errors:
+                    error_list.append(f"{label}: {err}")
+
+        # أخطاء بنود الفاتورة
+        for i, item_form in enumerate(formset):
+            if not item_form.errors:
+                continue
+            for field, errors in item_form.errors.items():
+                if field == '__all__':
+                    for err in errors:
+                        error_list.append(f"البند {i + 1}: {err}")
+                else:
+                    label = (item_form.fields[field].label if field in item_form.fields else None) or field
+                    for err in errors:
+                        error_list.append(f"البند {i + 1} - {label}: {err}")
+
+        # أخطاء عامة على مستوى الفورم سيت
+        for err in formset.non_form_errors():
+            error_list.append(str(err))
+
+        if not error_list:
+            error_list.append('يرجى تصحيح الأخطاء في النموذج.')
+
+        # ★ طلب AJAX: JSON بالأخطاء (نفس صيغة الإنشاء)
+        if is_ajax:
+            return JsonResponse({'error': '؛ '.join(error_list)}, status=400)
+
+        # ★ متصفح عادي: كل الأخطاء كرسائل واضحة
+        for err in error_list:
+            messages.error(request, f"❌ {err}")
+
     else:
         form = PurchEditForm(instance=purchase)
         formset = PurchItemEditFormSet(
-            instance=purchase, prefix='items', 
+            instance=purchase, prefix='items',
             original_purchase=purchase, returned_items_data=effective_quantities
         )
 
@@ -778,6 +832,8 @@ def purch_edit(request, slug):
         'title': f'تعديل فاتورة الشراء {purchase.uniqueId}',
         'effective_quantities_json': effective_quantities_json,
     })
+
+
 
 
 @login_required

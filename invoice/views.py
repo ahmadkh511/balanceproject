@@ -197,6 +197,9 @@ def purch_list(request):
 @permission_required('invoice.add_purch', raise_exception=True)
 def purch_create(request):
     """إنشاء فاتورة شراء جديدة."""
+    # ★ هل الطلب AJAX (من جافاسكريبت الفورم) أم متصفح عادي؟
+    is_ajax = request.headers.get('X-Requested-With') == 'XMLHttpRequest'
+
     if request.method == 'POST':
         form = PurchForm(request.POST, request.FILES)
         formset = PurchItemFormSet(request.POST, request.FILES, prefix='items')
@@ -224,6 +227,9 @@ def purch_create(request):
                     invoice_barcodes_set.add(bc)
                 if PurchItemBarcode.objects.filter(barcode__barcode_in=bc).exists():
                     barcode_errors.append(f"الباركود '{bc}' مستخدم سابقاً في فاتورة شراء أخرى ولا يمكن تكراره.")
+
+        # ★ رسالة الخطأ إذا فشلت المعاملة الذرية بعد نجاح الفورم
+        transaction_error = None
 
         if form.is_valid() and formset.is_valid() and not barcode_errors:
             try:
@@ -257,13 +263,11 @@ def purch_create(request):
                             except Product.DoesNotExist:
                                 pass
                         
-                        # ================= تمت المعالجة هنا =================
                         if not instance.product and product_search_value and product_search_value != "مادة غير محددة":
                             try:
                                 instance.product = Product.objects.filter(product_name=product_search_value.split(' - ')[0].strip()).first()
                             except Exception as e:
                                 logger.warning(f"خطأ في البحث عن المنتج بالاسم '{product_search_value}' أثناء إنشاء فاتورة الشراء: {e}")
-                        # ====================================================
                         
                         if not instance.item_name and instance.product:
                             instance.item_name = instance.product.product_name
@@ -335,6 +339,7 @@ def purch_create(request):
                     
                     purchase.calculate_and_save_totals()
 
+                    # ★ الفحص المرجعي: المبلغ المدفوع مقابل الإجمالي الحقيقي المحسوب من البنود
                     if purchase.paid_amount > purchase.purch_final_total:
                         raise ValidationError(_("المبلغ المدفوع لا يمكن أن يتجاوز الإجمالي النهائي للفاتورة"))
 
@@ -345,24 +350,70 @@ def purch_create(request):
                     return redirect('invoice:purch_detail', slug=purchase.slug)
                     
             except ValidationError as e:
-                messages.error(request, e.messages[0] if e.messages else str(e))
+                transaction_error = str(e.messages[0]) if e.messages else str(e)
+                logger.warning(f"تم رفض حفظ فاتورة شراء: {transaction_error}")
             except Exception as e:
-                logger.error(f"خطأ في إنشاء فاتورة الشراء: {e}")
-                messages.error(request, 'حدث خطأ غير متوقع أثناء إنشاء الفاتورة، يرجى المحاولة مرة أخرى.')
-        
-        if not form.is_valid() or not formset.is_valid() or barcode_errors:
+                logger.error(f"خطأ في إنشاء فاتورة الشراء: {e}", exc_info=True)
+                transaction_error = 'حدث خطأ غير متوقع أثناء إنشاء الفاتورة، يرجى المحاولة مرة أخرى.'
+
+        # ============================================================
+        # ★★★ الوصول إلى هنا = فشل الحفظ ★★★
+        # ============================================================
+        if is_ajax:
+            # إرجاع الأخطاء الحقيقية كـ JSON يعرضها الجافاسكريبت مباشرة
+            error_list = []
+
+            if transaction_error:
+                error_list.append(transaction_error)
+
             for error in barcode_errors:
-                messages.error(request, error)
-            if not barcode_errors:
-                messages.error(request, 'يرجى تصحيح الأخطاء في النموذج.')
-            else:
-                messages.error(request, 'لم يتم حفظ الفاتورة بسبب أخطاء في الباركودات أو البيانات.')
-            
-            products = Product.objects.all()
-            return render(request, 'invoice/purchase/purch_form.html', {
-                'form': form, 'formset': formset, 'products': products,
-                'title': 'إنشاء فاتورة شراء جديدة'
-            })
+                error_list.append(str(error))
+
+            # أخطاء الفورم الرئيسي (مع اسم الحقل بالعربي)
+            for field, errors in form.errors.items():
+                if field == '__all__':
+                    for err in errors:
+                        error_list.append(str(err))
+                else:
+                    label = (form.fields[field].label if field in form.fields else field) or field
+                    for err in errors:
+                        error_list.append(f"{label}: {err}")
+
+            # أخطاء بنود الفاتورة
+            for i, item_form in enumerate(formset):
+                if not item_form.errors:
+                    continue
+                for field, errors in item_form.errors.items():
+                    if field == '__all__':
+                        for err in errors:
+                            error_list.append(f"البند {i + 1}: {err}")
+                    else:
+                        label = (item_form.fields[field].label if field in item_form.fields else field) or field
+                        for err in errors:
+                            error_list.append(f"البند {i + 1} - {label}: {err}")
+
+            # أخطاء عامة على مستوى الفورم سيت
+            for err in formset.non_form_errors():
+                error_list.append(str(err))
+
+            if not error_list:
+                error_list.append('لم يتم حفظ الفاتورة، يرجى مراجعة البيانات المدخلة.')
+
+            return JsonResponse({'error': '؛ '.join(error_list)}, status=400)
+
+        # متصفح عادي (بدون جافاسكريبت) — نفس السلوك القديم
+        for error in barcode_errors:
+            messages.error(request, error)
+        if transaction_error:
+            messages.error(request, transaction_error)
+        elif not barcode_errors:
+            messages.error(request, 'يرجى تصحيح الأخطاء في النموذج.')
+
+        products = Product.objects.all()
+        return render(request, 'invoice/purchase/purch_form.html', {
+            'form': form, 'formset': formset, 'products': products,
+            'title': 'إنشاء فاتورة شراء جديدة'
+        })
 
     else:
         form = PurchForm(initial={
@@ -376,6 +427,7 @@ def purch_create(request):
         'form': form, 'formset': formset, 'products': products,
         'title': 'إنشاء فاتورة شراء جديدة'
     })
+
 
 
 
@@ -1940,16 +1992,8 @@ def sale_edit(request, slug):
     return render(request, 'invoice/sale/sale_form_edit.html', context)
 
 
-@login_required
-def get_cash_balance(request):
-    """API لجلب رصيد الصندوق الحالي"""
-    from .models import Cash
-    try:
-        cash = Cash.objects.first()
-        balance = cash.current_balance if cash else Decimal('0.00')
-        return JsonResponse({'balance': str(balance)})
-    except Exception as e:
-        return JsonResponse({'balance': '0.00', 'error': str(e)})
+
+
 
 
 @login_required

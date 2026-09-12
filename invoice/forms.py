@@ -164,7 +164,6 @@ class PurchForm(forms.ModelForm):
                 'step': '0.01', 
                 'min': '0'
             }),
-            # حقول الإجماليات كحقول مخفية
             'purch_subtotal': forms.HiddenInput(),
             'purch_tax_amount': forms.HiddenInput(),
             'purch_final_total': forms.HiddenInput(),
@@ -174,7 +173,6 @@ class PurchForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         
-        # تعيين كلاس form-control للحقول المرئية
         for field_name, field in self.fields.items():
             if field_name not in [
                 'purch_notes', 'purch_supplier', 'purch_image', 'paid_amount',
@@ -182,7 +180,6 @@ class PurchForm(forms.ModelForm):
             ]:
                 field.widget.attrs.update({'class': 'form-control'})
         
-        # جعل الحقول المالية والحقول المحسوبة غير مطلوبة
         non_required_fields = [
             'purch_tax_percentage', 'purch_discount', 'purch_addition',
             'purch_subtotal', 'purch_tax_amount', 'purch_final_total', 'balance_due'
@@ -192,35 +189,50 @@ class PurchForm(forms.ModelForm):
 
     def clean(self):
         """
-        التحقق من أن المبلغ المدفوع لا يتجاوز الإجمالي العام للفاتورة
+        ★★★ إصلاح الخلل الرئيسي ★★★
+        
+        المشكلة السابقة: كان الفحص يقارن المبلغ المدفوع بـ calculated_total
+        المحسوبة من purch_subtotal — لكن قالب الإنشاء لا يرسل هذا الحقل إطلاقاً،
+        فكانت المقارنة تجري ضد (الإضافة - الخصم) فقط، وترفض أي فاتورة نقدية
+        فيها إضافة بمبلغ مدفوع كامل.
+        
+        الفحص المرجعي الصحيح موجود في الفيو (purch_create) بعد حساب
+        calculate_and_save_totals() حيث يُحسب الإجمالي الحقيقي من بنود
+        قاعدة البيانات داخل معاملة ذرية.
+        
+        الحارس المشروط أدناه يعمل فقط إذا أرسل القالب قيمة subtotal فعلية
+        (قالب الإنشاء لا يرسلها أبداً) — بقي كحماية لمسار التعديل حتى
+        نراجعه في المرحلة الثانية.
         """
         cleaned_data = super().clean()
         
         paid_amount = cleaned_data.get('paid_amount') or Decimal('0.00')
-        subtotal = cleaned_data.get('purch_subtotal') or Decimal('0.00')
-        tax_percentage = cleaned_data.get('purch_tax_percentage') or Decimal('0.00')
-        addition = cleaned_data.get('purch_addition') or Decimal('0.00')
-        discount = cleaned_data.get('purch_discount') or Decimal('0.00')
-        
-        # حساب الإجمالي الفعلي بناءً على البيانات المدخلة
-        tax_amount = (subtotal * tax_percentage / Decimal('100')).quantize(Decimal('0.01'))
-        calculated_total = subtotal + tax_amount + addition - discount
         
         # التحقق من أن المبلغ المدفوع ليس سالباً
         if paid_amount < Decimal('0.00'):
             self.add_error('paid_amount', _('المبلغ المدفوع لا يمكن أن يكون سالباً'))
         
-        # التحقض من أن المبلغ المدفوع لا يتجاوز الإجمالي
-        if paid_amount > calculated_total and calculated_total > Decimal('0.00'):
-            self.add_error(
-                'paid_amount', 
-                _('المبلغ المدفوع (%(paid)s) أكبر من الإجمالي العام (%(total)s)') % {
-                    'paid': paid_amount, 
-                    'total': calculated_total
-                }
-            )
+        # حارس مشروط: يتفعّل فقط عند إرسال subtotal فعلي مع الفورم
+        subtotal = cleaned_data.get('purch_subtotal')
+        if subtotal:
+            tax_percentage = cleaned_data.get('purch_tax_percentage') or Decimal('0.00')
+            addition = cleaned_data.get('purch_addition') or Decimal('0.00')
+            discount = cleaned_data.get('purch_discount') or Decimal('0.00')
+            
+            tax_amount = (subtotal * tax_percentage / Decimal('100')).quantize(Decimal('0.01'))
+            calculated_total = subtotal + tax_amount + addition - discount
+            
+            if paid_amount > calculated_total:
+                self.add_error(
+                    'paid_amount', 
+                    _('المبلغ المدفوع (%(paid)s) أكبر من الإجمالي العام (%(total)s)') % {
+                        'paid': paid_amount, 
+                        'total': calculated_total
+                    }
+                )
             
         return cleaned_data
+
 
 
 class PurchItemForm(forms.ModelForm):

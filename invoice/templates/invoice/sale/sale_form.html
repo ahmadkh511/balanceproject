@@ -470,6 +470,34 @@ body {
 .loading-text { color: #ffffff; margin-top: 1rem; font-size: 1.2rem; font-weight: 600; font-family: 'Tajawal', sans-serif; }
 @keyframes spin { to { transform: rotate(360deg); } }
 
+/* ============================================
+   [CSS-VALIDATE] ✅ التحقق الفوري من المبلغ المدفوع
+   ============================================ */
+.paid-amount-container.show { max-height: 200px; }
+.paid-amount-error {
+    display: none;
+    color: #d32f2f;
+    background: #fff0f0;
+    border: 1px solid #ffcccc;
+    border-right: 4px solid #dc3545;
+    border-radius: 4px;
+    padding: 0.35rem 0.6rem;
+    font-size: 0.72rem;
+    font-weight: 600;
+    margin-top: 0.35rem;
+    text-align: right;
+}
+#paid-amount.is-invalid {
+    border-color: #dc3545 !important;
+    box-shadow: 0 0 0 0.15rem rgba(220, 53, 69, 0.25) !important;
+    background-color: #fff5f5;
+    animation: paidAmountShake 0.4s;
+}
+@keyframes paidAmountShake {
+    0%, 100% { transform: translateX(0); }
+    25%, 75% { transform: translateX(-3px); }
+    50% { transform: translateX(3px); }
+}
 </style>
 {% endblock %}
 
@@ -1660,5 +1688,117 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     });
 });
+
+// ============================================
+// [JS-VALIDATE] ✅✅✅ التحقق الفوري من المبلغ المدفوع مقابل الإجمالي
+// وحدة مستقلة — تعمل قبل handleFormSubmit [JS-11] دون تعديل أي سطر منه
+// ============================================
+(function() {
+    'use strict';
+
+    function parseNum(v) { return parseFloat(String(v || '').replace(/,/g, '')) || 0; }
+    function getPaidInput() { return document.getElementById('paid-amount'); }
+    function getContainer() { return document.getElementById('paid-amount-container'); }
+    function getErrorDiv() { return document.getElementById('paid-amount-error'); }
+    function getTotal() {
+        var el = document.getElementById('grand-total');
+        return el ? parseNum(el.textContent) : 0;
+    }
+
+    // بناء حاوية رسالة الخطأ أسفل الحقل تلقائياً — بدون تعديل HTML
+    function ensureErrorDiv() {
+        var container = getContainer();
+        if (container && !getErrorDiv()) {
+            var div = document.createElement('div');
+            div.id = 'paid-amount-error';
+            div.className = 'paid-amount-error';
+            container.appendChild(div);
+        }
+    }
+
+    function clearFeedback() {
+        var input = getPaidInput(), err = getErrorDiv();
+        if (input) input.classList.remove('is-invalid');
+        if (err) { err.style.display = 'none'; err.textContent = ''; }
+    }
+
+    function showFeedback(paid, total) {
+        var input = getPaidInput(), err = getErrorDiv();
+        if (input) input.classList.add('is-invalid');
+        if (err) {
+            err.innerHTML = '<i class="fas fa-exclamation-circle"></i> المبلغ المدفوع (' +
+                paid.toFixed(2) + ') أكبر من قيمة الفاتورة (' + total.toFixed(2) + ')';
+            err.style.display = 'block';
+        }
+    }
+
+    // الإرجاع: true = سليم / false = يتجاوز الإجمالي
+    function validatePaidAmount(withFeedback) {
+        var input = getPaidInput(), container = getContainer();
+        if (!input || !container) return true;
+
+        // الحقل مخفي (طريقة دفع غير نقدية) → لا تحقق — متوافق مع checkPaymentMethod
+        if (!container.classList.contains('show')) { clearFeedback(); return true; }
+
+        var paid = parseNum(input.value);
+        var total = getTotal();
+
+        if (paid > total) {
+            if (withFeedback !== false) showFeedback(paid, total);
+            return false;
+        }
+        clearFeedback();
+        return true;
+    }
+
+    function blockIfInvalid(e) {
+        if (validatePaidAmount()) return;
+        if (e) {
+            e.preventDefault();
+            e.stopPropagation();
+            if (e.stopImmediatePropagation) e.stopImmediatePropagation();
+        }
+        var input = getPaidInput();
+        if (input) {
+            input.focus();
+            if (input.scrollIntoView) input.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+        if (typeof showErrorMessage === 'function') {
+            showErrorMessage('⛔ لا يمكن الحفظ: المبلغ المدفوع أكبر من قيمة الفاتورة');
+        }
+    }
+
+    function initPaidAmountValidation() {
+        ensureErrorDiv();
+        var input = getPaidInput();
+        if (!input) return;
+
+        // ✅ احمرار فوري + رسالة أسفل الحقل أثناء الكتابة وعند مغادرة الحقل
+        input.addEventListener('input', function() { validatePaidAmount(); });
+        input.addEventListener('change', function() { validatePaidAmount(); });
+
+        // ✅ إعادة التحقق عند أي تغيّر في الإجمالي (بنود / ضريبة / خصم / نسخ تلقائي)
+        document.addEventListener('financialCalculationsUpdated', function() { validatePaidAmount(); });
+        document.addEventListener('remainingAmountUpdated', function() { validatePaidAmount(); });
+
+        // ✅✅✅ منع الحفظ — مرحلة الالتقاط (capture) = تعمل قبل handleFormSubmit [JS-11]
+        document.addEventListener('submit', function(e) {
+            if (e.target && e.target.id === 'sale-form') blockIfInvalid(e);
+        }, true);
+        document.addEventListener('click', function(e) {
+            var btn = e.target.closest ? e.target.closest('#sale-form button[type="submit"]') : null;
+            if (btn) blockIfInvalid(e);
+        }, true);
+
+        // ✅ فحص أولي بعد اكتمال تهيئة الصفحة
+        setTimeout(function() { validatePaidAmount(); }, 900);
+    }
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initPaidAmountValidation);
+    } else {
+        initPaidAmountValidation();
+    }
+})();
 </script>
 {% endblock %}

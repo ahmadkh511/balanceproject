@@ -119,16 +119,23 @@ body.dark-mode .search-result-item:hover{background:rgba(44,197,219,.08)}
 .cat-item.active{background:linear-gradient(135deg,var(--aqua-500),var(--aqua-700));color:#fff;border-color:transparent;box-shadow:var(--glow)}
 .cat-item img{width:20px;height:20px;object-fit:contain;border-radius:6px}
 
-/* ===== العروض الفلاش ===== */
+/* ===== العروض الفلاش — توزيع متساوٍ حسب العدد =====
+   1 → عرض كامل | 2 → نصفان | 3 → أثلاث | 4+ → أرباع ثم التفاف
+   min(280px,100%) تمنع الفيض الأفقي على الشاشات الضيقة */
+.flash-grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fit, minmax(min(280px,100%), 1fr));
+    gap:12px;
+}
+
 .flash-head{display:flex;justify-content:space-between;align-items:center;margin:10px 0 12px}
 .flash-head-title{font-size:1.05rem;font-weight:900;display:flex;align-items:center;gap:8px;color:var(--ink);margin:0}
 .flash-head-title .bolt{width:34px;height:34px;border-radius:12px;background:linear-gradient(135deg,var(--gold),#f08c00);color:#fff;display:flex;align-items:center;justify-content:center;box-shadow:0 6px 16px rgba(255,176,32,.4);animation:pulseBolt 2s infinite}
 @keyframes pulseBolt{0%,100%{transform:scale(1)}50%{transform:scale(1.1)}}
 .flash-all{font-size:.78rem;font-weight:800;color:var(--aqua-600);text-decoration:none;display:flex;align-items:center;gap:5px}
 .flash-all:hover{color:var(--aqua-700);gap:9px}
-.flash-strip{display:grid;grid-auto-flow:column;grid-auto-columns:minmax(272px,300px);gap:12px;overflow-x:auto;scroll-snap-type:x mandatory;padding:2px 2px 10px;scrollbar-width:none}
-.flash-strip::-webkit-scrollbar{display:none}
-.flash-card{scroll-snap-align:start;background:linear-gradient(145deg,var(--aqua-800),var(--aqua-900));border-radius:var(--r-md);padding:14px;display:flex;flex-direction:column;gap:10px;position:relative;overflow:hidden;border:1px solid rgba(111,217,232,.25);box-shadow:var(--sh-1);transition:.3s}
+
+.flash-card{scroll-snap-align:start;background:linear-gradient(145deg,var(--aqua-800),var(--aqua-900));border-radius:var(--r-md);padding:14px;display:flex;flex-direction:column;gap:10px;position:relative;overflow:hidden;border:1px solid rgba(111,217,232,.25);box-shadow:var(--sh-1);transition:.3s;container-type:inline-size}
 .flash-card:hover{transform:translateY(-4px);box-shadow:var(--sh-2)}
 .flash-card::before{content:'';position:absolute;inset:0;background:radial-gradient(circle at 85% -10%,rgba(44,197,219,.22),transparent 55%);pointer-events:none}
 .flash-card-header{display:flex;justify-content:space-between;align-items:center;z-index:1}
@@ -148,6 +155,15 @@ body.dark-mode .search-result-item:hover{background:rgba(44,197,219,.08)}
 .flash-expired-chip{position:absolute;inset:auto 10px 10px 10px;background:rgba(255,77,90,.92);color:#fff;text-align:center;border-radius:10px;font-size:.72rem;font-weight:800;padding:5px;z-index:3;display:none}
 .flash-card.expired .flash-expired-chip{display:block}
 .flash-card.expired .flash-cart-sm{opacity:.4;pointer-events:none}
+
+/* تكيف البطاقة مع عرضها الخاص (Container Query):
+   عند تمدد البطاقة (فلاش واحد = عرض كامل مثلاً) تتحول لتخطيط أفقي فخم */
+@container (min-width:430px){
+    .flash-img{width:104px;height:104px}
+    .flash-name-sm{font-size:.95rem}
+    .flash-price-sm{font-size:1.18rem}
+    .flash-cart-sm{width:fit-content;padding:8px 28px}
+}
 
 /* ===== السلايدر ===== */
 .hero-slider{height:190px;border-radius:var(--r-lg);overflow:hidden;position:relative;box-shadow:var(--sh-1);margin:6px 0 18px}
@@ -319,7 +335,6 @@ body.dark-mode .bottom-nav{background:rgba(15,46,53,.88);border-color:rgba(255,2
 @media (max-width:600px){
     .hero-slider{height:130px;border-radius:var(--r-md)}
     .products-grid{grid-template-columns:repeat(2,1fr);gap:8px}
-    .flash-strip{grid-auto-columns:minmax(240px,1fr)}
     .header-glass{top:28px;padding:7px 0}
     .top-announce-bar{height:28px}
     .announce-track span{font-size:.65rem;padding:0 30px}
@@ -350,7 +365,6 @@ body.dark-mode .bottom-nav{background:rgba(15,46,53,.88);border-color:rgba(255,2
 {{ recent_orders_json|json_script:"storeRecentOrders" }}
 
 <script type="application/json" id="storeLowStock">{{ low_stock_threshold }}</script>
-<meta name="flash-deals-url" content="{{ flash_deals_url }}">
 
 <div class="bg-mesh">
 
@@ -404,14 +418,14 @@ body.dark-mode .bottom-nav{background:rgba(15,46,53,.88);border-color:rgba(255,2
                 {% endfor %}
             </ul>
 
-            <!-- ===== العروض المحدودة ===== -->
+            <!-- ===== العروض المحدودة (توزيع متساوٍ حسب العدد) ===== -->
             {% if flashes_data %}
             <div class="animate-on-scroll delay-1">
                 <div class="flash-head">
                     <h3 class="flash-head-title"><span class="bolt"><i class="fas fa-bolt"></i></span> عروض تنتهي قريباً</h3>
                     <a class="flash-all" href="{{ flash_deals_url }}">عرض الكل <i class="fas fa-chevron-left"></i></a>
                 </div>
-                <div class="flash-strip">
+                <div class="flash-grid">
                     {% for flash in flashes_data %}
                     <div class="flash-card" data-ends-at="{{ flash.ends_at }}">
                         <div class="flash-card-header">
@@ -504,7 +518,7 @@ body.dark-mode .bottom-nav{background:rgba(15,46,53,.88);border-color:rgba(255,2
                                 <span class="review-count">({{ item.product.review_count|default:0 }})</span>
                             </div>
 
-                            <!-- الأسعار عبر data-* فقط — JS يحسب نسبة الخصم -->
+                            <!-- الأسعار عبر data-* فقط — JS يحسب ويعرض نسبة الخصم -->
                             <div class="product-price" data-old="{% if item.show_old_price and item.product.wholesale_price > 0 %}{{ item.product.wholesale_price }}{% endif %}" data-new="{% if item.product.offer_1_price > 0 and item.product.offer_1_price < item.product.wholesale_price %}{{ item.product.offer_1_price }}{% else %}{{ item.product.wholesale_price }}{% endif %}">
                                 <span class="current-price">
                                     {% if item.product.offer_1_price > 0 and item.product.offer_1_price < item.product.wholesale_price %}
@@ -590,7 +604,7 @@ body.dark-mode .bottom-nav{background:rgba(15,46,53,.88);border-color:rgba(255,2
 <nav class="bottom-nav" id="bottomNav">
     <a class="bn-item active" href="#" data-target="body"><i class="fas fa-house"></i><span>الرئيسية</span></a>
     <a class="bn-item" href="#categoriesMenu" data-target="#categoriesMenu"><i class="fas fa-grip"></i><span>الأقسام</span></a>
-    <a class="bn-item" href="{{ flash_deals_url }}" data-target=".flash-strip"><i class="fas fa-bolt"></i><span>العروض</span></a>
+    <a class="bn-item" href="{{ flash_deals_url }}" data-target=".flash-grid"><i class="fas fa-bolt"></i><span>العروض</span></a>
     <!-- ضع رابط المفضلة والسلة من urls.py -->
     <a class="bn-item" href="#"><i class="far fa-heart"></i><span>المفضلة</span></a>
     <a class="bn-item" href="#"><i class="fas fa-cart-shopping"></i><span>السلة</span></a>
@@ -610,7 +624,7 @@ body.dark-mode .bottom-nav{background:rgba(15,46,53,.88);border-color:rgba(255,2
     </div>
 </div>
 
-<!-- ===== تنبيه السلة ===== -->
+<!-- ===== تنبيه السلة (تنسيقاته في base.html كما في القالب الأصلي) ===== -->
 <div class="cart-toast-enhanced" id="cartToastEnhanced">
     <span class="t-icon"><i class="fas fa-check"></i></span>
     <span class="t-product" id="cartToastProduct">تمت الإضافة</span>
@@ -732,7 +746,7 @@ document.addEventListener('DOMContentLoaded', function() {
     /* ⑥ السلايدر + النقاط */
     var slides = document.querySelectorAll('.h-slide');
     var dotsWrap = document.getElementById('sliderDots');
-    var si = 0, slideTimer;
+    var si = 0, slideTimer = null;
     function goTo(i) {
         slides[si].classList.remove('active');
         dotsWrap.children[si].classList.remove('active');
@@ -740,14 +754,17 @@ document.addEventListener('DOMContentLoaded', function() {
         slides[si].classList.add('active');
         dotsWrap.children[si].classList.add('active');
     }
-    if (slides.length > 1) {
+    function restartAuto() {
+        clearInterval(slideTimer);
+        slideTimer = setInterval(function(){ goTo(si + 1); }, 4500);
+    }
+    if (slides.length > 1 && dotsWrap) {
         slides.forEach(function(_, i) {
             var d = document.createElement('button');
             d.className = 's-dot' + (i === 0 ? ' active' : '');
             d.addEventListener('click', function(){ goTo(i); restartAuto(); });
             dotsWrap.appendChild(d);
         });
-        function restartAuto(){ clearInterval(slideTimer); slideTimer = setInterval(function(){ goTo(si + 1); }, 4500); }
         restartAuto();
     }
 
@@ -814,18 +831,20 @@ document.addEventListener('DOMContentLoaded', function() {
         var iv = setInterval(tick, 1000);
     });
 
-    /* ⑨ مقياس المخزون — JS يقرأ data-stock/data-max ويعيّن العرض (البديل الصحيح) */
+    /* ⑨ مقياس المخزون — JS يقرأ data-stock/data-max ويعيّن العرض */
     document.querySelectorAll('.stock-meter').forEach(function(m) {
-        var stock = parseFloat(m.dataset.stock), max = parseFloat(m.dataset.max);
+        var stock = parseFloat(m.getAttribute('data-stock'));
+        var max = parseFloat(m.getAttribute('data-max'));
         if (!max || isNaN(stock) || stock < 0) return;
         var pct = Math.max(4, Math.min(100, Math.round(stock / max * 100)));
         var fill = m.querySelector('.stock-meter-fill');
         if (fill) requestAnimationFrame(function(){ fill.style.width = pct + '%'; });
     });
 
-    /* ⑩ شارة نسبة الخصم — JS يحسبها من data-old/data-new (البديل الصحيح) */
+    /* ⑩ شارة نسبة الخصم — JS يحسبها من data-old/data-new */
     document.querySelectorAll('.product-price').forEach(function(pp) {
-        var o = parseFloat(pp.dataset.old), n = parseFloat(pp.dataset.new);
+        var o = parseFloat(pp.getAttribute('data-old'));
+        var n = parseFloat(pp.getAttribute('data-new'));
         if (!(o > 0) || !(n > 0) || n >= o) return;
         var tag = pp.querySelector('.discount-tag');
         if (tag) {
@@ -841,7 +860,7 @@ document.addEventListener('DOMContentLoaded', function() {
             entries.forEach(function(entry) {
                 if (!entry.isIntersecting) return;
                 statObs.unobserve(entry.target);
-                var el = entry.target, target = parseInt(el.dataset.count) || 0, start = null;
+                var el = entry.target, target = parseInt(el.getAttribute('data-count')) || 0, start = null;
                 function step(ts) {
                     if (!start) start = ts;
                     var p = Math.min((ts - start) / 1300, 1);
@@ -900,9 +919,9 @@ document.addEventListener('DOMContentLoaded', function() {
         item.addEventListener('click', function() {
             document.querySelectorAll('#categoriesMenu .cat-item').forEach(function(c){ c.classList.remove('active'); });
             item.classList.add('active');
-            var id = String(item.dataset.catId), first = null;
+            var id = String(item.getAttribute('data-cat-id')), first = null;
             document.querySelectorAll('.store-section-box').forEach(function(sec) {
-                var show = id === 'all' || String(sec.dataset.categoryId) === id;
+                var show = id === 'all' || String(sec.getAttribute('data-category-id')) === id;
                 sec.classList.toggle('force-hide', !show);
                 if (show) sec.classList.remove('initially-hidden');
                 if (show && !first) first = sec;
@@ -932,7 +951,7 @@ document.addEventListener('DOMContentLoaded', function() {
     /* ⑱ شريط التنقل السفلي */
     document.querySelectorAll('.bn-item[data-target]').forEach(function(bn) {
         bn.addEventListener('click', function(e) {
-            var t = document.querySelector(bn.dataset.target);
+            var t = document.querySelector(bn.getAttribute('data-target'));
             if (t) { e.preventDefault(); t.scrollIntoView({ behavior: 'smooth', block: 'start' }); }
             document.querySelectorAll('.bn-item').forEach(function(x){ x.classList.remove('active'); });
             bn.classList.add('active');
@@ -943,9 +962,9 @@ document.addEventListener('DOMContentLoaded', function() {
     document.addEventListener('click', function(e) {
         var b = e.target.closest('.btn-notify');
         if (!b) return;
-        document.getElementById('notifyProductId').value = b.dataset.id || '';
-        document.getElementById('notifyProductName').textContent = b.dataset.name || '';
-        document.getElementById('notifyEmail').value = b.dataset.email || '';
+        document.getElementById('notifyProductId').value = b.getAttribute('data-id') || '';
+        document.getElementById('notifyProductName').textContent = b.getAttribute('data-name') || '';
+        document.getElementById('notifyEmail').value = b.getAttribute('data-email') || '';
         bootstrap.Modal.getOrCreateInstance(document.getElementById('notifyModal')).show();
     });
     document.getElementById('btnSubmitNotify').addEventListener('click', function() {

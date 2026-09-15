@@ -7328,19 +7328,59 @@ def api_add_flash_deal(request):
 
 
 
-
 @login_required
 @permission_required('invoice.change_flashdeal', raise_exception=True)
 @require_POST
 def api_toggle_flash_deal(request, deal_id):
-    """تفعيل/تعطيل عرض فلاش"""
+    """تفعيل/تعطيل عرض فلاش — مع إعادة احتساب المدة للعروض المنتهية"""
     try:
         deal = get_object_or_404(FlashDeal, id=deal_id)
-        deal.is_active = not deal.is_active
+        now = timezone.now()
+
+        # هل انتهى وقت العرض؟ (فحص مستقل عن is_active — هذا هو جوهر الإصلاح)
+        is_expired = bool(deal.ends_at and deal.ends_at <= now)
+
+        # ---- الحالة 1: تعطيل عرض نشط فعلاً (والوقت لم ينتهِ) ----
+        if deal.is_active and not is_expired:
+            deal.is_active = False
+            deal.save(update_fields=['is_active'])
+            return JsonResponse({'success': True, 'is_active': False, 'message': 'تم تعطيل العرض'})
+
+        # ---- الحالة 2: تفعيل عرض معطّل لم تنتهِ مدته بعد ----
+        if not deal.is_active and not is_expired:
+            deal.is_active = True
+            deal.save(update_fields=['is_active'])
+            return JsonResponse({'success': True, 'is_active': True, 'message': 'تم تفعيل العرض — الوقت المتبقي لم ينتهِ بعد'})
+
+        # ---- الحالة 3: عرض منتهي (سواء is_active كان True أو False) — مدة جديدة مطلوبة ----
+        try:
+            data = json.loads(request.body) if request.body else {}
+        except json.JSONDecodeError:
+            data = {}
+
+        hours = data.get('hours')
+        if not hours:
+            return JsonResponse({
+                'success': False,
+                'expired': True,
+                'message': 'العرض منتهي — تحديد مدة جديدة مطلوب'
+            }, status=400)
+
+        try:
+            hours = float(hours)
+            if hours <= 0:
+                raise ValueError
+        except (ValueError, TypeError):
+            return JsonResponse({'success': False, 'message': 'المدة غير صالحة'}, status=400)
+
+        deal.ends_at = now + timedelta(hours=hours)
+        deal.is_active = True
         deal.save()
-        return JsonResponse({'success': True, 'is_active': deal.is_active})
-    except Exception as e:
+        return JsonResponse({'success': True, 'is_active': True, 'message': f'تم تفعيل العرض لمدة {hours:g} ساعة من الآن'})
+
+    except Exception:
         return JsonResponse({'success': False, 'message': 'حدث خطأ أثناء تحديث العرض'}, status=400)
+
 
 
 @login_required

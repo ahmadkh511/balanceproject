@@ -10,49 +10,141 @@
         --aqua-2: #b2ebf2;
         --aqua-3: #4dd0e1;
         --aqua-4: #0097a7;
+        --aqua-5: #006064;
         --text-dark: #006064;
         --text-light: #ffffff;
-        --shadow-sm: 0 2px 8px rgba(0, 150, 167, 0.08);
+        --bg-page: #f2f6f7;
+        --shadow-sm: 0 2px 10px rgba(0, 96, 100, 0.06);
+        --shadow-md: 0 8px 25px rgba(0, 96, 100, 0.12);
+        --radius: 12px;
     }
-    body { font-family: 'Tajawal', sans-serif; background-color: #f8f9fa; }
-    
+    body { font-family: 'Tajawal', sans-serif; background-color: var(--bg-page); }
+
+    .page-header {
+        background: linear-gradient(135deg, var(--aqua-4) 0%, var(--aqua-5) 100%);
+        padding: 1.6rem 1.8rem;
+        border-radius: var(--radius);
+        margin-bottom: 1.25rem;
+        box-shadow: var(--shadow-md);
+        display: flex; justify-content: space-between;
+        align-items: center; flex-wrap: wrap; gap: 1rem;
+        position: relative; overflow: hidden;
+    }
+    .page-header::after {
+        content: ''; position: absolute; top: -60%; left: -5%;
+        width: 320px; height: 320px;
+        background: rgba(255,255,255,0.07);
+        border-radius: 50%; pointer-events: none;
+    }
+    .page-header h2 {
+        margin: 0; color: white; font-size: 1.45rem; font-weight: 700;
+        display: flex; align-items: center; gap: 10px;
+    }
+    .page-header p { color: rgba(255,255,255,0.75); }
+    .page-header .btn {
+        background: rgba(255,255,255,0.14);
+        border: 1px solid rgba(255,255,255,0.28);
+        color: white; font-weight: 600;
+    }
+    .page-header .btn:hover {
+        background: rgba(255,255,255,0.28); color: white;
+        transform: translateY(-1px);
+    }
+
+    .stat-card {
+        background: white; border-radius: var(--radius);
+        padding: 1.1rem 1.2rem;
+        display: flex; align-items: center; gap: 14px;
+        box-shadow: var(--shadow-sm);
+        border: 1px solid #eaf2f3;
+        transition: transform .2s, box-shadow .2s;
+        height: 100%;
+    }
+    .stat-card:hover { transform: translateY(-3px); box-shadow: var(--shadow-md); }
+    .stat-icon {
+        width: 48px; height: 48px; border-radius: 12px;
+        display: flex; align-items: center; justify-content: center;
+        font-size: 1.25rem; color: white; flex-shrink: 0;
+        background: linear-gradient(135deg, var(--sc, #0097a7), var(--sc2, #006064));
+    }
+    .stat-value { font-size: 1.5rem; font-weight: 800; color: #263238; line-height: 1; display: block; }
+    .stat-label { font-size: 0.8rem; color: #78909c; font-weight: 600; margin-top: 4px; display: block; }
+
+    .control-tabs {
+        background: white; padding: 0.6rem;
+        border-radius: var(--radius);
+        box-shadow: var(--shadow-sm);
+        border: 1px solid #e8f0f1;
+        flex-wrap: wrap; gap: 4px;
+        margin-bottom: 1.25rem;
+    }
+    .control-tabs .nav-link {
+        border-radius: 8px; color: #546e7a;
+        font-weight: 600; font-size: 0.88rem;
+        padding: 0.55rem 1.1rem;
+        display: flex; align-items: center; gap: 8px;
+        transition: all 0.2s; border: 1px solid transparent;
+    }
+    .control-tabs .nav-link i { font-size: 0.95rem; }
+    .control-tabs .nav-link:hover { background: var(--aqua-1); color: var(--aqua-4); }
+    .control-tabs .nav-link.active {
+        background: linear-gradient(135deg, var(--aqua-4), #00838f);
+        color: white; box-shadow: 0 3px 10px rgba(0,151,167,0.3);
+    }
+    @media (max-width: 576px) {
+        .control-tabs .nav-link { font-size: 0.78rem; padding: 0.45rem 0.7rem; }
+        .page-header { padding: 1.2rem; }
+    }
+
     .control-page .card {
-        border: none; border-radius: 8px; box-shadow: var(--shadow-sm);
-        margin-bottom: 1.5rem; overflow: hidden; border: 1px solid #eee;
+        border: 1px solid #eaf0f1; border-radius: var(--radius);
+        box-shadow: var(--shadow-sm);
+        margin-bottom: 1.25rem; overflow: hidden;
     }
     .control-page .card-header {
-        background: linear-gradient(135deg, var(--aqua-4) 0%, #006064 100%);
-        color: var(--text-light); padding: 0.8rem 1rem; font-weight: 600; font-size: 0.95rem;
-        display: flex; align-items: center; justify-content: space-between;
+        background: linear-gradient(135deg, var(--aqua-4) 0%, var(--aqua-5) 100%);
+        color: var(--text-light); padding: 0.85rem 1.1rem;
+        font-weight: 600; font-size: 0.95rem;
+        display: flex; align-items: center; justify-content: space-between; gap: 10px;
     }
     .control-page .card-body { padding: 1.2rem; background: white; }
-    
+
     .control-page .table { font-size: 0.85rem; margin-bottom: 0; }
     .control-page .table thead th {
-        background-color: var(--aqua-1); color: var(--text-dark); font-weight: 700;
-        text-align: center; border: none; padding: 0.7rem; font-size: 0.8rem;
+        background-color: var(--aqua-1); color: var(--text-dark);
+        font-weight: 700; text-align: center; border: none;
+        padding: 0.75rem; font-size: 0.8rem;
     }
     .control-page .table tbody td {
-        vertical-align: middle; border-bottom: 1px solid #f0f0f0; padding: 0.7rem; text-align: center;
+        vertical-align: middle; border-bottom: 1px solid #f0f4f5;
+        padding: 0.7rem; text-align: center;
     }
-    .control-page .table-hover tbody tr:hover { background-color: #fcfcfc; }
+    .control-page .table-hover tbody tr:hover { background-color: #f7fcfc; }
+    .control-page .badge {
+        padding: 0.4em 0.9em; border-radius: 20px;
+        font-weight: 700; font-size: 0.72rem;
+    }
 
-    .control-page .form-label { font-weight: 600; font-size: 0.8rem; margin-bottom: 0.3rem; color: var(--text-dark); }
+    .control-page .form-label {
+        font-weight: 600; font-size: 0.8rem; margin-bottom: 0.3rem;
+        color: var(--text-dark);
+    }
     .control-page .form-control, .control-page .form-select {
-        border-radius: 4px; border: 1px solid #ced4da; padding: 0.4rem 0.6rem;
-        font-size: 0.85rem; transition: all 0.2s;
+        border-radius: 6px; border: 1px solid #d5e0e2;
+        padding: 0.4rem 0.6rem; font-size: 0.85rem; transition: all 0.2s;
     }
     .control-page .form-control:focus, .control-page .form-select:focus {
-        border-color: var(--aqua-4); box-shadow: 0 0 0 2px rgba(0, 151, 167, 0.15);
+        border-color: var(--aqua-4); box-shadow: 0 0 0 3px rgba(0, 151, 167, 0.12);
     }
     .control-page .form-control[readonly] {
         background: #e8f5e9; color: #2e7d32; font-weight: 600;
     }
     .control-page .btn {
-        border-radius: 4px; padding: 0.4rem 0.8rem; font-weight: 600; font-size: 0.85rem; transition: all 0.2s;
+        border-radius: 6px; padding: 0.4rem 0.9rem;
+        font-weight: 600; font-size: 0.85rem; transition: all 0.2s;
     }
     .control-page .btn-primary { background: var(--aqua-4); border-color: var(--aqua-4); color: white; }
-    .control-page .btn-primary:hover { background: #00796b; border-color: #00796b; color: white; }
+    .control-page .btn-primary:hover { background: #00838f; border-color: #00838f; color: white; }
     .control-page .btn-success { background: #00897b; border-color: #00897b; color: white; }
     .control-page .btn-success:hover { background: #00695c; border-color: #00695c; color: white; }
     .control-page .btn-danger { background: #e53935; border-color: #e53935; color: white; }
@@ -63,233 +155,279 @@
     .control-page .btn-info { background: #26c6da; border-color: #26c6da; color: white; }
     .control-page .btn-info:hover { background: #00acc1; border-color: #00acc1; color: white; }
 
-    .page-header {
-        background: white; padding: 1.5rem; border-radius: 8px; margin-bottom: 1.5rem;
-        box-shadow: 0 2px 5px rgba(0,0,0,0.05); display: flex; justify-content: space-between;
-        align-items: center; flex-wrap: wrap; gap: 1rem;
-    }
-    .page-header h2 { margin: 0; color: #333; font-size: 1.5rem; font-weight: 700; display: flex; align-items: center; gap: 10px; }
-    
+    .control-page .alert { border-radius: 10px; border: none; }
+    .control-page .alert-info { background: var(--aqua-1); color: var(--aqua-5); }
+
     .banner-row { cursor: pointer; transition: background 0.2s; }
     .banner-row:hover { background-color: #f1f8e9 !important; }
+    .banner-img-preview {
+        width: 80px; height: 40px; object-fit: cover;
+        border-radius: 6px; background: #f5f5f5;
+    }
+    .banner-no-img {
+        width: 80px; height: 40px; border-radius: 6px;
+        background: #f5f5f5; border: 1px dashed #ccc;
+        display: flex; align-items: center; justify-content: center;
+        color: #bdbdbd; font-size: 0.7rem;
+    }
 
     .product-cell { display: flex; align-items: center; gap: 10px; text-align: right; }
-    .product-cell img { 
-        border-radius: 50%; border: 2px solid var(--aqua-2); object-fit: cover; 
+    .product-cell img {
+        border-radius: 50%; border: 2px solid var(--aqua-2); object-fit: cover;
         width: 40px; height: 40px; background: #f5f5f5;
     }
-    .product-cell .no-img { 
-        width: 38px; height: 38px; 
+    .product-cell .no-img {
+        width: 38px; height: 38px;
         background: #f5f5f5; border-radius: 50%;
         display: flex; align-items: center; justify-content: center;
         border: 2px solid #e0e0e0;
     }
     .product-cell .no-img i { color: #bdbdbd; font-size: 1.2rem; }
+    .category-select option:checked {
+        background-color: var(--aqua-1); font-weight: bold;
+    }
 
-    .sections-panel { display: flex; min-height: 450px; border: 1px solid #ddd; border-radius: 0 0 8px 8px; overflow: hidden; }
-    .sections-sidebar { width: 280px; min-width: 280px; background: #f4f7f6; border-left: 1px solid #ddd; overflow-y: auto; display: flex; flex-direction: column; }
-    .sections-sidebar-title { padding: 0.8rem; font-size: 0.85rem; color: #555; font-weight: 700; background: white; border-bottom: 1px solid #ddd; }
-    .section-list-item { padding: 0.8rem; display: flex; justify-content: space-between; align-items: center; cursor: pointer; border-bottom: 1px solid #e0e0e0; transition: all 0.2s; font-size: 0.85rem; }
-    .section-list-item:hover { background: #e0f7fa; }
+    .sections-panel {
+        display: flex; min-height: 450px;
+        border: 1px solid #e0e8e9; border-radius: 0 0 var(--radius) var(--radius);
+        overflow: hidden;
+    }
+    .sections-sidebar {
+        width: 280px; min-width: 280px; background: #f4f7f6;
+        border-left: 1px solid #e0e8e9; overflow-y: auto;
+        display: flex; flex-direction: column;
+    }
+    .sections-sidebar-title {
+        padding: 0.8rem; font-size: 0.85rem; color: #555;
+        font-weight: 700; background: white; border-bottom: 1px solid #e0e8e9;
+    }
+    .section-list-item {
+        padding: 0.8rem; display: flex; justify-content: space-between;
+        align-items: center; cursor: pointer;
+        border-bottom: 1px solid #e5ecee; transition: all 0.2s; font-size: 0.85rem;
+    }
+    .section-list-item:hover { background: var(--aqua-1); }
     .section-list-item.active { background: var(--aqua-4); color: white; }
     .section-list-item.active .sec-count { background: rgba(255,255,255,0.25); color: white; }
-    .section-list-item.active .sec-cat-label { color: rgba(255,255,255,0.6); }
+    .section-list-item.active .sec-cat-label { color: rgba(255,255,255,0.65); }
     .section-list-item.active .sec-delete-icon { color: rgba(255,255,255,0.7); }
     .section-list-item.active .sec-delete-icon:hover { color: white; }
-    .sec-count { background: var(--aqua-2); color: var(--text-dark); font-size: 0.7rem; padding: 2px 8px; border-radius: 10px; font-weight: 700; }
+    .sec-count {
+        background: var(--aqua-2); color: var(--text-dark);
+        font-size: 0.7rem; padding: 2px 8px; border-radius: 10px; font-weight: 700;
+    }
     .sec-cat-label { font-size: 0.7rem; color: #999; display: block; margin-top: 2px; }
-    .sec-delete-icon { color: #ccc; transition: color 0.2s; }
+    .sec-delete-icon { color: #ccc; transition: color 0.2s; cursor: pointer; }
     .sec-delete-icon:hover { color: #e53935; }
     .sections-content { flex: 1; overflow-y: auto; background: white; }
-    
-    .modal-content { border: none; border-radius: 8px; box-shadow: 0 10px 30px rgba(0,0,0,0.15); }
-    .modal-header { background: var(--aqua-4); color: white; border: none; }
-    .modal-header .btn-close { filter: brightness(0) invert(1); }
-
-    .icon-picker-grid {
-        display: grid; grid-template-columns: repeat(auto-fill, minmax(45px, 1fr));
-        gap: 6px; max-height: 220px; overflow-y: auto; padding: 5px;
-        border: 1px solid #dee2e6; border-radius: 6px; background: #f8f9fa;
-    }
-    .icon-picker-item {
-        width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;
-        border-radius: 6px; cursor: pointer; transition: all 0.15s;
-        border: 2px solid transparent; background: white; font-size: 1rem; color: #555;
-    }
-    .icon-picker-item:hover { background: var(--aqua-1); color: var(--aqua-4); border-color: var(--aqua-2); transform: scale(1.1); }
-    .icon-picker-item.selected { background: var(--aqua-4); color: white; border-color: var(--text-dark); box-shadow: 0 2px 8px rgba(0, 151, 167, 0.3); }
-    .selected-icon-preview {
-        display: flex; align-items: center; gap: 10px; padding: 10px 15px;
-        background: #f0f9fa; border-radius: 8px; border: 2px solid var(--aqua-2); margin-bottom: 10px;
-    }
-    .selected-icon-preview i { font-size: 1.4rem; color: var(--aqua-4); }
-    .selected-icon-preview span { font-size: 0.8rem; color: #666; direction: ltr; }
-
-    .header-btn-ghost { background: rgba(255,255,255,0.2); color: white; border: none; }
-    .header-btn-ghost:hover { background: rgba(255,255,255,0.3); color: white; }
-    .header-hint { font-size: 0.75rem; font-weight: 400; }
     .section-form-hidden { display: none; }
     .search-icon-abs { position: absolute; top: 50%; transform: translateY(-50%); right: 20px; }
     .search-input-pr { padding-right: 35px; }
     .search-dropdown-abs { position: absolute; top: 100%; left: 0; display: none; z-index: 10; width: 100%; }
     .section-products-scroll { max-height: 350px; overflow-y: auto; }
 
-    .section-row-new {
-        animation: rowFadeIn 0.4s ease;
+    .section-prod-cell { display: flex; align-items: center; gap: 10px; text-align: right; }
+    .section-prod-img {
+        width: 38px; height: 38px; border-radius: 8px; object-fit: cover;
+        border: 1px solid #e0e0e0; flex-shrink: 0; background: #f5f5f5;
     }
+    .section-prod-no-img {
+        width: 38px; height: 38px; border-radius: 8px;
+        border: 1px solid #e0e0e0; flex-shrink: 0; background: #f5f5f5;
+        display: flex; align-items: center; justify-content: center;
+        color: #bdbdbd; font-size: 0.8rem;
+    }
+
+    .offers-toggle-wrap { display: flex; align-items: center; gap: 10px; height: 100%; }
+    .offers-toggle-wrap .form-check-input { width: 22px; height: 22px; cursor: pointer; }
+    .offers-toggle-wrap .form-check-label {
+        font-size: 0.85rem; font-weight: 600; color: #555; cursor: pointer;
+        margin: 0; display: flex; align-items: center; gap: 6px;
+    }
+    .offers-toggle-wrap .form-check-label i { color: #ff6d00; font-size: 1rem; }
+
+    .section-row-new { animation: rowFadeIn 0.4s ease; }
     @keyframes rowFadeIn {
-        0% { opacity: 0; transform: translateX(-15px); background: #e0f7fa; }
+        0% { opacity: 0; transform: translateX(-15px); background: var(--aqua-1); }
         100% { opacity: 1; transform: translateX(0); background: transparent; }
     }
-    .section-row-removing {
-        animation: rowFadeOut 0.3s ease forwards;
-    }
+    .section-row-removing { animation: rowFadeOut 0.3s ease forwards; }
     @keyframes rowFadeOut {
         0% { opacity: 1; transform: translateX(0); }
         100% { opacity: 0; transform: translateX(15px); }
     }
 
+    .modal-content {
+        border: none; border-radius: var(--radius);
+        box-shadow: 0 10px 40px rgba(0,0,0,0.18);
+    }
+    .modal-header {
+        background: linear-gradient(135deg, var(--aqua-4), var(--aqua-5));
+        color: white; border: none;
+    }
+    .modal-header .btn-close { filter: brightness(0) invert(1); }
+    .modal-header.bg-warning { background: linear-gradient(135deg, #ffb300, #fb8c00) !important; color: #3e2723 !important; }
+    .modal-header.bg-warning .btn-close { filter: none; }
+
+    .icon-picker-grid {
+        display: grid; grid-template-columns: repeat(auto-fill, minmax(45px, 1fr));
+        gap: 6px; max-height: 220px; overflow-y: auto; padding: 5px;
+        border: 1px solid #dee2e6; border-radius: 8px; background: #f8f9fa;
+    }
+    .icon-picker-item {
+        width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;
+        border-radius: 8px; cursor: pointer; transition: all 0.15s;
+        border: 2px solid transparent; background: white; font-size: 1rem; color: #555;
+    }
+    .icon-picker-item:hover {
+        background: var(--aqua-1); color: var(--aqua-4);
+        border-color: var(--aqua-2); transform: scale(1.1);
+    }
+    .icon-picker-item.selected {
+        background: var(--aqua-4); color: white; border-color: var(--aqua-5);
+        box-shadow: 0 2px 8px rgba(0, 151, 167, 0.3);
+    }
+    .selected-icon-preview {
+        display: flex; align-items: center; gap: 10px; padding: 10px 15px;
+        background: #f0f9fa; border-radius: 10px;
+        border: 2px solid var(--aqua-2); margin-bottom: 10px;
+    }
+    .selected-icon-preview i { font-size: 1.4rem; color: var(--aqua-4); }
+    .selected-icon-preview span { font-size: 0.8rem; color: #666; direction: ltr; }
+
+    .header-btn-ghost { background: rgba(255,255,255,0.2); color: white; border: none; }
+    .header-btn-ghost:hover { background: rgba(255,255,255,0.32); color: white; }
+    .header-hint { font-size: 0.75rem; font-weight: 400; }
+
+    .sections-sidebar::-webkit-scrollbar,
+    .section-products-scroll::-webkit-scrollbar,
+    .icon-picker-grid::-webkit-scrollbar { width: 6px; }
+    .sections-sidebar::-webkit-scrollbar-track,
+    .section-products-scroll::-webkit-scrollbar-track,
+    .icon-picker-grid::-webkit-scrollbar-track { background: transparent; }
+    .sections-sidebar::-webkit-scrollbar-thumb,
+    .section-products-scroll::-webkit-scrollbar-thumb,
+    .icon-picker-grid::-webkit-scrollbar-thumb {
+        background: var(--aqua-2); border-radius: 10px;
+    }
+
     .inline-toast {
-        position: fixed;
-        bottom: 25px;
-        left: 50%;
+        position: fixed; bottom: 25px; left: 50%;
         transform: translateX(-50%) translateY(80px);
-        padding: 10px 24px;
-        border-radius: 8px;
-        font-size: 0.88rem;
-        font-weight: 600;
-        color: white;
+        padding: 10px 24px; border-radius: 10px;
+        font-size: 0.88rem; font-weight: 600; color: white;
         z-index: 99999;
         transition: transform 0.35s cubic-bezier(.68,-.55,.265,1.55), opacity 0.35s;
-        opacity: 0;
-        pointer-events: none;
-        display: flex;
-        align-items: center;
-        gap: 8px;
+        opacity: 0; pointer-events: none;
+        display: flex; align-items: center; gap: 8px;
     }
-    .inline-toast.show {
-        transform: translateX(-50%) translateY(0);
-        opacity: 1;
-    }
+    .inline-toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
     .inline-toast.toast-success { background: #00897b; box-shadow: 0 4px 15px rgba(0,137,123,0.35); }
     .inline-toast.toast-error { background: #e53935; box-shadow: 0 4px 15px rgba(229,57,53,0.35); }
     .inline-toast.toast-info { background: #0288d1; box-shadow: 0 4px 15px rgba(2,136,209,0.35); }
 
-    .section-prod-cell {
-        display: flex;
-        align-items: center;
-        gap: 10px;
-        text-align: right;
-    }
-    .section-prod-img {
-        width: 38px;
-        height: 38px;
-        border-radius: 6px;
-        object-fit: cover;
-        border: 1px solid #e0e0e0;
-        flex-shrink: 0;
-        background: #f5f5f5;
-    }
-    .section-prod-no-img {
-        width: 38px;
-        height: 38px;
-        border-radius: 6px;
-        border: 1px solid #e0e0e0;
-        flex-shrink: 0;
-        background: #f5f5f5;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        color: #bdbdbd;
-        font-size: 0.8rem;
-    }
-
-    .offers-toggle-wrap {
-        display: flex;
-        align-items: center;
-        gap: 10px;
-        height: 100%;
-    }
-    .offers-toggle-wrap .form-check-input {
-        width: 22px;
-        height: 22px;
-        cursor: pointer;
-    }
-    .offers-toggle-wrap .form-check-label {
-        font-size: 0.85rem;
-        font-weight: 600;
-        color: #555;
-        cursor: pointer;
-        margin: 0;
-        display: flex;
-        align-items: center;
-        gap: 6px;
-    }
-    .offers-toggle-wrap .form-check-label i {
-        color: #ff6d00;
-        font-size: 1rem;
-    }
-
-    .banner-img-preview {
-        width: 80px; height: 40px; object-fit: cover; border-radius: 4px;
-        background: #f5f5f5;
-    }
-    .banner-no-img {
-        width: 80px; height: 40px; border-radius: 4px;
-        background: #f5f5f5; border: 1px dashed #ccc;
-        display: flex; align-items: center; justify-content: center;
-        color: #bdbdbd; font-size: 0.7rem;
-    }
-
-    .feature-icon-box {
-        display: flex; align-items: center; gap: 8px;
-        padding: 4px 8px; background: #f8f9fa; border-radius: 6px;
-    }
-
-    /* تنسيق خاص لإظهار التصنيف المختار */
-    .category-select option:checked {
-        background-color: var(--aqua-1);
-        font-weight: bold;
-    }
+    .quick-hours { border-radius: 20px !important; font-size: 0.78rem !important; }
 </style>
 {% endblock %}
 
 {% block content %}
-<div class="container-fluid py-3 control-page">
+<div class="container-fluid py-4 control-page">
 
+    <!-- ===== رأس الصفحة ===== -->
     <div class="page-header">
         <div>
-            <h2><i class="fas fa-store-alt" style="color:var(--aqua-4)"></i> إدارة المتجر</h2>
-            <p class="text-muted mb-0 small">تحكم كامل بالواجهة والمنتجات والعروض</p>
+            <h2><i class="fas fa-store-alt"></i> إدارة المتجر</h2>
+            <p class="mb-0 small">تحكم كامل بالواجهة والمنتجات والعروض</p>
         </div>
         <div class="d-flex gap-2 flex-wrap">
-            <a href="{% url 'invoice:manage_categories' %}" class="btn btn-info"><i class="fas fa-tags"></i> التصنيفات</a>
-            <button class="btn btn-success" id="addBannerBtn"><i class="fas fa-ad"></i> إضافة بنر</button>
-            <a href="{% url 'invoice:product_bulk_update' %}" class="btn btn-warning"><i class="fas fa-dollar-sign"></i> نظام التسعير</a>
+            <a href="{% url 'invoice:manage_categories' %}" class="btn"><i class="fas fa-tags me-1"></i> التصنيفات</a>
+          
+            <a href="{% url 'invoice:product_bulk_update' %}" class="btn"><i class="fas fa-dollar-sign me-1"></i> نظام التسعير</a>
         </div>
     </div>
 
-    <!-- ===== 1. تخصيص الواجهة ===== -->
-    <div class="card">
-        <div class="card-header">
-            <i class="fas fa-sliders-h"></i> تخصيص واجهة المتجر
-            <small class="text-white-50 header-hint">تعديل مباشر دون برمجة</small>
-        </div>
-        <div class="card-body">
-            <div class="alert alert-info py-2 mb-3" style="font-size:0.85rem;">
-                <i class="fas fa-info-circle me-1"></i>
-                <strong>ملاحظة:</strong> لجعل الفلاش يظهر "مقسماً" (منتجين)، فعّل عرضين من جدول "عروض الفلاش" في الأسفل.
+    <!-- ===== بطاقات الإحصائيات ===== -->
+    <div class="row g-3 mb-4">
+        <div class="col-6 col-lg-3">
+            <div class="stat-card">
+                <div class="stat-icon" style="--sc:#0097a7; --sc2:#006064;"><i class="fas fa-boxes"></i></div>
+                <div>
+                    <span class="stat-value">{{ products_data|length }}</span>
+                    <span class="stat-label">إجمالي المنتجات</span>
+                </div>
             </div>
+        </div>
+        <div class="col-6 col-lg-3">
+            <div class="stat-card">
+                <div class="stat-icon" style="--sc:#26c6da; --sc2:#00838f;"><i class="fas fa-images"></i></div>
+                <div>
+                    <span class="stat-value">{{ banners|length }}</span>
+                    <span class="stat-label">البنرات الإعلانية</span>
+                </div>
+            </div>
+        </div>
+        <div class="col-6 col-lg-3">
+            <div class="stat-card">
+                <div class="stat-icon" style="--sc:#7e57c2; --sc2:#4527a0;"><i class="fas fa-layer-group"></i></div>
+                <div>
+                    <span class="stat-value" id="statSections">—</span>
+                    <span class="stat-label">الأقسام الديناميكية</span>
+                </div>
+            </div>
+        </div>
+        <div class="col-6 col-lg-3">
+            <div class="stat-card">
+                <div class="stat-icon" style="--sc:#ffa726; --sc2:#e65100;"><i class="fas fa-bullhorn"></i></div>
+                <div>
+                    <span class="stat-value">{{ announcements_list|length }}</span>
+                    <span class="stat-label">إعلانات الشريط</span>
+                </div>
+            </div>
+        </div>
+    </div>
 
-            <div class="row">
-                <div class="col-md-6 border-end">
-                    <div class="d-flex justify-content-between align-items-center mb-2">
-                        <h6 class="fw-bold mb-0 text-primary"><i class="fas fa-bullhorn"></i> الشريط العلوي المتحرك</h6>
-                        <button class="btn btn-outline-primary btn-sm" id="addAnnouncementBtn"><i class="fas fa-plus"></i> إضافة</button>
-                    </div>
-                    <div class="table-responsive bg-light" style="border-radius:6px;">
-                        <table class="table table-sm table-hover mb-0">
-                            <thead class="table-light"><tr><th>#</th><th>الأيقونة</th><th>النص</th><th>حذف</th></tr></thead>
+    <!-- ===== شريط التبويبات ===== -->
+    <ul class="nav control-tabs" role="tablist">
+        <li class="nav-item" role="presentation">
+            <button class="nav-link active" data-bs-toggle="pill" data-bs-target="#tabAnnouncements" type="button" role="tab">
+                <i class="fas fa-bullhorn"></i> الشريط الإعلاني
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" data-bs-toggle="pill" data-bs-target="#tabBanners" type="button" role="tab">
+                <i class="fas fa-images"></i> البنرات
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" data-bs-toggle="pill" data-bs-target="#tabProducts" type="button" role="tab">
+                <i class="fas fa-boxes"></i> المنتجات
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" data-bs-toggle="pill" data-bs-target="#tabSections" type="button" role="tab">
+                <i class="fas fa-layer-group"></i> الأقسام الديناميكية
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" data-bs-toggle="pill" data-bs-target="#tabFlash" type="button" role="tab">
+                <i class="fas fa-bolt"></i> عروض الفلاش
+            </button>
+        </li>
+    </ul>
+
+    <div class="tab-content">
+
+        <!-- ===== تبويب 1: الشريط الإعلاني ===== -->
+        <div class="tab-pane fade show active" id="tabAnnouncements" role="tabpanel">
+            <div class="card">
+                <div class="card-header">
+                    <span><i class="fas fa-bullhorn me-2"></i>الشريط العلوي المتحرك</span>
+                    <button class="btn btn-sm header-btn-ghost" id="addAnnouncementBtn"><i class="fas fa-plus me-1"></i> إضافة إعلان</button>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0">
+                            <thead><tr><th style="width:60px">#</th><th style="width:80px">الأيقونة</th><th>النص</th><th style="width:80px">حذف</th></tr></thead>
                             <tbody id="announcementsTableBody">
                                 {% for ann in announcements_list %}
                                 <tr id="ann-row-{{ ann.id }}">
@@ -299,210 +437,208 @@
                                     <td><button class="btn btn-danger btn-sm" data-delete-ann="{{ ann.id }}"><i class="fas fa-trash"></i></button></td>
                                 </tr>
                                 {% empty %}
-                                <tr><td colspan="4" class="text-center text-muted py-3">لا توجد إعلانات</td></tr>
+                                <tr><td colspan="4" class="text-center text-muted py-4">لا توجد إعلانات — اضغط "إضافة إعلان" للبدء</td></tr>
                                 {% endfor %}
                             </tbody>
                         </table>
                     </div>
                 </div>
+            </div>
+        </div>
 
-                <div class="col-md-6">
-                    <h6 class="fw-bold mb-3 text-success"><i class="fas fa-icons"></i> الأيقونات المميزة</h6>
-                    <div class="row g-2">
-                        {% for feature in features_list %}
-                        <div class="col-md-6">
-                            <div class="input-group input-group-sm">
-                                <span class="input-group-text bg-light"><i class="fas {{ feature.icon_class }} text-secondary"></i></span>
-                                <input type="text" class="form-control feature-title-input" value="{{ feature.title }}" data-feature-id="{{ feature.id }}" placeholder="العنوان">
-                            </div>
-                        </div>
-                        {% empty %}
-                        <div class="col-12 text-muted small">لا توجد أيقونات مضافة.</div>
-                        {% endfor %}
+        <!-- ===== تبويب 2: البنرات ===== -->
+                 <!-- ===== تبويب 2: البنرات ===== -->
+        <div class="tab-pane fade" id="tabBanners" role="tabpanel">
+            <div class="card">
+                <div class="card-header">
+                    <span><i class="fas fa-images me-2"></i>البنرات الإعلانية</span>
+                    <button class="btn" id="addBannerBtn"><i class="fas fa-ad me-1"></i> إضافة بنر</button>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0">
+                            <thead><tr><th style="width:100px">صورة</th><th>العنوان</th><th>الموضع</th><th>الحالة</th><th style="width:60px"></th></tr></thead>
+                            <tbody>
+                                {% for banner in banners %}
+                                <tr class="banner-row"
+                                    data-banner-id="{{ banner.id }}"
+                                    data-banner-title="{{ banner.title|escapejs }}"
+                                    data-banner-link="{{ banner.link_url|default:''|escapejs }}"
+                                    data-banner-position="{{ banner.position }}"
+                                    data-banner-order="{{ banner.order }}"
+                                    data-banner-active="{% if banner.is_active %}true{% else %}false{% endif %}">
+                                    <td>
+                                        {% if banner.image %}
+                                        <img src="{{ banner.image.url }}" class="banner-img-preview" alt="{{ banner.title }}">
+                                        {% else %}
+                                        <div class="banner-no-img"><i class="fas fa-image"></i></div>
+                                        {% endif %}
+                                    </td>
+                                    <td class="text-start">{{ banner.title }}</td>
+                                    <td>{{ banner.get_position_display }}</td>
+                                    <td><span class="badge {% if banner.is_active %}bg-success{% else %}bg-secondary{% endif %}">{% if banner.is_active %}فعال{% else %}معطل{% endif %}</span></td>
+                                    <td><button class="btn btn-danger btn-sm" data-delete-banner="{{ banner.id }}"><i class="fas fa-trash"></i></button></td>
+                                </tr>
+                                {% empty %}
+                                <tr><td colspan="5" class="text-center text-muted py-4">لا توجد بنرات — اضغط زر "إضافة بنر" أعلى الجدول للبدء</td></tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
                     </div>
                 </div>
             </div>
         </div>
-    </div>
-
-    <!-- ===== 2. البنرات الإعلانية ===== -->
-    <div class="card">
-        <div class="card-header"><i class="fas fa-images"></i> البنرات الإعلانية</div>
-        <div class="card-body p-0">
-            <div class="table-responsive">
-                <table class="table table-hover mb-0">
-                    <thead><tr><th style="width:100px">صورة</th><th>العنوان</th><th>الموضع</th><th>الحالة</th><th style="width:60px"></th></tr></thead>
-                    <tbody>
-                        {% for banner in banners %}
-                        <tr class="banner-row"
-                            data-banner-id="{{ banner.id }}"
-                            data-banner-title="{{ banner.title|escapejs }}"
-                            data-banner-link="{{ banner.link_url|default:''|escapejs }}"
-                            data-banner-position="{{ banner.position }}"
-                            data-banner-order="{{ banner.order }}"
-                            data-banner-active="{% if banner.is_active %}true{% else %}false{% endif %}">
-                            <td>
-                                {% if banner.image %}
-                                <img src="{{ banner.image.url }}" class="banner-img-preview" alt="{{ banner.title }}">
-                                {% else %}
-                                <div class="banner-no-img"><i class="fas fa-image"></i></div>
-                                {% endif %}
-                            </td>
-                            <td class="text-start">{{ banner.title }}</td>
-                            <td>{{ banner.get_position_display }}</td>
-                            <td><span class="badge {% if banner.is_active %}bg-success{% else %}bg-secondary{% endif %}">{% if banner.is_active %}فعال{% else %}معطل{% endif %}</span></td>
-                            <td><button class="btn btn-danger btn-sm" data-delete-banner="{{ banner.id }}"><i class="fas fa-trash"></i></button></td>
-                        </tr>
-                        {% empty %}
-                        <tr><td colspan="5" class="text-center text-muted py-4">لا توجد بنرات</td></tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
+        <!-- ===== تبويب 3: المنتجات ===== -->
+        <div class="tab-pane fade" id="tabProducts" role="tabpanel">
+            <div class="card">
+                <div class="card-header"><span><i class="fas fa-boxes me-2"></i>المنتجات</span></div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0">
+                            <thead><tr><th style="width:25%">المنتج</th><th style="width:12%">التصنيف</th><th style="width:12%">السعر</th><th style="width:8%">ترتيب</th><th style="width:8%">الحالة</th><th style="width:6%"></th></tr></thead>
+                            <tbody>
+                                {% for product in products_data %}
+                                <tr id="product-row-{{ product.id }}">
+                                    <td>
+                                        <div class="product-cell">
+                                            {% if product.image %}
+                                            <img src="{{ product.image }}" alt="{{ product.name }}">
+                                            {% else %}
+                                            <div class="no-img"><i class="fas fa-image"></i></div>
+                                            {% endif %}
+                                            <span class="fw-bold small">{{ product.name }}</span>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <select class="form-select form-select-sm category-select" data-product-id="{{ product.id }}" data-current-category="{{ product.category_id|default:'' }}">
+                                            <option value="">-- بدون --</option>
+                                            {% for cat in categories %}
+                                            <option value="{{ cat.id }}" {% if product.category_id == cat.id %}selected{% endif %}>{{ cat.name }}</option>
+                                            {% endfor %}
+                                        </select>
+                                    </td>
+                                    <td>
+                                        <div class="small">
+                                            {% if product.show_old_price %}
+                                            <del class="text-muted" style="font-size:0.7rem">{{ product.price_old }}</del><br>
+                                            {% endif %}
+                                            <span class="fw-bold text-primary">{{ product.price_new }}</span>
+                                        </div>
+                                    </td>
+                                    <td><input type="number" class="form-control form-control-sm text-center order-input" value="{{ product.display_order|default:0 }}" data-product-id="{{ product.id }}"></td>
+                                    <td>
+                                        <div class="form-check form-switch d-flex justify-content-center">
+                                            <input type="checkbox" class="form-check-input visibility-toggle" data-product-id="{{ product.id }}" {% if product.is_visible %}checked{% endif %}>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        {% if product.badge_url %}
+                                        <img src="{{ product.badge_url }}" style="width:30px; height:30px; object-fit:contain;" alt="شعار">
+                                        {% endif %}
+                                        <button class="btn btn-outline-primary btn-sm" data-open-badge="{{ product.id }}" data-badge-name="{{ product.name|escapejs }}"><i class="fas fa-camera"></i></button>
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr><td colspan="6" class="text-center text-muted py-4">لا توجد منتجات</td></tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
             </div>
         </div>
-    </div>
 
-    <!-- ===== 3. المنتجات والأسعار ===== -->
-    <div class="card">
-        <div class="card-header"><i class="fas fa-boxes"></i> المنتجات</div>
-        <div class="card-body p-0">
-            <div class="table-responsive">
-                <table class="table table-hover mb-0">
-                    <thead><tr><th style="width:25%">المنتج</th><th style="width:12%">التصنيف</th><th style="width:12%">السعر</th><th style="width:8%">ترتيب</th><th style="width:8%">الحالة</th><th style="width:6%"></th></tr></thead>
-                    <tbody>
-                        {% for product in products_data %}
-                        <tr id="product-row-{{ product.id }}">
-                            <td>
-                                <div class="product-cell">
-                                    {% if product.image %}
-                                    <img src="{{ product.image }}" alt="{{ product.name }}">
-                                    {% else %}
-                                    <div class="no-img"><i class="fas fa-image"></i></div>
-                                    {% endif %}
-                                    <span class="fw-bold small">{{ product.name }}</span>
-                                </div>
-                            </td>
-                            <td>
-                                <select class="form-select form-select-sm category-select" data-product-id="{{ product.id }}" data-current-category="{{ product.category_id|default:'' }}">
-                                    <option value="">-- بدون --</option>
+        <!-- ===== تبويب 4: الأقسام الديناميكية ===== -->
+        <div class="tab-pane fade" id="tabSections" role="tabpanel">
+            <div class="card">
+                <div class="card-header">
+                    <span><i class="fas fa-layer-group me-2"></i>الأقسام الديناميكية</span>
+                    <button class="btn btn-sm header-btn-ghost" id="toggleSectionFormBtn"><i class="fas fa-plus me-1"></i> قسم جديد</button>
+                </div>
+                <div class="card-body p-0">
+                    <div id="addSectionForm" class="p-3 border-bottom bg-light section-form-hidden">
+                        <div class="row g-2 align-items-end">
+                            <div class="col-md-4">
+                                <label class="form-label">التصنيف <span class="text-muted fw-normal" style="font-size:0.72rem;">(يُملأ الاسم تلقائياً)</span></label>
+                                <select id="newSectionCategory" class="form-select">
+                                    <option value="">-- بدون تصنيف --</option>
                                     {% for cat in categories %}
-                                    <option value="{{ cat.id }}" {% if product.category_id == cat.id %}selected{% endif %}>{{ cat.name }}</option>
+                                    <option value="{{ cat.id }}">{{ cat.name }}</option>
                                     {% endfor %}
                                 </select>
-                            </td>
-                            <td>
-                                <div class="small">
-                                    {% if product.show_old_price %}
-                                    <del class="text-muted" style="font-size:0.7rem">{{ product.price_old }}</del><br>
-                                    {% endif %}
-                                    <span class="fw-bold text-primary">{{ product.price_new }}</span>
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label">اسم القسم</label>
+                                <input type="text" id="newSectionName" class="form-control" placeholder="يُملأ تلقائياً من التصنيف">
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label">شكل العرض</label>
+                                <div class="offers-toggle-wrap">
+                                    <div class="form-check form-switch">
+                                        <input type="checkbox" class="form-check-input" id="newSectionOffers" value="true">
+                                        <label class="form-check-label" for="newSectionOffers"><i class="fas fa-fire"></i> شكل عروض مميز</label>
+                                    </div>
                                 </div>
-                            </td>
-                            <td><input type="number" class="form-control form-control-sm text-center order-input" value="{{ product.display_order|default:0 }}" data-product-id="{{ product.id }}"></td>
-                            <td>
-                                <div class="form-check form-switch d-flex justify-content-center">
-                                    <input type="checkbox" class="form-check-input visibility-toggle" data-product-id="{{ product.id }}" {% if product.is_visible %}checked{% endif %}>
-                                </div>
-                            </td>
-                            <td>
-                                {% if product.badge_url %}
-                                <img src="{{ product.badge_url }}" style="width:30px; height:30px; object-fit:contain;" alt="شعار">
-                                {% endif %}
-                                <button class="btn btn-outline-primary btn-sm" data-open-badge="{{ product.id }}" data-badge-name="{{ product.name|escapejs }}"><i class="fas fa-camera"></i></button>
-                            </td>
-                        </tr>
-                        {% empty %}
-                        <tr><td colspan="6" class="text-center text-muted py-4">لا توجد منتجات</td></tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>
-        </div>
-    </div>
-
-    <!-- ===== 4. الأقسام الديناميكية ===== -->
-    <div class="card">
-        <div class="card-header">
-            <i class="fas fa-layer-group"></i> الأقسام الديناميكية
-            <button class="btn btn-sm header-btn-ghost" id="toggleSectionFormBtn"><i class="fas fa-plus"></i> قسم جديد</button>
-        </div>
-        <div class="card-body p-0">
-            <div id="addSectionForm" class="p-3 border-bottom bg-light section-form-hidden">
-                <div class="row g-2 align-items-end">
-                    <div class="col-md-4">
-                        <label class="form-label">التصنيف <span class="text-muted fw-normal" style="font-size:0.72rem;">(يُملأ الاسم تلقائياً)</span></label>
-                        <select id="newSectionCategory" class="form-select">
-                            <option value="">-- بدون تصنيف --</option>
-                            {% for cat in categories %}
-                            <option value="{{ cat.id }}">{{ cat.name }}</option>
-                            {% endfor %}
-                        </select>
-                    </div>
-                    <div class="col-md-3">
-                        <label class="form-label">اسم القسم</label>
-                        <input type="text" id="newSectionName" class="form-control" placeholder="يُملأ تلقائياً من التصنيف">
-                    </div>
-                    <div class="col-md-3">
-                        <label class="form-label">شكل العرض</label>
-                        <div class="offers-toggle-wrap">
-                            <div class="form-check form-switch">
-                                <input type="checkbox" class="form-check-input" id="newSectionOffers" value="true">
-                                <label class="form-check-label" for="newSectionOffers"><i class="fas fa-fire"></i> شكل عروض مميز</label>
+                            </div>
+                            <div class="col-md-2 d-flex gap-2">
+                                <button class="btn btn-success flex-grow-1" id="createSectionBtn"><i class="fas fa-save"></i> حفظ</button>
+                                <button class="btn btn-secondary" id="cancelSectionFormBtn">إلغاء</button>
                             </div>
                         </div>
                     </div>
-                    <div class="col-md-2 d-flex gap-2">
-                        <button class="btn btn-success flex-grow-1" id="createSectionBtn"><i class="fas fa-save"></i> حفظ</button>
-                        <button class="btn btn-secondary" id="cancelSectionFormBtn">إلغاء</button>
-                    </div>
-                </div>
-            </div>
-            <div class="sections-panel">
-                <div class="sections-sidebar">
-                    <div class="sections-sidebar-title">قائمة الأقسام</div>
-                    <div id="sectionsListContainer"></div>
-                </div>
-                <div class="sections-content">
-                    <div class="text-center text-muted mt-5" id="sectionPlaceholder"><i class="fas fa-mouse-pointer fa-2x mb-2 text-secondary"></i><p>اختر قسماً من القائمة لإدارة منتجاته</p></div>
-                    <div id="sectionDetails" class="section-details-hidden">
-                        <div class="p-3 border-bottom bg-light d-flex justify-content-between align-items-center">
-                            <h5 class="mb-0 fw-bold text-primary" id="activeSectionName"></h5>
-                            <span class="badge bg-secondary" id="activeSectionStyle"></span>
+                    <div class="sections-panel">
+                        <div class="sections-sidebar">
+                            <div class="sections-sidebar-title">قائمة الأقسام</div>
+                            <div id="sectionsListContainer"></div>
                         </div>
-                        <div class="p-3 border-bottom position-relative">
-                            <i class="fas fa-search position-absolute search-icon-abs text-muted"></i>
-                            <input type="text" id="searchProductInput" class="form-control ps-4 search-input-pr" placeholder="بحث عن منتج لإضافته...">
-                            <div class="dropdown-menu w-100 p-2 shadow search-dropdown-abs" id="searchResultsDropdown"></div>
-                        </div>
-                        <div class="section-products-scroll">
-                            <table class="table table-sm table-hover mb-0">
-                                <thead><tr><th>#</th><th>المنتج</th><th>السعر</th><th></th></tr></thead>
-                                <tbody id="sectionProductsTbody"></tbody>
-                            </table>
+                        <div class="sections-content">
+                            <div class="text-center text-muted mt-5" id="sectionPlaceholder"><i class="fas fa-mouse-pointer fa-2x mb-2 text-secondary"></i><p>اختر قسماً من القائمة لإدارة منتجاته</p></div>
+                            <div id="sectionDetails" class="section-details-hidden">
+                                <div class="p-3 border-bottom bg-light d-flex justify-content-between align-items-center">
+                                    <h5 class="mb-0 fw-bold text-primary" id="activeSectionName"></h5>
+                                    <span class="badge bg-secondary" id="activeSectionStyle"></span>
+                                </div>
+                                <div class="p-3 border-bottom position-relative">
+                                    <i class="fas fa-search position-absolute search-icon-abs text-muted"></i>
+                                    <input type="text" id="searchProductInput" class="form-control ps-4 search-input-pr" placeholder="بحث عن منتج لإضافته...">
+                                    <div class="dropdown-menu w-100 p-2 shadow search-dropdown-abs" id="searchResultsDropdown"></div>
+                                </div>
+                                <div class="section-products-scroll">
+                                    <table class="table table-sm table-hover mb-0">
+                                        <thead><tr><th>#</th><th>المنتج</th><th>السعر</th><th></th></tr></thead>
+                                        <tbody id="sectionProductsTbody"></tbody>
+                                    </table>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
-    </div>
 
-    <!-- ===== 5. عروض الفلاش ===== -->
-    <div class="card">
-        <div class="card-header">
-            <i class="fas fa-bolt"></i> عروض الفلاش
-            <small class="text-white-50 header-hint">يمكن تفعيل عدة عروض معاً</small>
-            <button class="btn btn-sm header-btn-ghost" id="addFlashBtn"><i class="fas fa-plus"></i> إضافة عرض</button>
-        </div>
-        <div class="card-body p-0">
-            <div class="table-responsive">
-                <table class="table table-hover mb-0">
-                    <thead><tr><th>المنتج</th><th>سعر العرض</th><th>ينتهي في</th><th>الحالة</th><th>إجراءات</th></tr></thead>
-                    <tbody id="flashDealsBody"><tr><td colspan="5" class="text-center py-3">جارٍ التحميل...</td></tr></tbody>
-                </table>
+        <!-- ===== تبويب 5: عروض الفلاش ===== -->
+        <div class="tab-pane fade" id="tabFlash" role="tabpanel">
+            <div class="card">
+                <div class="card-header">
+                    <span><i class="fas fa-bolt me-2"></i>عروض الفلاش</span>
+                    <button class="btn btn-sm header-btn-ghost" id="addFlashBtn"><i class="fas fa-plus me-1"></i> إضافة عرض</button>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-info py-2 mb-3" style="font-size:0.85rem;">
+                        <i class="fas fa-info-circle me-1"></i>
+                        <strong>ملاحظة:</strong> لجعل الفلاش يظهر "مقسماً" (منتجين)، فعّل عرضين معاً. العروض المنتهية يمكن إعادة تفعيلها بزر التشغيل ▶ مع تحديد مدة جديدة.
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0">
+                            <thead><tr><th>المنتج</th><th>سعر العرض</th><th>ينتهي في</th><th>الحالة</th><th>إجراءات</th></tr></thead>
+                            <tbody id="flashDealsBody"><tr><td colspan="5" class="text-center py-3">جارٍ التحميل...</td></tr></tbody>
+                        </table>
+                    </div>
+                </div>
             </div>
         </div>
-    </div>
 
+    </div>
 </div>
 
 <!-- ===== مودال البنر ===== -->
@@ -515,7 +651,7 @@
                 <input type="hidden" id="bannerId">
                 <div class="mb-3"><label class="form-label">العنوان</label><input type="text" id="bannerTitle" class="form-control"></div>
                 <div class="mb-3"><label class="form-label">الرابط</label><input type="text" id="bannerLink" class="form-control" placeholder="https://..."></div>
-                <div class="mb-3"><label class="form-label">صورة البنر   (القياس المناسب 1200*150 بيكسل)</label><input type="file" id="bannerImage" class="form-control"></div>
+                <div class="mb-3"><label class="form-label">صورة البنر (القياس المناسب 1200*150 بيكسل)</label><input type="file" id="bannerImage" class="form-control"></div>
                 <div class="row g-2">
                     <div class="col-6"><label class="form-label">الموضع</label><select id="bannerPosition" class="form-select"><option value="top">علوي (كامل)</option><option value="side">جانبي</option></select></div>
                     <div class="col-6"><label class="form-label">الترتيب</label><input type="number" id="bannerOrder" class="form-control" value="0"></div>
@@ -547,7 +683,7 @@
 <div class="modal fade" id="flashModal" tabindex="-1">
     <div class="modal-dialog">
         <div class="modal-content">
-            <div class="modal-header bg-warning text-dark border-0"><h6 class="modal-title mb-0"><i class="fas fa-bolt me-2"></i> عرض فلاش جديد</h6><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+            <div class="modal-header bg-warning border-0"><h6 class="modal-title mb-0"><i class="fas fa-bolt me-2"></i> عرض فلاش جديد</h6><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
             <div class="modal-body">
                 <div class="mb-3"><label class="form-label">المنتج <span class="text-danger">*</span></label><select class="form-select" id="fdProduct"></select></div>
                 <div class="row"><div class="col-6 mb-3"><label class="form-label">سعر العرض <span class="text-danger">*</span></label><input type="number" class="form-control" id="fdPrice" step="0.01"></div><div class="col-6 mb-3"><label class="form-label">الكمية</label><input type="number" class="form-control" id="fdQuantity" value="10"></div></div>
@@ -555,6 +691,33 @@
                 <div class="form-check form-switch"><input class="form-check-input" type="checkbox" id="fdActive" checked><label class="form-check-label" for="fdActive">تفعيل فوراً</label></div>
             </div>
             <div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إلغاء</button><button type="button" class="btn btn-warning text-white fw-bold" id="saveFlashBtn">حفظ العرض</button></div>
+        </div>
+    </div>
+</div>
+
+<!-- ===== مودال إعادة تفعيل العرض المنتهي ===== -->
+<div class="modal fade" id="flashHoursModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered modal-sm">
+        <div class="modal-content">
+            <div class="modal-header"><h6 class="modal-title mb-0"><i class="fas fa-clock me-2"></i> إعادة تفعيل العرض</h6><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button></div>
+            <div class="modal-body text-center">
+                <p class="text-muted small mb-3">هذا العرض منتهي. حدد المدة الجديدة بالساعات ليظهر في المتجر من الآن.</p>
+                <div class="input-group justify-content-center mb-3">
+                    <input type="number" class="form-control text-center fw-bold" id="flashHoursInput" value="6" min="0.5" step="0.5" style="max-width:120px;">
+                    <span class="input-group-text">ساعة</span>
+                </div>
+                <div class="d-flex gap-2 justify-content-center flex-wrap">
+                    <button type="button" class="btn btn-sm btn-outline-secondary quick-hours" data-h="1">1 ساعة</button>
+                    <button type="button" class="btn btn-sm btn-outline-secondary quick-hours" data-h="3">3 ساعات</button>
+                    <button type="button" class="btn btn-sm btn-outline-secondary quick-hours" data-h="6">6 ساعات</button>
+                    <button type="button" class="btn btn-sm btn-outline-secondary quick-hours" data-h="12">12 ساعة</button>
+                    <button type="button" class="btn btn-sm btn-outline-secondary quick-hours" data-h="24">24 ساعة</button>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إلغاء</button>
+                <button type="button" class="btn btn-warning text-white fw-bold" id="confirmFlashHoursBtn"><i class="fas fa-bolt me-1"></i> تفعيل</button>
+            </div>
         </div>
     </div>
 </div>
@@ -602,44 +765,46 @@
 <script nonce="{{ csp_nonce }}">
 document.addEventListener('DOMContentLoaded', function() {
 
-    var csrftoken = document.querySelector('[name=csrfmiddlewaretoken]').value;
-    
+    /* ============ التهيئة الأساسية ============ */
+    var csrfEl = document.querySelector('[name=csrfmiddlewaretoken]');
+    var csrftoken = csrfEl ? csrfEl.value : '';
+
     var productsData = [];
-    try { 
+    try {
         var productsDataEl = document.getElementById('products-data');
         if (productsDataEl) {
             productsData = JSON.parse(productsDataEl.textContent);
         }
-    } catch(e) { 
+    } catch(e) {
         console.warn('Error parsing products data:', e);
-        productsData = []; 
+        productsData = [];
     }
-    
+
     var sectionsData = [];
-    try { 
+    try {
         var sectionsDataEl = document.getElementById('sections-data');
         if (sectionsDataEl) {
             var raw = JSON.parse(sectionsDataEl.textContent);
             sectionsData = Array.isArray(raw) ? raw : (raw ? [raw] : []);
         }
-    } catch(e) { 
+    } catch(e) {
         console.warn('Error parsing sections data:', e);
-        sectionsData = []; 
+        sectionsData = [];
     }
 
     var activeSectionId = null;
 
-    /* ==========================================
-       رسائل Toast فورية
-       ========================================== */
+    /* ============ رسائل Toast فورية ============ */
     var toastTimer;
     function showInlineToast(msg, type) {
         var el = document.getElementById('inlineToast');
+        if (!el) return;
         var icon = el.querySelector('i');
         clearTimeout(toastTimer);
         el.className = 'inline-toast toast-' + (type || 'success');
-        icon.className = type === 'error' ? 'fas fa-times-circle' : (type === 'info' ? 'fas fa-info-circle' : 'fas fa-check-circle');
-        document.getElementById('inlineToastMsg').textContent = msg;
+        if (icon) icon.className = type === 'error' ? 'fas fa-times-circle' : (type === 'info' ? 'fas fa-info-circle' : 'fas fa-check-circle');
+        var msgEl = document.getElementById('inlineToastMsg');
+        if (msgEl) msgEl.textContent = msg;
         el.classList.add('show');
         toastTimer = setTimeout(function() { el.classList.remove('show'); }, 3000);
     }
@@ -651,17 +816,15 @@ document.addEventListener('DOMContentLoaded', function() {
         return fetch(url, options)
             .then(function(r) { return r.text(); })
             .then(function(text) {
-                try { return JSON.parse(text); } 
-                catch(e) { 
+                try { return JSON.parse(text); }
+                catch(e) {
                     console.error('Invalid JSON response:', text.substring(0, 200));
                     throw new Error("Invalid JSON response");
                 }
             });
     }
 
-    /* ==========================================
-       منتقي الأيقونات
-       ========================================== */
+    /* ============ منتقي الأيقونات ============ */
     var availableIcons = [
         'fa-bullhorn','fa-tag','fa-gift','fa-fire','fa-bolt','fa-star',
         'fa-heart','fa-truck','fa-shield-alt','fa-clock','fa-percent',
@@ -696,45 +859,50 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     buildIconPicker();
 
-    /* ==========================================
-       الشريط العلوي (الإعلانات)
-       ========================================== */
-    var announcementModal = new bootstrap.Modal(document.getElementById('announcementModal'));
+    /* ============ الشريط العلوي (الإعلانات) ============ */
+    var announcementModalEl = document.getElementById('announcementModal');
+    var announcementModal = announcementModalEl ? new bootstrap.Modal(announcementModalEl) : null;
 
-    document.getElementById('addAnnouncementBtn').addEventListener('click', function() {
-        document.getElementById('annText').value = '';
-        selectedIcon = 'fa-bullhorn';
-        document.getElementById('previewIcon').className = 'fas fa-bullhorn';
-        document.getElementById('previewIconClass').textContent = 'fa-bullhorn';
-        buildIconPicker();
-        announcementModal.show();
-    });
-
-    document.getElementById('saveAnnouncementBtn').addEventListener('click', function() {
-        var text = document.getElementById('annText').value.trim();
-        if (!text) {
-            showInlineToast('نص الإعلان مطلوب', 'error');
-            return;
-        }
-        apiCall('/invoice/api/add-announcement/', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ text: text, icon_class: selectedIcon })
-        })
-        .then(function(d) {
-            if (d.success) { 
-                announcementModal.hide(); 
-                showInlineToast('تمت إضافة الإعلان');
-                setTimeout(function() { location.reload(); }, 800);
-            } else {
-                showInlineToast(d.message || 'حدث خطأ', 'error');
-            }
-        })
-        .catch(function(e) { 
-            console.error(e.message);
-            showInlineToast('خطأ في الاتصال', 'error');
+    var addAnnBtn = document.getElementById('addAnnouncementBtn');
+    if (addAnnBtn) {
+        addAnnBtn.addEventListener('click', function() {
+            document.getElementById('annText').value = '';
+            selectedIcon = 'fa-bullhorn';
+            document.getElementById('previewIcon').className = 'fas fa-bullhorn';
+            document.getElementById('previewIconClass').textContent = 'fa-bullhorn';
+            buildIconPicker();
+            if (announcementModal) announcementModal.show();
         });
-    });
+    }
+
+    var saveAnnBtn = document.getElementById('saveAnnouncementBtn');
+    if (saveAnnBtn) {
+        saveAnnBtn.addEventListener('click', function() {
+            var text = document.getElementById('annText').value.trim();
+            if (!text) {
+                showInlineToast('نص الإعلان مطلوب', 'error');
+                return;
+            }
+            apiCall('/invoice/api/add-announcement/', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ text: text, icon_class: selectedIcon })
+            })
+            .then(function(d) {
+                if (d.success) {
+                    if (announcementModal) announcementModal.hide();
+                    showInlineToast('تمت إضافة الإعلان');
+                    setTimeout(function() { location.reload(); }, 800);
+                } else {
+                    showInlineToast(d.message || 'حدث خطأ', 'error');
+                }
+            })
+            .catch(function(e) {
+                console.error(e.message);
+                showInlineToast('خطأ في الاتصال', 'error');
+            });
+        });
+    }
 
     document.addEventListener('click', function(e) {
         var btn = e.target.closest('[data-delete-ann]');
@@ -746,59 +914,30 @@ document.addEventListener('DOMContentLoaded', function() {
         if (row) { row.style.opacity = '0.4'; row.style.pointerEvents = 'none'; }
         apiCall('/invoice/api/delete-announcement/' + id + '/', { method: 'POST' })
         .then(function(d) {
-            if (d.success) { 
-                if (row) row.remove(); 
-                showInlineToast('تم الحذف'); 
+            if (d.success) {
+                if (row) row.remove();
+                showInlineToast('تم الحذف');
             } else {
-                if (row) { row.style.opacity = '1'; row.style.pointerEvents = 'auto'; } 
+                if (row) { row.style.opacity = '1'; row.style.pointerEvents = 'auto'; }
                 showInlineToast(d.message || 'فشل الحذف', 'error');
             }
         })
-        .catch(function(e) { 
-            if (row) { row.style.opacity = '1'; row.style.pointerEvents = 'auto'; } 
+        .catch(function(e) {
+            if (row) { row.style.opacity = '1'; row.style.pointerEvents = 'auto'; }
             console.error(e.message);
             showInlineToast('خطأ في الاتصال', 'error');
         });
     });
 
-    /* ==========================================
-       تحديث الأيقونات المميزة
-       ========================================== */
-    document.querySelectorAll('.feature-title-input').forEach(function(el) {
-        el.addEventListener('change', function() {
-            var value = this.value.trim();
-            if (!value) {
-                showInlineToast('العنوان لا يمكن أن يكون فارغاً', 'error');
-                return;
-            }
-            apiCall('/invoice/api/update-feature/' + this.dataset.featureId + '/', {
-                method: 'POST', headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ title: value })
-            }).then(function(d) { 
-                if (d.success) {
-                    showInlineToast('تم التحديث');
-                } else {
-                    showInlineToast('فشل الحفظ', 'error');
-                }
-            }).catch(function(e) { 
-                console.error(e.message);
-                showInlineToast('خطأ في الاتصال', 'error');
-            });
-        });
-    });
-
-    /* ==========================================
-       إدارة المنتجات
-       ========================================== */
-    
+    /* ============ إدارة المنتجات ============ */
     document.querySelectorAll('.category-select').forEach(function(el) {
         el.addEventListener('change', function() {
             var productId = this.dataset.productId;
             var categoryId = this.value;
             var selectElement = this;
-            
+
             apiCall('/invoice/api/product/' + productId + '/update-category/', {
-                method: 'POST', 
+                method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ category_id: categoryId })
             })
@@ -816,7 +955,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     showInlineToast(d.message || 'فشل التحديث', 'error');
                 }
             })
-            .catch(function(e) { 
+            .catch(function(e) {
                 console.error(e.message);
                 var currentCat = selectElement.dataset.currentCategory || '';
                 selectElement.value = currentCat;
@@ -829,9 +968,9 @@ document.addEventListener('DOMContentLoaded', function() {
         el.addEventListener('change', function() {
             var productId = this.dataset.productId;
             var isChecked = this.checked;
-            
+
             apiCall('/invoice/api/product/' + productId + '/update-settings/', {
-                method: 'POST', 
+                method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ field: 'is_visible', value: isChecked })
             })
@@ -848,7 +987,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     showInlineToast(d.message || 'فشل التحديث', 'error');
                 }
             })
-            .catch(function(e) { 
+            .catch(function(e) {
                 console.error(e.message);
                 var currentStatus = !isChecked;
                 document.querySelector('.visibility-toggle[data-product-id="' + productId + '"]').checked = currentStatus;
@@ -861,9 +1000,9 @@ document.addEventListener('DOMContentLoaded', function() {
         el.addEventListener('change', function() {
             var productId = this.dataset.productId;
             var value = parseInt(this.value) || 0;
-            
+
             apiCall('/invoice/api/product/' + productId + '/update-settings/', {
-                method: 'POST', 
+                method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ field: 'display_order', value: value })
             })
@@ -878,16 +1017,14 @@ document.addEventListener('DOMContentLoaded', function() {
                     showInlineToast(d.message || 'فشل التحديث', 'error');
                 }
             })
-            .catch(function(e) { 
+            .catch(function(e) {
                 console.error(e.message);
                 showInlineToast('خطأ في الاتصال', 'error');
             });
         });
     });
 
-    /* ==========================================
-       مودال رفع الشعار
-       ========================================== */
+    /* ============ مودال رفع الشعار ============ */
     function openBadgeModal(id, name) {
         document.getElementById('modalProductId').value = id;
         document.getElementById('modalProductName').textContent = name;
@@ -902,35 +1039,37 @@ document.addEventListener('DOMContentLoaded', function() {
         openBadgeModal(btn.dataset.openBadge, btn.dataset.badgeName);
     });
 
-    document.getElementById('uploadBadgeBtn').addEventListener('click', function() {
-        var id = document.getElementById('modalProductId').value;
-        var file = document.getElementById('badgeImageInput').files[0];
-        if (!file) {
-            showInlineToast('اختر صورة أولاً', 'error');
-            return;
-        }
-        var fd = new FormData();
-        fd.append('badge_image', file);
-        apiCall('/invoice/api/product/' + id + '/update-badge-image/', { method: 'POST', body: fd })
-        .then(function(d) { 
-            if (d.success) { 
-                bootstrap.Modal.getInstance(document.getElementById('badgeModal')).hide(); 
-                showInlineToast('تم رفع الشعار');
-                setTimeout(function() { location.reload(); }, 800);
-            } else {
-                showInlineToast(d.message || 'فشل الرفع', 'error');
+    var uploadBadgeBtn = document.getElementById('uploadBadgeBtn');
+    if (uploadBadgeBtn) {
+        uploadBadgeBtn.addEventListener('click', function() {
+            var id = document.getElementById('modalProductId').value;
+            var file = document.getElementById('badgeImageInput').files[0];
+            if (!file) {
+                showInlineToast('اختر صورة أولاً', 'error');
+                return;
             }
-        })
-        .catch(function(e) { 
-            console.error(e.message);
-            showInlineToast('خطأ في الاتصال', 'error');
+            var fd = new FormData();
+            fd.append('badge_image', file);
+            apiCall('/invoice/api/product/' + id + '/update-badge-image/', { method: 'POST', body: fd })
+            .then(function(d) {
+                if (d.success) {
+                    bootstrap.Modal.getInstance(document.getElementById('badgeModal')).hide();
+                    showInlineToast('تم رفع الشعار');
+                    setTimeout(function() { location.reload(); }, 800);
+                } else {
+                    showInlineToast(d.message || 'فشل الرفع', 'error');
+                }
+            })
+            .catch(function(e) {
+                console.error(e.message);
+                showInlineToast('خطأ في الاتصال', 'error');
+            });
         });
-    });
+    }
 
-    /* ==========================================
-       إدارة البنرات
-       ========================================== */
-    var bannerModal = new bootstrap.Modal(document.getElementById('bannerModal'));
+    /* ============ إدارة البنرات ============ */
+    var bannerModalEl = document.getElementById('bannerModal');
+    var bannerModal = bannerModalEl ? new bootstrap.Modal(bannerModalEl) : null;
 
     function openBannerModal(id, title, link, pos, order, active) {
         document.getElementById('bannerId').value = id || '';
@@ -940,12 +1079,15 @@ document.addEventListener('DOMContentLoaded', function() {
         document.getElementById('bannerOrder').value = order || 0;
         document.getElementById('bannerActive').checked = (active === true || active === 'true');
         document.getElementById('bannerImage').value = '';
-        bannerModal.show();
+        if (bannerModal) bannerModal.show();
     }
 
-    document.getElementById('addBannerBtn').addEventListener('click', function() {
-        openBannerModal();
-    });
+    var addBannerBtn = document.getElementById('addBannerBtn');
+    if (addBannerBtn) {
+        addBannerBtn.addEventListener('click', function() {
+            openBannerModal();
+        });
+    }
 
     document.querySelectorAll('.banner-row').forEach(function(row) {
         row.addEventListener('click', function(e) {
@@ -971,88 +1113,99 @@ document.addEventListener('DOMContentLoaded', function() {
         window.location.href = '/invoice/delete-banner/' + id + '/';
     }
 
-    document.getElementById('saveBannerBtn').addEventListener('click', function() {
-        var id = document.getElementById('bannerId').value;
-        var fd = new FormData();
-        fd.append('title', document.getElementById('bannerTitle').value);
-        fd.append('link_url', document.getElementById('bannerLink').value);
-        fd.append('position', document.getElementById('bannerPosition').value);
-        fd.append('order', document.getElementById('bannerOrder').value);
-        fd.append('is_active', document.getElementById('bannerActive').checked);
-        var fileInput = document.getElementById('bannerImage');
-        if (fileInput.files.length > 0) fd.append('image', fileInput.files[0]);
-        var url = id ? '/invoice/api/banner/' + id + '/update/' : '/invoice/api/banner/add/';
-        apiCall(url, { method: 'POST', body: fd })
-        .then(function(d) { 
-            if (d.success) {
-                showInlineToast('تم حفظ البنر');
-                setTimeout(function() { location.reload(); }, 800);
-            } else {
-                showInlineToast(d.message || 'فشل الحفظ', 'error');
-            }
-        })
-        .catch(function(e) { 
-            console.error(e.message);
-            showInlineToast('خطأ في الاتصال', 'error');
-        });
-    });
-
-    /* ==========================================
-       إدارة الأقسام الديناميكية
-       ========================================== */
-    document.getElementById('toggleSectionFormBtn').addEventListener('click', function() {
-        document.getElementById('addSectionForm').classList.toggle('section-form-hidden');
-    });
-
-    document.getElementById('cancelSectionFormBtn').addEventListener('click', function() {
-        document.getElementById('addSectionForm').classList.add('section-form-hidden');
-    });
-
-    document.getElementById('newSectionCategory').addEventListener('change', function() {
-        var selectedOption = this.options[this.selectedIndex];
-        var nameInput = document.getElementById('newSectionName');
-        if (this.value) {
-            nameInput.value = selectedOption.text;
-            nameInput.readOnly = true;
-        } else {
-            nameInput.value = '';
-            nameInput.readOnly = false;
-        }
-    });
-
-    document.getElementById('createSectionBtn').addEventListener('click', function() {
-        var catId = document.getElementById('newSectionCategory').value;
-        var name = document.getElementById('newSectionName').value.trim();
-        var isOffers = document.getElementById('newSectionOffers').checked;
-        
-        if (!catId && !name) {
-            showInlineToast('اختر تصنيفاً أو اكتب اسم القسم', 'error');
-            return;
-        }
-        
-        apiCall('/invoice/api/sections/add/', {
-            method: 'POST', headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ 
-                category_id: catId || null, 
-                name: name,
-                is_offers_style: isOffers
+    var saveBannerBtn = document.getElementById('saveBannerBtn');
+    if (saveBannerBtn) {
+        saveBannerBtn.addEventListener('click', function() {
+            var id = document.getElementById('bannerId').value;
+            var fd = new FormData();
+            fd.append('title', document.getElementById('bannerTitle').value);
+            fd.append('link_url', document.getElementById('bannerLink').value);
+            fd.append('position', document.getElementById('bannerPosition').value);
+            fd.append('order', document.getElementById('bannerOrder').value);
+            fd.append('is_active', document.getElementById('bannerActive').checked);
+            var fileInput = document.getElementById('bannerImage');
+            if (fileInput.files.length > 0) fd.append('image', fileInput.files[0]);
+            var url = id ? '/invoice/api/banner/' + id + '/update/' : '/invoice/api/banner/add/';
+            apiCall(url, { method: 'POST', body: fd })
+            .then(function(d) {
+                if (d.success) {
+                    showInlineToast('تم حفظ البنر');
+                    setTimeout(function() { location.reload(); }, 800);
+                } else {
+                    showInlineToast(d.message || 'فشل الحفظ', 'error');
+                }
             })
-        }).then(function(d) {
-            if (d.success) {
-                showInlineToast('تم إنشاء القسم');
-                setTimeout(function() { location.reload(); }, 800);
-            } else {
-                showInlineToast(d.message || 'فشل الإنشاء', 'error');
-            }
-        }).catch(function(e) { 
-            console.error(e.message);
-            showInlineToast('خطأ في الاتصال', 'error');
+            .catch(function(e) {
+                console.error(e.message);
+                showInlineToast('خطأ في الاتصال', 'error');
+            });
         });
-    });
+    }
 
-    /* ==========================================
-       عرض الأقسام والمنتجات
-       ========================================== */
+    /* ============ إدارة الأقسام الديناميكية ============ */
+    var toggleSectionFormBtn = document.getElementById('toggleSectionFormBtn');
+    if (toggleSectionFormBtn) {
+        toggleSectionFormBtn.addEventListener('click', function() {
+            document.getElementById('addSectionForm').classList.toggle('section-form-hidden');
+        });
+    }
+
+    var cancelSectionFormBtn = document.getElementById('cancelSectionFormBtn');
+    if (cancelSectionFormBtn) {
+        cancelSectionFormBtn.addEventListener('click', function() {
+            document.getElementById('addSectionForm').classList.add('section-form-hidden');
+        });
+    }
+
+    var newSectionCategory = document.getElementById('newSectionCategory');
+    if (newSectionCategory) {
+        newSectionCategory.addEventListener('change', function() {
+            var selectedOption = this.options[this.selectedIndex];
+            var nameInput = document.getElementById('newSectionName');
+            if (this.value) {
+                nameInput.value = selectedOption.text;
+                nameInput.readOnly = true;
+            } else {
+                nameInput.value = '';
+                nameInput.readOnly = false;
+            }
+        });
+    }
+
+    var createSectionBtn = document.getElementById('createSectionBtn');
+    if (createSectionBtn) {
+        createSectionBtn.addEventListener('click', function() {
+            var catId = document.getElementById('newSectionCategory').value;
+            var name = document.getElementById('newSectionName').value.trim();
+            var isOffers = document.getElementById('newSectionOffers').checked;
+
+            if (!catId && !name) {
+                showInlineToast('اختر تصنيفاً أو اكتب اسم القسم', 'error');
+                return;
+            }
+
+            apiCall('/invoice/api/sections/add/', {
+                method: 'POST', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    category_id: catId || null,
+                    name: name,
+                    is_offers_style: isOffers
+                })
+            }).then(function(d) {
+                if (d.success) {
+                    showInlineToast('تم إنشاء القسم');
+                    setTimeout(function() { location.reload(); }, 800);
+                } else {
+                    showInlineToast(d.message || 'فشل الإنشاء', 'error');
+                }
+            }).catch(function(e) {
+                console.error(e.message);
+                showInlineToast('خطأ في الاتصال', 'error');
+            });
+        });
+    }
+
+    /* ============ عرض الأقسام والمنتجات ============ */
     function renderSectionsList() {
         var c = document.getElementById('sectionsListContainer');
         if (!c) return;
@@ -1064,26 +1217,26 @@ document.addEventListener('DOMContentLoaded', function() {
         sectionsData.forEach(function(s) {
             var div = document.createElement('div');
             div.className = 'section-list-item' + (activeSectionId === s.id ? ' active' : '');
-            
+
             var catLabel = '';
             if (s.category_name) {
                 catLabel = '<span class="sec-cat-label">تصنيف: ' + s.category_name + '</span>';
             }
-            
+
             var itemCount = s.items ? s.items.length : 0;
-            
+
             div.innerHTML = '<span>'
                 + '<strong>' + s.name + '</strong> '
                 + '<span class="sec-count">' + itemCount + '</span>'
                 + catLabel
                 + '</span> <i class="fas fa-trash sec-delete-icon" style="cursor:pointer;"></i>';
-            
+
             var deleteIcon = div.querySelector('i');
-            deleteIcon.onclick = function(e) { 
-                e.stopPropagation(); 
-                deleteSection(s.id); 
+            deleteIcon.onclick = function(e) {
+                e.stopPropagation();
+                deleteSection(s.id);
             };
-            
+
             div.onclick = function() { loadSectionDetails(s.id); };
             c.appendChild(div);
         });
@@ -1092,7 +1245,7 @@ document.addEventListener('DOMContentLoaded', function() {
     function deleteSection(id) {
         if (!confirm('حذف القسم؟')) return;
         apiCall('/invoice/api/sections/' + id + '/delete/', { method: 'POST' })
-        .then(function(d) { 
+        .then(function(d) {
             if (d.success) {
                 showInlineToast('تم حذف القسم');
                 setTimeout(function() { location.reload(); }, 800);
@@ -1100,7 +1253,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 showInlineToast(d.message || 'فشل الحذف', 'error');
             }
         })
-        .catch(function(e) { 
+        .catch(function(e) {
             console.error(e.message);
             showInlineToast('خطأ في الاتصال', 'error');
         });
@@ -1109,23 +1262,23 @@ document.addEventListener('DOMContentLoaded', function() {
     function loadSectionDetails(id) {
         activeSectionId = id;
         renderSectionsList();
-        
+
         var sec = sectionsData.find(function(s) { return s.id === id; });
         if (!sec) {
             showInlineToast('القسم غير موجود', 'error');
             return;
         }
-        
+
         document.getElementById('sectionPlaceholder').style.display = 'none';
         document.getElementById('sectionDetails').classList.remove('section-details-hidden');
         document.getElementById('activeSectionName').textContent = sec.name;
-        
+
         var styleBadge = sec.style_type === 'offers' ? '🎯 عروض مميز' : '';
         document.getElementById('activeSectionStyle').textContent = styleBadge;
-        
+
         var tbody = document.getElementById('sectionProductsTbody');
         tbody.innerHTML = '';
-        
+
         var items = sec.items || [];
         if (items.length === 0) {
             tbody.innerHTML = '<tr><td colspan="4" class="text-center text-muted py-3">لا توجد منتجات في هذا القسم</td></tr>';
@@ -1138,12 +1291,12 @@ document.addEventListener('DOMContentLoaded', function() {
                 } else {
                     imgHtml = '<div class="section-prod-no-img"><i class="fas fa-image"></i></div>';
                 }
-                
+
                 var priceHtml = '<span class="text-primary fw-bold">' + item.price + '</span>';
                 if (item.show_old_price && item.old_price) {
                     priceHtml = '<del class="text-muted small">' + item.old_price + '</del><br>' + priceHtml;
                 }
-                
+
                 tr.innerHTML = '<td>' + (idx+1) + '</td>'
                     + '<td class="text-start"><div class="section-prod-cell">'
                     + imgHtml
@@ -1155,9 +1308,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    /* ==========================================
-       حذف منتج من القسم
-       ========================================== */
+    /* ============ حذف منتج من القسم ============ */
     document.addEventListener('click', function(e) {
         var btn = e.target.closest('.remove-product-section-btn');
         if (!btn) return;
@@ -1190,39 +1341,40 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 
-    /* ==========================================
-       إضافة منتج للقسم (بحث)
-       ========================================== */
-    var searchTimer;
-    document.getElementById('searchProductInput').addEventListener('input', function(e) {
-        clearTimeout(searchTimer);
-        var q = e.target.value.trim();
-        document.getElementById('searchResultsDropdown').style.display = 'none';
-        if (q.length < 2) return;
-        searchTimer = setTimeout(function() {
-            apiCall('/invoice/search-products/?q=' + encodeURIComponent(q))
-            .then(function(data) {
-                var d = document.getElementById('searchResultsDropdown');
-                d.innerHTML = '';
-                if (data.results && data.results.length === 0) {
-                    d.innerHTML = '<div class="text-muted p-2 small">لا توجد نتائج</div>';
-                } else if (data.results) {
-                    data.results.forEach(function(p) {
-                        var item = document.createElement('div');
-                        item.className = 'dropdown-item';
-                        item.style.cursor = 'pointer';
-                        item.textContent = p.text;
-                        item.addEventListener('click', function() { addProductToSection(p.id); });
-                        d.appendChild(item);
-                    });
-                }
-                d.style.display = 'block';
-            })
-            .catch(function(e) {
-                console.error(e.message);
-            });
-        }, 500);
-    });
+    /* ============ إضافة منتج للقسم (بحث) ============ */
+    var searchInput = document.getElementById('searchProductInput');
+    if (searchInput) {
+        var searchTimer;
+        searchInput.addEventListener('input', function(e) {
+            clearTimeout(searchTimer);
+            var q = e.target.value.trim();
+            document.getElementById('searchResultsDropdown').style.display = 'none';
+            if (q.length < 2) return;
+            searchTimer = setTimeout(function() {
+                apiCall('/invoice/search-products/?q=' + encodeURIComponent(q))
+                .then(function(data) {
+                    var d = document.getElementById('searchResultsDropdown');
+                    d.innerHTML = '';
+                    if (data.results && data.results.length === 0) {
+                        d.innerHTML = '<div class="text-muted p-2 small">لا توجد نتائج</div>';
+                    } else if (data.results) {
+                        data.results.forEach(function(p) {
+                            var item = document.createElement('div');
+                            item.className = 'dropdown-item';
+                            item.style.cursor = 'pointer';
+                            item.textContent = p.text;
+                            item.addEventListener('click', function() { addProductToSection(p.id); });
+                            d.appendChild(item);
+                        });
+                    }
+                    d.style.display = 'block';
+                })
+                .catch(function(e) {
+                    console.error(e.message);
+                });
+            }, 500);
+        });
+    }
 
     function addProductToSection(pid) {
         if (!activeSectionId) {
@@ -1268,32 +1420,31 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    /* ==========================================
-       عروض الفلاش
-       ========================================== */
-    var flashModal = new bootstrap.Modal(document.getElementById('flashModal'));
-    
+    /* ============ عروض الفلاش ============ */
+    var flashModalEl = document.getElementById('flashModal');
+    var flashModal = flashModalEl ? new bootstrap.Modal(flashModalEl) : null;
+
     function loadFlashDeals() {
         var tbody = document.getElementById('flashDealsBody');
         if (!tbody) return;
-        
+
         apiCall('/invoice/api/flash-deals/')
         .then(function(deals) {
-            if (!Array.isArray(deals)) { 
-                tbody.innerHTML = '<tr><td colspan="5" class="text-center text-danger">خطأ في تحميل البيانات</td></tr>'; 
-                return; 
+            if (!Array.isArray(deals)) {
+                tbody.innerHTML = '<tr><td colspan="5" class="text-center text-danger">خطأ في تحميل البيانات</td></tr>';
+                return;
             }
-            if (deals.length === 0) { 
-                tbody.innerHTML = '<tr><td colspan="5" class="text-center text-muted">لا توجد عروض</td></tr>'; 
-                return; 
+            if (deals.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="5" class="text-center text-muted">لا توجد عروض</td></tr>';
+                return;
             }
             tbody.innerHTML = deals.map(function(d) {
                 var statusBadge = d.is_active ? 'bg-success' : 'bg-secondary';
                 var statusText = d.is_active ? 'نشط' : 'متوقف';
                 var iconClass = d.is_active ? 'pause' : 'play';
-                
+
                 var imgHtml = d.product_image ? '<img src="' + d.product_image + '" style="width: 35px; height: 35px; object-fit: contain; border-radius: 4px; margin-left: 8px; vertical-align: middle;" alt="صورة">' : '';
-                
+
                 return '<tr>'
                     + '<td class="text-start fw-bold">' + imgHtml + (d.product_name || 'منتج محذوف') + '</td>'
                     + '<td class="text-danger fw-bold">' + d.deal_price + '</td>'
@@ -1306,55 +1457,120 @@ document.addEventListener('DOMContentLoaded', function() {
                     + '</tr>';
             }).join('');
         })
-        .catch(function(e) { 
+        .catch(function(e) {
             console.error(e.message);
             tbody.innerHTML = '<tr><td colspan="5" class="text-center text-danger">خطأ في تحميل البيانات</td></tr>';
         });
     }
 
-    document.getElementById('addFlashBtn').addEventListener('click', function() {
-        var sel = document.getElementById('fdProduct');
-        sel.innerHTML = '<option value="">-- اختر منتج --</option>';
-        if (productsData && productsData.length > 0) {
-            productsData.forEach(function(p) {
-                if (p.is_visible !== false) {
-                    sel.innerHTML += '<option value="' + p.id + '">' + p.name + ' - ' + p.price_new + '</option>';
-                }
-            });
-        } else {
-            sel.innerHTML += '<option value="" disabled>لا توجد منتجات متاحة</option>';
-        }
-        flashModal.show();
-    });
-
-    document.getElementById('saveFlashBtn').addEventListener('click', function() {
-        var pid = document.getElementById('fdProduct').value;
-        var price = document.getElementById('fdPrice').value;
-        if (!pid || !price) {
-            showInlineToast('البيانات ناقصة (المنتج والسعر مطلوبان)', 'error');
-            return;
-        }
-        apiCall('/invoice/api/flash-deals/add/', {
-            method: 'POST', headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ 
-                product_id: pid, 
-                deal_price: price, 
-                max_quantity: document.getElementById('fdQuantity').value || 10, 
-                hours: document.getElementById('fdHours').value || 6, 
-                is_active: document.getElementById('fdActive').checked 
-            })
-        }).then(function(d) { 
-            if (d.success) { 
-                flashModal.hide(); 
-                loadFlashDeals(); 
-                showInlineToast('تم إضافة العرض');
+    var addFlashBtn = document.getElementById('addFlashBtn');
+    if (addFlashBtn) {
+        addFlashBtn.addEventListener('click', function() {
+            var sel = document.getElementById('fdProduct');
+            sel.innerHTML = '<option value="">-- اختر منتج --</option>';
+            if (productsData && productsData.length > 0) {
+                productsData.forEach(function(p) {
+                    if (p.is_visible !== false) {
+                        sel.innerHTML += '<option value="' + p.id + '">' + p.name + ' - ' + p.price_new + '</option>';
+                    }
+                });
             } else {
-                showInlineToast(d.message || 'فشل الإضافة', 'error');
+                sel.innerHTML += '<option value="" disabled>لا توجد منتجات متاحة</option>';
+            }
+            if (flashModal) flashModal.show();
+        });
+    }
+
+    var saveFlashBtn = document.getElementById('saveFlashBtn');
+    if (saveFlashBtn) {
+        saveFlashBtn.addEventListener('click', function() {
+            var pid = document.getElementById('fdProduct').value;
+            var price = document.getElementById('fdPrice').value;
+            if (!pid || !price) {
+                showInlineToast('البيانات ناقصة (المنتج والسعر مطلوبان)', 'error');
+                return;
+            }
+            apiCall('/invoice/api/flash-deals/add/', {
+                method: 'POST', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    product_id: pid,
+                    deal_price: price,
+                    max_quantity: document.getElementById('fdQuantity').value || 10,
+                    hours: document.getElementById('fdHours').value || 6,
+                    is_active: document.getElementById('fdActive').checked
+                })
+            }).then(function(d) {
+                if (d.success) {
+                    if (flashModal) flashModal.hide();
+                    loadFlashDeals();
+                    showInlineToast('تم إضافة العرض');
+                } else {
+                    showInlineToast(d.message || 'فشل الإضافة', 'error');
+                }
+            })
+            .catch(function(e) {
+                console.error(e.message);
+                showInlineToast('خطأ في الاتصال', 'error');
+            });
+        });
+    }
+
+    /* ============ إعادة تفعيل العرض المنتهي (مودال) ============ */
+    var flashHoursModal = null;
+    var flashHoursEl = document.getElementById('flashHoursModal');
+    if (flashHoursEl) flashHoursModal = new bootstrap.Modal(flashHoursEl);
+    var pendingFlashId = null;
+
+    function toggleFlashDeal(fid, hours) {
+        var options = { method: 'POST' };
+        if (hours) {
+            options.headers = { 'Content-Type': 'application/json' };
+            options.body = JSON.stringify({ hours: hours });
+        }
+        apiCall('/invoice/api/flash-deals/' + fid + '/toggle/', options)
+        .then(function(d) {
+            if (d.success) {
+                loadFlashDeals();
+                showInlineToast(d.message || 'تم تغيير حالة العرض');
+            } else if (d.expired) {
+                pendingFlashId = fid;
+                if (flashHoursModal) {
+                    document.getElementById('flashHoursInput').value = '6';
+                    flashHoursModal.show();
+                } else {
+                    /* احتياط إذا لم يوجد المودال */
+                    var input = prompt('هذا العرض منتهي.\nكم ساعة تريد تفعيله من الآن؟', '6');
+                    if (input === null) return;
+                    var h = parseFloat(input);
+                    if (h && h > 0) toggleFlashDeal(fid, h);
+                }
+            } else {
+                showInlineToast(d.message || 'فشل التغيير', 'error');
             }
         })
         .catch(function(e) {
             console.error(e.message);
             showInlineToast('خطأ في الاتصال', 'error');
+        });
+    }
+
+    var confirmFlashHoursBtn = document.getElementById('confirmFlashHoursBtn');
+    if (confirmFlashHoursBtn) {
+        confirmFlashHoursBtn.addEventListener('click', function() {
+            var h = parseFloat(document.getElementById('flashHoursInput').value);
+            if (!h || h <= 0) {
+                showInlineToast('أدخل مدة صحيحة بالساعات', 'error');
+                return;
+            }
+            if (flashHoursModal) flashHoursModal.hide();
+            toggleFlashDeal(pendingFlashId, h);
+        });
+    }
+
+    document.querySelectorAll('.quick-hours').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+            var input = document.getElementById('flashHoursInput');
+            if (input) input.value = this.dataset.h;
         });
     });
 
@@ -1362,33 +1578,20 @@ document.addEventListener('DOMContentLoaded', function() {
         var toggleBtn = e.target.closest('.toggle-flash-btn');
         if (toggleBtn) {
             e.preventDefault();
-            var fid = toggleBtn.dataset.fid;
-            apiCall('/invoice/api/flash-deals/' + fid + '/toggle/', { method: 'POST' })
-            .then(function(d) { 
-                if (d.success) {
-                    loadFlashDeals();
-                    showInlineToast('تم تغيير حالة العرض');
-                } else {
-                    showInlineToast(d.message || 'فشل التغيير', 'error');
-                }
-            })
-            .catch(function(e) {
-                console.error(e.message);
-                showInlineToast('خطأ في الاتصال', 'error');
-            });
+            toggleFlashDeal(toggleBtn.dataset.fid);
             return;
         }
-        
+
         var deleteBtn = e.target.closest('.delete-flash-btn');
         if (deleteBtn) {
             e.preventDefault();
             if (!confirm('حذف العرض؟')) return;
             var fid = deleteBtn.dataset.fid;
             apiCall('/invoice/api/flash-deals/' + fid + '/delete/', { method: 'POST' })
-            .then(function(d) { 
-                if (d.success) { 
-                    loadFlashDeals(); 
-                    showInlineToast('تم حذف العرض'); 
+            .then(function(d) {
+                if (d.success) {
+                    loadFlashDeals();
+                    showInlineToast('تم حذف العرض');
                 } else {
                     showInlineToast(d.message || 'فشل الحذف', 'error');
                 }
@@ -1400,12 +1603,27 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
-    /* ==========================================
-       التهيئة الأولية
-       ========================================== */
+    /* ============ التبويب النشط (يُحفظ بعد التحديث) ============ */
+    var savedTab = null;
+    try { savedTab = localStorage.getItem('controlActiveTab'); } catch(e) {}
+    if (savedTab) {
+        var tabBtn = document.querySelector('.control-tabs .nav-link[data-bs-target="' + savedTab + '"]');
+        if (tabBtn) tabBtn.click();
+    }
+    document.querySelectorAll('.control-tabs .nav-link').forEach(function(tab) {
+        tab.addEventListener('click', function() {
+            try { localStorage.setItem('controlActiveTab', this.dataset.bsTarget); } catch(e) {}
+        });
+    });
+
+    /* ============ عدادات الإحصائيات ============ */
+    var statSections = document.getElementById('statSections');
+    if (statSections) statSections.textContent = sectionsData.length;
+
+    /* ============ التهيئة الأولية ============ */
     renderSectionsList();
     loadFlashDeals();
 
 });
 </script>
-{% endblock %}
+{% endblock %}555

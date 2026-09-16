@@ -60,6 +60,53 @@
         position: fixed; top: 20px; left: 50%; transform: translateX(-50%);
         z-index: 1055; width: auto;
     }
+
+    /* ===== قسم الإعداد السريع ===== */
+    .quick-start {
+        background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+        border: 1px solid #7dd3fc; border-radius: 16px;
+        padding: 20px; margin: 20px 0; text-align: right;
+        box-shadow: 0 4px 12px rgba(2, 132, 199, 0.08);
+    }
+    .quick-start-header {
+        display: flex; align-items: center; gap: 10px;
+        margin-bottom: 15px; padding-bottom: 12px;
+        border-bottom: 1px dashed #7dd3fc;
+    }
+    .quick-start-header i {
+        font-size: 1.4rem; color: #0284c7;
+        background: #fff; width: 40px; height: 40px;
+        display: flex; align-items: center; justify-content: center;
+        border-radius: 10px; box-shadow: 0 2px 6px rgba(2,132,199,0.15);
+    }
+    .quick-start-header h3 {
+        margin: 0; font-size: 1.05rem; font-weight: 800; color: #075985;
+    }
+    .quick-start-steps {
+        list-style: none; padding: 0; margin: 0;
+        counter-reset: step-counter;
+    }
+    .quick-start-steps li {
+        position: relative; padding: 10px 45px 10px 0;
+        font-size: 0.9rem; color: #334155; line-height: 1.6;
+        counter-increment: step-counter;
+        border-bottom: 1px solid rgba(125, 211, 252, 0.3);
+    }
+    .quick-start-steps li:last-child { border-bottom: none; }
+    .quick-start-steps li::before {
+        content: counter(step-counter);
+        position: absolute; right: 0; top: 10px;
+        width: 28px; height: 28px;
+        background: linear-gradient(135deg, #0097a7, #006064);
+        color: #fff; border-radius: 50%;
+        display: flex; align-items: center; justify-content: center;
+        font-size: 0.8rem; font-weight: 800;
+        box-shadow: 0 2px 6px rgba(0,151,167,0.3);
+    }
+    .quick-start-steps li strong { color: #075985; }
+    .quick-start-steps li .hint {
+        display: block; font-size: 0.8rem; color: #64748b; margin-top: 4px;
+    }
 </style>
 {% endblock %}
 
@@ -106,6 +153,40 @@
         </button>
         {% endif %}
 
+        <!-- ===== قسم الإعداد السريع ===== -->
+        <div class="quick-start">
+            <div class="quick-start-header">
+                <i class="fas fa-rocket"></i>
+                <h3>ابدأ في  خطوات بسيطة و سريعة</h3>
+            </div>
+            <ol class="quick-start-steps">
+                <li>
+                    <strong>سجّل الدخول</strong> باستخدام بيانات الدخول أعلاه.
+                    <span class="hint">انسخها أولًا لتجنب الأخطاء.</span>
+                </li>
+                <li>
+                    <strong>أدخل الإعدادات الأساسية</strong> من صفحة الإعدادات.
+                    <span class="hint">طريقة الدفع، شركة الشحن، العملة الافتراضية، واسم المستخدم.</span>
+                </li>
+                <li>
+                    <strong>أضف أول منتج</strong> من صفحة المنتجات.
+                    <span class="hint">المنتجات ضرورية لإنشاء أول فاتورة مشتريات.</span>
+                </li>
+                <li>
+                    <strong>اضبط نظام التسعير</strong> من صفحة المنتجات.
+                    <span class="hint">أضف نسبة الربح، سعر الصرف، ومستوى جديد باسم المتجر.</span>
+                </li>
+                <li>
+                    <strong>أضف جميع البيانات</strong> من صفحة إدارة المتجر.
+                    <span class="hint">الشريط العلوي، البنرات، الأقسام الديناميكية، وعروض الفلاش.</span>
+                </li>
+                <li>
+                    <strong>تواصل مع الدعم الفني عند الحاجة</strong> — تذكّر دائمًا.
+                    <span class="hint">الدعم الفني متوفر عبر واتساب أو البريد الإلكتروني.</span>
+                </li>
+            </ol>
+        </div>
+
         <a href="{% url 'accounts:login' %}" class="btn-action">
             <i class="fas fa-sign-in-alt"></i> اضغط هنا لتسجيل الدخول
         </a>
@@ -142,7 +223,7 @@
             downloadBtn.addEventListener('click', function() {
                 const username = usernameEl.innerText;
                 const password = passwordEl.innerText;
-                const text = `=================================\nBalanceIQ System Login\n=================================\n\nUsername: ${username}\nPassword: ${password}\n\nTrial Duration: 10 Days\n\nNote: Please keep this information safe.\n`;
+                const text = `=================================\nBalanceIQ System Login\n=================================\n\nUsername: ${username}\nPassword: ${password}\n\nTrial Duration: 10 Days\n\nNote: Please keep this information safe.\n\n=================================\nQuick Start Guide (ابدأ في 6 خطوات)\n=================================\n\n1. سجّل الدخول باستخدام بيانات الدخول أعلاه.\n   (انسخها أولًا لتجنب الأخطاء)\n\n2. أدخل الإعدادات الأساسية من صفحة الإعدادات.\n   (طريقة الدفع، شركة الشحن، العملة الافتراضية، واسم المستخدم)\n\n3. أضف أول منتج من صفحة المنتجات.\n   (المنتجات ضرورية لإنشاء أول فاتورة مشتريات)\n\n4. اضبط نظام التسعير من صفحة المنتجات.\n   (أضف نسبة الربح، سعر الصرف، ومستوى جديد باسم المتجر)\n\n5. أضف جميع البيانات من صفحة إدارة المتجر.\n   (الشريط العلوي، البنرات، الأقسام الديناميكية، وعروض الفلاش)\n\n6. تواصل مع الدعم الفني عند الحاجة.\n   (الدعم الفني متوفر عبر واتساب أو البريد الإلكتروني)\n`;
                 
                 const blob = new Blob([text], {type: "text/plain;charset=utf-8"});
                 const link = document.createElement('a');

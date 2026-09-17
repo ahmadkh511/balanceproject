@@ -135,6 +135,7 @@ def reset_trial(request, trial_id):
         messages.success(request, f'تم إعادة ضبط الفترة للمستخدم {trial.full_name} لتبدأ من جديد لمدة 10 أيام.')
     return redirect('trials:manage_trials')
 
+
 @login_required
 def delete_trial(request, trial_id):
     if not check_admin_access(request):
@@ -146,14 +147,26 @@ def delete_trial(request, trial_id):
             return redirect('trials:manage_trials')
         
         db_name = trial.db_name
+        trial_user_id = trial.user_id
+        
         try:
+            # 1. حذف قاعدة البيانات المعزولة من MySQL
             with connection.cursor() as cursor:
                 cursor.execute(f"DROP DATABASE IF EXISTS `{db_name}`;")
-            user = trial.user
-            user.is_active = False
-            user.save()
-            trial.delete()
-            messages.success(request, f'تم حذف قاعدة البيانات {db_name} والعميل {trial.full_name} نهائياً.')
+            
+            # 2. حذف المستخدمين الظل (الموظفين) من القاعدة الرئيسية default
+            # نبحث عن المستخدمين الذين يملكون profile.trial_db_name == db_name
+            from accounts.models import Profile
+            shadow_employees = User.objects.using('default').filter(profile__trial_db_name=db_name)
+            shadow_employees_count = shadow_employees.count()
+            shadow_employees.delete()
+            
+            # 3. حذف المستخدم التجريبي الأساسي (صاحب الشركة) من القاعدة الرئيسية default
+            # ملاحظة: عند حذف المستخدم الأساسي، سيتم حذف كائن Trial تلقائياً بسبب on_delete=models.CASCADE في موديل Trial
+            User.objects.using('default').filter(id=trial_user_id).delete()
+            
+            messages.success(request, f'تم حذف قاعدة البيانات {db_name} والعميل و {shadow_employees_count} موظف نهائياً.')
         except Exception as e:
             messages.error(request, f'حدث خطأ أثناء الحذف: {str(e)}')
+            
     return redirect('trials:manage_trials')

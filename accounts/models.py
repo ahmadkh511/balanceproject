@@ -221,6 +221,7 @@ class Profile(models.Model):
         verbose_name_plural = "الملفات الشخصية"
 
 
+
 class CompanySettings(models.Model):
     # ========== الحقول الأساسية ==========
     company_name = models.CharField(max_length=255, default= "أدخل أسم شركتك  ", verbose_name="اسم الشركة")
@@ -257,8 +258,6 @@ class CompanySettings(models.Model):
     whatsapp_number = models.CharField(max_length=20, blank=True, null=True, verbose_name="رقم الواتساب (مع رمز الدولة، مثال: 966501234567)")
     whatsapp_message = models.CharField(max_length=255, blank=True, null=True, default="مرحباً، أتواصل معكم من المتجر، كيف يمكنكم مساعدتي؟", verbose_name="رسالة واتساب التلقائية")
 
-
-
     # ==========================================
     # إعدادات دمج الفيسبوك (Facebook Integration)
     # ==========================================
@@ -289,22 +288,36 @@ class CompanySettings(models.Model):
         return f"إعدادات الشركة - آخر تحديث: {self.updated_at}"
 
     def save(self, *args, **kwargs):
-        """تجاوز دالة الحفظ لمسح الكاش قبل الحفظ مباشرة"""
+        """تجاوز دالة الحفظ لمسح الكاش الديناميكي قبل الحفظ مباشرة"""
         from django.core.cache import cache
-        cache.delete('company_settings')
+        from trials.middleware import get_current_trial_db
+        
+        # تحديد مفتاح الكاش بناءً على قاعدة البيانات الحالية
+        trial_db = get_current_trial_db()
+        cache_key = f'company_settings_{trial_db}' if trial_db else 'company_settings_default'
+        
+        cache.delete(cache_key)
         super().save(*args, **kwargs)
 
     @classmethod
     def get_settings(cls):
-        """جلب إعدادات الشركة مع الكاش لتحسين الأداء"""
+        """جلب إعدادات الشركة مع الكاش الديناميكي لتحسين الأداء والعزل"""
         from django.core.cache import cache
-        settings = cache.get('company_settings')
+        from trials.middleware import get_current_trial_db
+        
+        # تحديد مفتاح الكاش بناءً على قاعدة البيانات الحالية
+        trial_db = get_current_trial_db()
+        cache_key = f'company_settings_{trial_db}' if trial_db else 'company_settings_default'
+        
+        settings = cache.get(cache_key)
         if not settings:
-            settings, created = cls.objects.get_or_create(id=1)
-            cache.set('company_settings', settings, 60 * 60)
+            # استخدام first() بدلاً من id=1 لأن القاعدة المعزولة قد لا تبدأ من id=1
+            settings = cls.objects.first()
+            if not settings:
+                settings = cls.objects.create()
+            cache.set(cache_key, settings, 60 * 60)  # كاش لمدة ساعة
+            
         return settings
-
-
 
 
 

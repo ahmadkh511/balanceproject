@@ -65,3 +65,75 @@ class CustomCSPMiddleware:
         response['Content-Security-Policy'] = " ".join(csp_policy.split())
         
         return response
+
+
+#--------- حماية اسم البرنامج
+
+import re
+
+class ProtectFooterMiddleware:
+    """
+    ميدل وير لحماية حقوق الشركة (BalanceIq)
+    يبحث عن كلاس الفوتر ويحقن الكود بجانبه (مستقل عن النصوص المتغيرة)
+    """
+    def __init__(self, get_response):
+        self.get_response = get_response
+
+    def __call__(self, request):
+        response = self.get_response(request)
+
+        content_type = response.get('Content-Type', '')
+        if 'text/html' not in content_type:
+            return response
+
+        if response.streaming:
+            return response
+
+        try:
+            content = response.content.decode('utf-8')
+        except (UnicodeDecodeError, AttributeError):
+            return response
+
+        injected = False
+
+        # 1. كود الحقوق المندمج (بنفس لون الفوتر)
+        powered_by_html = """
+        <span style="margin: 0 10px; color: rgba(255, 255, 255, 0.3);">|</span>
+        <a href="https://balanceiqsoft.com" target="_blank" rel="noopener noreferrer" style="color: rgba(255, 255, 255, 0.5); text-decoration: none;">
+            Powered by BalanceIq
+        </a>
+        """
+
+        # 2. البحث عن كلاس السطر (text-md-start mb-1 mb-md-0) وحقن الكود بعده
+        # هذا الكلاس ثابت في base.html ولن يتغير بتغير رقم الإصدار
+        pattern = r'(text-md-start mb-1 mb-md-0">\s*<span>.*?</span>)'
+        
+        if re.search(pattern, content, re.IGNORECASE):
+            content = re.sub(
+                pattern, 
+                r'\1' + powered_by_html, 
+                content, 
+                flags=re.IGNORECASE, 
+                count=1
+            )
+            injected = True
+
+        # 3. احتياطي للصفحات التي لا تحتوي على هذا الكلاس (مثل صفحات تسجيل الدخول)
+        if not injected:
+            fallback_html = """
+            <div style="text-align: center; padding: 15px; font-size: 0.8rem; color: #666; font-family: 'Tajawal', sans-serif;">
+                <a href="https://balanceiqsoft.com" target="_blank" rel="noopener noreferrer" style="color: #0097a7; text-decoration: none; font-weight: 600;">
+                    Powered by BalanceIq
+                </a>
+            </div>
+            """
+            if re.search(r'</body>', content, re.IGNORECASE):
+                content = re.sub(r'</body>', fallback_html + '</body>', content, flags=re.IGNORECASE, count=1)
+                injected = True
+
+        if injected:
+            response.content = content.encode('utf-8')
+            if 'Content-Length' in response:
+                response['Content-Length'] = len(response.content)
+
+        return response

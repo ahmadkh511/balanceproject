@@ -67,6 +67,7 @@ INSTALLED_APPS = [
 # ==========================================
 # 5. البرمجيات الوسيطة (Middleware)
 # ==========================================
+
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
@@ -79,8 +80,11 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     # ================= تمت الإضافة: سياسة أمان المحتوى (CSP) =================
     'balanceIQ.middlewares.CustomCSPMiddleware',
+    # ================= حماية اسم البرنامج (الجديد) =================
+    'balanceIQ.middlewares.ProtectFooterMiddleware',
    
 ]
+
 
 ROOT_URLCONF = 'balanceIQ.urls'
 

@@ -19,7 +19,7 @@ from django.db.models import Sum, F
 from django.utils import timezone
 from django.utils.text import slugify
 from django.utils.translation import gettext_lazy as _
-
+from django_ckeditor_5.fields import CKEditor5Field 
 logger = logging.getLogger(__name__)
 User = get_user_model()
 
@@ -1221,6 +1221,7 @@ class SaleReturnItemBarcode(models.Model):
 class Product(models.Model):
     product_name = models.CharField(max_length=255, verbose_name=_("اسم المادة"))
     product_description = models.TextField(blank=True, verbose_name=_("وصف المادة"))
+
     main_barcode = models.CharField(max_length=100, unique=True, blank=True, null=True, verbose_name=_("الباركود الأساسي"))
     category = models.ForeignKey('Category', on_delete=models.SET_NULL, null=True, blank=True, verbose_name=_("التصنيف"), related_name='products')
 
@@ -1242,7 +1243,11 @@ class Product(models.Model):
     current_stock_quantity = models.DecimalField(max_digits=10, decimal_places=2, default=Decimal('0.00'), verbose_name=_("الكمية الحالية في المخزون"))
     average_purchase_cost = models.DecimalField(max_digits=12, decimal_places=2, default=Decimal('0.00'), verbose_name=_("متوسط تكلفة الشراء"))
     product_image = models.ImageField(upload_to='products/%Y/%m/%d/', blank=True, null=True, verbose_name=_("صورة المنتج"))
+
+    Prodnots = CKEditor5Field(config_name='default', blank=True, null=True, verbose_name=_("ملاحظات"))
     
+
+
     OPERATION_TYPES = (('purchase', 'مشتريات'),('sale', 'مبيعات'),('sale_return', 'مرتجع مبيعات'),('purchase_return', 'مرتجع مشتريات'))
     last_operation_type = models.CharField(max_length=20, choices=OPERATION_TYPES, null=True, blank=True, verbose_name=_("نوع آخر عملية"))
     

@@ -1,0 +1,127 @@
+[
+  {
+    "model": "invoice.currency",
+    "pk": 1,
+    "fields": {
+      "code": "SYP",
+      "symbol": "ل.س",
+      "name": "Syrian Pound",
+      "name_ar": "ليرة سورية",
+      "is_default": true,
+      "is_active": true
+    }
+  },
+  {
+    "model": "invoice.currency",
+    "pk": 2,
+    "fields": {
+      "code": "USD",
+      "symbol": "$",
+      "name": "US Dollar",
+      "name_ar": "دولار أمريكي",
+      "is_default": false,
+      "is_active": true
+    }
+  },
+  {
+    "model": "invoice.payment_method",
+    "pk": 1,
+    "fields": {
+      "name": "نقداً",
+      "is_cash": true
+    }
+  },
+  {
+    "model": "invoice.payment_method",
+    "pk": 2,
+    "fields": {
+      "name": "تحويل بنكي",
+      "is_cash": false
+    }
+  },
+  {
+    "model": "invoice.status",
+    "pk": 1,
+    "fields": { "name": "مكتملة" }
+  },
+  {
+    "model": "invoice.status",
+    "pk": 2,
+    "fields": { "name": "قيد التنفيذ" }
+  },
+  {
+    "model": "invoice.category",
+    "pk": 1,
+    "fields": { "name": "إلكترونيات", "is_active": true }
+  },
+  {
+    "model": "invoice.category",
+    "pk": 2,
+    "fields": { "name": "مواد غذائية", "is_active": true }
+  },
+  {
+    "model": "invoice.product",
+    "pk": 1,
+    "fields": {
+      "product_name": "لابتوب Dell Inspiron",
+      "purch_price": "1500000.00",
+      "sale_price": "1800000.00",
+      "retail_price": "1800000.00",
+      "wholesale_price": "1700000.00",
+      "current_stock_quantity": "50.00",
+      "category": 1
+    }
+  },
+  {
+    "model": "invoice.product",
+    "pk": 2,
+    "fields": {
+      "product_name": "ماوس لاسلكي Logitech",
+      "purch_price": "50000.00",
+      "sale_price": "75000.00",
+      "retail_price": "75000.00",
+      "wholesale_price": "65000.00",
+      "current_stock_quantity": "200.00",
+      "category": 1
+    }
+  },
+  {
+    "model": "invoice.product",
+    "pk": 3,
+    "fields": {
+      "product_name": "زيت زيتون بكر 1 لتر",
+      "purch_price": "35000.00",
+      "sale_price": "45000.00",
+      "retail_price": "45000.00",
+      "wholesale_price": "40000.00",
+      "current_stock_quantity": "500.00",
+      "category": 2
+    }
+  },
+  {
+    "model": "invoice.product",
+    "pk": 4,
+    "fields": {
+      "product_name": "شاي أحمر سيلاني 500غ",
+      "purch_price": "25000.00",
+      "sale_price": "32000.00",
+      "retail_price": "32000.00",
+      "wholesale_price": "28000.00",
+      "current_stock_quantity": "300.00",
+      "category": 2
+    }
+  },
+  {
+    "model": "invoice.product",
+    "pk": 5,
+    "fields": {
+      "product_name": "شاشة Samsung 24 بوصة",
+      "purch_price": "800000.00",
+      "sale_price": "950000.00",
+      "retail_price": "950000.00",
+      "wholesale_price": "900000.00",
+      "current_stock_quantity": "30.00",
+      "category": 1
+    }
+  }
+]

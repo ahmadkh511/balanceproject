@@ -1,0 +1,152 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}لوحةjhjjjjj تحكم الصندوق{% endblock %}
+
+{% block extra_css %}
+<style>
+.cash-card {
+    border-radius: 15px;
+    border: none;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    transition: transform 0.3s ease;
+}
+.cash-card:hover {
+    transform: translateY(-5px);
+}
+.cash-icon {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+}
+.balance-positive {
+    background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+    color: white;
+}
+.balance-negative {
+    background: linear-gradient(135deg, #dc3545 0%, #fd7e14 100%);
+    color: white;
+}
+.stat-value {
+    font-size: 2.5rem;
+    font-weight: bold;
+}
+.stat-label {
+    font-size: 1rem;
+    opacity: 0.9;
+}
+.recent-transaction {
+    border-left: 4px solid #007bff;
+    padding: 10px 15px;
+    margin-bottom: 10px;
+    background: #f8f9fa;
+    border-radius: 5px;
+    transition: all 0.3s ease;
+}
+.recent-transaction:hover {
+    background: #e9ecef;
+    transform: translateX(5px);
+}
+.transaction-in {
+    border-left-color: #28a745;
+}
+.transaction-out {
+    border-left-color: #dc3545;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2><i class="fas fa-wallet me-2"></i>لوحة تحكم الصندوق</h2>
+        <div>
+            <a href="{% url 'invoice:cash_transaction_create' %}" class="btn btn-success">
+                <i class="fas fa-plus me-1"></i>إضافة حركة جديدة
+            </a>
+            <a href="{% url 'invoice:cash_transaction_list' %}" class="btn btn-primary">
+                <i class="fas fa-list me-1"></i>عرض جميع الحركات
+            </a>
+        </div>
+    </div>
+
+    <!-- Balance Cards -->
+    <div class="row mb-4">
+        <div class="col-md-3 mb-4">
+            <div class="card cash-card text-center text-white balance-positive">
+                <div class="card-body">
+                    <i class="fas fa-arrow-down cash-icon"></i>
+                    <h5 class="card-title">إجمالي المدفوعات</h5>
+                    <div class="stat-value">{{ total_in }}</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 mb-4">
+            <div class="card cash-card text-center text-white balance-negative">
+                <div class="card-body">
+                    <i class="fas fa-arrow-up cash-icon"></i>
+                    <h5 class="card-title">إجمالي المسحوبات</h5>
+                    <div class="stat-value">{{ total_out }}</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 mb-4">
+            <div class="card cash-card text-center {% if current_balance >= 0 %}balance-positive{% else %}balance-negative{% endif %}">
+                <div class="card-body">
+                    <i class="fas fa-balance-scale cash-icon"></i>
+                    <h5 class="card-title">الرصيد الحالي</h5>
+                    <div class="stat-value">{{ current_balance }}</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 mb-4">
+            <div class="card cash-card text-center text-white" style="background: linear-gradient(135deg, #17a2b8 0%, #6c757d 100%);">
+                <div class="card-body">
+                    <i class="fas fa-calendar-day cash-icon"></i>
+                    <h5 class="card-title">صافي اليوم</h5>
+                    <div class="stat-value">{{ today_in|add:"-"|add:today_out }}</div>
+                    <small>داخل: {{ today_in }} | خارج: {{ today_out }}</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Transactions -->
+    <div class="card">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h5 class="mb-0"><i class="fas fa-history me-2"></i>آخر الحركات</h5>
+            <a href="{% url 'invoice:cash_transaction_list' %}" class="btn btn-sm btn-outline-primary">عرض الكل</a>
+        </div>
+        <div class="card-body">
+            {% for transaction in recent_transactions %}
+            <div class="recent-transaction {% if transaction.amount_in > 0 %}transaction-in{% else %}transaction-out{% endif %}">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <strong>{{ transaction.get_transaction_type_display }}</strong>
+                        {% if transaction.purchase_invoice %}
+                        <small class="text-muted">(فاتورة: {{ transaction.purchase_invoice.uniqueId }})</small>
+                        {% endif %}
+                        <br>
+                        <small class="text-muted">{{ transaction.transaction_date|date:"Y-m-d H:i" }}</small>
+                    </div>
+                    <div class="text-end">
+                        {% if transaction.amount_in > 0 %}
+                        <span class="text-success fw-bold">+{{ transaction.amount_in }}</span>
+                        {% else %}
+                        <span class="text-danger fw-bold">-{{ transaction.amount_out }}</span>
+                        {% endif %}
+                    </div>
+                </div>
+                {% if transaction.notes %}
+                <small class="text-muted d-block mt-1">{{ transaction.notes }}</small>
+                {% endif %}
+            </div>
+            {% empty %}
+            <div class="text-center text-muted py-4">
+                <i class="fas fa-inbox fa-3x mb-3"></i>
+                <p>لا توجد حركات حالياً</p>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endblock %}

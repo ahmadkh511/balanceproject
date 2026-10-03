@@ -485,13 +485,15 @@ PurchItemBarcodeEditFormSet = inlineformset_factory(
 # ===============================================
 
 
+
 class ProductForm(forms.ModelForm):
     """نموذج المنتج - معلومات فقط بدون حسابات"""
     
     class Meta:
         model = Product
         fields = [
-            'product_name', 'main_barcode', 'product_description', 'product_image'
+            'product_name', 'main_barcode', 'product_description', 
+            'product_image', 'Prodnots'
         ]
         widgets = {
             'product_name': forms.TextInput(attrs={
@@ -512,27 +514,31 @@ class ProductForm(forms.ModelForm):
                 'class': 'form-control',
                 'accept': 'image/*'
             })
+            # ⚠️ لا تضع widget لـ Prodnots — CKEditor5Field يوفّر widget الخاص به
         }
         labels = {
             'product_name': _('اسم المادة'),
             'main_barcode': _('الباركود الأساسي'),
             'product_description': _('وصف المادة'),
-            'product_image': _('صورة المادة')
+            'product_image': _('صورة المادة'),
+            'Prodnots': _('ملاحظات')
         }
         help_texts = {
             'product_name': _('أدخل اسم المادة كاملاً'),
             'main_barcode': _('الباركود الأساسي للمادة (اختياري) - يجب أن يكون فريداً'),
             'product_description': _('يمكنك إضافة وصف تفصيلي للمادة'),
-            'product_image': _('صورة المادة (اختياري)')
+            'product_image': _('صورة المادة (اختياري)'),
+            'Prodnots': _('ملاحظات غنية بالتنسيق تظهر في صفحة تفاصيل المادة')
         }
     
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        # جعل جميع الحقول غير إجبارية ما عدا اسم المادة
         self.fields['product_name'].required = True
         self.fields['main_barcode'].required = False
         self.fields['product_description'].required = False
         self.fields['product_image'].required = False
+        self.fields['Prodnots'].required = False
+
 
 
 

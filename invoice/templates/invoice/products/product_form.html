@@ -5,414 +5,567 @@
 {% block title %}{{ title }}{% endblock %}
 
 {% block content %}
-<div class="container-fluid">
-    <!-- عنوان الصفحة مع تصميم أفضل -->
-    <div class="row mb-4">
-        <div class="col">
-            <div class="d-flex align-items-center">
-                <div class="rounded-circle bg-primary bg-opacity-10 p-3 me-3">
-                    <i class="fas fa-cube fa-2x text-primary"></i>
-                </div>
-                <div>
-                    <h1 class="h3 mb-1 text-gray-800">{{ title }}</h1>
-                    <p class="text-muted mb-0">
-                        <i class="fas fa-info-circle me-1"></i>
-                        {% trans "إضافة مادة جديدة" %}
-                    </p>
-                </div>
+<!-- ========================================================== -->
+<!-- 1) CSS — مع nonce للـ CSP                                   -->
+<!-- ========================================================== -->
+<style nonce="{{ csp_nonce }}">
+@import url('https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;600;700;800&display=swap');
+
+:root {
+    --primary-1: #e0f7fa;
+    --primary-2: #b2ebf2;
+    --primary-3: #4dd0e1;
+    --primary-4: #0097a7;
+    --primary-dark: #006064;
+    --text-dark: #006064;
+    --text-light: #ffffff;
+    --shadow-sm: 0 2px 8px rgba(0, 150, 167, 0.08);
+    --shadow-md: 0 4px 12px rgba(0, 150, 167, 0.12);
+    --shadow-lg: 0 8px 30px rgba(0, 150, 167, 0.2);
+    --radius: 8px;
+    --radius-sm: 4px;
+    --radius-lg: 12px;
+    --ease: cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-speed: 0.3s;
+    --success-color: #059669;
+    --success-bg: #d1fae5;
+    --danger-color: #dc2626;
+    --danger-bg: #fee2e2;
+    --warning-color: #d97706;
+    --warning-bg: #fef3c7;
+}
+
+* { box-sizing: border-box; }
+
+body {
+    font-family: 'Tajawal', sans-serif;
+    background: linear-gradient(135deg, #f8fafc 0%, var(--primary-1) 100%);
+    min-height: 100vh;
+    padding: 1rem;
+    font-size: 0.9rem;
+    color: #1a1a2e;
+}
+
+.page-container { max-width: 1200px; margin: 0 auto; }
+
+/* ===== الهيدر ===== */
+.form-hero {
+    background: linear-gradient(135deg, var(--primary-4), var(--primary-dark));
+    border-radius: var(--radius-lg);
+    padding: 1.5rem 2rem;
+    margin-bottom: 1rem;
+    color: #fff;
+    position: relative;
+    overflow: hidden;
+    box-shadow: var(--shadow-lg);
+}
+.form-hero::before {
+    content: '';
+    position: absolute;
+    top: -40%; left: -5%;
+    width: 300px; height: 300px;
+    background: radial-gradient(circle, rgba(255,255,255,0.12) 0%, transparent 70%);
+    border-radius: 50%;
+    pointer-events: none;
+}
+.form-hero::after {
+    content: '';
+    position: absolute;
+    bottom: -30%; right: -5%;
+    width: 250px; height: 250px;
+    background: radial-gradient(circle, rgba(255,255,255,0.08) 0%, transparent 70%);
+    border-radius: 50%;
+    pointer-events: none;
+}
+.form-hero-content { position: relative; z-index: 2; display: flex; align-items: center; gap: 1rem; }
+.form-hero-icon {
+    width: 50px; height: 50px;
+    background: rgba(255, 255, 255, 0.2);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    border-radius: var(--radius);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.35rem; flex-shrink: 0;
+}
+.form-hero-title { font-size: 1.4rem; font-weight: 700; margin: 0; line-height: 1.2; }
+.form-hero-subtitle { font-size: 0.85rem; opacity: 0.85; margin-top: 0.2rem; }
+
+/* ===== البطاقات ===== */
+.card { background: white; border-radius: var(--radius); padding: 20px 24px; box-shadow: var(--shadow-sm); border: 1px solid rgba(0, 0, 0, 0.04); margin-bottom: 16px; transition: box-shadow 0.3s var(--ease); }
+.card:hover { box-shadow: var(--shadow-md); }
+.card-title { font-size: 0.95rem; font-weight: 700; color: var(--text-dark); margin: 0 0 16px; padding-bottom: 10px; border-bottom: 2px solid var(--primary-1); display: flex; align-items: center; gap: 8px; }
+.card-title i { color: var(--primary-4); }
+
+/* ===== الحقول ===== */
+.form-label { font-size: 0.85rem; font-weight: 600; color: var(--text-dark); margin-bottom: 0.4rem; display: block; }
+.form-label .required { color: var(--danger-color); }
+.form-label .optional { color: #94a3b8; font-weight: 400; font-size: 0.8rem; }
+.input-group-custom { position: relative; display: flex; align-items: stretch; }
+.input-icon {
+    display: flex; align-items: center; justify-content: center;
+    width: 42px; background: var(--primary-1);
+    border: 1px solid var(--primary-2); border-left: none;
+    border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+    color: var(--primary-4); font-size: 0.9rem; flex-shrink: 0;
+}
+.form-input, .form-textarea {
+    flex: 1; width: 100%; padding: 0.55rem 0.75rem;
+    border: 1px solid var(--primary-2);
+    border-radius: var(--radius-sm);
+    font-size: 0.88rem; font-family: 'Tajawal', sans-serif;
+    background: white; color: #1a1a2e;
+    transition: all 0.2s var(--ease);
+}
+.form-input:focus, .form-textarea:focus {
+    border-color: var(--primary-3);
+    box-shadow: 0 0 0 3px rgba(77, 208, 225, 0.2);
+    outline: none;
+}
+.input-group-custom .form-input { border-radius: var(--radius-sm) 0 0 var(--radius-sm); border-left: none; }
+.form-textarea { resize: vertical; min-height: 100px; }
+.form-hint { font-size: 0.75rem; color: #94a3b8; margin-top: 0.3rem; }
+.form-hint i { margin-left: 0.2rem; color: var(--primary-3); }
+
+.is-valid { border-color: var(--success-color) !important; background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 8 8'%3e%3cpath fill='%23059669' d='M2.3 6.73L.6 4.53c-.4-1.04.46-1.4 1.1-.8l1.1 1.4 3.4-3.8c.6-.63 1.6-.27 1.2.7l-4 4.6c-.43.5-.8.4-1.1.1z'/%3e%3c/svg%3e"); background-repeat: no-repeat; background-position: left calc(0.375em + 0.1875rem) center; background-size: calc(0.75em + 0.375rem) calc(0.75em + 0.375rem); }
+.is-invalid { border-color: var(--danger-color) !important; }
+
+/* ===== رفع الصورة ===== */
+.image-upload-box {
+    border: 2px dashed var(--primary-2);
+    border-radius: var(--radius);
+    padding: 1.5rem 1rem;
+    text-align: center;
+    background: var(--primary-1);
+    cursor: pointer;
+    transition: all 0.3s var(--ease);
+    min-height: 220px;
+    display: flex; align-items: center; justify-content: center;
+}
+.image-upload-box:hover {
+    border-color: var(--primary-4);
+    background: #f0fdfa;
+    transform: scale(1.01);
+}
+.image-upload-box.has-image { padding: 0.5rem; background: white; border-style: solid; }
+.image-placeholder-text { color: var(--primary-4); }
+.image-placeholder-text i { font-size: 2.5rem; margin-bottom: 0.5rem; display: block; }
+.image-placeholder-text span { font-size: 0.85rem; }
+.image-placeholder-text small { font-size: 0.7rem; color: #94a3b8; }
+.image-preview { max-width: 100%; max-height: 200px; border-radius: var(--radius-sm); }
+.image-info { font-size: 0.75rem; color: #94a3b8; text-align: center; margin-top: 0.5rem; }
+.btn-remove-image {
+    width: 100%; margin-top: 0.5rem; padding: 0.4rem;
+    background: var(--danger-bg); color: var(--danger-color);
+    border: 1px solid var(--danger-color); border-radius: var(--radius-sm);
+    font-size: 0.8rem; font-weight: 600; cursor: pointer;
+    font-family: 'Tajawal', sans-serif; transition: all 0.2s var(--ease);
+}
+.btn-remove-image:hover { background: var(--danger-color); color: white; }
+
+/* ===== CKEditor ===== */
+.ck-container { border-radius: var(--radius); overflow: hidden; }
+.ck-container .ck-toolbar { background: var(--primary-1) !important; border: 1px solid var(--primary-2) !important; border-bottom: 1px solid var(--primary-2) !important; border-radius: 0 !important; }
+.ck-container .ck-toolbar .ck-button { color: var(--text-dark) !important; }
+.ck-container .ck-toolbar .ck-button.ck-on { background: var(--primary-2) !important; }
+.ck-container .ck-content { min-height: 180px !important; padding: 1rem !important; border: 1px solid var(--primary-2) !important; border-top: none !important; border-radius: 0 0 var(--radius) var(--radius) !important; font-family: 'Tajawal', sans-serif !important; font-size: 0.88rem !important; line-height: 1.8 !important; }
+.ck-container .ck-content img { max-width: 100% !important; height: auto; border-radius: var(--radius-sm); }
+.ck-container .ck-content table { width: 100%; border-collapse: collapse; }
+.ck-container .ck-content table td, .ck-container .ck-content table th { border: 1px solid var(--primary-2); padding: 0.4rem; }
+.ck-container .ck-focused { border-color: var(--primary-3) !important; box-shadow: 0 0 0 3px rgba(77, 208, 225, 0.2) !important; }
+#id_Prodnots { width: 100%; padding: 0.75rem; border: 1px solid var(--primary-2); border-radius: var(--radius); font-family: 'Tajawal', sans-serif; font-size: 0.88rem; min-height: 180px; resize: vertical; }
+
+/* ===== أزرار ===== */
+.btn-primary-teal {
+    background: linear-gradient(135deg, var(--primary-4), var(--primary-dark));
+    color: white; border: none;
+    padding: 0.65rem 1.5rem;
+    border-radius: var(--radius-sm);
+    font-size: 0.9rem; font-weight: 600;
+    font-family: 'Tajawal', sans-serif;
+    cursor: pointer; transition: all 0.25s var(--ease);
+    display: inline-flex; align-items: center; gap: 0.5rem;
+    box-shadow: 0 3px 12px rgba(0, 150, 167, 0.3);
+}
+.btn-primary-teal:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(0, 150, 167, 0.4); color: white; }
+.btn-primary-teal:active { transform: scale(0.98); }
+.btn-secondary-teal {
+    background: white; color: var(--text-dark);
+    border: 1px solid var(--primary-2);
+    padding: 0.65rem 1.5rem;
+    border-radius: var(--radius-sm);
+    font-size: 0.9rem; font-weight: 600;
+    font-family: 'Tajawal', sans-serif;
+    cursor: pointer; transition: all 0.25s var(--ease);
+    display: inline-flex; align-items: center; gap: 0.5rem;
+    text-decoration: none;
+}
+.btn-secondary-teal:hover { background: var(--primary-1); border-color: var(--primary-3); color: var(--text-dark); }
+
+/* ===== شريط التقدم ===== */
+.progress-teal { height: 3px; background: var(--primary-1); border-radius: 1.5rem; overflow: hidden; margin: 1rem 0; }
+.progress-teal-bar { height: 100%; background: linear-gradient(90deg, var(--primary-3), var(--primary-4)); border-radius: 1.5rem; transition: width 0.3s var(--ease); width: 0%; }
+
+/* ===== تنبيهات ===== */
+.alert-teal { border-radius: var(--radius); border: 1px solid; padding: 0.75rem 1rem; margin-bottom: 1rem; font-size: 0.85rem; display: flex; align-items: center; gap: 0.5rem; }
+.alert-teal.alert-success { background: var(--success-bg); border-color: var(--success-color); color: var(--success-color); }
+.alert-teal.alert-error { background: var(--danger-bg); border-color: var(--danger-color); color: var(--danger-color); }
+.alert-teal.alert-info { background: var(--primary-1); border-color: var(--primary-3); color: var(--text-dark); }
+
+/* ===== التجاوب ===== */
+@media (max-width: 768px) {
+    .form-hero { padding: 1.25rem 1rem; }
+    .form-hero-title { font-size: 1.15rem; }
+    .card { padding: 14px 16px; }
+    .btn-primary-teal, .btn-secondary-teal { width: 100%; justify-content: center; }
+    .actions-row { flex-direction: column; gap: 0.5rem; }
+    .ck-container .ck-content { min-height: 140px; }
+}
+</style>
+
+<!-- ========================================================== -->
+<!-- 2) سلاسل مترجمة عبر data-* (بديل Django داخل script)       -->
+<!-- ========================================================== -->
+<div id="i18nStrings" class="d-none"
+     data-err-name="{% trans 'يرجى إدخال اسم المادة' %}"
+     data-err-type="{% trans 'نوع الملف غير مدعوم. الرجاء اختيار صورة JPG, PNG, GIF' %}"
+     data-err-size="{% trans 'حجم الصورة كبير جداً. الحد الأقصى 5 ميجابايت' %}"
+     data-loaded="{% trans 'تم تحميل صفحة إنشاء المادة' %}"
+     data-full-load="{% trans 'تم تحميل الصفحة بالكامل' %}"
+     data-ckeditor-error="{% trans 'تعذر تحميل محرر الملاحظات' %}">
+</div>
+
+<div class="page-container">
+    <!-- ===== الهيدر ===== -->
+    <div class="form-hero">
+        <div class="form-hero-content">
+            <div class="form-hero-icon"><i class="fas fa-cube"></i></div>
+            <div>
+                <h1 class="form-hero-title">{{ title }}</h1>
+                <div class="form-hero-subtitle">{% trans "إضافة مادة جديدة" %}</div>
             </div>
         </div>
     </div>
 
-    <!-- رسائل التنبيه -->
+    <!-- ===== التنبيهات ===== -->
     {% if messages %}
         {% for message in messages %}
-            <div class="alert alert-{{ message.tags }} alert-dismissible fade show mb-4" role="alert">
-                <div class="d-flex align-items-center">
-                    <i class="fas fa-{% if message.tags == 'success' %}check-circle{% elif message.tags == 'error' %}exclamation-circle{% else %}info-circle{% endif %} me-2"></i>
-                    {{ message }}
-                </div>
-                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            <div class="alert-teal alert-{{ message.tags|default:'info' }} alert-dismissible fade show" role="alert">
+                <i class="fas fa-{% if message.tags == 'success' %}check-circle{% elif message.tags == 'error' %}exclamation-circle{% else %}info-circle{% endif %}"></i>
+                <span>{{ message }}</span>
+                <button type="button" class="btn-close ms-auto" data-bs-dismiss="alert"></button>
             </div>
         {% endfor %}
     {% endif %}
 
-    <!-- نموذج إنشاء المادة -->
-    <div class="card shadow mb-4">
-        <div class="card-header py-3">
-            <h6 class="m-0 font-weight-bold text-primary">
-                <i class="fas fa-edit me-1"></i>{% trans "معلومات المادة الأساسية" %}
-            </h6>
-        </div>
-        <div class="card-body">
-            <form method="post" enctype="multipart/form-data" id="productForm" action="{% url 'invoice:product_create' %}">
-                {% csrf_token %}
-                
-                <div class="row">
-                    <!-- العمود الأيمن - معلومات المادة -->
-                    <div class="col-lg-8">
-                        <!-- اسم المادة (إجباري) -->
-                        <div class="mb-4">
-                            <label for="product_name" class="form-label fw-bold">
-                                {% trans "اسم المادة" %} 
-                                <span class="text-danger">*</span>
-                            </label>
-                            <div class="input-group">
-                                <span class="input-group-text bg-light border-end-0">
-                                    <i class="fas fa-tag text-primary"></i>
-                                </span>
-                                <input type="text" 
-                                       class="form-control border-start-0" 
-                                       id="product_name" 
-                                       name="product_name" 
-                                       required 
-                                       autofocus
-                                       placeholder="{% trans 'أدخل اسم المادة' %}"
-                                       style="border-left: 1px solid #d1d3e2;">
-                            </div>
-                            <div class="form-text text-muted">
-                                <i class="fas fa-info-circle fa-xs"></i>
-                                {% trans "أدخل اسم المادة كاملاً كما يجب أن يظهر في الفواتير" %}
-                            </div>
-                        </div>
+    <!-- ===== النموذج ===== -->
+    <div class="card">
+        <div class="card-title"><i class="fas fa-edit"></i> {% trans "معلومات المادة الأساسية" %}</div>
 
-                        <!-- الباركود الأساسي (اختياري) -->
-                        <div class="mb-4">
-                            <label for="main_barcode" class="form-label fw-bold">
-                                {% trans "الباركود الأساسي" %}
-                                <span class="text-muted">({% trans "اختياري" %})</span>
-                            </label>
-                            <div class="input-group">
-                                <span class="input-group-text bg-light border-end-0">
-                                    <i class="fas fa-barcode text-primary"></i>
-                                </span>
-                                <input type="text" 
-                                       class="form-control border-start-0" 
-                                       id="main_barcode" 
-                                       name="main_barcode" 
-                                       placeholder="{% trans 'أدخل الباركود الأساسي (اختياري)' %}"
-                                       style="border-left: 1px solid #d1d3e2;">
-                            </div>
-                            <div class="form-text text-muted">
-                                <i class="fas fa-info-circle fa-xs"></i>
-                                {% trans " الباركود الأساسي للمادة (اختياري) - يجب أن يكون فريداً وهو مهم بمجال مثل البسة مواد غذائية او اي نشاط يعتمد على الباركود وليس السيريال " %}
-                            </div>
-                        </div>
+        <form method="post" enctype="multipart/form-data" id="productForm" action="{% url 'invoice:product_create' %}">
+            {% csrf_token %}
 
-                        <!-- وصف المادة (اختياري) -->
-                        <div class="mb-4">
-                            <label for="product_description" class="form-label fw-bold">
-                                {% trans "وصف المادة" %}
-                                <span class="text-muted">({% trans "اختياري" %})</span>
-                            </label>
-                            <textarea class="form-control" 
-                                      id="product_description" 
-                                      name="product_description" 
-                                      rows="5"
-                                      placeholder="{% trans 'أضف وصفاً تفصيلياً للمادة (اختياري)' %}"></textarea>
-                            <div class="form-text text-muted">
-                                <i class="fas fa-info-circle fa-xs"></i>
-                                {% trans "يمكنك إضافة مواصفات أو ملاحظات مهمة عن المادة" %}
-                            </div>
+            <div class="row g-4">
+                <!-- العمود الأيمن -->
+                <div class="col-lg-8">
+                    <!-- اسم المادة -->
+                    <div class="mb-3">
+                        <label for="id_product_name" class="form-label">
+                            {% trans "اسم المادة" %} <span class="required">*</span>
+                        </label>
+                        <div class="input-group-custom">
+                            <span class="input-icon"><i class="fas fa-tag"></i></span>
+                            <input type="text" class="form-input" id="id_product_name" name="product_name"
+                                   required autofocus
+                                   placeholder="{% trans 'أدخل اسم المادة' %}">
                         </div>
+                        <div class="form-hint"><i class="fas fa-info-circle fa-xs"></i> {% trans "أدخل اسم المادة كاملاً كما يجب أن يظهر في الفواتير" %}</div>
                     </div>
 
-                    <!-- العمود الأيسر - صورة المادة -->
-                    <div class="col-lg-4">
-                        <div class="card border-0 shadow-sm">
-                            <div class="card-header bg-transparent border-0">
-                                <h6 class="fw-bold mb-0">
-                                    <i class="fas fa-image me-1 text-primary"></i>
-                                    {% trans "صورة المادة" %}
-                                </h6>
-                            </div>
-                            <div class="card-body">
-                                <!-- حاوية معاينة الصورة -->
-                                <div class="image-upload-container">
-                                    <div class="image-preview-wrapper border rounded-3 p-3 text-center bg-light mb-3" 
-                                         id="imagePreviewArea"
-                                         style="min-height: 250px; display: flex; align-items: center; justify-content: center; cursor: pointer;">
-                                        <div id="noImagePlaceholder" class="text-muted">
-                                            <i class="fas fa-cloud-upload-alt fa-3x mb-2"></i>
-                                            <br>
-                                            <span>{% trans 'اضغط لاختيار صورة للمادة' %}</span>
-                                            <br>
-                                            <small class="text-muted">{% trans 'JPG, PNG, GIF - 5MB كحد أقصى' %}</small>
-                                        </div>
-                                        <img id="productImagePreview" 
-                                             src="#" 
-                                             alt="{% trans 'معاينة الصورة' %}" 
-                                             style="max-width: 100%; max-height: 200px; display: none;"
-                                             class="img-fluid rounded">
-                                    </div>
-
-                                    <!-- حقل رفع الصورة (مخفي) -->
-                                    <input type="file" 
-                                           class="d-none" 
-                                           id="product_image" 
-                                           name="product_image" 
-                                           accept="image/*">
-
-                                    <!-- معلومات الصورة -->
-                                    <div id="imageInfo" class="small text-muted text-center" style="display: none;">
-                                        <i class="fas fa-file-image me-1"></i>
-                                        <span id="imageName"></span>
-                                        <span id="imageSize" class="ms-2"></span>
-                                    </div>
-
-                                    <!-- زر إزالة الصورة -->
-                                    <button type="button" 
-                                            class="btn btn-sm btn-outline-danger w-100 mt-2" 
-                                            id="removeImageBtn" 
-                                            style="display: none;">
-                                        <i class="fas fa-trash-alt me-1"></i>
-                                        {% trans "إزالة الصورة" %}
-                                    </button>
-                                </div>
-                            </div>
+                    <!-- الباركود الأساسي -->
+                    <div class="mb-3">
+                        <label for="id_main_barcode" class="form-label">
+                            {% trans "الباركود الأساسي" %} <span class="optional">({% trans "اختياري" %})</span>
+                        </label>
+                        <div class="input-group-custom">
+                            <span class="input-icon"><i class="fas fa-barcode"></i></span>
+                            <input type="text" class="form-input" id="id_main_barcode" name="main_barcode"
+                                   placeholder="{% trans 'أدخل الباركود الأساسي (اختياري)' %}">
                         </div>
+                        <div class="form-hint"><i class="fas fa-info-circle fa-xs"></i> {% trans "الباركود الأساسي للمادة - يجب أن يكون فريداً" %}</div>
+                    </div>
+
+                    <!-- وصف المادة -->
+                    <div class="mb-3">
+                        <label for="id_product_description" class="form-label">
+                            {% trans "وصف المادة" %} <span class="optional">({% trans "اختياري" %})</span>
+                        </label>
+                        <textarea class="form-textarea" id="id_product_description" name="product_description"
+                                  rows="4" placeholder="{% trans 'أضف وصفاً تفصيلياً للمادة (اختياري)' %}"></textarea>
+                        <div class="form-hint"><i class="fas fa-info-circle fa-xs"></i> {% trans "يمكنك إضافة مواصفات أو ملاحظات مهمة عن المادة" %}</div>
                     </div>
                 </div>
 
-                <!-- شريط التقدم (للمظهر فقط) -->
-                <div class="progress mb-4" style="height: 3px;">
-                    <div class="progress-bar bg-success" role="progressbar" style="width: 25%;" aria-valuenow="25" aria-valuemin="0" aria-valuemax="100"></div>
-                </div>
-
-                <!-- أزرار التحكم -->
-                <div class="d-flex gap-2 justify-content-start mt-4">
-                    <button type="submit" class="btn btn-success btn-lg">
-                        <i class="fas fa-save me-2"></i>
-                        {% trans "حفظ المادة" %}
+                <!-- العمود الأيسر - الصورة -->
+                <div class="col-lg-4">
+                    <label class="form-label">
+                        <i class="fas fa-image ms-1"></i> {% trans "صورة المادة" %}
+                        <span class="optional">({% trans "اختياري" %})</span>
+                    </label>
+                    <div class="image-upload-box" id="imageUploadBox">
+                        <div id="noImagePlaceholder" class="image-placeholder-text">
+                            <i class="fas fa-cloud-upload-alt"></i>
+                            <span>{% trans 'اضغط لاختيار صورة للمادة' %}</span>
+                            <br>
+                            <small>JPG, PNG, GIF — 5MB {% trans "كحد أقصى" %}</small>
+                        </div>
+                        <img id="imagePreview" src="#" alt="" class="image-preview" style="display:none;">
+                    </div>
+                    <input type="file" class="d-none" id="id_product_image" name="product_image" accept="image/*">
+                    <div id="imageInfo" class="image-info" style="display:none;">
+                        <i class="fas fa-file-image ms-1"></i>
+                        <span id="imageName"></span>
+                        <span id="imageSize" class="ms-2"></span>
+                    </div>
+                    <button type="button" class="btn-remove-image" id="removeImageBtn" style="display:none;">
+                        <i class="fas fa-trash-alt ms-1"></i> {% trans "إزالة الصورة" %}
                     </button>
-                    <a href="{% url 'invoice:product_list' %}" class="btn btn-secondary btn-lg">
-                        <i class="fas fa-times me-2"></i>
-                        {% trans "إلغاء" %}
-                    </a>
                 </div>
-            </form>
-        </div>
+            </div>
+
+            <!-- ===== شريط التقدم ===== -->
+            <div class="progress-teal">
+                <div class="progress-teal-bar" id="progressBar"></div>
+            </div>
+
+            <!-- ===== حقل الملاحظات (Prodnots) - CKEditor 5 من jsdelivr ===== -->
+            <div class="mb-3">
+                <label for="id_Prodnots" class="form-label">
+                    <i class="fas fa-sticky-note ms-1"></i> {% trans "ملاحظات" %}
+                    <span class="optional">({% trans "اختياري" %})</span>
+                </label>
+                <div class="ck-container">
+                    <textarea name="Prodnots" id="id_Prodnots" rows="8" placeholder="{% trans 'أضف ملاحظات تفصيلية للمادة... (يدعم التنسيق، الصور، الجداول)' %}"></textarea>
+                </div>
+                <div class="form-hint"><i class="fas fa-info-circle fa-xs"></i> {% trans "ملاحظات غنية بالتنسيق تظهر في صفحة تفاصيل المادة" %}</div>
+            </div>
+
+            <!-- ===== الأزرار ===== -->
+            <div class="d-flex gap-2 actions-row mt-4">
+                <button type="submit" class="btn-primary-teal">
+                    <i class="fas fa-save"></i> {% trans "حفظ المادة" %}
+                </button>
+                <a href="{% url 'invoice:product_list' %}" class="btn-secondary-teal">
+                    <i class="fas fa-times"></i> {% trans "إلغاء" %}
+                </a>
+            </div>
+        </form>
     </div>
 </div>
 
-<!-- كود JavaScript المحسن -->
+<!-- ========================================================== -->
+<!-- 3) CKEditor 5 من jsdelivr (مسموح في CSP)                   -->
+<!-- ========================================================== -->
+<script src="https://cdn.jsdelivr.net/npm/@ckeditor/ckeditor5-build-classic@40.2.0/build/ckeditor.min.js"></script>
+
+<!-- ========================================================== -->
+<!-- 4) JavaScript — مع nonce، لا يوجد Django بداخله            -->
+<!-- ========================================================== -->
 <script nonce="{{ csp_nonce }}">
-document.addEventListener('DOMContentLoaded', function() {
-    console.log("✅ تم تحميل صفحة إنشاء المادة");
-    
-    // الحصول على العناصر
-    const productForm = document.getElementById('productForm');
-    const productImageInput = document.getElementById('product_image');
-    const productImagePreview = document.getElementById('productImagePreview');
-    const noImagePlaceholder = document.getElementById('noImagePlaceholder');
-    const removeImageBtn = document.getElementById('removeImageBtn');
-    const imageInfo = document.getElementById('imageInfo');
-    const imageName = document.getElementById('imageName');
-    const imageSize = document.getElementById('imageSize');
-    const productNameInput = document.getElementById('product_name');
-    const imagePreviewArea = document.getElementById('imagePreviewArea');
-    const mainBarcodeInput = document.getElementById('main_barcode');
+(function() {
+    'use strict';
 
-    // التحقق من وجود النموذج
-    if (productForm) {
-        console.log("✅ تم العثور على النموذج");
-        
-        // التحقق من صحة البيانات قبل الإرسال
-        productForm.addEventListener('submit', function(e) {
-            const productName = productNameInput.value.trim();
-            console.log("✅ اسم المادة المدخل:", productName);
-            
-            if (!productName) {
-                e.preventDefault();
-                showNotification('{% trans "يرجى إدخال اسم المادة" %}', 'error');
-                productNameInput.classList.add('is-invalid');
-                productNameInput.focus();
-            } else {
-                productNameInput.classList.remove('is-invalid');
-            }
-        });
+    /* ===== قراءة السلاسل المترجمة من data-* ===== */
+    var i18nEl = document.getElementById('i18nStrings');
+    var i18n = i18nEl ? i18nEl.dataset : {};
+
+    /* ===== العناصر ===== */
+    var form = document.getElementById('productForm');
+    var nameInput = document.getElementById('id_product_name');
+    var barcodeInput = document.getElementById('id_main_barcode');
+    var descInput = document.getElementById('id_product_description');
+    var imageInput = document.getElementById('id_product_image');
+    var imageBox = document.getElementById('imageUploadBox');
+    var imagePreview = document.getElementById('imagePreview');
+    var noImagePh = document.getElementById('noImagePlaceholder');
+    var removeImgBtn = document.getElementById('removeImageBtn');
+    var imageInfo = document.getElementById('imageInfo');
+    var imageName = document.getElementById('imageName');
+    var imageSize = document.getElementById('imageSize');
+    var progressBar = document.getElementById('progressBar');
+    var prodnotsTextarea = document.getElementById('id_Prodnots');
+    var ckeditorInstance = null;
+
+    console.log('✅ ' + (i18n.loaded || 'تم تحميل صفحة إنشاء المادة'));
+
+    /* ===== شريط التقدم ===== */
+    function updateProgress() {
+        var filled = 0;
+        if (nameInput && nameInput.value.trim()) filled += 40;
+        if (barcodeInput && barcodeInput.value.trim()) filled += 15;
+        if (descInput && descInput.value.trim()) filled += 15;
+        if (prodnotsTextarea && prodnotsTextarea.value.trim()) filled += 15;
+        if (imageInput && imageInput.files.length > 0) filled += 15;
+        if (progressBar) progressBar.style.width = filled + '%';
     }
 
-    // فتح مربع اختيار الصورة عند الضغط على منطقة المعاينة
-    if (imagePreviewArea) {
-        imagePreviewArea.addEventListener('click', function(e) {
-            // تجنب فتح مربع الاختيار عند الضغط على زر الإزالة
-            if (e.target.closest('#removeImageBtn')) {
-                return;
-            }
-            productImageInput.click();
-        });
-    }
-
-    // معاينة الصورة عند الاختيار
-    if (productImageInput) {
-        productImageInput.addEventListener('change', function(e) {
-            const file = e.target.files[0];
-            if (file) {
-                // التحقق من نوع الملف
-                const validTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/jpg'];
-                if (!validTypes.includes(file.type)) {
-                    showNotification('{% trans "نوع الملف غير مدعوم. الرجاء اختيار صورة JPG, PNG, GIF" %}', 'error');
-                    this.value = '';
-                    return;
-                }
-
-                // التحقق من حجم الملف (5 ميجابايت)
-                const maxSize = 5 * 1024 * 1024; // 5MB
-                if (file.size > maxSize) {
-                    showNotification('{% trans "حجم الصورة كبير جداً. الحد الأقصى 5 ميجابايت" %}', 'error');
-                    this.value = '';
-                    return;
-                }
-
-                // عرض معلومات الصورة
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    productImagePreview.src = e.target.result;
-                    productImagePreview.style.display = 'block';
-                    noImagePlaceholder.style.display = 'none';
-                    
-                    // عرض معلومات الملف
-                    imageName.textContent = file.name.length > 30 ? file.name.substring(0, 27) + '...' : file.name;
-                    const fileSizeKB = (file.size / 1024).toFixed(2);
-                    imageSize.textContent = `(${fileSizeKB} KB)`;
-                    imageInfo.style.display = 'block';
-                    
-                    removeImageBtn.style.display = 'block';
-                    
-                    console.log(`✅ تم اختيار الصورة: ${file.name} (${fileSizeKB} KB)`);
-                };
-                reader.readAsDataURL(file);
-            } else {
-                resetImagePreview();
-            }
-        });
-    }
-
-    // إزالة الصورة
-    if (removeImageBtn) {
-        removeImageBtn.addEventListener('click', function(e) {
-            e.stopPropagation(); // منع انتشار الحدث لكي لا يفتح مربع اختيار الصورة
-            productImageInput.value = '';
-            resetImagePreview();
-        });
-    }
-
-    // دالة إعادة تعيين معاينة الصورة
-    function resetImagePreview() {
-        productImagePreview.src = '#';
-        productImagePreview.style.display = 'none';
-        noImagePlaceholder.style.display = 'block';
-        imageInfo.style.display = 'none';
-        removeImageBtn.style.display = 'none';
-        console.log("✅ تم إزالة الصورة");
-    }
-
-    // دالة عرض الإشعارات
-    function showNotification(message, type) {
-        // إنشاء إشعار مؤقت
-        const notification = document.createElement('div');
-        notification.className = `alert alert-${type === 'error' ? 'danger' : 'success'} alert-dismissible fade show position-fixed top-0 start-50 translate-middle-x mt-3`;
-        notification.style.zIndex = '9999';
-        notification.style.minWidth = '300px';
-        notification.innerHTML = `
-            <div class="d-flex align-items-center">
-                <i class="fas fa-${type === 'error' ? 'exclamation-circle' : 'check-circle'} me-2"></i>
-                ${message}
-            </div>
-            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-        `;
-        document.body.appendChild(notification);
-        
-        setTimeout(() => {
-            notification.remove();
+    /* ===== تنبيه ===== */
+    function showAlert(msg, type) {
+        var t = type || 'info';
+        var alertEl = document.createElement('div');
+        alertEl.className = 'alert-teal alert-' + (t === 'error' ? 'error' : t === 'success' ? 'success' : 'info') + ' alert-dismissible fade show';
+        alertEl.style.cssText = 'position:fixed; top:1rem; left:50%; transform:translateX(-50%); z-index:9999; min-width:300px; max-width:90%;';
+        alertEl.innerHTML = '<i class="fas fa-' + (t === 'error' ? 'exclamation-circle' : t === 'success' ? 'check-circle' : 'info-circle') + '"></i><span>' + msg + '</span>';
+        var closeBtn = document.createElement('button');
+        closeBtn.className = 'btn-close ms-auto';
+        closeBtn.setAttribute('data-bs-dismiss', 'alert');
+        alertEl.appendChild(closeBtn);
+        document.body.appendChild(alertEl);
+        setTimeout(function() {
+            alertEl.style.transition = 'opacity 0.4s';
+            alertEl.style.opacity = '0';
+            setTimeout(function() { alertEl.remove(); }, 400);
         }, 3000);
     }
 
-    // تحسين مظهر حقل الاسم عند الكتابة
-    if (productNameInput) {
-        productNameInput.addEventListener('input', function() {
-            if (this.value.trim()) {
-                this.classList.remove('is-invalid');
-                this.classList.add('is-valid');
+    /* ===== تهيئة CKEditor 5 ===== */
+    function initCKEditor() {
+        if (typeof ClassicEditor === 'undefined') {
+            setTimeout(initCKEditor, 200);
+            return;
+        }
+        if (!prodnotsTextarea) return;
+        ClassicEditor.create(prodnotsTextarea, {
+            toolbar: {
+                items: [
+                    'heading', '|',
+                    'bold', 'italic', 'underline', 'strikethrough', '|',
+                    'fontColor', '|',
+                    'link', 'bulletedList', 'numberedList', '|',
+                    'blockQuote', 'insertTable', '|',
+                    'undo', 'redo'
+                ]
+            },
+            table: {
+                contentToolbar: ['tableColumn', 'tableRow', 'mergeTableCells']
+            },
+            heading: {
+                options: [
+                    { model: 'paragraph', title: 'نص عادي', class: 'ck-heading_paragraph' },
+                    { model: 'heading1', view: 'h1', title: 'عنوان 1', class: 'ck-heading_heading1' },
+                    { model: 'heading2', view: 'h2', title: 'عنوان 2', class: 'ck-heading_heading2' },
+                    { model: 'heading3', view: 'h3', title: 'عنوان 3', class: 'ck-heading_heading3' }
+                ]
+            }
+        }).then(function(editor) {
+            ckeditorInstance = editor;
+            editor.model.document.on('change:data', updateProgress);
+            console.log('✅ CKEditor 5 initialized for Prodnots');
+        }).catch(function(error) {
+            console.error('CKEditor error:', error);
+            showAlert(i18n.ckeditorError || 'تعذر تحميل محرر الملاحظات', 'error');
+        });
+    }
+
+    /* ===== الصورة ===== */
+    if (imageBox) {
+        imageBox.addEventListener('click', function(e) {
+            if (e.target.closest('#removeImageBtn')) return;
+            imageInput.click();
+        });
+    }
+
+    if (imageInput) {
+        imageInput.addEventListener('change', function(e) {
+            var file = e.target.files[0];
+            if (!file) { resetImage(); return; }
+            var validTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/jpg'];
+            if (validTypes.indexOf(file.type) === -1) {
+                showAlert(i18n.errType || 'نوع الملف غير مدعوم', 'error');
+                this.value = '';
+                return;
+            }
+            var maxSize = 5 * 1024 * 1024;
+            if (file.size > maxSize) {
+                showAlert(i18n.errSize || 'حجم الصورة كبير جداً', 'error');
+                this.value = '';
+                return;
+            }
+            var reader = new FileReader();
+            reader.onload = function(ev) {
+                imagePreview.src = ev.target.result;
+                imagePreview.style.display = 'block';
+                noImagePh.style.display = 'none';
+                imageBox.classList.add('has-image');
+                imageName.textContent = file.name.length > 28 ? file.name.substring(0, 25) + '...' : file.name;
+                imageSize.textContent = '(' + (file.size / 1024).toFixed(1) + ' KB)';
+                imageInfo.style.display = 'block';
+                removeImgBtn.style.display = 'block';
+                updateProgress();
+            };
+            reader.readAsDataURL(file);
+        });
+    }
+
+    if (removeImgBtn) {
+        removeImgBtn.addEventListener('click', function(e) {
+            e.stopPropagation();
+            imageInput.value = '';
+            resetImage();
+        });
+    }
+
+    function resetImage() {
+        imagePreview.src = '#';
+        imagePreview.style.display = 'none';
+        noImagePh.style.display = 'block';
+        imageBox.classList.remove('has-image');
+        imageInfo.style.display = 'none';
+        removeImgBtn.style.display = 'none';
+        updateProgress();
+    }
+
+    /* ===== التحقق من النموذج ===== */
+    if (form) {
+        form.addEventListener('submit', function(e) {
+            var name = nameInput.value.trim();
+            if (!name) {
+                e.preventDefault();
+                showAlert(i18n.errName || 'يرجى إدخال اسم المادة', 'error');
+                nameInput.classList.add('is-invalid');
+                nameInput.focus();
             } else {
-                this.classList.remove('is-valid');
+                nameInput.classList.remove('is-invalid');
+                /* مزامنة CKEditor قبل الإرسال */
+                if (ckeditorInstance) {
+                    ckeditorInstance.updateSourceElement();
+                }
             }
         });
     }
 
-    // تحسين مظهر حقل الباركود عند الكتابة
-    if (mainBarcodeInput) {
-        mainBarcodeInput.addEventListener('input', function() {
-            if (this.value.trim()) {
-                this.classList.add('is-valid');
-            } else {
-                this.classList.remove('is-valid');
-            }
-        });
-    }
-});
+    /* ===== تحديث الشريط عند الكتابة ===== */
+    var inputs = [nameInput, barcodeInput, descInput];
+    inputs.forEach(function(inp) {
+        if (inp) {
+            inp.addEventListener('input', function() {
+                if (this.value.trim()) {
+                    this.classList.remove('is-invalid');
+                    this.classList.add('is-valid');
+                } else {
+                    this.classList.remove('is-valid');
+                }
+                updateProgress();
+            });
+        }
+    });
 
-// كود إضافي للتأكد من تحميل الصفحة بالكامل
-window.addEventListener('load', function() {
-    console.log("✅ تم تحميل الصفحة بالكامل");
-});
+    /* ===== التهيئة ===== */
+    initCKEditor();
+    updateProgress();
+
+    window.addEventListener('load', function() {
+        console.log('✅ ' + (i18n.fullLoad || 'تم تحميل الصفحة بالكامل'));
+    });
+})();
 </script>
-
-{% block extra_css %}
-<style>
-    /* تحسينات إضافية للتصميم */
-    .image-upload-container {
-        transition: all 0.3s ease;
-    }
-    
-    .image-preview-wrapper {
-        transition: all 0.3s ease;
-        cursor: pointer;
-        border: 2px dashed #d1d3e2;
-    }
-    
-    .image-preview-wrapper:hover {
-        border-color: #4e73df !important;
-        background-color: #f8f9fc !important;
-        transform: scale(1.02);
-    }
-    
-    .is-valid {
-        border-color: #1cc88a !important;
-        background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 8 8'%3e%3cpath fill='%231cc88a' d='M2.3 6.73L.6 4.53c-.4-1.04.46-1.4 1.1-.8l1.1 1.4 3.4-3.8c.6-.63 1.6-.27 1.2.7l-4 4.6c-.43.5-.8.4-1.1.1z'/%3e%3c/svg%3e");
-        background-repeat: no-repeat;
-        background-position: left calc(0.375em + 0.1875rem) center;
-        background-size: calc(0.75em + 0.375rem) calc(0.75em + 0.375rem);
-    }
-    
-    .is-invalid {
-        border-color: #e74a3b !important;
-    }
-    
-    .card {
-        border-radius: 0.75rem;
-    }
-    
-    .btn-lg {
-        padding: 0.75rem 1.5rem;
-    }
-    
-    .progress {
-        border-radius: 1.5rem;
-    }
-    
-    /* تحسين للهواتف */
-    @media (max-width: 768px) {
-        .btn-lg {
-            width: 100%;
-            margin-bottom: 0.5rem;
-        }
-        
-        .d-flex.gap-2 {
-            flex-direction: column;
-        }
-    }
-</style>
-{% endblock %}
 {% endblock %}

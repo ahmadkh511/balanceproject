@@ -2816,6 +2816,7 @@ def product_create(request):
         product_name = request.POST.get('product_name')
         main_barcode = request.POST.get('main_barcode', '')
         product_description = request.POST.get('product_description', '')
+        prodnots = request.POST.get('Prodnots', '')          # ✅ السطر الأول فقط
         product_image = request.FILES.get('product_image')
         
         print(f"✅ اسم المادة: {product_name}")
@@ -2833,6 +2834,7 @@ def product_create(request):
                     product_name=product_name,
                     main_barcode=main_barcode if main_barcode else None,
                     product_description=product_description,
+                    Prodnots=prodnots if prodnots else None,   # ✅ السطر الثاني فقط
                     purch_price=Decimal('0.00'),
                     sale_price=Decimal('0.00'),
                     current_stock_quantity=Decimal('0.00'),
@@ -2910,58 +2912,51 @@ def product_delete(request, slug):
     })
 
 
+
 @login_required
 @permission_required('invoice.change_product', raise_exception=True)
 def product_edit(request, slug):
-    """تعديل مادة موجودة - معلومات فقط"""
+    """تعديل مادة موجودة"""
     product = get_object_or_404(Product, slug=slug)
-    print(f"✅ تعديل المادة: {product.product_name} - Slug: {slug}")
-    
+
     if request.method == 'POST':
         product_name = request.POST.get('product_name')
         main_barcode = request.POST.get('main_barcode', '')
         product_description = request.POST.get('product_description', '')
+        prodnots = request.POST.get('Prodnots', '')                               # ✅ السطر الأول
         product_image = request.FILES.get('product_image')
-        remove_image = request.POST.get('remove_image')
-        
+        remove_image = request.POST.get('remove_image') == 'true'
+
         if not product_name:
             messages.error(request, _('اسم المادة مطلوب'))
             return render(request, 'invoice/products/product_edit.html', {
-                'product': product,
-                'title': _('تعديل المادة')
+                'title': _('تعديل المادة'),
+                'product': product
             })
-        
+
         try:
             with transaction.atomic():
                 product.product_name = product_name
                 product.main_barcode = main_barcode if main_barcode else None
                 product.product_description = product_description
-                
-                if remove_image == 'true':
-                    if product.product_image:
-                        product.product_image.delete()
-                    product.product_image = None
-                elif product_image:
-                    if product.product_image:
-                        product.product_image.delete()
+                product.Prodnots = prodnots if prodnots else None                 # ✅ السطر الثاني
+
+                if product_image:
                     product.product_image = product_image
-                
+                elif remove_image:
+                    product.product_image = None
+
                 product.save()
-                print(f"✅ تم تحديث المادة: {product.product_name}")
-                
                 messages.success(request, _('تم تحديث المادة بنجاح'))
                 return redirect('invoice:product_detail', slug=product.slug)
-                
+
         except Exception as e:
-            print(f"❌ خطأ في تحديث المادة: {str(e)}")
             messages.error(request, f'حدث خطأ أثناء تحديث المادة: {str(e)}')
-    
+
     return render(request, 'invoice/products/product_edit.html', {
-        'product': product,
-        'title': _('تعديل المادة')
+        'title': _('تعديل المادة'),
+        'product': product
     })
-
-
 
 
 

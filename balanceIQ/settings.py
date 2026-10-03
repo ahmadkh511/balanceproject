@@ -62,6 +62,12 @@ INSTALLED_APPS = [
     'invoice.apps.InvoiceConfig',
     'markdownify',
     'trials',
+    'django_ckeditor_5',
+
+
+
+
+    
 ]
 
 # ==========================================
@@ -388,3 +394,31 @@ TRIAL_DAYS = 10
 # CSP_FONT_SRC = ("'self'", "https://fonts.gstatic.com")
 
 
+
+
+
+# إعدادات CKEditor 5
+CKEDITOR_5_CONFIGS = {
+    'default': {
+        'toolbar': {
+            'items': [
+                'heading', '|',
+                'bold', 'italic', 'underline', 'strikethrough', '|',
+                'fontFamily', 'fontSize', 'fontColor', 'fontBackgroundColor', '|',
+                'alignment', '|',
+                'bulletedList', 'numberedList', '|',
+                'link', 'imageUpload', 'blockQuote', 'insertTable', '|',
+                'undo', 'redo'
+            ],
+            'shouldNotGroupWhenFull': True
+        },
+        'image': {
+            'toolbar': ['imageTextAlternative', '|', 'imageStyle:alignLeft', 'imageStyle:alignRight', 'imageStyle:alignCenter', 'imageStyle:alignBlockLeft', 'imageStyle:alignBlockRight'],
+            'styles': ['full', 'alignLeft', 'alignRight', 'alignCenter', 'alignBlockLeft', 'alignBlockRight']
+        },
+        'fontSize': {'options': [9, 11, 13, 'default', 17, 19, 21, 24, 28]},
+        'language': 'ar'
+    },
+    # يمكنك إضافة إعدادات أخرى إذا أردت رفع الصور لاحقاً
+    # 'extends': { ... }
+}

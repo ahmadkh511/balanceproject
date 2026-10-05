@@ -7,7 +7,13 @@ from .views import (
     sales_by_customer_report, 
     purchases_by_supplier_report, 
     daily_sales_summary_report, 
-    unpaid_invoices_report, dead_stocks_report , api_add_announcement
+    unpaid_invoices_report, dead_stocks_report , api_add_announcement , get_spec_values_api ,manage_specs , add_spec_value
+)
+
+from .views import (
+    manage_specs, add_spec_value, 
+    edit_spec_type, delete_spec_type, 
+    edit_spec_value, delete_spec_value , print_product_barcode
 )
 
 app_name = 'invoice'
@@ -31,6 +37,26 @@ urlpatterns = [
     path('products/<slug:slug>/delete/', views.product_delete, name='product_delete'),
     path('products/<slug:slug>/edit/', views.product_edit, name='product_edit'),
     path('products/<slug:product_slug>/barcode/create/', views.barcode_create, name='barcode_create'),
+
+    path('api/spec-values/<int:type_id>/', get_spec_values_api, name='get_spec_values_api'),
+
+    path('settings/specs/manage/', manage_specs, name='manage_specs'),
+    path('settings/specs/add-value/', add_spec_value, name='add_spec_value'),
+
+    # المسارات الجديدة للتعديل والحذف
+    path('settings/specs/edit-type/<int:pk>/', edit_spec_type, name='edit_spec_type'),
+    path('settings/specs/delete-type/<int:pk>/', delete_spec_type, name='delete_spec_type'),
+    path('settings/specs/edit-value/<int:pk>/', edit_spec_value, name='edit_spec_value'),
+    path('settings/specs/delete-value/<int:pk>/', delete_spec_value, name='delete_spec_value'),
+
+    path('product/<int:pk>/print-barcode/', print_product_barcode, name='print_product_barcode'),
+
+
+
+
+
+
+
     path('barcode/manage/<slug:product_slug>/', views.barcode_manage, name='barcode_manage'),
     path('barcode/delete/<int:barcode_id>/', views.barcode_delete, name='barcode_delete'),
     

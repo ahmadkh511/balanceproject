@@ -1315,8 +1315,94 @@ class Product(models.Model):
         valid_prices = [p for p in prices if p > 0]
         return min(valid_prices) if valid_prices else self.sale_price
 
+   
+
+        # ===== خاصية تجميع المواصفات للباركود =====
+    @property
+    def barcode_specs_text(self):
+        # جلب المواصفات المفعّل عليها خيار "إظهار بالباركود"
+        active_specs = self.specs.filter(show_on_barcode=True)
+        
+        if not active_specs.exists():
+            return ""
+        
+        # تجميع القيم فقط لتوفير المساحة (مثال: أحمر - XL)
+        specs_list = []
+        for spec in active_specs:
+            specs_list.append(spec.spec_value.value)
+        
+        # دمجها في نص واحد مع فاصل شرطة (-) لتكون مختصرة
+        return " - ".join(specs_list)
+    # ==========================================
+    
 
 
+
+
+
+
+#=================
+
+from django.db import models
+from decimal import Decimal
+
+# 1. جدول أنواع المواصفات (مثال: الألوان، الأحجام)
+class SpecType(models.Model):
+    name = models.CharField(max_length=100, unique=True, verbose_name=_("اسم نوع المواصفة"))
+
+    class Meta:
+        verbose_name = _("نوع مواصفة")
+        verbose_name_plural = _("أنواع المواصفات")
+        ordering = ['name']
+
+    def __str__(self):
+        return self.name
+
+# 2. جدول قيم المواصفات (مثال: أحمر، أزرق، XL)
+class SpecValue(models.Model):
+    spec_type = models.ForeignKey(SpecType, on_delete=models.CASCADE, related_name='values', verbose_name=_("نوع المواصفة"))
+    value = models.CharField(max_length=255, verbose_name=_("القيمة"))
+
+    class Meta:
+        verbose_name = _("قيمة مواصفة")
+        verbose_name_plural = _("قيم المواصفات")
+        ordering = ['value']
+
+    def __str__(self):
+        return f"{self.spec_type.name}: {self.value}"
+
+# 3. جدول مواصفات المنتج (ربط المنتج بالمواصفة + السعر + الباركود)
+class ProdSpec(models.Model):
+    product = models.ForeignKey('Product', on_delete=models.CASCADE, related_name='specs', verbose_name=_("المادة"))
+    
+    # اختيار نوع المواصفة (مثال: الألوان)
+    spec_type = models.ForeignKey(SpecType, on_delete=models.PROTECT, verbose_name=_("نوع المواصفة"))
+    
+    # اختيار قيمة المواصفة (مثال: أحمر)
+    spec_value = models.ForeignKey(SpecValue, on_delete=models.PROTECT, verbose_name=_("قيمة المواصفة"), limit_choices_to=models.Q(spec_type=models.F('spec_type')))
+
+    # حقل الملاحظات (كما طلبنا سابقاً)
+    spec_notes = models.TextField(blank=True, null=True, verbose_name=_("ملاحظات المواصفة"))
+    
+    # ===== إضافاتك الجديدة =====
+    # السعر الخاص بهذه المواصفة (اختياري)
+    spec_price = models.DecimalField(max_digits=12, decimal_places=2, default=Decimal('0.00'), verbose_name=_("سعر المواصفة"))
+    
+    # مربع اختيار ظهور الخاصية في الباركود
+    show_on_barcode = models.BooleanField(default=False, verbose_name=_("إظهار في الباركود"))
+    # ==========================
+
+    class Meta:
+        verbose_name = _("مواصفة")
+        verbose_name_plural = _("مواصفات إضافية")
+        # ضمان أن لا يتكرر نفس نوع المواصفة لنفس المنتج مرتين
+        unique_together = ('product', 'spec_type') 
+
+    def __str__(self):
+        return f"{self.product.product_name} - {self.spec_type.name}: {self.spec_value.value}"
+
+
+#=================
 
 class Barcode(models.Model):
     BARCODE_STATUS_CHOICES = [

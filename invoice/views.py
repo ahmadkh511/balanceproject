@@ -68,7 +68,7 @@ from .models import (
     PurchaseReturnItemBarcode, Sale, SaleItem, SaleItemBarcode, SaleReturn,
     SaleReturnItem, SaleReturnItemBarcode, Shipping_com_m, Status,
     StockNotification, StoreAnnouncement, StoreBanner, StoreFeatureIcon,
-    StoreSection, User, WebsiteOrder, WebsiteOrderItem
+    StoreSection, User, WebsiteOrder, WebsiteOrderItem,ProdSpec
 )
 
 # ==================== النماذج المحلية (Forms) ====================
@@ -2804,6 +2804,11 @@ def check_barcode_for_return(request, product_id):
 # ===============================================
 
 
+import json
+from django.http import JsonResponse
+from django.views.decorators.http import require_GET
+# تأكد من استيراد النماذج الجديدة
+from .models import Product, ProdSpec, SpecType, SpecValue
 
 @login_required
 @permission_required('invoice.add_product', raise_exception=True)
@@ -2816,16 +2821,23 @@ def product_create(request):
         product_name = request.POST.get('product_name')
         main_barcode = request.POST.get('main_barcode', '')
         product_description = request.POST.get('product_description', '')
-        prodnots = request.POST.get('Prodnots', '')          # ✅ السطر الأول فقط
+        prodnots = request.POST.get('Prodnots', '')          
         product_image = request.FILES.get('product_image')
         
-        print(f"✅ اسم المادة: {product_name}")
-        print(f"✅ الباركود الأساسي: {main_barcode}")
+        # ===== استقبال المواصفات الديناميكية كـ JSON =====
+        specs_json = request.POST.get('specs_data', '[]')
+        try:
+            specs_list = json.loads(specs_json)
+        except json.JSONDecodeError:
+            specs_list = []
+        # =================================================
         
         if not product_name:
             messages.error(request, _('اسم المادة مطلوب'))
+            # نرسل الـ spec_types للسياق حتى لا تختفي القائمة المنسدلة عند الخطأ
             return render(request, 'invoice/products/product_form.html', {
-                'title': _('إنشاء مادة جديدة')
+                'title': _('إنشاء مادة جديدة'),
+                'spec_types': SpecType.objects.all()
             })
         
         try:
@@ -2834,7 +2846,7 @@ def product_create(request):
                     product_name=product_name,
                     main_barcode=main_barcode if main_barcode else None,
                     product_description=product_description,
-                    Prodnots=prodnots if prodnots else None,   # ✅ السطر الثاني فقط
+                    Prodnots=prodnots if prodnots else None,
                     purch_price=Decimal('0.00'),
                     sale_price=Decimal('0.00'),
                     current_stock_quantity=Decimal('0.00'),
@@ -2854,6 +2866,22 @@ def product_create(request):
                 product.save()
                 print(f"✅ تم حفظ المادة: {product.product_name} - ID: {product.id} - Slug: {product.slug}")
                 
+                # ===== حفظ المواصفات الديناميكية =====
+                for spec in specs_list:
+                    type_id = spec.get('type_id')
+                    value_id = spec.get('value_id')
+                    
+                    if type_id and value_id:
+                        ProdSpec.objects.create(
+                            product=product,
+                            spec_type_id=type_id,
+                            spec_value_id=value_id,
+                            spec_price=Decimal(spec.get('price', '0.00')),
+                            show_on_barcode=spec.get('show_on_barcode', False),
+                            spec_notes=spec.get('notes', '') or None
+                        )
+                # ======================================
+                
                 messages.success(request, _('تم إنشاء المادة بنجاح'))
                 return redirect('invoice:product_list')
                 
@@ -2861,9 +2889,164 @@ def product_create(request):
             print(f"❌ خطأ في الحفظ: {str(e)}")
             messages.error(request, f'حدث خطأ أثناء إنشاء المادة: {str(e)}')
     
+    # جلب أنواع المواصفات لعرضها في القائمة المنسدلة عند فتح الصفحة
+    spec_types = SpecType.objects.all()
+    
     return render(request, 'invoice/products/product_form.html', {
-        'title': _('إنشاء مادة جديدة')
+        'title': _('إنشاء مادة جديدة'),
+        'spec_types': spec_types
     })
+
+
+# دالة AJAX لجلب قيم المواصفات بناءً على النوع المختار
+@require_GET
+@login_required
+def get_spec_values_api(request, type_id):
+    try:
+        values = SpecValue.objects.filter(spec_type_id=type_id).values('id', 'value')
+        return JsonResponse(list(values), safe=False)
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=400)
+
+
+
+
+
+
+
+
+from django.shortcuts import render, redirect, get_object_or_404
+from django.contrib import messages
+from django.views.decorators.http import require_POST
+from .models import SpecType, SpecValue
+
+@login_required
+@permission_required('invoice.add_spectype', raise_exception=True)
+def manage_specs(request):
+    """صفحة إدارة أنواع المواصفات وقيمها"""
+    if request.method == 'POST':
+        # إضافة نوع مواصفة جديد (مثال: الألوان)
+        type_name = request.POST.get('type_name')
+        if type_name:
+            type_name = type_name.strip()
+            obj, created = SpecType.objects.get_or_create(name=type_name)
+            if created:
+                messages.success(request, _('تم إضافة نوع المواصفة بنجاح'))
+            else:
+                messages.info(request, _('نوع المواصفة موجود مسبقاً'))
+        return redirect('invoice:manage_specs')
+    
+    # جلب كل الأنواع مع القيم المرتبطة بها
+    spec_types = SpecType.objects.prefetch_related('values').all()
+    return render(request, 'invoice/products/manage_specs.html', {
+        'title': _('إدارة المواصفات'),
+        'spec_types': spec_types
+    })
+
+@require_POST
+@login_required
+@permission_required('invoice.add_specvalue', raise_exception=True)
+def add_spec_value(request):
+    """إضافة قيمة لمواصفة معينة (مثال: أحمر للالوان)"""
+    type_id = request.POST.get('type_id')
+    value_text = request.POST.get('value')
+    
+    if type_id and value_text:
+        spec_type = get_object_or_404(SpecType, id=type_id)
+        value_text = value_text.strip()
+        obj, created = SpecValue.objects.get_or_create(spec_type=spec_type, value=value_text)
+        if created:
+            messages.success(request, _('تمت إضافة القيمة بنجاح'))
+        else:
+            messages.info(request, _('القيمة موجودة مسبقاً'))
+    else:
+        messages.error(request, _('بيانات غير صحيحة'))
+        
+    return redirect('invoice:manage_specs')
+
+
+
+
+from django.views.decorators.http import require_POST
+from django.shortcuts import get_object_or_404
+
+# ... (دوال manage_specs و add_spec_value السابقة تبقى كما هي) ...
+
+@require_POST
+@login_required
+@permission_required('invoice.change_spectype', raise_exception=True)
+def edit_spec_type(request, pk):
+    spec_type = get_object_or_404(SpecType, pk=pk)
+    new_name = request.POST.get('name')
+    if new_name:
+        spec_type.name = new_name.strip()
+        spec_type.save()
+        messages.success(request, _('تم تحديث اسم المواصفة بنجاح'))
+    return redirect('invoice:manage_specs')
+
+@require_POST
+@login_required
+@permission_required('invoice.delete_spectype', raise_exception=True)
+def delete_spec_type(request, pk):
+    spec_type = get_object_or_404(SpecType, pk=pk)
+    spec_type.delete()
+    messages.success(request, _('تم حذف نوع المواصفة بنجاح'))
+    return redirect('invoice:manage_specs')
+
+@require_POST
+@login_required
+@permission_required('invoice.change_specvalue', raise_exception=True)
+def edit_spec_value(request, pk):
+    spec_value = get_object_or_404(SpecValue, pk=pk)
+    new_value = request.POST.get('value')
+    if new_value:
+        spec_value.value = new_value.strip()
+        spec_value.save()
+        messages.success(request, _('تم تحديث القيمة بنجاح'))
+    return redirect('invoice:manage_specs')
+
+@require_POST
+@login_required
+@permission_required('invoice.delete_specvalue', raise_exception=True)
+def delete_spec_value(request, pk):
+    spec_value = get_object_or_404(SpecValue, pk=pk)
+    spec_value.delete()
+    messages.success(request, _('تم حذف القيمة بنجاح'))
+    return redirect('invoice:manage_specs')
+
+
+
+
+from django.shortcuts import get_object_or_404, render
+
+@login_required
+def print_product_barcode(request, pk):
+    """عرض صفحة طباعة الباركود للمادة المحددة"""
+    product = get_object_or_404(Product, pk=pk)
+    
+    context = {
+        'product': product,
+    }
+    return render(request, 'invoice/products/print_barcode.html', context)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 @login_required

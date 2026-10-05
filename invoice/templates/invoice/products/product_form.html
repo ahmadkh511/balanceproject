@@ -60,31 +60,22 @@ body {
     box-shadow: var(--shadow-lg);
 }
 .form-hero::before {
-    content: '';
-    position: absolute;
-    top: -40%; left: -5%;
+    content: ''; position: absolute; top: -40%; left: -5%;
     width: 300px; height: 300px;
     background: radial-gradient(circle, rgba(255,255,255,0.12) 0%, transparent 70%);
-    border-radius: 50%;
-    pointer-events: none;
+    border-radius: 50%; pointer-events: none;
 }
 .form-hero::after {
-    content: '';
-    position: absolute;
-    bottom: -30%; right: -5%;
+    content: ''; position: absolute; bottom: -30%; right: -5%;
     width: 250px; height: 250px;
     background: radial-gradient(circle, rgba(255,255,255,0.08) 0%, transparent 70%);
-    border-radius: 50%;
-    pointer-events: none;
+    border-radius: 50%; pointer-events: none;
 }
 .form-hero-content { position: relative; z-index: 2; display: flex; align-items: center; gap: 1rem; }
 .form-hero-icon {
-    width: 50px; height: 50px;
-    background: rgba(255, 255, 255, 0.2);
-    backdrop-filter: blur(10px);
-    border: 1px solid rgba(255, 255, 255, 0.25);
-    border-radius: var(--radius);
-    display: flex; align-items: center; justify-content: center;
+    width: 50px; height: 50px; background: rgba(255, 255, 255, 0.2);
+    backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.25);
+    border-radius: var(--radius); display: flex; align-items: center; justify-content: center;
     font-size: 1.35rem; flex-shrink: 0;
 }
 .form-hero-title { font-size: 1.4rem; font-weight: 700; margin: 0; line-height: 1.2; }
@@ -108,7 +99,7 @@ body {
     border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
     color: var(--primary-4); font-size: 0.9rem; flex-shrink: 0;
 }
-.form-input, .form-textarea {
+.form-input, .form-textarea, .form-select-custom {
     flex: 1; width: 100%; padding: 0.55rem 0.75rem;
     border: 1px solid var(--primary-2);
     border-radius: var(--radius-sm);
@@ -116,7 +107,7 @@ body {
     background: white; color: #1a1a2e;
     transition: all 0.2s var(--ease);
 }
-.form-input:focus, .form-textarea:focus {
+.form-input:focus, .form-textarea:focus, .form-select-custom:focus {
     border-color: var(--primary-3);
     box-shadow: 0 0 0 3px rgba(77, 208, 225, 0.2);
     outline: none;
@@ -126,26 +117,17 @@ body {
 .form-hint { font-size: 0.75rem; color: #94a3b8; margin-top: 0.3rem; }
 .form-hint i { margin-left: 0.2rem; color: var(--primary-3); }
 
-.is-valid { border-color: var(--success-color) !important; background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 8 8'%3e%3cpath fill='%23059669' d='M2.3 6.73L.6 4.53c-.4-1.04.46-1.4 1.1-.8l1.1 1.4 3.4-3.8c.6-.63 1.6-.27 1.2.7l-4 4.6c-.43.5-.8.4-1.1.1z'/%3e%3c/svg%3e"); background-repeat: no-repeat; background-position: left calc(0.375em + 0.1875rem) center; background-size: calc(0.75em + 0.375rem) calc(0.75em + 0.375rem); }
+.is-valid { border-color: var(--success-color) !important; }
 .is-invalid { border-color: var(--danger-color) !important; }
 
 /* ===== رفع الصورة ===== */
 .image-upload-box {
-    border: 2px dashed var(--primary-2);
-    border-radius: var(--radius);
-    padding: 1.5rem 1rem;
-    text-align: center;
-    background: var(--primary-1);
-    cursor: pointer;
-    transition: all 0.3s var(--ease);
-    min-height: 220px;
+    border: 2px dashed var(--primary-2); border-radius: var(--radius);
+    padding: 1.5rem 1rem; text-align: center; background: var(--primary-1);
+    cursor: pointer; transition: all 0.3s var(--ease); min-height: 220px;
     display: flex; align-items: center; justify-content: center;
 }
-.image-upload-box:hover {
-    border-color: var(--primary-4);
-    background: #f0fdfa;
-    transform: scale(1.01);
-}
+.image-upload-box:hover { border-color: var(--primary-4); background: #f0fdfa; transform: scale(1.01); }
 .image-upload-box.has-image { padding: 0.5rem; background: white; border-style: solid; }
 .image-placeholder-text { color: var(--primary-4); }
 .image-placeholder-text i { font-size: 2.5rem; margin-bottom: 0.5rem; display: block; }
@@ -177,27 +159,20 @@ body {
 /* ===== أزرار ===== */
 .btn-primary-teal {
     background: linear-gradient(135deg, var(--primary-4), var(--primary-dark));
-    color: white; border: none;
-    padding: 0.65rem 1.5rem;
-    border-radius: var(--radius-sm);
-    font-size: 0.9rem; font-weight: 600;
-    font-family: 'Tajawal', sans-serif;
-    cursor: pointer; transition: all 0.25s var(--ease);
+    color: white; border: none; padding: 0.65rem 1.5rem;
+    border-radius: var(--radius-sm); font-size: 0.9rem; font-weight: 600;
+    font-family: 'Tajawal', sans-serif; cursor: pointer; transition: all 0.25s var(--ease);
     display: inline-flex; align-items: center; gap: 0.5rem;
     box-shadow: 0 3px 12px rgba(0, 150, 167, 0.3);
 }
 .btn-primary-teal:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(0, 150, 167, 0.4); color: white; }
 .btn-primary-teal:active { transform: scale(0.98); }
 .btn-secondary-teal {
-    background: white; color: var(--text-dark);
-    border: 1px solid var(--primary-2);
-    padding: 0.65rem 1.5rem;
-    border-radius: var(--radius-sm);
-    font-size: 0.9rem; font-weight: 600;
-    font-family: 'Tajawal', sans-serif;
+    background: white; color: var(--text-dark); border: 1px solid var(--primary-2);
+    padding: 0.65rem 1.5rem; border-radius: var(--radius-sm);
+    font-size: 0.9rem; font-weight: 600; font-family: 'Tajawal', sans-serif;
     cursor: pointer; transition: all 0.25s var(--ease);
-    display: inline-flex; align-items: center; gap: 0.5rem;
-    text-decoration: none;
+    display: inline-flex; align-items: center; gap: 0.5rem; text-decoration: none;
 }
 .btn-secondary-teal:hover { background: var(--primary-1); border-color: var(--primary-3); color: var(--text-dark); }
 
@@ -211,6 +186,32 @@ body {
 .alert-teal.alert-error { background: var(--danger-bg); border-color: var(--danger-color); color: var(--danger-color); }
 .alert-teal.alert-info { background: var(--primary-1); border-color: var(--primary-3); color: var(--text-dark); }
 
+/* ===== المواصفات الديناميكية (UX) ===== */
+.spec-row {
+    background: #fdfdfd;
+    border: 1px solid var(--primary-2);
+    border-radius: var(--radius);
+    padding: 15px;
+    margin-bottom: 15px;
+    position: relative;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+}
+.spec-row .form-label { font-size: 0.75rem; color: #64748b; }
+.btn-remove-spec {
+    background: var(--danger-bg);
+    color: var(--danger-color);
+    border: 1px solid var(--danger-color);
+    border-radius: var(--radius-sm);
+    width: 38px; height: 38px;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer; transition: all 0.2s var(--ease); flex-shrink: 0;
+    margin-top: 1.6rem;
+}
+.btn-remove-spec:hover { background: var(--danger-color); color: white; }
+.checkbox-container { display: flex; align-items: center; gap: 8px; margin-top: 1.8rem; }
+.checkbox-container input { width: 20px; height: 20px; accent-color: var(--primary-4); cursor: pointer; }
+.checkbox-container label { margin: 0; cursor: pointer; font-size: 0.8rem; color: var(--text-dark); }
+
 /* ===== التجاوب ===== */
 @media (max-width: 768px) {
     .form-hero { padding: 1.25rem 1rem; }
@@ -219,11 +220,13 @@ body {
     .btn-primary-teal, .btn-secondary-teal { width: 100%; justify-content: center; }
     .actions-row { flex-direction: column; gap: 0.5rem; }
     .ck-container .ck-content { min-height: 140px; }
+    .btn-remove-spec { margin-top: 0.5rem; width: 100%; height: 40px; }
+    .checkbox-container { margin-top: 0.5rem; }
 }
 </style>
 
 <!-- ========================================================== -->
-<!-- 2) سلاسل مترجمة عبر data-* (بديل Django داخل script)       -->
+<!-- 2) سلاسل مترجمة وروابط API                                  -->
 <!-- ========================================================== -->
 <div id="i18nStrings" class="d-none"
      data-err-name="{% trans 'يرجى إدخال اسم المادة' %}"
@@ -231,8 +234,22 @@ body {
      data-err-size="{% trans 'حجم الصورة كبير جداً. الحد الأقصى 5 ميجابايت' %}"
      data-loaded="{% trans 'تم تحميل صفحة إنشاء المادة' %}"
      data-full-load="{% trans 'تم تحميل الصفحة بالكامل' %}"
-     data-ckeditor-error="{% trans 'تعذر تحميل محرر الملاحظات' %}">
+     data-ckeditor-error="{% trans 'تعذر تحميل محرر الملاحظات' %}"
+     data-spec-loading="{% trans 'جاري التحميل...' %}">
 </div>
+
+<div id="apiUrls" class="d-none" 
+     data-spec-values-url="{% url 'invoice:get_spec_values_api' 0 %}">
+</div>
+
+<!-- حاوية بيانات أنواع المواصفات (JSON آمن لا يسبب أخطاء في VS Code) -->
+<script id="specTypesData" type="application/json">
+[
+    {% for type in spec_types %}
+    {"id": {{ type.id }}, "name": "{{ type.name|escapejs }}"}{% if not forloop.last %},{% endif %}
+    {% endfor %}
+]
+</script>
 
 <div class="page-container">
     <!-- ===== الهيدر ===== -->
@@ -257,60 +274,44 @@ body {
         {% endfor %}
     {% endif %}
 
-    <!-- ===== النموذج ===== -->
-    <div class="card">
-        <div class="card-title"><i class="fas fa-edit"></i> {% trans "معلومات المادة الأساسية" %}</div>
+    <!-- ===== بداية النموذج ===== -->
+    <form method="post" enctype="multipart/form-data" id="productForm" action="{% url 'invoice:product_create' %}">
+        {% csrf_token %}
 
-        <form method="post" enctype="multipart/form-data" id="productForm" action="{% url 'invoice:product_create' %}">
-            {% csrf_token %}
+        <!-- حقل مخفي لحمل بيانات المواصفات بصيغة JSON -->
+        <input type="hidden" name="specs_data" id="specsData" value="[]">
+
+        <!-- ===== بطاقة المعلومات الأساسية ===== -->
+        <div class="card">
+            <div class="card-title"><i class="fas fa-edit"></i> {% trans "معلومات المادة الأساسية" %}</div>
 
             <div class="row g-4">
-                <!-- العمود الأيمن -->
                 <div class="col-lg-8">
-                    <!-- اسم المادة -->
                     <div class="mb-3">
-                        <label for="id_product_name" class="form-label">
-                            {% trans "اسم المادة" %} <span class="required">*</span>
-                        </label>
+                        <label for="id_product_name" class="form-label">{% trans "اسم المادة" %} <span class="required">*</span></label>
                         <div class="input-group-custom">
                             <span class="input-icon"><i class="fas fa-tag"></i></span>
-                            <input type="text" class="form-input" id="id_product_name" name="product_name"
-                                   required autofocus
-                                   placeholder="{% trans 'أدخل اسم المادة' %}">
+                            <input type="text" class="form-input" id="id_product_name" name="product_name" required autofocus placeholder="{% trans 'أدخل اسم المادة' %}">
                         </div>
                         <div class="form-hint"><i class="fas fa-info-circle fa-xs"></i> {% trans "أدخل اسم المادة كاملاً كما يجب أن يظهر في الفواتير" %}</div>
                     </div>
 
-                    <!-- الباركود الأساسي -->
                     <div class="mb-3">
-                        <label for="id_main_barcode" class="form-label">
-                            {% trans "الباركود الأساسي" %} <span class="optional">({% trans "اختياري" %})</span>
-                        </label>
+                        <label for="id_main_barcode" class="form-label">{% trans "الباركود الأساسي" %} <span class="optional">({% trans "اختياري" %})</span></label>
                         <div class="input-group-custom">
                             <span class="input-icon"><i class="fas fa-barcode"></i></span>
-                            <input type="text" class="form-input" id="id_main_barcode" name="main_barcode"
-                                   placeholder="{% trans 'أدخل الباركود الأساسي (اختياري)' %}">
+                            <input type="text" class="form-input" id="id_main_barcode" name="main_barcode" placeholder="{% trans 'أدخل الباركود الأساسي (اختياري)' %}">
                         </div>
-                        <div class="form-hint"><i class="fas fa-info-circle fa-xs"></i> {% trans "الباركود الأساسي للمادة - يجب أن يكون فريداً" %}</div>
                     </div>
 
-                    <!-- وصف المادة -->
                     <div class="mb-3">
-                        <label for="id_product_description" class="form-label">
-                            {% trans "وصف المادة" %} <span class="optional">({% trans "اختياري" %})</span>
-                        </label>
-                        <textarea class="form-textarea" id="id_product_description" name="product_description"
-                                  rows="4" placeholder="{% trans 'أضف وصفاً تفصيلياً للمادة (اختياري)' %}"></textarea>
-                        <div class="form-hint"><i class="fas fa-info-circle fa-xs"></i> {% trans "يمكنك إضافة مواصفات أو ملاحظات مهمة عن المادة" %}</div>
+                        <label for="id_product_description" class="form-label">{% trans "وصف المادة" %} <span class="optional">({% trans "اختياري" %})</span></label>
+                        <textarea class="form-textarea" id="id_product_description" name="product_description" rows="4" placeholder="{% trans 'أضف وصفاً تفصيلياً للمادة (اختياري)' %}"></textarea>
                     </div>
                 </div>
 
-                <!-- العمود الأيسر - الصورة -->
                 <div class="col-lg-4">
-                    <label class="form-label">
-                        <i class="fas fa-image ms-1"></i> {% trans "صورة المادة" %}
-                        <span class="optional">({% trans "اختياري" %})</span>
-                    </label>
+                    <label class="form-label"><i class="fas fa-image ms-1"></i> {% trans "صورة المادة" %} <span class="optional">({% trans "اختياري" %})</span></label>
                     <div class="image-upload-box" id="imageUploadBox">
                         <div id="noImagePlaceholder" class="image-placeholder-text">
                             <i class="fas fa-cloud-upload-alt"></i>
@@ -331,25 +332,38 @@ body {
                     </button>
                 </div>
             </div>
+        </div>
 
-            <!-- ===== شريط التقدم ===== -->
+        <!-- ===== بطاقة المواصفات الديناميكية ===== -->
+        <div class="card">
+            <div class="card-title"><i class="fas fa-sliders-h"></i> {% trans "المواصفات والأسعار (Variants)" %}</div>
+            <div class="form-hint mb-3">
+                <i class="fas fa-info-circle fa-xs"></i> {% trans "أضف مواصفات مخصصة (اللون، الحجم) وحدد سعرها وخيارات ظهورها بالباركود." %}
+            </div>
+            
+            <div id="specsContainer">
+                <!-- سيتم حقن صفوف المواصفات هنا بواسطة JS -->
+            </div>
+            
+            <button type="button" class="btn-secondary-teal" id="addSpecBtn">
+                <i class="fas fa-plus"></i> {% trans "إضافة مواصفة جديدة" %}
+            </button>
+        </div>
+
+        <!-- ===== بطاقة الملاحظات ===== -->
+        <div class="card">
+            <div class="card-title"><i class="fas fa-sticky-note"></i> {% trans "ملاحظات عامة" %}</div>
+            <div class="mb-3">
+                <label for="id_Prodnots" class="form-label">{% trans "ملاحظات" %} <span class="optional">({% trans "اختياري" %})</span></label>
+                <div class="ck-container">
+                    <textarea name="Prodnots" id="id_Prodnots" rows="8" placeholder="{% trans 'أضف ملاحظات تفصيلية للمادة... (يدعم التنسيق، الصور، الجداول)' %}"></textarea>
+                </div>
+            </div>
+
             <div class="progress-teal">
                 <div class="progress-teal-bar" id="progressBar"></div>
             </div>
 
-            <!-- ===== حقل الملاحظات (Prodnots) - CKEditor 5 من jsdelivr ===== -->
-            <div class="mb-3">
-                <label for="id_Prodnots" class="form-label">
-                    <i class="fas fa-sticky-note ms-1"></i> {% trans "ملاحظات" %}
-                    <span class="optional">({% trans "اختياري" %})</span>
-                </label>
-                <div class="ck-container">
-                    <textarea name="Prodnots" id="id_Prodnots" rows="8" placeholder="{% trans 'أضف ملاحظات تفصيلية للمادة... (يدعم التنسيق، الصور، الجداول)' %}"></textarea>
-                </div>
-                <div class="form-hint"><i class="fas fa-info-circle fa-xs"></i> {% trans "ملاحظات غنية بالتنسيق تظهر في صفحة تفاصيل المادة" %}</div>
-            </div>
-
-            <!-- ===== الأزرار ===== -->
             <div class="d-flex gap-2 actions-row mt-4">
                 <button type="submit" class="btn-primary-teal">
                     <i class="fas fa-save"></i> {% trans "حفظ المادة" %}
@@ -358,12 +372,13 @@ body {
                     <i class="fas fa-times"></i> {% trans "إلغاء" %}
                 </a>
             </div>
-        </form>
-    </div>
+        </div>
+
+    </form>
 </div>
 
 <!-- ========================================================== -->
-<!-- 3) CKEditor 5 من jsdelivr (مسموح في CSP)                   -->
+<!-- 3) CKEditor 5                                               -->
 <!-- ========================================================== -->
 <script src="https://cdn.jsdelivr.net/npm/@ckeditor/ckeditor5-build-classic@40.2.0/build/ckeditor.min.js"></script>
 
@@ -374,11 +389,25 @@ body {
 (function() {
     'use strict';
 
-    /* ===== قراءة السلاسل المترجمة من data-* ===== */
+    /* ===== قراءة السلاسل المترجمة والروابط ===== */
     var i18nEl = document.getElementById('i18nStrings');
     var i18n = i18nEl ? i18nEl.dataset : {};
+    
+    var apiUrlsEl = document.getElementById('apiUrls');
+    var specValuesBaseUrl = apiUrlsEl ? apiUrlsEl.dataset.specValuesUrl : '';
 
-    /* ===== العناصر ===== */
+    /* ===== قراءة بيانات أنواع المواصفات من JSON الآمن ===== */
+    var specTypesElement = document.getElementById('specTypesData');
+    var specTypesData = [];
+    if (specTypesElement) {
+        try {
+            specTypesData = JSON.parse(specTypesElement.textContent.trim());
+        } catch(e) {
+            console.error('Error parsing spec types JSON:', e);
+        }
+    }
+
+    /* ===== العناصر الأساسية ===== */
     var form = document.getElementById('productForm');
     var nameInput = document.getElementById('id_product_name');
     var barcodeInput = document.getElementById('id_main_barcode');
@@ -394,6 +423,11 @@ body {
     var progressBar = document.getElementById('progressBar');
     var prodnotsTextarea = document.getElementById('id_Prodnots');
     var ckeditorInstance = null;
+
+    /* ===== عناصر المواصفات ===== */
+    var specsContainer = document.getElementById('specsContainer');
+    var addSpecBtn = document.getElementById('addSpecBtn');
+    var specsDataInput = document.getElementById('specsData');
 
     console.log('✅ ' + (i18n.loaded || 'تم تحميل صفحة إنشاء المادة'));
 
@@ -429,41 +463,138 @@ body {
 
     /* ===== تهيئة CKEditor 5 ===== */
     function initCKEditor() {
-        if (typeof ClassicEditor === 'undefined') {
-            setTimeout(initCKEditor, 200);
-            return;
-        }
+        if (typeof ClassicEditor === 'undefined') { setTimeout(initCKEditor, 200); return; }
         if (!prodnotsTextarea) return;
         ClassicEditor.create(prodnotsTextarea, {
-            toolbar: {
-                items: [
-                    'heading', '|',
-                    'bold', 'italic', 'underline', 'strikethrough', '|',
-                    'fontColor', '|',
-                    'link', 'bulletedList', 'numberedList', '|',
-                    'blockQuote', 'insertTable', '|',
-                    'undo', 'redo'
-                ]
-            },
-            table: {
-                contentToolbar: ['tableColumn', 'tableRow', 'mergeTableCells']
-            },
-            heading: {
-                options: [
-                    { model: 'paragraph', title: 'نص عادي', class: 'ck-heading_paragraph' },
-                    { model: 'heading1', view: 'h1', title: 'عنوان 1', class: 'ck-heading_heading1' },
-                    { model: 'heading2', view: 'h2', title: 'عنوان 2', class: 'ck-heading_heading2' },
-                    { model: 'heading3', view: 'h3', title: 'عنوان 3', class: 'ck-heading_heading3' }
-                ]
-            }
+            toolbar: { items: ['heading', '|', 'bold', 'italic', 'underline', 'strikethrough', '|', 'fontColor', '|', 'link', 'bulletedList', 'numberedList', '|', 'blockQuote', 'insertTable', '|', 'undo', 'redo'] },
+            table: { contentToolbar: ['tableColumn', 'tableRow', 'mergeTableCells'] }
         }).then(function(editor) {
             ckeditorInstance = editor;
             editor.model.document.on('change:data', updateProgress);
-            console.log('✅ CKEditor 5 initialized for Prodnots');
         }).catch(function(error) {
             console.error('CKEditor error:', error);
             showAlert(i18n.ckeditorError || 'تعذر تحميل محرر الملاحظات', 'error');
         });
+    }
+
+    /* ===== إدارة المواصفات الديناميكية (AJAX) ===== */
+    function addSpecRow() {
+        var row = document.createElement('div');
+        row.className = 'spec-row';
+        
+        var typeOptions = '<option value="">اختر النوع</option>';
+        specTypesData.forEach(function(t) {
+            typeOptions += '<option value="' + t.id + '">' + t.name + '</option>';
+        });
+
+        row.innerHTML = `
+            <div class="row g-3 align-items-end">
+                <div class="col-md-3">
+                    <label class="form-label">نوع المواصفة</label>
+                    <select class="form-select-custom spec-type-select" required>
+                        ${typeOptions}
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">القيمة</label>
+                    <select class="form-select-custom spec-value-select" disabled required>
+                        <option value="">${i18n.specLoading || 'جاري التحميل...'}</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">السعر الإضافي</label>
+                    <input type="number" step="0.01" class="form-input spec-price-input" placeholder="0.00" value="0.00">
+                </div>
+                <div class="col-md-2">
+                    <div class="checkbox-container">
+                        <input type="checkbox" class="spec-barcode-check" checked>
+                        <label>إظهار بالباركود</label>
+                    </div>
+                </div>
+                <div class="col-md-2 d-flex gap-2">
+                    <input type="text" class="form-input spec-notes-input" placeholder="ملاحظات">
+                    <button type="button" class="btn-remove-spec" title="حذف"><i class="fas fa-times"></i></button>
+                </div>
+            </div>
+        `;
+
+        specsContainer.appendChild(row);
+
+        var typeSelect = row.querySelector('.spec-type-select');
+        var valueSelect = row.querySelector('.spec-value-select');
+        var removeBtn = row.querySelector('.btn-remove-spec');
+
+        typeSelect.addEventListener('change', function() {
+            loadSpecValues(this.value, valueSelect);
+        });
+
+        removeBtn.addEventListener('click', function() {
+            row.remove();
+            updateProgress();
+        });
+        
+        updateProgress();
+    }
+
+    function loadSpecValues(typeId, valueSelect) {
+        if (!typeId) {
+            valueSelect.innerHTML = '<option value="">اختر القيمة</option>';
+            valueSelect.disabled = true;
+            return;
+        }
+
+        valueSelect.innerHTML = '<option value="">' + (i18n.specLoading || 'جاري التحميل...') + '</option>';
+        valueSelect.disabled = true;
+
+        // تعويض الرقم 0 بالـ ID الحقيقي في الرابط
+        var url = specValuesBaseUrl.replace('/0/', '/' + typeId + '/');
+
+        fetch(url)
+            .then(response => {
+                if (!response.ok) throw new Error('Network response was not ok');
+                return response.json();
+            })
+            .then(data => {
+                valueSelect.innerHTML = '<option value="">اختر القيمة</option>';
+                data.forEach(function(item) {
+                    var opt = document.createElement('option');
+                    opt.value = item.id;
+                    opt.textContent = item.value;
+                    valueSelect.appendChild(opt);
+                });
+                valueSelect.disabled = false;
+            })
+            .catch(error => {
+                console.error('Error fetching spec values:', error);
+                valueSelect.innerHTML = '<option value="">خطأ في التحميل</option>';
+                showAlert('حدث خطأ أثناء جلب القيم', 'error');
+            });
+    }
+
+    function collectSpecsData() {
+        var specs = [];
+        var rows = specsContainer.querySelectorAll('.spec-row');
+        
+        rows.forEach(function(row) {
+            var typeSelect = row.querySelector('.spec-type-select');
+            var valueSelect = row.querySelector('.spec-value-select');
+            
+            if (typeSelect.value && valueSelect.value) {
+                specs.push({
+                    type_id: typeSelect.value,
+                    value_id: valueSelect.value,
+                    price: row.querySelector('.spec-price-input').value || '0.00',
+                    show_on_barcode: row.querySelector('.spec-barcode-check').checked,
+                    notes: row.querySelector('.spec-notes-input').value || ''
+                });
+            }
+        });
+        
+        specsDataInput.value = JSON.stringify(specs);
+    }
+
+    if (addSpecBtn) {
+        addSpecBtn.addEventListener('click', addSpecRow);
     }
 
     /* ===== الصورة ===== */
@@ -481,14 +612,12 @@ body {
             var validTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/jpg'];
             if (validTypes.indexOf(file.type) === -1) {
                 showAlert(i18n.errType || 'نوع الملف غير مدعوم', 'error');
-                this.value = '';
-                return;
+                this.value = ''; return;
             }
             var maxSize = 5 * 1024 * 1024;
             if (file.size > maxSize) {
                 showAlert(i18n.errSize || 'حجم الصورة كبير جداً', 'error');
-                this.value = '';
-                return;
+                this.value = ''; return;
             }
             var reader = new FileReader();
             reader.onload = function(ev) {
@@ -524,7 +653,7 @@ body {
         updateProgress();
     }
 
-    /* ===== التحقق من النموذج ===== */
+    /* ===== التحقق من النموذج قبل الإرسال ===== */
     if (form) {
         form.addEventListener('submit', function(e) {
             var name = nameInput.value.trim();
@@ -535,10 +664,8 @@ body {
                 nameInput.focus();
             } else {
                 nameInput.classList.remove('is-invalid');
-                /* مزامنة CKEditor قبل الإرسال */
-                if (ckeditorInstance) {
-                    ckeditorInstance.updateSourceElement();
-                }
+                if (ckeditorInstance) { ckeditorInstance.updateSourceElement(); }
+                collectSpecsData(); // تجميع بيانات المواصفات قبل الإرسال
             }
         });
     }
@@ -548,12 +675,8 @@ body {
     inputs.forEach(function(inp) {
         if (inp) {
             inp.addEventListener('input', function() {
-                if (this.value.trim()) {
-                    this.classList.remove('is-invalid');
-                    this.classList.add('is-valid');
-                } else {
-                    this.classList.remove('is-valid');
-                }
+                if (this.value.trim()) { this.classList.remove('is-invalid'); this.classList.add('is-valid'); }
+                else { this.classList.remove('is-valid'); }
                 updateProgress();
             });
         }
@@ -568,4 +691,4 @@ body {
     });
 })();
 </script>
-{% endblock %}
+{% endblock %}555

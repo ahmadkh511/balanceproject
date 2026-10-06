@@ -42,8 +42,8 @@ body { font-family: 'Tajawal', sans-serif; background: linear-gradient(135deg, #
 .form-label .optional { color: #94a3b8; font-weight: 400; font-size: 0.8rem; }
 .input-group-custom { position: relative; display: flex; align-items: stretch; }
 .input-icon { display: flex; align-items: center; justify-content: center; width: 42px; background: var(--primary-1); border: 1px solid var(--primary-2); border-left: none; border-radius: 0 var(--radius-sm) var(--radius-sm) 0; color: var(--primary-4); font-size: 0.9rem; flex-shrink: 0; }
-.form-input, .form-textarea { flex: 1; width: 100%; padding: 0.55rem 0.75rem; border: 1px solid var(--primary-2); border-radius: var(--radius-sm); font-size: 0.88rem; font-family: 'Tajawal', sans-serif; background: white; color: #1a1a2e; transition: all 0.2s var(--ease); }
-.form-input:focus, .form-textarea:focus { border-color: var(--primary-3); box-shadow: 0 0 0 3px rgba(77,208,225,0.2); outline: none; }
+.form-input, .form-textarea, .form-select-custom { flex: 1; width: 100%; padding: 0.55rem 0.75rem; border: 1px solid var(--primary-2); border-radius: var(--radius-sm); font-size: 0.88rem; font-family: 'Tajawal', sans-serif; background: white; color: #1a1a2e; transition: all 0.2s var(--ease); }
+.form-input:focus, .form-textarea:focus, .form-select-custom:focus { border-color: var(--primary-3); box-shadow: 0 0 0 3px rgba(77,208,225,0.2); outline: none; }
 .input-group-custom .form-input { border-radius: var(--radius-sm) 0 0 var(--radius-sm); border-left: none; }
 .form-textarea { resize: vertical; min-height: 100px; }
 .form-hint { font-size: 0.75rem; color: #94a3b8; margin-top: 0.3rem; }
@@ -84,7 +84,6 @@ body { font-family: 'Tajawal', sans-serif; background: linear-gradient(135deg, #
 .ck-container .ck-focused { border-color: var(--primary-3) !important; box-shadow: 0 0 0 3px rgba(77,208,225,0.2) !important; }
 #id_Prodnots { width: 100%; padding: 0.75rem; border: 1px solid var(--primary-2); border-radius: var(--radius); font-family: 'Tajawal', sans-serif; font-size: 0.88rem; min-height: 200px; resize: vertical; }
 
-/* ✅ قسم الملاحظات بعرض كامل */
 .notes-fullwidth { margin-top: 1.5rem; padding-top: 1.5rem; border-top: 2px solid var(--primary-1); }
 .notes-fullwidth .form-label { font-size: 0.9rem; }
 
@@ -101,6 +100,15 @@ body { font-family: 'Tajawal', sans-serif; background: linear-gradient(135deg, #
 .alert-teal.alert-error { background: var(--danger-bg); border-color: var(--danger-color); color: var(--danger-color); }
 .alert-teal.alert-info { background: var(--primary-1); border-color: var(--primary-3); color: var(--text-dark); }
 
+/* ===== المواصفات الديناميكية ===== */
+.spec-row { background: #fdfdfd; border: 1px solid var(--primary-2); border-radius: var(--radius); padding: 15px; margin-bottom: 15px; position: relative; box-shadow: 0 2px 4px rgba(0,0,0,0.02); }
+.spec-row .form-label { font-size: 0.75rem; color: #64748b; }
+.btn-remove-spec { background: var(--danger-bg); color: var(--danger-color); border: 1px solid var(--danger-color); border-radius: var(--radius-sm); width: 38px; height: 38px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s var(--ease); flex-shrink: 0; margin-top: 1.6rem; }
+.btn-remove-spec:hover { background: var(--danger-color); color: white; }
+.checkbox-container { display: flex; align-items: center; gap: 8px; margin-top: 1.8rem; }
+.checkbox-container input { width: 20px; height: 20px; accent-color: var(--primary-4); cursor: pointer; }
+.checkbox-container label { margin: 0; cursor: pointer; font-size: 0.8rem; color: var(--text-dark); }
+
 @media (max-width: 768px) {
     .form-hero { padding: 1.25rem 1rem; }
     .form-hero-title { font-size: 1.15rem; }
@@ -108,6 +116,8 @@ body { font-family: 'Tajawal', sans-serif; background: linear-gradient(135deg, #
     .btn-primary-teal, .btn-secondary-teal { width: 100%; justify-content: center; }
     .actions-row { flex-direction: column; gap: 0.5rem; }
     .system-info { padding: 0.75rem; }
+    .btn-remove-spec { margin-top: 0.5rem; width: 100%; height: 40px; }
+    .checkbox-container { margin-top: 0.5rem; }
 }
 </style>
 
@@ -118,8 +128,37 @@ body { font-family: 'Tajawal', sans-serif; background: linear-gradient(135deg, #
      data-loaded="{% trans 'تم تحميل صفحة تعديل المادة' %}"
      data-full-load="{% trans 'تم تحميل الصفحة بالكامل' %}"
      data-ckeditor-error="{% trans 'تعذر تحميل محرر الملاحظات' %}"
-     data-remove-warning="{% trans 'سيتم حذف الصورة الحالية عند الحفظ' %}">
+     data-remove-warning="{% trans 'سيتم حذف الصورة الحالية عند الحفظ' %}"
+     data-spec-loading="{% trans 'جاري التحميل...' %}">
 </div>
+
+<div id="apiUrls" class="d-none" data-spec-values-url="{% url 'invoice:get_spec_values_api' 0 %}"></div>
+
+<!-- حاوية بيانات المواصفات (أنواع + قيم حالية للمنتج) -->
+<script id="specTypesData" type="application/json">
+[
+    {% for type in spec_types %}
+    {"id": {{ type.id }}, "name": "{{ type.name|escapejs }}"}{% if not forloop.last %},{% endif %}
+    {% endfor %}
+]
+</script>
+<script id="existingSpecsData" type="application/json">
+{{ existing_specs|json_script:""|safe }}
+</script>
+<!-- تم تصحيح طباعة JSON لتفادي أخطاء القوالب -->
+<script id="existingSpecsDataClean" type="application/json">
+[
+{% for spec in existing_specs %}
+    {
+        "spec_type_id": {{ spec.spec_type_id }},
+        "spec_value_id": {{ spec.spec_value_id }},
+        "spec_price": "{{ spec.spec_price }}",
+        "show_on_barcode": {{ spec.show_on_barcode|lower }},
+        "spec_notes": "{{ spec.spec_notes|default_if_none:''|escapejs }}"
+    }{% if not forloop.last %},{% endif %}
+{% endfor %}
+]
+</script>
 
 <div class="page-container">
     <div class="form-hero">
@@ -142,124 +181,68 @@ body { font-family: 'Tajawal', sans-serif; background: linear-gradient(135deg, #
         {% endfor %}
     {% endif %}
 
-    <div class="card">
-        <div class="card-title"><i class="fas fa-edit"></i> {% trans "تعديل معلومات المادة" %}</div>
+    <form method="post" enctype="multipart/form-data" id="productEditForm">
+        {% csrf_token %}
+        <!-- حقل مخفي لحمل بيانات المواصفات بصيغة JSON -->
+        <input type="hidden" name="specs_data" id="specsData" value="[]">
 
-        <form method="post" enctype="multipart/form-data" id="productEditForm">
-            {% csrf_token %}
+        <div class="card">
+            <div class="card-title"><i class="fas fa-edit"></i> {% trans "تعديل معلومات المادة" %}</div>
 
-            <!-- ====================================================== -->
-            <!-- صفّ الأعمدة: معلومات + صورة (col-lg-8 + col-lg-4)      -->
-            <!-- ====================================================== -->
             <div class="row g-4">
-                <!-- العمود الأيمن - col-lg-8 -->
                 <div class="col-lg-8">
-                    <!-- اسم المادة -->
                     <div class="mb-3">
-                        <label for="id_product_name" class="form-label">
-                            {% trans "اسم المادة" %} <span class="required">*</span>
-                        </label>
+                        <label for="id_product_name" class="form-label">{% trans "اسم المادة" %} <span class="required">*</span></label>
                         <div class="input-group-custom">
                             <span class="input-icon"><i class="fas fa-tag"></i></span>
-                            <input type="text" class="form-input" id="id_product_name" name="product_name"
-                                   value="{{ product.product_name }}" required autofocus
-                                   placeholder="{% trans 'أدخل اسم المادة' %}">
+                            <input type="text" class="form-input" id="id_product_name" name="product_name" value="{{ product.product_name }}" required autofocus placeholder="{% trans 'أدخل اسم المادة' %}">
                         </div>
                     </div>
 
-                    <!-- الباركود الأساسي -->
                     <div class="mb-3">
-                        <label for="id_main_barcode" class="form-label">
-                            {% trans "الباركود الأساسي" %} <span class="optional">({% trans "اختياري" %})</span>
-                        </label>
+                        <label for="id_main_barcode" class="form-label">{% trans "الباركود الأساسي" %} <span class="optional">({% trans "اختياري" %})</span></label>
                         <div class="input-group-custom">
                             <span class="input-icon"><i class="fas fa-barcode"></i></span>
-                            <input type="text" class="form-input" id="id_main_barcode" name="main_barcode"
-                                   value="{{ product.main_barcode|default:'' }}"
-                                   placeholder="{% trans 'أدخل الباركود الأساسي (اختياري)' %}">
+                            <input type="text" class="form-input" id="id_main_barcode" name="main_barcode" value="{{ product.main_barcode|default:'' }}" placeholder="{% trans 'أدخل الباركود الأساسي (اختياري)' %}">
                         </div>
                         <div class="form-hint"><i class="fas fa-info-circle fa-xs"></i> {% trans "الباركود الأساسي للمادة - يجب أن يكون فريداً" %}</div>
                     </div>
 
-                    <!-- وصف المادة -->
                     <div class="mb-3">
-                        <label for="id_product_description" class="form-label">
-                            {% trans "وصف المادة" %} <span class="optional">({% trans "اختياري" %})</span>
-                        </label>
-                        <textarea class="form-textarea" id="id_product_description" name="product_description"
-                                  rows="4" placeholder="{% trans 'أضف وصفاً تفصيلياً للمادة' %}">{{ product.product_description }}</textarea>
+                        <label for="id_product_description" class="form-label">{% trans "وصف المادة" %} <span class="optional">({% trans "اختياري" %})</span></label>
+                        <textarea class="form-textarea" id="id_product_description" name="product_description" rows="4" placeholder="{% trans 'أضف وصفاً تفصيلياً للمادة' %}">{{ product.product_description }}</textarea>
                     </div>
 
-                    <!-- معلومات النظام -->
                     <div class="system-info">
                         <div class="system-info-title"><i class="fas fa-clock"></i> {% trans "معلومات النظام" %}</div>
                         <div class="row">
                             <div class="col-md-6">
-                                <div class="system-info-row">
-                                    <i class="fas fa-calendar"></i>
-                                    <span><strong>{% trans "تاريخ الإنشاء:" %}</strong> {{ product.date_created|date:"Y-m-d H:i" }}</span>
-                                </div>
-                                <div class="system-info-row">
-                                    <i class="fas fa-sync"></i>
-                                    <span><strong>{% trans "آخر تحديث:" %}</strong> {{ product.last_updated|date:"Y-m-d H:i" }}</span>
-                                </div>
+                                <div class="system-info-row"><i class="fas fa-calendar"></i><span><strong>{% trans "تاريخ الإنشاء:" %}</strong> {{ product.date_created|date:"Y-m-d H:i" }}</span></div>
+                                <div class="system-info-row"><i class="fas fa-sync"></i><span><strong>{% trans "آخر تحديث:" %}</strong> {{ product.last_updated|date:"Y-m-d H:i" }}</span></div>
                             </div>
                             <div class="col-md-6">
-                                <div class="system-info-row">
-                                    <i class="fas fa-barcode"></i>
-                                    <span><strong>{% trans "الباركود:" %}</strong>
-                                        {% if product.main_barcode %}{{ product.main_barcode }}{% else %}<span class="text-muted">{% trans "لا يوجد" %}</span>{% endif %}
-                                    </span>
-                                </div>
+                                <div class="system-info-row"><i class="fas fa-barcode"></i><span><strong>{% trans "الباركود:" %}</strong> {% if product.main_barcode %}{{ product.main_barcode }}{% else %}<span class="text-muted">{% trans "لا يوجد" %}</span>{% endif %}</span></div>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                <!-- العمود الأيسر - col-lg-4 - الصورة -->
                 <div class="col-lg-4">
-                    <label class="form-label">
-                        <i class="fas fa-image ms-1"></i> {% trans "صورة المادة" %}
-                        <span class="optional">({% trans "اختياري" %})</span>
-                    </label>
-
-                    <div class="form-label" style="font-size: 0.75rem; color: #94a3b8; margin-top: 0.5rem;">
-                        <i class="fas fa-image ms-1"></i> {% trans "الصورة الحالية" %}
-                    </div>
+                    <label class="form-label"><i class="fas fa-image ms-1"></i> {% trans "صورة المادة" %} <span class="optional">({% trans "اختياري" %})</span></label>
+                    <div class="form-label" style="font-size: 0.75rem; color: #94a3b8; margin-top: 0.5rem;"><i class="fas fa-image ms-1"></i> {% trans "الصورة الحالية" %}</div>
                     <div class="image-current-box" id="currentImageBox">
                         {% if product.product_image %}
                             <img src="{{ product.product_image.url }}" alt="{{ product.product_name }}" id="currentImage">
                         {% else %}
-                            <div class="image-current-placeholder">
-                                <i class="fas fa-image"></i>
-                                <span>{% trans 'لا توجد صورة حالية' %}</span>
-                            </div>
+                            <div class="image-current-placeholder"><i class="fas fa-image"></i><span>{% trans 'لا توجد صورة حالية' %}</span></div>
                         {% endif %}
                     </div>
-
-                    <div class="image-new-box" id="newImageBox">
-                        <img id="newImagePreview" src="#" alt="">
-                    </div>
-                    <div class="form-hint" id="newImageHint" style="display:none;">
-                        <i class="fas fa-info-circle fa-xs"></i> {% trans "سيتم استبدال الصورة الحالية عند الحفظ" %}
-                    </div>
-
-                    <button type="button" class="btn-upload" id="uploadBtn" style="margin-top: 0.75rem;">
-                        <i class="fas fa-upload ms-1"></i>
-                        {% if product.product_image %}{% trans "تغيير الصورة" %}{% else %}{% trans "إضافة صورة" %}{% endif %}
-                    </button>
+                    <div class="image-new-box" id="newImageBox"><img id="newImagePreview" src="#" alt=""></div>
+                    <div class="form-hint" id="newImageHint" style="display:none;"><i class="fas fa-info-circle fa-xs"></i> {% trans "سيتم استبدال الصورة الحالية عند الحفظ" %}</div>
+                    <button type="button" class="btn-upload" id="uploadBtn" style="margin-top: 0.75rem;"><i class="fas fa-upload ms-1"></i> {% if product.product_image %}{% trans "تغيير الصورة" %}{% else %}{% trans "إضافة صورة" %}{% endif %}</button>
                     <input type="file" class="d-none" id="id_product_image" name="product_image" accept="image/*">
-
-                    <div id="imageInfo" class="image-info" style="display:none;">
-                        <i class="fas fa-file-image ms-1"></i>
-                        <span id="imageName"></span>
-                        <span id="imageSize" class="ms-2"></span>
-                    </div>
-
-                    <button type="button" class="btn-remove-image" id="cancelImageBtn" style="display:none; background: var(--primary-1); color: var(--primary-4); border-color: var(--primary-2);">
-                        <i class="fas fa-times ms-1"></i> {% trans "إلغاء اختيار الصورة" %}
-                    </button>
-
+                    <div id="imageInfo" class="image-info" style="display:none;"><i class="fas fa-file-image ms-1"></i> <span id="imageName"></span> <span id="imageSize" class="ms-2"></span></div>
+                    <button type="button" class="btn-remove-image" id="cancelImageBtn" style="display:none; background: var(--primary-1); color: var(--primary-4); border-color: var(--primary-2);"><i class="fas fa-times ms-1"></i> {% trans "إلغاء اختيار الصورة" %}</button>
                     {% if product.product_image %}
                     <div class="checkbox-remove" id="removeImageBox">
                         <input type="checkbox" id="removeImage" name="remove_image" value="true">
@@ -268,39 +251,38 @@ body { font-family: 'Tajawal', sans-serif; background: linear-gradient(135deg, #
                     {% endif %}
                 </div>
             </div>
+        </div>
 
-            <!-- ====================================================== -->
-            <!-- ✅ حقل الملاحظات (Prodnots) — بعرض كامل خارج الأعمدة    -->
-            <!--    ليس داخل col-lg-8، بل بعد إغلاق </div> للصفّ        -->
-            <!-- ====================================================== -->
+        <!-- ===== بطاقة المواصفات الديناميكية ===== -->
+        <div class="card">
+            <div class="card-title"><i class="fas fa-sliders-h"></i> {% trans "المواصفات والأسعار (Variants)" %}</div>
+            <div class="form-hint mb-3"><i class="fas fa-info-circle fa-xs"></i> {% trans "عدّل المواصفات (اللون، الحجم) وحدد سعرها وخيارات ظهورها بالباركود." %}</div>
+            
+            <div id="specsContainer"></div>
+            
+            <button type="button" class="btn-secondary-teal" id="addSpecBtn">
+                <i class="fas fa-plus"></i> {% trans "إضافة مواصفة جديدة" %}
+            </button>
+        </div>
+
+        <div class="card">
+            <div class="card-title"><i class="fas fa-sticky-note"></i> {% trans "ملاحظات عامة" %}</div>
             <div class="notes-fullwidth">
-                <label for="id_Prodnots" class="form-label">
-                    <i class="fas fa-sticky-note ms-1"></i> {% trans "ملاحظات" %}
-                    <span class="optional">({% trans "اختياري" %})</span>
-                </label>
+                <label for="id_Prodnots" class="form-label"><i class="fas fa-sticky-note ms-1"></i> {% trans "ملاحظات" %} <span class="optional">({% trans "اختياري" %})</span></label>
                 <div class="ck-container">
-                    <textarea name="Prodnots" id="id_Prodnots" rows="8"
-                              placeholder="{% trans 'أضف ملاحظات تفصيلية للمادة... (يدعم التنسيق، الصور، الجداول)' %}">{{ product.Prodnots }}</textarea>
+                    <textarea name="Prodnots" id="id_Prodnots" rows="8" placeholder="{% trans 'أضف ملاحظات تفصيلية للمادة... (يدعم التنسيق، الصور، الجداول)' %}">{{ product.Prodnots }}</textarea>
                 </div>
                 <div class="form-hint"><i class="fas fa-info-circle fa-xs"></i> {% trans "ملاحظات غنية بالتنسيق تظهر في صفحة تفاصيل المادة" %}</div>
             </div>
 
-            <!-- ===== شريط التقدم ===== -->
-            <div class="progress-teal">
-                <div class="progress-teal-bar" id="progressBar"></div>
-            </div>
+            <div class="progress-teal"><div class="progress-teal-bar" id="progressBar"></div></div>
 
-            <!-- ===== الأزرار ===== -->
             <div class="d-flex gap-2 actions-row justify-content-between mt-4">
-                <a href="{% url 'invoice:product_detail' slug=product.slug %}" class="btn-secondary-teal">
-                    <i class="fas fa-times"></i> {% trans "إلغاء" %}
-                </a>
-                <button type="submit" class="btn-primary-teal">
-                    <i class="fas fa-save"></i> {% trans "حفظ التغييرات" %}
-                </button>
+                <a href="{% url 'invoice:product_detail' slug=product.slug %}" class="btn-secondary-teal"><i class="fas fa-times"></i> {% trans "إلغاء" %}</a>
+                <button type="submit" class="btn-primary-teal"><i class="fas fa-save"></i> {% trans "حفظ التغييرات" %}</button>
             </div>
-        </form>
-    </div>
+        </div>
+    </form>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@ckeditor/ckeditor5-build-classic@40.2.0/build/ckeditor.min.js"></script>
@@ -311,6 +293,16 @@ body { font-family: 'Tajawal', sans-serif; background: linear-gradient(135deg, #
 
     var i18nEl = document.getElementById('i18nStrings');
     var i18n = i18nEl ? i18nEl.dataset : {};
+    var apiUrlsEl = document.getElementById('apiUrls');
+    var specValuesBaseUrl = apiUrlsEl ? apiUrlsEl.dataset.specValuesUrl : '';
+
+    var specTypesElement = document.getElementById('specTypesData');
+    var specTypesData = [];
+    if (specTypesElement) { try { specTypesData = JSON.parse(specTypesElement.textContent.trim()); } catch(e) {} }
+
+    var existingSpecsElement = document.getElementById('existingSpecsDataClean');
+    var existingSpecsData = [];
+    if (existingSpecsElement) { try { existingSpecsData = JSON.parse(existingSpecsElement.textContent.trim()); } catch(e) {} }
 
     var form = document.getElementById('productEditForm');
     var nameInput = document.getElementById('id_product_name');
@@ -330,7 +322,9 @@ body { font-family: 'Tajawal', sans-serif; background: linear-gradient(135deg, #
     var progressBar = document.getElementById('progressBar');
     var ckeditorInstance = null;
 
-    console.log('✅ ' + (i18n.loaded || 'تم تحميل صفحة تعديل المادة'));
+    var specsContainer = document.getElementById('specsContainer');
+    var addSpecBtn = document.getElementById('addSpecBtn');
+    var specsDataInput = document.getElementById('specsData');
 
     function updateProgress() {
         var filled = 0;
@@ -349,11 +343,7 @@ body { font-family: 'Tajawal', sans-serif; background: linear-gradient(135deg, #
         alertEl.style.cssText = 'position:fixed; top:1rem; left:50%; transform:translateX(-50%); z-index:9999; min-width:300px; max-width:90%;';
         alertEl.innerHTML = '<i class="fas fa-' + (t === 'error' ? 'exclamation-circle' : t === 'success' ? 'check-circle' : 'info-circle') + '"></i><span>' + msg + '</span>';
         document.body.appendChild(alertEl);
-        setTimeout(function() {
-            alertEl.style.transition = 'opacity 0.4s';
-            alertEl.style.opacity = '0';
-            setTimeout(function() { alertEl.remove(); }, 400);
-        }, 3000);
+        setTimeout(function() { alertEl.style.transition = 'opacity 0.4s'; alertEl.style.opacity = '0'; setTimeout(function() { alertEl.remove(); }, 400); }, 3000);
     }
 
     function initCKEditor() {
@@ -361,22 +351,11 @@ body { font-family: 'Tajawal', sans-serif; background: linear-gradient(135deg, #
         if (!prodnotsTextarea) return;
         ClassicEditor.create(prodnotsTextarea, {
             toolbar: { items: ['heading', '|', 'bold', 'italic', 'underline', 'strikethrough', '|', 'fontColor', '|', 'link', 'bulletedList', 'numberedList', '|', 'blockQuote', 'insertTable', '|', 'undo', 'redo'] },
-            table: { contentToolbar: ['tableColumn', 'tableRow', 'mergeTableCells'] },
-            heading: { options: [
-                { model: 'paragraph', title: 'نص عادي', class: 'ck-heading_paragraph' },
-                { model: 'heading1', view: 'h1', title: 'عنوان 1', class: 'ck-heading_heading1' },
-                { model: 'heading2', view: 'h2', title: 'عنوان 2', class: 'ck-heading_heading2' },
-                { model: 'heading3', view: 'h3', title: 'عنوان 3', class: 'ck-heading_heading3' }
-            ]}
-        }).then(function(editor) {
-            ckeditorInstance = editor;
-            editor.model.document.on('change:data', updateProgress);
-            console.log('✅ CKEditor 5 initialized (edit mode)');
-        }).catch(function(error) { console.error('CKEditor error:', error); });
+            table: { contentToolbar: ['tableColumn', 'tableRow', 'mergeTableCells'] }
+        }).then(function(editor) { ckeditorInstance = editor; editor.model.document.on('change:data', updateProgress); }).catch(function(error) { console.error('CKEditor error:', error); });
     }
 
     if (uploadBtn) { uploadBtn.addEventListener('click', function() { imageInput.click(); }); }
-
     if (imageInput) {
         imageInput.addEventListener('change', function(e) {
             var file = e.target.files[0];
@@ -400,23 +379,93 @@ body { font-family: 'Tajawal', sans-serif; background: linear-gradient(135deg, #
             reader.readAsDataURL(file);
         });
     }
-
     if (cancelImageBtn) { cancelImageBtn.addEventListener('click', function() { imageInput.value = ''; resetNewImage(); }); }
+    function resetNewImage() { newImagePreview.src = '#'; newImageBox.style.display = 'none'; newImageHint.style.display = 'none'; imageInfo.style.display = 'none'; cancelImageBtn.style.display = 'none'; imageInput.value = ''; updateProgress(); }
+    if (removeImageCheckbox) { removeImageCheckbox.addEventListener('change', function() { if (this.checked) { imageInput.value = ''; resetNewImage(); showAlert(i18n.removeWarning || 'سيتم حذف الصورة الحالية عند الحفظ', 'info'); } }); }
 
-    function resetNewImage() {
-        newImagePreview.src = '#';
-        newImageBox.style.display = 'none';
-        newImageHint.style.display = 'none';
-        imageInfo.style.display = 'none';
-        cancelImageBtn.style.display = 'none';
-        imageInput.value = '';
+    function addSpecRow(existingData) {
+        var row = document.createElement('div');
+        row.className = 'spec-row';
+        var typeOptions = '<option value="">اختر النوع</option>';
+        specTypesData.forEach(function(t) { typeOptions += '<option value="' + t.id + '">' + t.name + '</option>'; });
+
+        row.innerHTML = `
+            <div class="row g-3 align-items-end">
+                <div class="col-md-3"><label class="form-label">نوع المواصفة</label><select class="form-select-custom spec-type-select" required>${typeOptions}</select></div>
+                <div class="col-md-3"><label class="form-label">القيمة</label><select class="form-select-custom spec-value-select" disabled required><option value="">${i18n.specLoading || 'جاري التحميل...'}</option></select></div>
+                <div class="col-md-2"><label class="form-label">السعر الإضافي</label><input type="number" step="0.01" class="form-input spec-price-input" placeholder="0.00" value="0.00"></div>
+                <div class="col-md-2"><div class="checkbox-container"><input type="checkbox" class="spec-barcode-check" checked><label>إظهار بالباركود</label></div></div>
+                <div class="col-md-2 d-flex gap-2"><input type="text" class="form-input spec-notes-input" placeholder="ملاحظات"><button type="button" class="btn-remove-spec" title="حذف"><i class="fas fa-times"></i></button></div>
+            </div>
+        `;
+
+        specsContainer.appendChild(row);
+        var typeSelect = row.querySelector('.spec-type-select');
+        var valueSelect = row.querySelector('.spec-value-select');
+        var removeBtn = row.querySelector('.btn-remove-spec');
+
+        typeSelect.addEventListener('change', function() { loadSpecValues(this.value, valueSelect); });
+        removeBtn.addEventListener('click', function() { row.remove(); updateProgress(); });
+
+        // If editing, populate with existing data
+        if (existingData) {
+            typeSelect.value = existingData.spec_type_id;
+            // Store selected value to apply after AJAX loads
+            valueSelect.setAttribute('data-selected-value', existingData.spec_value_id);
+            row.querySelector('.spec-price-input').value = existingData.spec_price;
+            row.querySelector('.spec-barcode-check').checked = existingData.show_on_barcode;
+            row.querySelector('.spec-notes-input').value = existingData.spec_notes || '';
+            // Trigger change to load values
+            loadSpecValues(existingData.spec_type_id, valueSelect);
+        }
         updateProgress();
     }
 
-    if (removeImageCheckbox) {
-        removeImageCheckbox.addEventListener('change', function() {
-            if (this.checked) { imageInput.value = ''; resetNewImage(); showAlert(i18n.removeWarning || 'سيتم حذف الصورة الحالية عند الحفظ', 'info'); }
+    function loadSpecValues(typeId, valueSelect) {
+        if (!typeId) { valueSelect.innerHTML = '<option value="">اختر القيمة</option>'; valueSelect.disabled = true; return; }
+        valueSelect.innerHTML = '<option value="">' + (i18n.specLoading || 'جاري التحميل...') + '</option>';
+        valueSelect.disabled = true;
+        var url = specValuesBaseUrl.replace('/0/', '/' + typeId + '/');
+
+        fetch(url)
+            .then(response => response.json())
+            .then(data => {
+                valueSelect.innerHTML = '<option value="">اختر القيمة</option>';
+                data.forEach(function(item) {
+                    var opt = document.createElement('option');
+                    opt.value = item.id; opt.textContent = item.value;
+                    valueSelect.appendChild(opt);
+                });
+                var selectedVal = valueSelect.getAttribute('data-selected-value');
+                if (selectedVal) { valueSelect.value = selectedVal; valueSelect.removeAttribute('data-selected-value'); }
+                valueSelect.disabled = false;
+            })
+            .catch(error => { valueSelect.innerHTML = '<option value="">خطأ في التحميل</option>'; });
+    }
+
+    function collectSpecsData() {
+        var specs = [];
+        var rows = specsContainer.querySelectorAll('.spec-row');
+        rows.forEach(function(row) {
+            var typeSelect = row.querySelector('.spec-type-select');
+            var valueSelect = row.querySelector('.spec-value-select');
+            if (typeSelect.value && valueSelect.value) {
+                specs.push({
+                    type_id: typeSelect.value, value_id: valueSelect.value,
+                    price: row.querySelector('.spec-price-input').value || '0.00',
+                    show_on_barcode: row.querySelector('.spec-barcode-check').checked,
+                    notes: row.querySelector('.spec-notes-input').value || ''
+                });
+            }
         });
+        specsDataInput.value = JSON.stringify(specs);
+    }
+
+    if (addSpecBtn) { addSpecBtn.addEventListener('click', function() { addSpecRow(); }); }
+    
+    // Initialize existing specs on load
+    if (existingSpecsData.length > 0) {
+        existingSpecsData.forEach(function(spec) { addSpecRow(spec); });
     }
 
     if (form) {
@@ -425,24 +474,20 @@ body { font-family: 'Tajawal', sans-serif; background: linear-gradient(135deg, #
             if (!name) {
                 e.preventDefault();
                 showAlert(i18n.errName || 'يرجى إدخال اسم المادة', 'error');
-                nameInput.classList.add('is-invalid');
-                nameInput.focus();
+                nameInput.classList.add('is-invalid'); nameInput.focus();
             } else {
                 nameInput.classList.remove('is-invalid');
                 if (ckeditorInstance) { ckeditorInstance.updateSourceElement(); }
+                collectSpecsData();
             }
         });
     }
 
     var inputs = [nameInput, barcodeInput, descInput];
-    inputs.forEach(function(inp) {
-        if (inp) { inp.addEventListener('input', function() { if (this.value.trim()) { this.classList.remove('is-invalid'); this.classList.add('is-valid'); } else { this.classList.remove('is-valid'); } updateProgress(); }); }
-    });
+    inputs.forEach(function(inp) { if (inp) { inp.addEventListener('input', function() { if (this.value.trim()) { this.classList.remove('is-invalid'); this.classList.add('is-valid'); } else { this.classList.remove('is-valid'); } updateProgress(); }); } });
 
     initCKEditor();
     updateProgress();
-
-    window.addEventListener('load', function() { console.log('✅ ' + (i18n.fullLoad || 'تم تحميل الصفحة بالكامل')); });
 })();
 </script>
 {% endblock %}

@@ -336,6 +336,8 @@
     .btn-icon-sm.text-danger:hover { background: #e74c3c; box-shadow: 0 4px 8px rgba(231,76,60,0.3); }
     .btn-icon-sm.text-primary:hover { background: #3498db; box-shadow: 0 4px 8px rgba(52,152,219,0.3); }
     .btn-icon-sm.text-warning:hover { background: #f39c12; box-shadow: 0 4px 8px rgba(243,156,18,0.3); }
+    /* لون مخصص لزر الطباعة الجديد */
+    .btn-icon-sm.text-info:hover { background: #17a2b8; box-shadow: 0 4px 8px rgba(23,162,184,0.3); }
 
     /* === قسم الأكورديون المنسدل === */
     .accordion-row {
@@ -372,7 +374,7 @@
         font-family: 'Courier New', Courier, monospace;
         font-size: 0.9rem;
         font-weight: bold;
-        border: 1px solid #e9ecef;
+        border: 1px solid #e9ecec;
         color: #495057;
         transition: all 0.2s ease-in-out;
     }
@@ -473,7 +475,7 @@
                         <th data-sort="stock" data-print-field="col-stock">المخزون <span class="sort-icon"><i class="fas fa-sort"></i></span></th>
                         <th data-sort="serials" data-print-field="col-serials">السيريالات <span class="sort-icon"><i class="fas fa-sort"></i></span></th>
                         <th data-sort="barcode" data-print-field="col-barcode">الباركود الأساسي <span class="sort-icon"><i class="fas fa-sort"></i></span></th>
-                        <th style="width: 120px;" class="no-print">الإجراءات</th>
+                        <th style="width: 140px;" class="no-print">الإجراءات</th>
                     </tr>
                 </thead>
                 <tbody id="tableBody">
@@ -530,6 +532,7 @@
                         <td class="actions-cell no-print">
                             <a href="{% url 'invoice:product_detail' slug=product.slug %}" class="btn-icon-sm text-primary" title="عرض التفاصيل"><i class="fas fa-eye"></i></a>
                             <a href="{% url 'invoice:product_edit' slug=product.slug %}" class="btn-icon-sm text-warning" title="تعديل المادة"><i class="fas fa-pen"></i></a>
+                            <a href="{% url 'invoice:print_product_barcode' product.id %}" target="_blank" class="btn-icon-sm text-info" title="طباعة باركود"><i class="fas fa-barcode"></i></a>
                             <a href="{% url 'invoice:product_delete' slug=product.slug %}" class="btn-icon-sm text-danger btn-delete-product" title="حذف المادة"><i class="fas fa-trash-alt"></i></a>
                         </td>
                     </tr>

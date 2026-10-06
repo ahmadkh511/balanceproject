@@ -137,13 +137,16 @@ body {
 
 /* --- التصميم الجديد المضغوط --- */
 .page-container { max-width: 1200px; margin: 0 auto; }
-.page-header-bar { display: flex; justify-content: space-between; align-items: center; background: white; padding: 0.75rem 1.25rem; border-radius: var(--radius); box-shadow: var(--shadow-sm); margin-bottom: 1rem; border-left: 4px solid var(--primary-4); }
+.page-header-bar { display: flex; justify-content: space-between; align-items: center; background: white; padding: 0.75rem 1.25rem; border-radius: var(--radius); box-shadow: var(--shadow-sm); margin-bottom: 1rem; border-left: 4px solid var(--primary-4); flex-wrap: wrap; gap: 1rem; }
 .header-title-group { display: flex; align-items: center; gap: 0.75rem; }
 .header-icon-box { width: 40px; height: 40px; background: var(--primary-1); color: var(--primary-4); border-radius: var(--radius-sm); display: flex; align-items: center; justify-content: center; font-size: 1.1rem; }
 .header-title-text h1 { font-size: 1.1rem; font-weight: 700; color: var(--text-dark); margin: 0; }
 .header-title-text span { font-size: 0.8rem; color: #64748b; }
+.header-actions-group { display: flex; gap: 0.5rem; flex-wrap: wrap; }
 .btn-back { background: var(--primary-1); color: var(--text-dark); padding: 0.4rem 0.9rem; border-radius: var(--radius-sm); font-weight: 600; text-decoration: none; display: inline-flex; align-items: center; gap: 0.4rem; font-size: 0.8rem; transition: all 0.2s var(--ease); border: 1px solid var(--primary-2); }
 .btn-back:hover { background: var(--primary-2); color: var(--primary-dark); }
+.btn-print-sticker { background: var(--success-bg); color: var(--success-color); padding: 0.4rem 0.9rem; border-radius: var(--radius-sm); font-weight: 600; text-decoration: none; display: inline-flex; align-items: center; gap: 0.4rem; font-size: 0.8rem; transition: all 0.2s var(--ease); border: 1px solid var(--success-color); }
+.btn-print-sticker:hover { background: var(--success-color); color: white; }
 
 .stats-strip { display: flex; background: white; border-radius: var(--radius); box-shadow: var(--shadow-sm); margin-bottom: 1rem; overflow: hidden; border: 1px solid rgba(0,0,0,0.04); }
 .stat-strip-item { flex: 1; padding: 0.75rem 1rem; border-left: 1px solid #f1f5f9; position: relative; }
@@ -331,9 +334,14 @@ body {
                     <span>{{ product.product_name }}</span>
                 </div>
             </div>
-            <a href="{% url 'invoice:product_list' %}" class="btn-back">
-                <i class="fas fa-arrow-right"></i><span>رجوع للقائمة</span>
-            </a>
+            <div class="header-actions-group">
+                <a href="{% url 'invoice:print_product_barcode' product.id %}" target="_blank" class="btn-print-sticker">
+                    <i class="fas fa-barcode"></i><span>طباعة ملصق الباركود</span>
+                </a>
+                <a href="{% url 'invoice:product_list' %}" class="btn-back">
+                    <i class="fas fa-arrow-right"></i><span>رجوع للقائمة</span>
+                </a>
+            </div>
         </div>
 
         <div class="stats-strip no-print">
@@ -388,7 +396,6 @@ body {
                         <span class="badge-teal">{{ barcodes.count }} باركود</span>
                     </div>
                     
-                    {# === تعديل: إضافة SVG لرسم الباركود الأساسي === #}
                     {% if product.main_barcode %}
                     <div class="main-barcode-box">
                         <div class="main-barcode-icon"><i class="fas fa-star"></i></div>
@@ -412,7 +419,6 @@ body {
                             <tbody>
                                 {% for barcode in barcodes %}
                                 <tr>
-                                    {# === تعديل: إضافة SVG لرسم باركودات الجدول === #}
                                     <td data-print-field="col-barcode" data-label="الباركود">
                                         <div class="barcode-print-cell">
                                             <svg class="table-barcode-svg" data-value="{{ barcode.barcode_in|default:'000000' }}"></svg>
@@ -434,6 +440,46 @@ body {
                         {% endif %}
                     {% endif %}
                 </div>
+
+                <!-- === بطاقة المواصفات الإضافية الجديدة === -->
+                {% if product.specs.all %}
+                <div class="card">
+                    <div class="card-title">
+                        <span class="left-title"><i class="fas fa-sliders-h"></i> المواصفات والأسعار </span>
+                        <span class="badge-teal">{{ product.specs.count }} مواصفة</span>
+                    </div>
+                    <div class="table-wrap">
+                        <table class="table-order">
+                            <thead>
+                                <tr>
+                                    <th data-print-field="col-spec-type">نوع المواصفة</th>
+                                    <th data-print-field="col-spec-value">القيمة</th>
+                                    <th data-print-field="col-spec-price">السعر</th>
+                                    <th data-print-field="col-spec-barcode">بالباركود</th>
+                                    <th data-print-field="col-spec-notes">ملاحظات</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for spec in product.specs.all %}
+                                <tr>
+                                    <td data-print-field="col-spec-type" data-label="نوع المواصفة">{{ spec.spec_type.name }}</td>
+                                    <td data-print-field="col-spec-value" data-label="القيمة">{{ spec.spec_value.value }}</td>
+                                    <td data-print-field="col-spec-price" data-label="السعر">{{ spec.spec_price }} ر.س</td>
+                                    <td data-print-field="col-spec-barcode" data-label="بالباركود">
+                                        {% if spec.show_on_barcode %}
+                                            <span class="badge-success"><i class="fas fa-check ms-1" style="font-size:0.45rem;"></i>نعم</span>
+                                        {% else %}
+                                            <span class="badge-danger"><i class="fas fa-times ms-1"></i>لا</span>
+                                        {% endif %}
+                                    </td>
+                                    <td data-print-field="col-spec-notes" data-label="ملاحظات">{{ spec.spec_notes|default:'-' }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                {% endif %}
 
                 <div class="notes-card" data-print-field="col-prod-notes">
                     <div class="card-title" style="padding: 1rem 1rem 0.5rem; margin: 0; border: none;">
@@ -518,6 +564,9 @@ body {
             <div class="field-grid">
                 <label class="field-check"><input type="checkbox" checked data-target="col-barcode"> الباركود <span class="field-key">col-barcode</span></label>
                 <label class="field-check"><input type="checkbox" checked data-target="col-status"> الحالة <span class="field-key">col-status</span></label>
+                <label class="field-check"><input type="checkbox" checked data-target="col-spec-type"> نوع المواصفة <span class="field-key">col-spec-type</span></label>
+                <label class="field-check"><input type="checkbox" checked data-target="col-spec-value"> القيمة <span class="field-key">col-spec-value</span></label>
+                <label class="field-check"><input type="checkbox" checked data-target="col-spec-price"> سعر المواصفة <span class="field-key">col-spec-price</span></label>
                 <label class="field-check"><input type="checkbox" checked data-target="col-prod-notes"> ملاحظات المنتج <span class="field-key">col-prod-notes</span></label>
             </div>
             
@@ -569,8 +618,6 @@ body {
 <!-- 6) JavaScript — مع nonce للـ CSP                           -->
 <!-- ========================================================== -->
 
-<!-- === إضافة مكتبة JsBarcode لرسم خطوط الباركود === -->
-<!-- ملاحظة: يفضل تحميلها لمشروعك المحلي (static folder) واستدعائها محلياً لتجنب حظر الـ CSP -->
 <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.6/dist/JsBarcode.all.min.js"></script>
 
 <script nonce="{{ csp_nonce }}">
@@ -695,40 +742,15 @@ body {
         }
     }
 
-    // === دالة توليد الباركود باستخدام مكتبة JsBarcode ===
     function generateBarcodes() {
-        if (typeof JsBarcode === 'undefined') {
-            console.warn('JsBarcode library not loaded.');
-            return;
-        }
-        // توليد الباركود الأساسي
+        if (typeof JsBarcode === 'undefined') return;
         var mainSvg = document.querySelector('.main-barcode-svg');
         if (mainSvg && mainSvg.dataset.value) {
-            try {
-                JsBarcode(mainSvg, mainSvg.dataset.value, {
-                    format: "CODE128", // صالح لجميع الأرقام والنصوص
-                    displayValue: false, // وضعناه false لأننا نطبع الرقم يدوياً في الأسفل للتحكم بالتصميم
-                    margin: 5,
-                    height: 40,
-                    width: 1.8,
-                    background: "#ffffff"
-                });
-            } catch(e) { console.error('Error generating main barcode:', e); }
+            try { JsBarcode(mainSvg, mainSvg.dataset.value, { format: "CODE128", displayValue: false, margin: 5, height: 40, width: 1.8, background: "#ffffff" }); } catch(e) {}
         }
-
-        // توليد باركودات الجدول
         document.querySelectorAll('.table-barcode-svg').forEach(function(svg) {
             if (svg.dataset.value) {
-                try {
-                    JsBarcode(svg, svg.dataset.value, {
-                        format: "CODE128",
-                        displayValue: false,
-                        margin: 2,
-                        height: 30,
-                        width: 1.5,
-                        background: "#ffffff"
-                    });
-                } catch(e) { console.error('Error generating table barcode:', e); }
+                try { JsBarcode(svg, svg.dataset.value, { format: "CODE128", displayValue: false, margin: 2, height: 30, width: 1.5, background: "#ffffff" }); } catch(e) {}
             }
         });
     }
@@ -890,10 +912,7 @@ body {
         btn.disabled = true;
         btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري التجهيز...';
         preparePrintSettings();
-        
-        // === استدعاء دالة توليد الباركود قبل الطباعة مباشرة لضمان ظهورها في الـ PDF ===
         generateBarcodes();
-        
         printModal.classList.remove('active');
         setTimeout(function() {
             window.print();
@@ -908,12 +927,9 @@ body {
 
     document.getElementById('executePrintBtn').addEventListener('click', executePrint);
 
-    // === تشغيل أولي عند تحميل الصفحة ===
     prefillFromCompanyData();
     loadPrintSettings();
-    generateBarcodes(); // توليد الباركود فور تحميل الصفحة للعرض في المتصفح
-    
-    console.log('✅ نظام الطباعة الموحد v6.3 - جاهز');
+    generateBarcodes();
 })();
 </script>
 {% endblock %}

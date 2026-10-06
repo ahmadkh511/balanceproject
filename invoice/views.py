@@ -3063,11 +3063,17 @@ def product_list(request):
     })
 
 
+
+
 @login_required
 @permission_required('invoice.view_product', raise_exception=True)
 def product_detail(request, slug):
     """عرض تفاصيل المنتج"""
-    product = get_object_or_404(Product, slug=slug)
+    # استخدام prefetch_related لجلب المواصفات وأنواعها وقيمها بسرعة
+    product = get_object_or_404(
+        Product.objects.prefetch_related('specs__spec_type', 'specs__spec_value'), 
+        slug=slug
+    )
     barcodes = product.barcodes.all()
     
     return render(request, 'invoice/products/product_detail.html', {
@@ -3075,6 +3081,9 @@ def product_detail(request, slug):
         'barcodes': barcodes,
         'title': _('تفاصيل المنتج')
     })
+
+
+
 
 
 @login_required
@@ -3096,6 +3105,10 @@ def product_delete(request, slug):
 
 
 
+
+import json
+from decimal import Decimal
+
 @login_required
 @permission_required('invoice.change_product', raise_exception=True)
 def product_edit(request, slug):
@@ -3106,15 +3119,19 @@ def product_edit(request, slug):
         product_name = request.POST.get('product_name')
         main_barcode = request.POST.get('main_barcode', '')
         product_description = request.POST.get('product_description', '')
-        prodnots = request.POST.get('Prodnots', '')                               # ✅ السطر الأول
+        prodnots = request.POST.get('Prodnots', '')                               
         product_image = request.FILES.get('product_image')
         remove_image = request.POST.get('remove_image') == 'true'
+        
+        # استقبال المواصفات الديناميكية (JSON)
+        specs_json = request.POST.get('specs_data', '[]')
 
         if not product_name:
             messages.error(request, _('اسم المادة مطلوب'))
             return render(request, 'invoice/products/product_edit.html', {
                 'title': _('تعديل المادة'),
-                'product': product
+                'product': product,
+                'spec_types': SpecType.objects.all()
             })
 
         try:
@@ -3122,7 +3139,7 @@ def product_edit(request, slug):
                 product.product_name = product_name
                 product.main_barcode = main_barcode if main_barcode else None
                 product.product_description = product_description
-                product.Prodnots = prodnots if prodnots else None                 # ✅ السطر الثاني
+                product.Prodnots = prodnots if prodnots else None                 
 
                 if product_image:
                     product.product_image = product_image
@@ -3130,16 +3147,54 @@ def product_edit(request, slug):
                     product.product_image = None
 
                 product.save()
+                
+                # ===== تحديث المواصفات الديناميكية =====
+                try:
+                    specs_list = json.loads(specs_json)
+                except json.JSONDecodeError:
+                    specs_list = []
+
+                processed_type_ids = []
+                for spec in specs_list:
+                    type_id = spec.get('type_id')
+                    value_id = spec.get('value_id')
+                    
+                    if type_id and value_id:
+                        # تحديث أو إنشاء المواصفة بناءً على نوعها للمنتج
+                        obj, created = ProdSpec.objects.update_or_create(
+                            product=product,
+                            spec_type_id=type_id,
+                            defaults={
+                                'spec_value_id': value_id,
+                                'spec_price': Decimal(spec.get('price', '0.00') or '0.00'),
+                                'show_on_barcode': spec.get('show_on_barcode', False),
+                                'spec_notes': spec.get('notes', '') or None
+                            }
+                        )
+                        processed_type_ids.append(type_id)
+
+                # حذف المواصفات التي أزالها المستخدم من النموذج
+                product.specs.exclude(spec_type_id__in=processed_type_ids).delete()
+                # ======================================
+
                 messages.success(request, _('تم تحديث المادة بنجاح'))
                 return redirect('invoice:product_detail', slug=product.slug)
 
         except Exception as e:
             messages.error(request, f'حدث خطأ أثناء تحديث المادة: {str(e)}')
 
+    # جلب أنواع المواصفات والمواصفات الحالية للمنتج لعرضها في القالب
+    spec_types = SpecType.objects.all()
+    existing_specs = list(product.specs.values('spec_type_id', 'spec_value_id', 'spec_price', 'show_on_barcode', 'spec_notes'))
+
     return render(request, 'invoice/products/product_edit.html', {
         'title': _('تعديل المادة'),
-        'product': product
+        'product': product,
+        'spec_types': spec_types,
+        'existing_specs': existing_specs
     })
+
+
 
 
 

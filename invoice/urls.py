@@ -13,7 +13,7 @@ from .views import (
 from .views import (
     manage_specs, add_spec_value, 
     edit_spec_type, delete_spec_type, 
-    edit_spec_value, delete_spec_value , print_product_barcode
+    edit_spec_value, delete_spec_value , print_product_barcode ,manage_label_sizes , delete_label_size
 )
 
 app_name = 'invoice'
@@ -50,6 +50,9 @@ urlpatterns = [
     path('settings/specs/delete-value/<int:pk>/', delete_spec_value, name='delete_spec_value'),
 
     path('product/<int:pk>/print-barcode/', print_product_barcode, name='print_product_barcode'),
+
+    path('settings/label-sizes/', manage_label_sizes, name='manage_label_sizes'),
+    path('settings/label-sizes/delete/<int:pk>/', delete_label_size, name='delete_label_size'),
 
 
 

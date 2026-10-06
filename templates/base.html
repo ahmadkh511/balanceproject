@@ -2143,7 +2143,7 @@
 
                         <!-- إعدادات -->
                         {% if request.user.is_superuser %}
-                        <li class="has-submenu {% if 'currency' in current_url_name or 'payment_method' in current_url_name or 'shipping_company' in current_url_name or 'status' in current_url_name or 'price_type' in current_url_name or 'email' in current_url_name or 'manage_specs' in current_url_name %}active{% endif %}">
+                        <li class="has-submenu {% if 'currency' in current_url_name or 'payment_method' in current_url_name or 'shipping_company' in current_url_name or 'status' in current_url_name or 'price_type' in current_url_name or 'email' in current_url_name or 'manage_specs' in current_url_name or 'manage_label_sizes' in current_url_name %}active{% endif %}">
                             <a href="#"><i class="fas fa-cogs nav-icon"></i>الإعدادات</a>
                             <ul class="menu-submenu wide-grid dropdown-left">
                                 <li class="{% if current_url_name == 'email_settings' %}sub-active{% endif %}"><a href="{% url 'invoice:email_settings' %}"><i class="fas fa-envelope-open-text"></i>إعدادات البريد</a></li>
@@ -2153,6 +2153,7 @@
                                 <li class="{% if current_url_name == 'status_list' %}sub-active{% endif %}"><a href="{% url 'invoice:status_list' %}"><i class="fas fa-info-circle"></i>الحالات</a></li>
                                 <li class="{% if current_url_name == 'price_type_list' %}sub-active{% endif %}"><a href="{% url 'invoice:price_type_list' %}"><i class="fas fa-tags"></i>أنواع الأسعار</a></li>
                                 <li class="{% if current_url_name == 'manage_specs' %}sub-active{% endif %}"><a href="{% url 'invoice:manage_specs' %}"><i class="fas fa-sliders-h"></i>إدارة المواصفات</a></li>
+                                <li class="{% if current_url_name == 'manage_label_sizes' %}sub-active{% endif %}"><a href="{% url 'invoice:manage_label_sizes' %}"><i class="fas fa-ruler-combined"></i>مقاسات الملصقات</a></li>
                             </ul>
                         </li>
                         {% endif %}
@@ -2346,7 +2347,7 @@
             </li>
             {% endif %}
             {% if request.user.is_superuser %}
-            <li class="sidebar-item has-dropdown {% if 'currency' in current_url_name or 'payment_method' in current_url_name or 'shipping_company' in current_url_name or 'status' in current_url_name or 'price_type' in current_url_name or 'email' in current_url_name or 'manage_specs' in current_url_name %}active{% endif %}">
+            <li class="sidebar-item has-dropdown {% if 'currency' in current_url_name or 'payment_method' in current_url_name or 'shipping_company' in current_url_name or 'status' in current_url_name or 'price_type' in current_url_name or 'email' in current_url_name or 'manage_specs' in current_url_name or 'manage_label_sizes' in current_url_name %}active{% endif %}">
                 <a href="#" class="sidebar-link">
                     <i class="fas fa-cogs sidebar-icon"></i><span class="sidebar-text">الإعدادات</span>
                     <i class="fas fa-chevron-left sidebar-arrow"></i>
@@ -2359,6 +2360,7 @@
                     <li class="sidebar-item"><a href="{% url 'invoice:status_list' %}" class="sidebar-link"><i class="fas fa-info-circle sidebar-icon"></i><span class="sidebar-text">الحالات</span></a></li>
                     <li class="sidebar-item"><a href="{% url 'invoice:price_type_list' %}" class="sidebar-link"><i class="fas fa-tags sidebar-icon"></i><span class="sidebar-text">أنواع الأسعار</span></a></li>
                     <li class="sidebar-item"><a href="{% url 'invoice:manage_specs' %}" class="sidebar-link"><i class="fas fa-sliders-h sidebar-icon"></i><span class="sidebar-text">إدارة المواصفات</span></a></li>
+                    <li class="sidebar-item"><a href="{% url 'invoice:manage_label_sizes' %}" class="sidebar-link"><i class="fas fa-ruler-combined sidebar-icon"></i><span class="sidebar-text">مقاسات الملصقات</span></a></li>
                 </ul>
             </li>
             <li class="sidebar-item">

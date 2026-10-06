@@ -6,7 +6,7 @@ from django.contrib.auth.models import User
 
 from django.db import models
 
-
+from django.utils.translation import gettext_lazy as _
 # ==========================================
 # الخيارات المتكررة (توضع خارج الكلاس لتكون أنظف)
 # ==========================================
@@ -318,6 +318,23 @@ class CompanySettings(models.Model):
             cache.set(cache_key, settings, 60 * 60)  # كاش لمدة ساعة
             
         return settings
+
+
+
+class LabelSize(models.Model):
+    name = models.CharField(max_length=50, verbose_name=_("اسم المقاس"))
+    width = models.PositiveIntegerField(verbose_name=_("العرض (مم)"))
+    height = models.PositiveIntegerField(verbose_name=_("الارتفاع (مم)"))
+    is_default = models.BooleanField(default=False, verbose_name=_("المقاس الافتراضي"))
+
+    class Meta:
+        verbose_name = _("مقاس ملصق")
+        verbose_name_plural = _("مقاسات ملصقات الباركود")
+        ordering = ['width']
+
+    def __str__(self):
+        return f"{self.name} ({self.width}x{self.height} مم)"
+
 
 
 

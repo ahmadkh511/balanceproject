@@ -1,0 +1,96 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load i18n %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto p-4 space-y-6">
+    
+    <!-- الهيدر -->
+    <div class="bg-gradient-to-l from-cyan-600 to-cyan-800 rounded-xl p-6 text-white shadow-lg flex items-center gap-4">
+        <div class="bg-white/20 w-12 h-12 rounded-lg flex items-center justify-center text-xl">
+            <i class="fas fa-ruler-combined"></i>
+        </div>
+        <div>
+            <h1 class="text-xl font-bold">{{ title }}</h1>
+            <p class="text-sm text-cyan-100">{% trans "أضف مقاسات مختلفة لملصقات الباركود لتناسب جميع المنتجات (صغير، متوسط، كبير)" %}</p>
+        </div>
+    </div>
+
+    <!-- التنبيهات -->
+    {% if messages %}
+        {% for message in messages %}
+            <div class="bg-cyan-50 border border-cyan-500 text-cyan-800 rounded-lg p-3 text-sm flex items-center gap-2">
+                <i class="fas fa-info-circle"></i>
+                <span>{{ message }}</span>
+            </div>
+        {% endfor %}
+    {% endif %}
+
+    <!-- بطاقة إضافة مقاس جديد -->
+    <div class="bg-white border-2 border-dashed border-cyan-500 rounded-xl p-6">
+        <form method="post" action="{% url 'invoice:manage_label_sizes' %}" class="flex flex-wrap gap-3 items-end">
+            {% csrf_token %}
+            <div class="flex-1 min-w-[150px]">
+                <label class="block text-sm font-semibold text-cyan-800 mb-1">{% trans "اسم المقاس" %}</label>
+                <input type="text" name="name" required placeholder="{% trans 'مثال: مقاس صغير' %}" class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500 text-sm">
+            </div>
+            <div class="w-[100px]">
+                <label class="block text-sm font-semibold text-cyan-800 mb-1">{% trans "العرض (مم)" %}</label>
+                <input type="number" name="width" required placeholder="30" class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500 text-sm">
+            </div>
+            <div class="w-[100px]">
+                <label class="block text-sm font-semibold text-cyan-800 mb-1">{% trans "الارتفاع (مم)" %}</label>
+                <input type="number" name="height" required placeholder="20" class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500 text-sm">
+            </div>
+            <div class="flex items-center gap-2 px-4 py-2 bg-slate-50 rounded-lg border border-slate-200 h-[42px]">
+                <input type="checkbox" name="is_default" id="is_default" class="w-4 h-4 accent-cyan-600 cursor-pointer">
+                <label for="is_default" class="text-sm font-medium text-slate-700 cursor-pointer">{% trans "افتراضي" %}</label>
+            </div>
+            <button type="submit" class="bg-cyan-600 hover:bg-cyan-700 text-white font-bold py-2 px-6 rounded-lg flex items-center gap-2 text-sm whitespace-nowrap">
+                <i class="fas fa-plus"></i> {% trans "إضافة" %}
+            </button>
+        </form>
+    </div>
+
+    <!-- قائمة المقاسات -->
+    <div class="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm">
+        <div class="bg-slate-50 p-4 border-b border-slate-200">
+            <h3 class="font-bold text-slate-700 flex items-center gap-2"><i class="fas fa-list text-cyan-600"></i> {% trans "المقاسات المتاحة" %}</h3>
+        </div>
+        <div class="p-4">
+            {% if sizes %}
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {% for size in sizes %}
+                <div class="border border-slate-200 rounded-lg p-4 flex justify-between items-center hover:shadow-md transition-shadow relative {% if size.is_default %}bg-cyan-50 border-cyan-400{% endif %}">
+                    {% if size.is_default %}
+                    <span class="absolute -top-2 -right-2 bg-cyan-600 text-white text-[10px] font-bold px-2 py-0.5 rounded-full shadow">افتراضي</span>
+                    {% endif %}
+                    <div>
+                        <div class="font-bold text-slate-800 text-lg">{{ size.name }}</div>
+                        <div class="text-sm text-slate-500 flex items-center gap-1 mt-1">
+                            <i class="fas fa-arrows-alt-h text-xs"></i> {{ size.width }} مم
+                            <span class="mx-1">×</span>
+                            <i class="fas fa-arrows-alt-v text-xs"></i> {{ size.height }} مم
+                        </div>
+                    </div>
+                    <form method="post" action="{% url 'invoice:delete_label_size' size.id %}" onsubmit="return confirm('هل أنت متأكد من حذف هذا المقاس؟');">
+                        {% csrf_token %}
+                        <button type="submit" class="bg-red-100 hover:bg-red-600 text-red-700 hover:text-white p-2 rounded-md transition-colors text-sm">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </form>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+                <div class="text-center py-10">
+                    <i class="fas fa-inbox text-4xl text-slate-300 mb-3"></i>
+                    <p class="text-slate-500">{% trans "لم تقم بإضافة أي مقاسات بعد. ابدأ بإضافة مقاس من الأعلى." %}</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

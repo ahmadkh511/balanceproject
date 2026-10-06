@@ -3017,22 +3017,87 @@ def delete_spec_value(request, pk):
 
 
 
-from django.shortcuts import get_object_or_404, render
+from accounts.models import LabelSize # استيراد النموذج من تطبيق accounts
+
 
 @login_required
 def print_product_barcode(request, pk):
     """عرض صفحة طباعة الباركود للمادة المحددة"""
     product = get_object_or_404(Product, pk=pk)
     
+    # جلب جميع مقاسات الملصقات المتاحة
+    sizes = LabelSize.objects.all()
+    
+    # معرفة المقاس الذي اختاره المستخدم (عبر parameter في الرابط)
+    selected_size_id = request.GET.get('size')
+    
+    if selected_size_id:
+        selected_size = get_object_or_404(LabelSize, id=selected_size_id)
+    else:
+        # إذا لم يختر شيئاً، نستخدم المقاس الافتراضي
+        selected_size = sizes.filter(is_default=True).first()
+        # إذا لم يوجد مقاس افتراضي، نستخدم أول مقاس متاح
+        if not selected_size and sizes.exists():
+            selected_size = sizes.first()
+
+    # إذا لم يقم المستخدم بإضافة أي مقاسات بعد، نضع قيم افتراضية مبدئية
+    if not selected_size:
+        selected_size = LabelSize(id=0, name="افتراضي", width=50, height=30)
+    
     context = {
         'product': product,
+        'sizes': sizes,
+        'selected_size': selected_size,
     }
     return render(request, 'invoice/products/print_barcode.html', context)
 
 
 
 
+from accounts.models import LabelSize # تأكد أن الاستيراد من accounts.models كما اتفقنا
+from django.views.decorators.http import require_POST
 
+@login_required
+@permission_required('accounts.add_labelsize', raise_exception=True)
+def manage_label_sizes(request):
+    """صفحة إدارة مقاسات ملصقات الباركود"""
+    if request.method == 'POST':
+        name = request.POST.get('name')
+        width = request.POST.get('width')
+        height = request.POST.get('height')
+        is_default = request.POST.get('is_default') == 'on'
+        
+        if name and width and height:
+            # إذا اختار المستخدم جعلها افتراضية، نلغي الافتراضي السابق
+            if is_default:
+                LabelSize.objects.filter(is_default=True).update(is_default=False)
+            
+            LabelSize.objects.create(
+                name=name, 
+                width=int(width), 
+                height=int(height), 
+                is_default=is_default
+            )
+            messages.success(request, _('تم إضافة المقاس بنجاح'))
+        else:
+            messages.error(request, _('الرجاء تعبئة جميع الحقول الأساسية'))
+        return redirect('invoice:manage_label_sizes')
+    
+    sizes = LabelSize.objects.all().order_by('width')
+    return render(request, 'invoice/settings/manage_label_sizes.html', {
+        'title': _('إدارة مقاسات الملصقات'),
+        'sizes': sizes
+    })
+
+@require_POST
+@login_required
+@permission_required('accounts.delete_labelsize', raise_exception=True)
+def delete_label_size(request, pk):
+    """حذف مقاس ملصق"""
+    size = get_object_or_404(LabelSize, pk=pk)
+    size.delete()
+    messages.success(request, _('تم حذف المقاس بنجاح'))
+    return redirect('invoice:manage_label_sizes')
 
 
 

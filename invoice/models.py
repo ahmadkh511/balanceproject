@@ -1371,36 +1371,27 @@ class SpecValue(models.Model):
     def __str__(self):
         return f"{self.spec_type.name}: {self.value}"
 
-# 3. جدول مواصفات المنتج (ربط المنتج بالمواصفة + السعر + الباركود)
+
 class ProdSpec(models.Model):
     product = models.ForeignKey('Product', on_delete=models.CASCADE, related_name='specs', verbose_name=_("المادة"))
     
-    # اختيار نوع المواصفة (مثال: الألوان)
-    spec_type = models.ForeignKey(SpecType, on_delete=models.PROTECT, verbose_name=_("نوع المواصفة"))
+    spec_type = models.ForeignKey(SpecType, on_delete=models.PROTECT, null=True, blank=True, verbose_name=_("نوع المواصفة"))
     
-    # اختيار قيمة المواصفة (مثال: أحمر)
-    spec_value = models.ForeignKey(SpecValue, on_delete=models.PROTECT, verbose_name=_("قيمة المواصفة"), limit_choices_to=models.Q(spec_type=models.F('spec_type')))
+    spec_value = models.ForeignKey(SpecValue, on_delete=models.PROTECT, null=True, blank=True, verbose_name=_("قيمة المواصفة"), limit_choices_to=models.Q(spec_type=models.F('spec_type')))
 
-    # حقل الملاحظات (كما طلبنا سابقاً)
     spec_notes = models.TextField(blank=True, null=True, verbose_name=_("ملاحظات المواصفة"))
-    
-    # ===== إضافاتك الجديدة =====
-    # السعر الخاص بهذه المواصفة (اختياري)
     spec_price = models.DecimalField(max_digits=12, decimal_places=2, default=Decimal('0.00'), verbose_name=_("سعر المواصفة"))
-    
-    # مربع اختيار ظهور الخاصية في الباركود
     show_on_barcode = models.BooleanField(default=False, verbose_name=_("إظهار في الباركود"))
-    # ==========================
 
     class Meta:
         verbose_name = _("مواصفة")
         verbose_name_plural = _("مواصفات إضافية")
-        # ضمان أن لا يتكرر نفس نوع المواصفة لنفس المنتج مرتين
-        unique_together = ('product', 'spec_type') 
+        # تم إزالة unique_together للسماح بتعدد القيم (أحمر، أسود، XL، XXل) لنفس المنتج
 
     def __str__(self):
-        return f"{self.product.product_name} - {self.spec_type.name}: {self.spec_value.value}"
-
+        type_name = self.spec_type.name if self.spec_type else "-"
+        value_name = self.spec_value.value if self.spec_value else "-"
+        return f"{self.product.product_name} - {type_name}: {value_name}"
 
 #=================
 

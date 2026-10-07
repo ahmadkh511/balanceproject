@@ -203,6 +203,15 @@ body {
 .table-barcode-svg { max-width: 100%; height: auto; }
 .barcode-text { font-family: 'Courier New', monospace; font-size: 0.75rem; font-weight: bold; margin-top: 2px; letter-spacing: 1px; }
 
+/* === تنسيقات المواصفات المجمعة === */
+.spec-group { background: #fdfdfd; border: 1px solid var(--primary-2); border-radius: var(--radius); padding: 15px; margin-bottom: 10px; }
+.spec-group-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; padding-bottom: 5px; border-bottom: 1px dashed var(--primary-2); }
+.spec-group-title { font-weight: 700; color: var(--text-dark); font-size: 0.9rem; }
+.spec-group-price { background: var(--success-bg); color: var(--success-color); padding: 3px 10px; border-radius: 12px; font-size: 0.75rem; font-weight: 600; }
+.spec-values-list { display: flex; flex-wrap: wrap; gap: 6px; }
+.spec-value-badge { background: var(--primary-1); color: var(--primary-dark); padding: 4px 12px; border-radius: 6px; font-size: 0.8rem; font-weight: 500; border: 1px solid var(--primary-2); }
+.spec-meta { font-size: 0.75rem; color: #64748b; margin-top: 8px; display: flex; gap: 15px; flex-wrap: wrap; }
+
 .notes-card { background: white; border-radius: var(--radius); overflow: hidden; box-shadow: var(--shadow-sm); border: 1px solid rgba(0, 0, 0, 0.04); margin-bottom: 1rem; }
 .notes-body { padding: 1rem; min-height: 60px; line-height: 1.7; color: #1a1a2e; font-size: 0.85rem; }
 .notes-body img { max-width: 100%; height: auto; border-radius: var(--radius-sm); margin: 0.4rem 0; }
@@ -232,7 +241,7 @@ body {
     .print-detailed .table-order td, .print-detailed .table-order th { padding: 6pt 8pt !important; font-size: 10pt !important; }
     .table-order td, .table-order th { padding: 3pt 5pt !important; font-size: 8pt !important; }
     .toast { display: none !important; }
-    .card, .notes-card { box-shadow: none !important; border: 1px solid #ddd !important; border-radius: 0 !important; page-break-inside: avoid; margin-bottom: 8pt !important; padding: 8pt !important; }
+    .card, .notes-card, .spec-group { box-shadow: none !important; border: 1px solid #ddd !important; border-radius: 0 !important; page-break-inside: avoid; margin-bottom: 8pt !important; padding: 8pt !important; }
     .notes-body { padding: 5pt !important; min-height: auto !important; line-height: 1.5 !important; font-size: 8pt !important; }
     .product-image-wrap, .main-barcode-box, .page-header-bar, .stats-strip { display: none !important; }
     .main-grid { display: block !important; }
@@ -441,42 +450,32 @@ body {
                     {% endif %}
                 </div>
 
-                <!-- === بطاقة المواصفات الإضافية الجديدة === -->
-                {% if product.specs.all %}
-                <div class="card">
+                <!-- === بطاقة المواصفات المجمعة الجديدة === -->
+                {% if grouped_specs %}
+                <div class="card" data-print-field="col-specs">
                     <div class="card-title">
-                        <span class="left-title"><i class="fas fa-sliders-h"></i> المواصفات والأسعار </span>
-                        <span class="badge-teal">{{ product.specs.count }} مواصفة</span>
+                        <span class="left-title"><i class="fas fa-sliders-h"></i> المواصفات والأسعار (Variants)</span>
                     </div>
-                    <div class="table-wrap">
-                        <table class="table-order">
-                            <thead>
-                                <tr>
-                                    <th data-print-field="col-spec-type">نوع المواصفة</th>
-                                    <th data-print-field="col-spec-value">القيمة</th>
-                                    <th data-print-field="col-spec-price">السعر</th>
-                                    <th data-print-field="col-spec-barcode">بالباركود</th>
-                                    <th data-print-field="col-spec-notes">ملاحظات</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {% for spec in product.specs.all %}
-                                <tr>
-                                    <td data-print-field="col-spec-type" data-label="نوع المواصفة">{{ spec.spec_type.name }}</td>
-                                    <td data-print-field="col-spec-value" data-label="القيمة">{{ spec.spec_value.value }}</td>
-                                    <td data-print-field="col-spec-price" data-label="السعر">{{ spec.spec_price }} ر.س</td>
-                                    <td data-print-field="col-spec-barcode" data-label="بالباركود">
-                                        {% if spec.show_on_barcode %}
-                                            <span class="badge-success"><i class="fas fa-check ms-1" style="font-size:0.45rem;"></i>نعم</span>
-                                        {% else %}
-                                            <span class="badge-danger"><i class="fas fa-times ms-1"></i>لا</span>
-                                        {% endif %}
-                                    </td>
-                                    <td data-print-field="col-spec-notes" data-label="ملاحظات">{{ spec.spec_notes|default:'-' }}</td>
-                                </tr>
+                    <div class="specs-list-container">
+                        {% for spec in grouped_specs %}
+                        <div class="spec-group">
+                            <div class="spec-group-header">
+                                <span class="spec-group-title">{{ spec.type_name }}</span>
+                                {% if spec.price > 0 %}
+                                <span class="spec-group-price">سعر إضافي: {{ spec.price }} ر.س</span>
+                                {% endif %}
+                            </div>
+                            <div class="spec-values-list">
+                                {% for val in spec.values %}
+                                <span class="spec-value-badge">{{ val }}</span>
                                 {% endfor %}
-                            </tbody>
-                        </table>
+                            </div>
+                            <div class="spec-meta">
+                                <span><i class="fas fa-barcode"></i> ظهور بالباركود: {% if spec.show_on_barcode %}نعم{% else %}لا{% endif %}</span>
+                                {% if spec.notes %}<span><i class="fas fa-sticky-note"></i> {{ spec.notes }}</span>{% endif %}
+                            </div>
+                        </div>
+                        {% endfor %}
                     </div>
                 </div>
                 {% endif %}
@@ -564,9 +563,7 @@ body {
             <div class="field-grid">
                 <label class="field-check"><input type="checkbox" checked data-target="col-barcode"> الباركود <span class="field-key">col-barcode</span></label>
                 <label class="field-check"><input type="checkbox" checked data-target="col-status"> الحالة <span class="field-key">col-status</span></label>
-                <label class="field-check"><input type="checkbox" checked data-target="col-spec-type"> نوع المواصفة <span class="field-key">col-spec-type</span></label>
-                <label class="field-check"><input type="checkbox" checked data-target="col-spec-value"> القيمة <span class="field-key">col-spec-value</span></label>
-                <label class="field-check"><input type="checkbox" checked data-target="col-spec-price"> سعر المواصفة <span class="field-key">col-spec-price</span></label>
+                <label class="field-check"><input type="checkbox" checked data-target="col-specs"> المواصفات <span class="field-key">col-specs</span></label>
                 <label class="field-check"><input type="checkbox" checked data-target="col-prod-notes"> ملاحظات المنتج <span class="field-key">col-prod-notes</span></label>
             </div>
             

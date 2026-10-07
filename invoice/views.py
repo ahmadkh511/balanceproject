@@ -3129,6 +3129,8 @@ def product_list(request):
 
 
 
+from itertools import groupby
+from operator import attrgetter
 
 @login_required
 @permission_required('invoice.view_product', raise_exception=True)
@@ -3141,13 +3143,25 @@ def product_detail(request, slug):
     )
     barcodes = product.barcodes.all()
     
+    # تجميع المواصفات حسب النوع لتسهيل عرضها في القالب (مثال: الألوان -> أحمر، أسود)
+    specs = product.specs.all().order_by('spec_type__name')
+    grouped_specs = []
+    for spec_type, items in groupby(specs, key=attrgetter('spec_type')):
+        items_list = list(items)
+        grouped_specs.append({
+            'type_name': spec_type.name,
+            'values': [item.spec_value.value for item in items_list],
+            'price': items_list[0].spec_price if items_list else 0,
+            'show_on_barcode': items_list[0].show_on_barcode if items_list else False,
+            'notes': items_list[0].spec_notes if items_list else ''
+        })
+    
     return render(request, 'invoice/products/product_detail.html', {
         'product': product,
         'barcodes': barcodes,
+        'grouped_specs': grouped_specs,
         'title': _('تفاصيل المنتج')
     })
-
-
 
 
 
@@ -3173,6 +3187,8 @@ def product_delete(request, slug):
 
 import json
 from decimal import Decimal
+import json
+from decimal import Decimal
 
 @login_required
 @permission_required('invoice.change_product', raise_exception=True)
@@ -3196,7 +3212,8 @@ def product_edit(request, slug):
             return render(request, 'invoice/products/product_edit.html', {
                 'title': _('تعديل المادة'),
                 'product': product,
-                'spec_types': SpecType.objects.all()
+                'spec_types': SpecType.objects.all(),
+                'existing_specs': list(product.specs.values('spec_type_id', 'spec_value_id', 'spec_price', 'show_on_barcode', 'spec_notes'))
             })
 
         try:
@@ -3213,33 +3230,29 @@ def product_edit(request, slug):
 
                 product.save()
                 
-                # ===== تحديث المواصفات الديناميكية =====
+                # ===== تحديث المواصفات الديناميكية (Multi-select) =====
                 try:
                     specs_list = json.loads(specs_json)
                 except json.JSONDecodeError:
                     specs_list = []
 
-                processed_type_ids = []
+                # 1. حذف كل المواصفات القديمة لهذا المنتج
+                product.specs.all().delete()
+
+                # 2. إعادة إنشاء المواصفات بناءً على القائمة الجديدة
                 for spec in specs_list:
                     type_id = spec.get('type_id')
                     value_id = spec.get('value_id')
                     
                     if type_id and value_id:
-                        # تحديث أو إنشاء المواصفة بناءً على نوعها للمنتج
-                        obj, created = ProdSpec.objects.update_or_create(
+                        ProdSpec.objects.create(
                             product=product,
                             spec_type_id=type_id,
-                            defaults={
-                                'spec_value_id': value_id,
-                                'spec_price': Decimal(spec.get('price', '0.00') or '0.00'),
-                                'show_on_barcode': spec.get('show_on_barcode', False),
-                                'spec_notes': spec.get('notes', '') or None
-                            }
+                            spec_value_id=value_id,
+                            spec_price=Decimal(spec.get('price', '0.00') or '0.00'),
+                            show_on_barcode=spec.get('show_on_barcode', False),
+                            spec_notes=spec.get('notes', '') or None
                         )
-                        processed_type_ids.append(type_id)
-
-                # حذف المواصفات التي أزالها المستخدم من النموذج
-                product.specs.exclude(spec_type_id__in=processed_type_ids).delete()
                 # ======================================
 
                 messages.success(request, _('تم تحديث المادة بنجاح'))
@@ -3258,9 +3271,6 @@ def product_edit(request, slug):
         'spec_types': spec_types,
         'existing_specs': existing_specs
     })
-
-
-
 
 
 #================================================

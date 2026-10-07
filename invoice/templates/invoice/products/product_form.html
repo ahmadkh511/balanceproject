@@ -212,6 +212,33 @@ body {
 .checkbox-container input { width: 20px; height: 20px; accent-color: var(--primary-4); cursor: pointer; }
 .checkbox-container label { margin: 0; cursor: pointer; font-size: 0.8rem; color: var(--text-dark); }
 
+/* ===== القائمة المنسدلة متعددة الاختيار (Multi-select) ===== */
+.multiselect-container { position: relative; width: 100%; }
+.multiselect-trigger {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 0.55rem 0.75rem; border: 1px solid var(--primary-2);
+    border-radius: var(--radius-sm); background: white; cursor: pointer;
+    font-size: 0.88rem; color: #1a1a2e; transition: all 0.2s var(--ease);
+    min-height: 38px;
+}
+.multiselect-trigger.disabled { background: #f8fafc; color: #94a3b8; cursor: not-allowed; }
+.multiselect-trigger.active { border-color: var(--primary-3); box-shadow: 0 0 0 3px rgba(77, 208, 225, 0.2); }
+.multiselect-trigger i { color: var(--primary-4); transition: transform 0.3s var(--ease); }
+.multiselect-trigger.active i { transform: rotate(180deg); }
+.multiselect-menu {
+    display: none; position: absolute; top: calc(100% + 4px); left: 0; right: 0;
+    background: white; border: 1px solid var(--primary-2); border-radius: var(--radius-sm);
+    box-shadow: var(--shadow-md); z-index: 100; max-height: 200px; overflow-y: auto; padding: 5px;
+}
+.multiselect-menu.show { display: block; }
+.multiselect-item {
+    display: flex; align-items: center; gap: 8px; padding: 8px 10px; cursor: pointer;
+    border-radius: var(--radius-sm); transition: background 0.15s var(--ease); font-size: 0.85rem;
+}
+.multiselect-item:hover { background: var(--primary-1); }
+.multiselect-item input { accent-color: var(--primary-4); cursor: pointer; width: 16px; height: 16px; }
+.multiselect-empty { padding: 10px; text-align: center; color: #94a3b8; font-size: 0.8rem; }
+
 /* ===== التجاوب ===== */
 @media (max-width: 768px) {
     .form-hero { padding: 1.25rem 1rem; }
@@ -235,7 +262,9 @@ body {
      data-loaded="{% trans 'تم تحميل صفحة إنشاء المادة' %}"
      data-full-load="{% trans 'تم تحميل الصفحة بالكامل' %}"
      data-ckeditor-error="{% trans 'تعذر تحميل محرر الملاحظات' %}"
-     data-spec-loading="{% trans 'جاري التحميل...' %}">
+     data-spec-loading="{% trans 'جاري التحميل...' %}"
+     data-spec-select="{% trans 'اختر القيمة' %}"
+     data-spec-selected="{% trans 'مختارة' %}">
 </div>
 
 <div id="apiUrls" class="d-none" 
@@ -302,6 +331,7 @@ body {
                             <span class="input-icon"><i class="fas fa-barcode"></i></span>
                             <input type="text" class="form-input" id="id_main_barcode" name="main_barcode" placeholder="{% trans 'أدخل الباركود الأساسي (اختياري)' %}">
                         </div>
+                        <div class="form-hint"><i class="fas fa-info-circle fa-xs"></i> {% trans "الباركود الأساسي للمادة - يجب أن يكون فريداً" %}</div>
                     </div>
 
                     <div class="mb-3">
@@ -338,7 +368,7 @@ body {
         <div class="card">
             <div class="card-title"><i class="fas fa-sliders-h"></i> {% trans "المواصفات والأسعار (Variants)" %}</div>
             <div class="form-hint mb-3">
-                <i class="fas fa-info-circle fa-xs"></i> {% trans "أضف مواصفات مخصصة (اللون، الحجم) وحدد سعرها وخيارات ظهورها بالباركود." %}
+                <i class="fas fa-info-circle fa-xs"></i> {% trans "أضف مواصفات (اللون، الحجم) ويمكنك اختيار أكثر من قيمة (أحمر، أسود) لنفس المواصفة." %}
             </div>
             
             <div id="specsContainer">
@@ -358,6 +388,7 @@ body {
                 <div class="ck-container">
                     <textarea name="Prodnots" id="id_Prodnots" rows="8" placeholder="{% trans 'أضف ملاحظات تفصيلية للمادة... (يدعم التنسيق، الصور، الجداول)' %}"></textarea>
                 </div>
+                <div class="form-hint"><i class="fas fa-info-circle fa-xs"></i> {% trans "ملاحظات غنية بالتنسيق تظهر في صفحة تفاصيل المادة" %}</div>
             </div>
 
             <div class="progress-teal">
@@ -477,7 +508,7 @@ body {
         });
     }
 
-    /* ===== إدارة المواصفات الديناميكية (AJAX) ===== */
+    /* ===== إدارة المواصفات الديناميكية (Multi-select) ===== */
     function addSpecRow() {
         var row = document.createElement('div');
         row.className = 'spec-row';
@@ -496,10 +527,16 @@ body {
                     </select>
                 </div>
                 <div class="col-md-3">
-                    <label class="form-label">القيمة</label>
-                    <select class="form-select-custom spec-value-select" disabled required>
-                        <option value="">${i18n.specLoading || 'جاري التحميل...'}</option>
-                    </select>
+                    <label class="form-label">القيمة (يمكن اختيار أكثر من واحدة)</label>
+                    <div class="multiselect-container">
+                        <div class="multiselect-trigger disabled spec-value-trigger">
+                            <span class="trigger-text">${i18n.specSelect || 'اختر القيمة'}</span>
+                            <i class="fas fa-chevron-down"></i>
+                        </div>
+                        <div class="multiselect-menu spec-value-menu">
+                            <div class="multiselect-empty">${i18n.specLoading || 'جاري التحميل...'}</div>
+                        </div>
+                    </div>
                 </div>
                 <div class="col-md-2">
                     <label class="form-label">السعر الإضافي</label>
@@ -521,11 +558,12 @@ body {
         specsContainer.appendChild(row);
 
         var typeSelect = row.querySelector('.spec-type-select');
-        var valueSelect = row.querySelector('.spec-value-select');
+        var trigger = row.querySelector('.spec-value-trigger');
+        var menu = row.querySelector('.spec-value-menu');
         var removeBtn = row.querySelector('.btn-remove-spec');
 
         typeSelect.addEventListener('change', function() {
-            loadSpecValues(this.value, valueSelect);
+            loadSpecValues(this.value, menu, trigger);
         });
 
         removeBtn.addEventListener('click', function() {
@@ -536,17 +574,20 @@ body {
         updateProgress();
     }
 
-    function loadSpecValues(typeId, valueSelect) {
+    function loadSpecValues(typeId, menuEl, triggerEl) {
+        var triggerText = triggerEl.querySelector('.trigger-text');
+        
         if (!typeId) {
-            valueSelect.innerHTML = '<option value="">اختر القيمة</option>';
-            valueSelect.disabled = true;
+            menuEl.innerHTML = '<div class="multiselect-empty">اختر القيمة</div>';
+            triggerEl.classList.add('disabled');
+            triggerText.textContent = i18n.specSelect || 'اختر القيمة';
             return;
         }
 
-        valueSelect.innerHTML = '<option value="">' + (i18n.specLoading || 'جاري التحميل...') + '</option>';
-        valueSelect.disabled = true;
+        menuEl.innerHTML = '<div class="multiselect-empty">' + (i18n.specLoading || 'جاري التحميل...') + '</div>';
+        triggerEl.classList.add('disabled');
+        triggerText.textContent = i18n.specLoading || 'جاري التحميل...';
 
-        // تعويض الرقم 0 بالـ ID الحقيقي في الرابط
         var url = specValuesBaseUrl.replace('/0/', '/' + typeId + '/');
 
         fetch(url)
@@ -555,21 +596,76 @@ body {
                 return response.json();
             })
             .then(data => {
-                valueSelect.innerHTML = '<option value="">اختر القيمة</option>';
+                menuEl.innerHTML = '';
+                if (data.length === 0) {
+                    menuEl.innerHTML = '<div class="multiselect-empty">لا توجد قيم لهذا النوع</div>';
+                    return;
+                }
                 data.forEach(function(item) {
-                    var opt = document.createElement('option');
-                    opt.value = item.id;
-                    opt.textContent = item.value;
-                    valueSelect.appendChild(opt);
+                    var label = document.createElement('label');
+                    label.className = 'multiselect-item';
+                    var checkbox = document.createElement('input');
+                    checkbox.type = 'checkbox';
+                    checkbox.value = item.id;
+                    var text = document.createTextNode(item.value);
+                    label.appendChild(checkbox);
+                    label.appendChild(text);
+                    menuEl.appendChild(label);
                 });
-                valueSelect.disabled = false;
+                triggerEl.classList.remove('disabled');
+                triggerText.textContent = i18n.specSelect || 'اختر القيمة';
             })
             .catch(error => {
                 console.error('Error fetching spec values:', error);
-                valueSelect.innerHTML = '<option value="">خطأ في التحميل</option>';
+                menuEl.innerHTML = '<div class="multiselect-empty">خطأ في التحميل</div>';
                 showAlert('حدث خطأ أثناء جلب القيم', 'error');
             });
     }
+
+    // التعامل مع فتح/إغلاق القائمة المنسدلة وتحديث النص
+    document.addEventListener('click', function(e) {
+        // فتح/إغلاق القائمة
+        if (e.target.closest('.spec-value-trigger')) {
+            var trigger = e.target.closest('.spec-value-trigger');
+            if (trigger.classList.contains('disabled')) return;
+            var menu = trigger.nextElementSibling;
+            
+            // إغلاق القوائم الأخرى المفتوحة
+            document.querySelectorAll('.spec-value-trigger.active').forEach(function(otherTrigger) {
+                if (otherTrigger !== trigger) {
+                    otherTrigger.classList.remove('active');
+                    otherTrigger.nextElementSibling.classList.remove('show');
+                }
+            });
+
+            trigger.classList.toggle('active');
+            menu.classList.toggle('show');
+            e.stopPropagation();
+        } else if (!e.target.closest('.multiselect-container')) {
+            // إغلاق القوائم عند الضغط خارجها
+            document.querySelectorAll('.spec-value-trigger.active').forEach(function(trigger) {
+                trigger.classList.remove('active');
+                trigger.nextElementSibling.classList.remove('show');
+            });
+        }
+
+        // تحديث نص التريجر عند تغيير مربعات الاختيار
+        if (e.target.matches('.spec-value-menu input[type="checkbox"]')) {
+            var menu = e.target.closest('.spec-value-menu');
+            var trigger = menu.previousElementSibling;
+            var triggerText = trigger.querySelector('.trigger-text');
+            var checkedBoxes = menu.querySelectorAll('input[type="checkbox"]:checked');
+            
+            if (checkedBoxes.length === 0) {
+                triggerText.textContent = i18n.specSelect || 'اختر القيمة';
+            } else if (checkedBoxes.length === 1) {
+                triggerText.textContent = checkedBoxes[0].nextSibling.textContent.trim();
+            } else {
+                triggerText.textContent = checkedBoxes.length + ' ' + (i18n.specSelected || 'مختارة');
+            }
+            e.stopPropagation();
+        }
+    });
 
     function collectSpecsData() {
         var specs = [];
@@ -577,17 +673,19 @@ body {
         
         rows.forEach(function(row) {
             var typeSelect = row.querySelector('.spec-type-select');
-            var valueSelect = row.querySelector('.spec-value-select');
+            var menu = row.querySelector('.spec-value-menu');
+            var checkedBoxes = menu.querySelectorAll('input[type="checkbox"]:checked');
             
-            if (typeSelect.value && valueSelect.value) {
+            // لكل قيمة مختارة، ننشئ كائناً مستقلاً في المصفوفة
+            checkedBoxes.forEach(function(cb) {
                 specs.push({
                     type_id: typeSelect.value,
-                    value_id: valueSelect.value,
+                    value_id: cb.value,
                     price: row.querySelector('.spec-price-input').value || '0.00',
                     show_on_barcode: row.querySelector('.spec-barcode-check').checked,
                     notes: row.querySelector('.spec-notes-input').value || ''
                 });
-            }
+            });
         });
         
         specsDataInput.value = JSON.stringify(specs);
@@ -665,7 +763,7 @@ body {
             } else {
                 nameInput.classList.remove('is-invalid');
                 if (ckeditorInstance) { ckeditorInstance.updateSourceElement(); }
-                collectSpecsData(); // تجميع بيانات المواصفات قبل الإرسال
+                collectSpecsData(); // تجميع بيانات المواصفات (متعددة) قبل الإرسال
             }
         });
     }
@@ -691,4 +789,4 @@ body {
     });
 })();
 </script>
-{% endblock %}555
+{% endblock %}

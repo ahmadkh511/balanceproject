@@ -1,5 +1,6 @@
 {% extends 'base.html' %}
 {% load static %}
+{% load i18n %}
 
 {% block title %}قائمة المنتجات{% endblock %}
 
@@ -8,422 +9,227 @@
 {% endblock %}
 
 {% block content %}
-<style>
-    /* === إعدادات عامة === */
-    body {
-        background-color: #f0f2f5;
-        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    }
+<style nonce="{{ csp_nonce }}">
+@import url('https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;600;700;800&display=swap');
 
-    .compact-container {
-        padding: 1.5rem;
-        max-width: 1400px;
-        margin: 0 auto;
-    }
+:root {
+    --primary-1: #f0fdfa;
+    --primary-2: #ccfbf1;
+    --primary-3: #5eead4;
+    --primary-4: #0d9488; /* Teal 600 */
+    --primary-dark: #0f766e;
+    --text-dark: #0f172a; /* Slate 900 */
+    --text-muted: #64748b; /* Slate 500 */
+    --bg-input: #f8fafc; /* Slate 50 */
+    --border-color: #e2e8f0; /* Slate 200 */
+    --danger-color: #ef4444;
+    --danger-bg: #fef2f2;
+    --success-color: #10b981;
+    --success-bg: #ecfdf5;
+    --info-color: #3b82f6;
+    --info-bg: #eff6ff;
+    --warning-color: #f59e0b;
+    --warning-bg: #fffbeb;
+    --shadow-sm: 0 1px 3px rgba(15, 23, 42, 0.05);
+    --shadow-md: 0 4px 6px -1px rgba(15, 23, 42, 0.08);
+    --shadow-lg: 0 10px 15px -3px rgba(15, 23, 42, 0.1);
+    --radius-sm: 8px;
+    --radius: 12px;
+    --radius-lg: 16px;
+    --ease: cubic-bezier(0.4, 0, 0.2, 1);
+}
 
-    /* === رأس الصفحة === */
-    .compact-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 1.5rem;
-        flex-wrap: wrap;
-        gap: 1rem;
-    }
+* { box-sizing: border-box; }
 
-    .header-title h1 {
-        font-size: 1.6rem;
-        color: #1a252f;
-        margin: 0;
-        font-weight: 800;
-        letter-spacing: -0.5px;
-    }
+body {
+    font-family: 'Tajawal', sans-serif;
+    background: #f1f5f9; /* Slate 100 */
+    min-height: 100vh;
+    padding: 1rem;
+    font-size: 0.9rem;
+    color: var(--text-dark);
+}
 
-    .header-title span {
-        color: #8395a7;
-        font-size: 0.9rem;
-        display: block;
-        margin-top: 0.2rem;
-    }
+.compact-container { max-width: 1200px; margin: 0 auto; }
 
-    .toolbar {
-        display: flex;
-        gap: 0.75rem;
-        align-items: center;
-        flex-wrap: wrap;
-    }
+/* === الهيدر الموحد === */
+.form-header {
+    background: white; border-radius: var(--radius); padding: 1rem 1.5rem; margin-bottom: 1rem;
+    box-shadow: var(--shadow-sm); border: 1px solid var(--border-color);
+    display: flex; align-items: center; justify-content: space-between; gap: 1rem; flex-wrap: wrap;
+}
+.header-info { display: flex; align-items: center; gap: 0.75rem; }
+.header-icon { width: 40px; height: 40px; background: var(--primary-1); border-radius: var(--radius-sm); display: flex; align-items: center; justify-content: center; color: var(--primary-4); font-size: 1.1rem; }
+.header-title { font-size: 1.1rem; font-weight: 700; margin: 0; color: var(--text-dark); }
+.header-subtitle { font-size: 0.75rem; color: var(--text-muted); margin-top: 2px; }
 
-    .search-input-compact {
-        border: 2px solid #e1e8ed;
-        border-radius: 10px;
-        padding: 0.6rem 1rem 0.6rem 2.8rem;
-        width: 280px;
-        transition: all 0.3s ease;
-        background-color: #fff;
-        font-size: 0.95rem;
-    }
+.toolbar { display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap; }
+.search-wrapper { position: relative; }
+.search-wrapper i {
+    position: absolute; right: 14px; top: 50%; transform: translateY(-50%);
+    color: var(--text-muted); font-size: 0.85rem; pointer-events: none;
+}
+.search-input-compact {
+    border: 1px solid var(--border-color); border-radius: var(--radius-sm);
+    padding: 0.5rem 2.5rem 0.5rem 0.8rem; width: 280px;
+    transition: all 0.2s var(--ease); background: var(--bg-input);
+    font-size: 0.85rem; font-family: 'Tajawal', sans-serif; color: var(--text-dark);
+}
+.search-input-compact:focus { background: white; border-color: var(--primary-4); box-shadow: 0 0 0 4px rgba(13, 148, 136, 0.1); outline: none; }
 
-    .search-input-compact:focus {
-        border-color: #3498db;
-        box-shadow: 0 0 0 4px rgba(52, 152, 219, 0.1);
-        outline: none;
-    }
+.btn-primary-teal { background: var(--primary-4); color: white; border: none; padding: 0.5rem 1.2rem; border-radius: var(--radius-sm); font-size: 0.85rem; font-weight: 600; cursor: pointer; transition: all 0.2s var(--ease); display: inline-flex; align-items: center; gap: 0.4rem; text-decoration: none; white-space: nowrap; }
+.btn-primary-teal:hover { background: var(--primary-dark); transform: translateY(-1px); box-shadow: var(--shadow-md); }
+.btn-secondary-teal { background: white; color: var(--text-muted); border: 1px solid var(--border-color); padding: 0.5rem 1.2rem; border-radius: var(--radius-sm); font-size: 0.85rem; font-weight: 600; cursor: pointer; transition: all 0.2s var(--ease); display: inline-flex; align-items: center; gap: 0.4rem; text-decoration: none; white-space: nowrap; }
+.btn-secondary-teal:hover { background: var(--bg-input); color: var(--text-dark); }
+.btn-secondary-teal.expanded { background: var(--primary-1); color: var(--primary-dark); border-color: var(--primary-2); }
 
-    .search-wrapper {
-        position: relative;
-    }
+/* === بطاقة الجدول === */
+.table-card {
+    background: white; border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-sm); overflow-x: auto;
+    border: 1px solid var(--border-color);
+}
+.table-card::-webkit-scrollbar { display: none; }
 
-    .search-wrapper i {
-        position: absolute;
-        left: 14px;
-        top: 50%;
-        transform: translateY(-50%);
-        color: #bdc3c7;
-        font-size: 0.9rem;
-    }
+.compact-table { width: 100%; min-width: 700px; border-collapse: collapse; text-align: right; }
+.compact-table thead th {
+    background: var(--bg-input); color: var(--text-muted); font-weight: 600; font-size: 0.75rem;
+    padding: 0.75rem 1rem; border-bottom: 1px solid var(--border-color);
+    text-transform: uppercase; white-space: nowrap; cursor: pointer; user-select: none; transition: all 0.2s var(--ease);
+}
+.compact-table thead th:hover { background: #e2e8f0; color: var(--text-dark); }
+.compact-table thead th .sort-icon { margin-right: 5px; font-size: 0.7rem; opacity: 0.5; }
+.compact-table thead th.active-sort .sort-icon { opacity: 1; color: var(--primary-4); }
+.compact-table thead th.active-sort { color: var(--primary-dark); background: var(--primary-1); }
 
-    .btn-add-compact {
-        background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
-        color: white;
-        padding: 0.65rem 1.5rem;
-        border-radius: 10px;
-        text-decoration: none;
-        font-weight: 600;
-        transition: all 0.3s ease;
-        white-space: nowrap;
-        box-shadow: 0 4px 6px rgba(52, 152, 219, 0.2);
-    }
+.compact-table tbody tr { border-bottom: 1px solid #f1f5f9; transition: background 0.2s var(--ease); cursor: pointer; }
+.compact-table tbody tr:hover { background: var(--bg-input); }
+.compact-table tbody td { padding: 0.75rem 1rem; vertical-align: middle; font-size: 0.85rem; color: var(--text-dark); }
 
-    .btn-add-compact:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 6px 12px rgba(52, 152, 219, 0.3);
-        color: white;
-    }
+/* === عناصر داخل الجدول === */
+.img-thumb { width: 40px; height: 40px; border-radius: 8px; object-fit: cover; background: var(--bg-input); border: 1px solid var(--border-color); }
+.no-img-icon { width: 40px; height: 40px; background: var(--bg-input); border-radius: 8px; display: flex; align-items: center; justify-content: center; color: #cbd5e1; border: 1px solid var(--border-color); }
+.product-name-cell { font-weight: 700; color: var(--text-dark); font-size: 0.9rem; }
 
-    /* === زر إظهار/إخفاء الكل === */
-    .btn-toggle-all-serials {
-        background: #fff;
-        color: #2c3e50;
-        padding: 0.65rem 1.2rem;
-        border: 2px solid #e1e8ed;
-        border-radius: 10px;
-        text-decoration: none;
-        font-weight: 600;
-        transition: all 0.3s ease;
-        white-space: nowrap;
-        cursor: pointer;
-        display: inline-flex;
-        align-items: center;
-        gap: 8px;
-    }
-    .btn-toggle-all-serials:hover {
-        background: #f8f9fa;
-        border-color: #bdc3c7;
-        transform: translateY(-2px);
-    }
-    .btn-toggle-all-serials.expanded {
-        background: #eaf2f8;
-        color: #2980b9;
-        border-color: #3498db;
-    }
+.main-barcode-cell {
+    font-family: 'Courier New', monospace; font-size: 0.8rem; font-weight: bold;
+    color: var(--info-color); background: var(--info-bg);
+    padding: 0.2rem 0.6rem; border-radius: 6px; border: 1px solid #bfdbfe; display: inline-block;
+}
+.barcode-wrapper { display: inline-flex; align-items: center; gap: 6px; }
+.btn-copy-code { background: none; border: none; color: #94a3b8; cursor: pointer; padding: 0; font-size: 0.8rem; transition: all 0.2s var(--ease); }
+.btn-copy-code:hover { color: var(--primary-4); transform: scale(1.2); }
+.btn-copy-code.copied { color: var(--success-color); }
 
-    /* === بطاقة الجدول === */
-    .table-card {
-        background: white;
-        border-radius: 16px;
-        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04);
-        overflow-x: auto;
-        border: 1px solid #e1e8ed;
-    }
-    
-    .table-card::-webkit-scrollbar {
-        display: none;
-        height: 0;
-        width: 0;
-    }
-    .table-card {
-        -ms-overflow-style: none;  
-        scrollbar-width: none;  
-    }
+.badge-sm { padding: 0.25rem 0.6rem; border-radius: 1rem; font-size: 0.7rem; font-weight: 700; display: inline-block; }
+.bg-low { background: var(--danger-bg); color: var(--danger-color); }
+.bg-med { background: var(--warning-bg); color: var(--warning-color); }
+.bg-high { background: var(--success-bg); color: var(--success-color); }
+.bg-info-soft { background: var(--info-bg); color: var(--info-color); }
 
-    /* === الجدول === */
-    .compact-table {
-        width: 100%;
-        min-width: 700px;
-        border-collapse: collapse;
-        text-align: right;
-    }
+.serial-toggle-wrapper { display: inline-flex; align-items: center; gap: 6px; cursor: pointer; user-select: none; padding: 0.2rem 0.4rem; border-radius: 6px; transition: background 0.2s; }
+.serial-toggle-wrapper:hover { background: var(--bg-input); }
+.serial-toggle-icon { font-size: 0.65rem; color: var(--info-color); transition: transform 0.3s var(--ease); }
+.main-product-row.expanded .serial-toggle-icon { transform: rotate(180deg); }
 
-    .compact-table thead th {
-        background-color: #f8f9fa;
-        color: #6c757d;
-        font-weight: 700;
-        font-size: 0.8rem;
-        padding: 1rem 1.2rem;
-        border-bottom: 2px solid #e9ecef;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-        white-space: nowrap;
-        cursor: pointer;
-        user-select: none;
-        position: relative;
-        transition: all 0.2s ease;
-    }
+.actions-cell { white-space: nowrap; }
+.btn-icon-sm {
+    width: 32px; height: 32px; line-height: 32px; text-align: center; border-radius: 8px;
+    color: var(--text-muted); background: var(--bg-input); border: 1px solid var(--border-color);
+    display: inline-block; margin: 0 0.1rem; transition: all 0.2s var(--ease); text-decoration: none;
+}
+.btn-icon-sm:hover { color: #fff; border-color: transparent; transform: translateY(-1px); }
+.btn-icon-sm.text-danger:hover { background: var(--danger-color); box-shadow: var(--shadow-sm); }
+.btn-icon-sm.text-primary:hover { background: var(--primary-4); box-shadow: var(--shadow-sm); }
+.btn-icon-sm.text-warning:hover { background: var(--warning-color); box-shadow: var(--shadow-sm); }
+.btn-icon-sm.text-info:hover { background: var(--info-color); box-shadow: var(--shadow-sm); }
 
-    .compact-table thead th:hover {
-        background-color: #e9ecef;
-        color: #2c3e50;
-    }
+/* === قسم الأكورديون === */
+.accordion-row { background-color: #fcfdff; }
+.accordion-content { padding: 1rem 1.5rem; border-bottom: 1px solid #f1f5f9; font-size: 0.8rem; display: none; background-color: var(--bg-input); }
+.accordion-content.show { display: block; animation: slideDown 0.3s var(--ease); }
+@keyframes slideDown { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
 
-    .compact-table thead th .sort-icon {
-        margin-right: 5px;
-        font-size: 0.7rem;
-        opacity: 0.5;
-    }
+.barcode-tag {
+    display: inline-flex; align-items: center; gap: 6px; background: white; padding: 0.3rem 0.6rem;
+    border-radius: 6px; margin-left: 0.4rem; margin-bottom: 0.4rem; font-family: 'Courier New', monospace;
+    font-size: 0.8rem; font-weight: bold; border: 1px solid var(--border-color); color: var(--text-dark); transition: all 0.2s var(--ease);
+}
+.barcode-tag:hover { border-color: #d1d3e2; box-shadow: var(--shadow-sm); }
+.barcode-tag.primary { background: var(--info-bg); border-color: #bfdbfe; color: var(--info-color); }
 
-    .compact-table thead th.active-sort .sort-icon {
-        opacity: 1;
-        color: #3498db;
-    }
+.empty-row td { text-align: center; padding: 3rem 2rem; color: #94a3b8; }
+.empty-row i { font-size: 2.5rem; margin-bottom: 0.5rem; display: block; color: #cbd5e1; }
 
-    .compact-table thead th.active-sort {
-        color: #1a252f;
-        background-color: #eaf2f8;
-    }
+/* === المودال === */
+.modal-overlay { display: none; position: fixed; inset: 0; background: rgba(15, 23, 42, 0.6); z-index: 9999; justify-content: center; align-items: center; backdrop-filter: blur(4px); }
+.modal-overlay.active { display: flex; }
+.modal-box { background: white; border-radius: var(--radius-lg); width: 720px; max-width: 95vw; max-height: 90vh; overflow-y: auto; box-shadow: var(--shadow-lg); }
+.modal-header-custom { display: flex; justify-content: space-between; align-items: center; padding: 1rem 1.5rem; background: white; border-bottom: 1px solid var(--border-color); border-radius: var(--radius-lg) var(--radius-lg) 0 0; }
+.modal-header-custom h3 { font-size: 1.1rem; font-weight: 700; margin: 0; display: flex; align-items: center; gap: 0.5rem; color: var(--text-dark); }
+.modal-header-custom h3 i { color: var(--primary-4); }
+.modal-close { width: 32px; height: 32px; border: none; background: var(--bg-input); border-radius: 50%; cursor: pointer; font-size: 1rem; color: var(--text-muted); display: flex; align-items: center; justify-content: center; transition: all 0.2s var(--ease); }
+.modal-close:hover { background: var(--danger-bg); color: var(--danger-color); transform: rotate(90deg); }
+.modal-body-custom { padding: 1.5rem; }
+.modal-footer-custom { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem; padding: 1rem 1.5rem; background: var(--bg-input); border-top: 1px solid var(--border-color); border-radius: 0 0 var(--radius-lg) var(--radius-lg); }
 
-    .compact-table tbody tr {
-        border-bottom: 1px solid #f1f3f5;
-        transition: all 0.2s ease;
-        cursor: pointer;
-    }
+.section-title { font-size: 0.75rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; margin: 1.5rem 0 0.75rem; padding-bottom: 0.5rem; border-bottom: 1px solid var(--border-color); }
+.section-title:first-child { margin-top: 0; }
 
-    .compact-table tbody tr:hover {
-        background-color: #f8f9fa;
-    }
+.company-info-box { background: var(--primary-1); border: 1px solid var(--primary-2); color: var(--primary-dark); padding: 0.75rem 1rem; border-radius: var(--radius-sm); margin-bottom: 1rem; font-size: 0.8rem; display: flex; align-items: center; gap: 0.5rem; }
+.header-footer-inputs { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+.hf-input-group label { display: block; font-size: 0.8rem; font-weight: 600; color: var(--text-muted); margin-bottom: 0.3rem; }
+.hf-input-group input, .hf-input-group textarea { width: 100%; border: 1px solid var(--border-color); border-radius: var(--radius-sm); padding: 0.5rem 0.75rem; font-size: 0.85rem; font-family: 'Tajawal', sans-serif; transition: all 0.2s var(--ease); background: var(--bg-input); }
+.hf-input-group input:focus, .hf-input-group textarea:focus { background: white; border-color: var(--primary-4); box-shadow: 0 0 0 4px rgba(13, 148, 136, 0.1); outline: none; }
+.hf-preview-box { border: 1px dashed var(--border-color); border-radius: var(--radius-sm); padding: 0.5rem; text-align: center; cursor: pointer; transition: all 0.2s var(--ease); min-height: 70px; display: flex; align-items: center; justify-content: center; background: var(--bg-input); }
+.hf-preview-box:hover { border-color: var(--primary-4); background: var(--primary-1); }
 
-    .compact-table tbody td {
-        padding: 1rem 1.2rem;
-        vertical-align: middle;
-        font-size: 0.95rem;
-        color: #2c3e50;
-    }
+.field-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; }
+.field-check { display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem 0.75rem; border: 1px solid var(--border-color); border-radius: var(--radius-sm); cursor: pointer; transition: all 0.2s var(--ease); font-size: 0.85rem; background: white; }
+.field-check:hover { border-color: var(--primary-3); background: var(--primary-1); }
+.field-check input { width: 16px; height: 16px; accent-color: var(--primary-4); cursor: pointer; }
+.field-key { color: var(--text-muted); font-size: 0.65rem; font-family: monospace; background: var(--bg-input); padding: 0.1rem 0.4rem; border-radius: 4px; margin-right: auto; }
 
-    /* === عناصر داخل الجدول === */
-    .img-thumb {
-        width: 45px;
-        height: 45px;
-        border-radius: 10px;
-        object-fit: cover;
-        background: #f1f3f5;
-        border: 2px solid #e9ecec;
-    }
+.btn-group-print { display: flex; gap: 0.25rem; background: var(--bg-input); padding: 0.25rem; border-radius: var(--radius-sm); flex-wrap: wrap; border: 1px solid var(--border-color); }
+.btn-opt { flex: 1; padding: 0.4rem 0.5rem; border: none; background: transparent; border-radius: 6px; font-size: 0.8rem; cursor: pointer; font-family: 'Tajawal', sans-serif; color: var(--text-muted); font-weight: 600; transition: all 0.2s var(--ease); text-align: center; min-width: 55px; }
+.btn-opt:hover { color: var(--text-dark); }
+.btn-opt.active { background: white; color: var(--primary-4); box-shadow: var(--shadow-sm); }
 
-    .no-img-icon {
-        width: 45px;
-        height: 45px;
-        background: #f1f3f5;
-        border-radius: 10px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        color: #ced4da;
-        border: 2px solid #e9ecec;
-    }
+.toggle-row { display: flex; align-items: center; justify-content: space-between; padding: 0.5rem 0; }
+.toggle-row label { font-size: 0.85rem; margin: 0; cursor: pointer; color: var(--text-dark); font-weight: 500; }
+.toggle-switch { position: relative; width: 40px; height: 22px; cursor: pointer; flex-shrink: 0; }
+.toggle-switch input { display: none; }
+.toggle-slider { position: absolute; inset: 0; background: #cbd5e1; border-radius: 11px; transition: 0.25s var(--ease); }
+.toggle-slider::before { content: ''; position: absolute; width: 16px; height: 16px; background: white; border-radius: 50%; top: 3px; left: 3px; transition: 0.25s var(--ease); box-shadow: var(--shadow-sm); }
+.toggle-switch input:checked + .toggle-slider { background: var(--primary-4); }
+.toggle-switch input:checked + .toggle-slider::before { left: 21px; }
 
-    .product-name-cell {
-        font-weight: 700;
-        color: #1a252f;
-        font-size: 1rem;
-    }
+/* === Toast === */
+.toast { position: fixed; bottom: 2rem; left: 50%; transform: translateX(-50%) translateY(80px); background: #1e293b; color: white; padding: 0.8rem 1.8rem; border-radius: 50px; font-size: 0.9rem; z-index: 100000; opacity: 0; transition: all 0.4s var(--ease); pointer-events: none; box-shadow: var(--shadow-lg); font-weight: 600; display: none; }
+.toast.show { display: block; transform: translateX(-50%) translateY(0); opacity: 1; }
+.toast-success { background: var(--primary-4); }
+.toast-error { background: var(--danger-color); }
+.toast-info { background: var(--info-color); }
 
-    .main-barcode-cell {
-        font-family: 'Courier New', Courier, monospace;
-        font-size: 0.9rem;
-        font-weight: bold;
-        color: #1565c0;
-        background: #e3f2fd;
-        padding: 0.3rem 0.7rem;
-        border-radius: 6px;
-        border: 1px solid #bbdefb;
-        display: inline-block;
-    }
+@media (max-width: 768px) {
+    .form-header { flex-direction: column; align-items: stretch; }
+    .toolbar { width: 100%; }
+    .search-input-compact { width: 100%; flex: 1; }
+    .btn-primary-teal, .btn-secondary-teal { flex: 1; justify-content: center; }
+}
 
-    .barcode-wrapper {
-        display: inline-flex;
-        align-items: center;
-        gap: 6px;
-    }
-
-    .btn-copy-code {
-        background: none;
-        border: none;
-        color: #bdc3c7;
-        cursor: pointer;
-        padding: 0 2px;
-        font-size: 0.85rem;
-        transition: all 0.2s ease;
-        line-height: 1;
-    }
-
-    .btn-copy-code:hover {
-        color: #3498db;
-        transform: scale(1.2);
-    }
-
-    .btn-copy-code.copied {
-        color: #27ae60;
-    }
-
-    .badge-sm {
-        padding: 0.35rem 0.75rem;
-        border-radius: 20px;
-        font-size: 0.8rem;
-        font-weight: 700;
-        display: inline-block;
-    }
-    .bg-low { background-color: #ffeaea; color: #e74c3c; }
-    .bg-med { background-color: #fff8e1; color: #f39c12; }
-    .bg-high { background-color: #eafaf1; color: #27ae60; }
-    .bg-info-soft { background-color: #eaf2f8; color: #2980b9; }
-
-    /* === زر إظهار/إخفاء للصف الواحد === */
-    .serial-toggle-wrapper {
-        display: inline-flex;
-        align-items: center;
-        gap: 8px;
-        cursor: pointer;
-        user-select: none;
-        padding: 0.2rem 0.4rem;
-        border-radius: 6px;
-        transition: background 0.2s;
-    }
-    .serial-toggle-wrapper:hover {
-        background: #f1f3f5;
-    }
-    .serial-toggle-icon {
-        font-size: 0.7rem;
-        color: #2980b9;
-        transition: transform 0.3s ease;
-    }
-    .main-product-row.expanded .serial-toggle-icon {
-        transform: rotate(180deg);
-    }
-
-    .actions-cell {
-        white-space: nowrap;
-    }
-
-    .btn-icon-sm {
-        width: 36px;
-        height: 36px;
-        padding: 0;
-        line-height: 36px;
-        text-align: center;
-        border-radius: 8px;
-        color: #adb5bd;
-        background: transparent;
-        border: 1px solid transparent;
-        display: inline-block;
-        margin: 0 0.15rem;
-        transition: all 0.2s ease;
-    }
-
-    .btn-icon-sm:hover {
-        color: #fff;
-        border-color: transparent;
-        transform: translateY(-1px);
-    }
-    .btn-icon-sm.text-danger:hover { background: #e74c3c; box-shadow: 0 4px 8px rgba(231,76,60,0.3); }
-    .btn-icon-sm.text-primary:hover { background: #3498db; box-shadow: 0 4px 8px rgba(52,152,219,0.3); }
-    .btn-icon-sm.text-warning:hover { background: #f39c12; box-shadow: 0 4px 8px rgba(243,156,18,0.3); }
-    /* لون مخصص لزر الطباعة الجديد */
-    .btn-icon-sm.text-info:hover { background: #17a2b8; box-shadow: 0 4px 8px rgba(23,162,184,0.3); }
-
-    /* === قسم الأكورديون المنسدل === */
-    .accordion-row {
-        background-color: #fcfdff;
-    }
-    
-    .accordion-content {
-        padding: 1.2rem;
-        border-bottom: 1px solid #f1f3f5;
-        font-size: 0.9rem;
-        display: none;
-        background-color: #fcfdff;
-    }
-    
-    .accordion-content.show {
-        display: block;
-        animation: slideDown 0.3s ease;
-    }
-
-    @keyframes slideDown {
-        from { opacity: 0; transform: translateY(-10px); }
-        to { opacity: 1; transform: translateY(0); }
-    }
-
-    .barcode-tag {
-        display: inline-flex;
-        align-items: center;
-        gap: 6px;
-        background: #f8f9fa;
-        padding: 0.4rem 0.8rem;
-        border-radius: 6px;
-        margin-left: 0.4rem;
-        margin-bottom: 0.4rem;
-        font-family: 'Courier New', Courier, monospace;
-        font-size: 0.9rem;
-        font-weight: bold;
-        border: 1px solid #e9ecec;
-        color: #495057;
-        transition: all 0.2s ease-in-out;
-    }
-
-    .barcode-tag:hover {
-        border-color: #d1d3e2;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.03);
-    }
-    
-    .barcode-tag.primary {
-        background: #e3f2fd;
-        border-color: #bbdefb;
-        color: #1565c0;
-    }
-
-    .empty-row td {
-        text-align: center;
-        padding: 4rem 2rem;
-        color: #adb5bd;
-    }
-    .empty-row i { font-size: 3rem; margin-bottom: 1rem; display: block; }
-
-    @media (max-width: 992px) {
-        .search-input-compact { width: 200px; }
-        .hide-tablet { display: none; }
-    }
-    
-    @media (max-width: 768px) {
-        .compact-container { padding: 1rem; }
-        .header-title h1 { font-size: 1.3rem; }
-        .hide-mobile { display: none; }
-        .search-input-compact { width: 100%; }
-        .toolbar { width: 100%; }
-        .btn-add-compact, .btn-toggle-all-serials { flex: 1; text-align: center; justify-content: center; }
-    }
-
-    /* === إعدادات الطباعة المتقدمة === */
-    @media print {
-        body { background: white !important; }
-        .compact-container { padding: 0 !important; max-width: 100% !important; }
-        .table-card { overflow: visible !important; border: none !important; box-shadow: none !important; border-radius: 0 !important; scrollbar-width: none !important; }
-        .table-card::-webkit-scrollbar { display: none !important; }
-        .compact-table { min-width: auto !important; width: 100% !important; }
-        .invoice-print-area { padding-bottom: 10pt !important; }
-        /* إجبار إظهار السيريالات عند الطباعة دائماً */
-        .accordion-content { display: block !important; padding: 5pt 10pt !important; }
-        .barcode-tag { border: 1px solid #ddd !important; box-shadow: none !important; }
-        .no-print { display: none !important; }
-    }
+/* === إعدادات الطباعة المتقدمة === */
+@media print {
+    body { background: white !important; }
+    .compact-container { padding: 0 !important; max-width: 100% !important; }
+    .table-card { overflow: visible !important; border: none !important; box-shadow: none !important; border-radius: 0 !important; scrollbar-width: none !important; }
+    .table-card::-webkit-scrollbar { display: none !important; }
+    .compact-table { min-width: auto !important; width: 100% !important; }
+    .invoice-print-area { padding-bottom: 10pt !important; }
+    .accordion-content { display: block !important; padding: 5pt 10pt !important; }
+    .barcode-tag { border: 1px solid #ddd !important; box-shadow: none !important; }
+    .no-print { display: none !important; }
+}
 </style>
 
 <!-- بيانات الشركة للطباعة -->
@@ -438,28 +244,29 @@
 </script>
 
 <div class="compact-container">
-    <!-- ===== المحتوى القابل للطباعة ===== -->
     <div class="invoice-print-area" id="printableArea">
-        <!-- الشريط العلوي -->
-        <div class="compact-header no-print">
-            <div class="header-title">
-                <h1>المخزون والمنتجات</h1>
-                <span>إدارة وتتبع جميع المواد</span>
+        <!-- الهيدر -->
+        <div class="form-header no-print">
+            <div class="header-info">
+                <div class="header-icon"><i class="fas fa-boxes-stacked"></i></div>
+                <div>
+                    <h1 class="header-title">المخزون والمنتجات</h1>
+                    <div class="header-subtitle">إدارة وتتبع جميع المواد</div>
+                </div>
             </div>
             <div class="toolbar">
                 <div class="search-wrapper">
+                    <input type="text" id="searchInput" class="search-input-compact" placeholder="بحث بالاسم أو الباركود...">
                     <i class="fas fa-search"></i>
-                    <input type="text" id="searchInput" class="search-input-compact" placeholder="بحث بالاسم أو الباركود أو السيريال...">
                 </div>
                 
-                <!-- زر إظهار / إخفاء الكل -->
-                <button class="btn-toggle-all-serials" id="toggleAllSerialsBtn">
+                <button class="btn-secondary-teal" id="toggleAllSerialsBtn">
                     <i class="fas fa-chevron-circle-down"></i>
-                    <span class="btn-text">إظهار كل السيريالات</span>
+                    <span class="btn-text">إظهار الكل</span>
                 </button>
 
-                <a href="{% url 'invoice:product_create' %}" class="btn-add-compact">
-                    <i class="fas fa-plus ms-1"></i> مادة جديدة
+                <a href="{% url 'invoice:product_create' %}" class="btn-primary-teal">
+                    <i class="fas fa-plus"></i> مادة جديدة
                 </a>
             </div>
         </div>
@@ -510,7 +317,7 @@
                                     <i class="fas fa-chevron-down serial-toggle-icon"></i>
                                 </div>
                             {% else %}
-                                <span style="color:#ced4da; font-size:0.85rem;">-</span>
+                                <span style="color:#cbd5e1; font-size:0.85rem;">-</span>
                             {% endif %}
                         </td>
 
@@ -525,7 +332,7 @@
                                     </button>
                                 </div>
                             {% else %}
-                                <span style="color:#ced4da; font-size:0.85rem;">-</span>
+                                <span style="color:#cbd5e1; font-size:0.85rem;">-</span>
                             {% endif %}
                         </td>
                         
@@ -541,10 +348,10 @@
                     <tr id="accordion-{{ product.id }}" class="accordion-row">
                         <td colspan="7" style="padding:0; border:none;">
                             <div class="accordion-content" data-print-field="serials-detail">
-                                <div style="margin-bottom: 0.5rem; color:#6c757d; font-weight:600; font-size:0.85rem;">السيريالات المسجلة:</div>
+                                <div style="margin-bottom: 0.5rem; color:var(--text-muted); font-weight:600; font-size:0.8rem;">السيريالات المسجلة:</div>
                                 {% for barcode in product.active_barcodes %}
                                     <span class="barcode-tag {% if barcode.is_primary %}primary{% endif %}" data-barcode-value="{{ barcode.barcode_in }}">
-                                        {% if barcode.is_primary %}<i class="fas fa-star fa-xs" style="color:#f1c40f;"></i> {% endif %}
+                                        {% if barcode.is_primary %}<i class="fas fa-star fa-xs" style="color:var(--warning-color);"></i> {% endif %}
                                         {{ barcode.barcode_in }}
                                         <button class="btn-copy-code no-print" data-code="{{ barcode.barcode_in }}" title="نسخ السيريال">
                                             <i class="fas fa-copy"></i>
@@ -560,7 +367,7 @@
                     <tr class="empty-row">
                         <td colspan="7">
                             <i class="fas fa-boxes-stacked"></i>
-                            <div style="font-size: 1.1rem; font-weight: 600;">لا توجد مواد بعد</div>
+                            <div style="font-size: 1.1rem; font-weight: 600; color: var(--text-dark);">لا توجد مواد بعد</div>
                             <div style="font-size: 0.9rem;">ابدأ بإضافة مواد جديدة للمخزونك</div>
                         </td>
                     </tr>
@@ -595,11 +402,11 @@
 
     <div class="print-watermark" id="watermarkText">شركة تجريبية</div>
 
-    <button class="print-fab no-print" id="openPrintModalBtn">
+    <button class="print-fab no-print" id="openPrintModalBtn" style="position: fixed; bottom: 1.5rem; left: 1.5rem; z-index: 1050; padding: 0.75rem 1.5rem; border-radius: 50px; box-shadow: var(--shadow-lg); font-size: 0.9rem; font-weight: 600; background: var(--primary-4); color: white; border: none; cursor: pointer; display: inline-flex; align-items: center; gap: 0.5rem; font-family: 'Tajawal', sans-serif;">
         <i class="fas fa-print"></i> طباعة
     </button>
 
-    <div class="modal-overlay no-print" id="printModal" style="display:none;">
+    <div class="modal-overlay no-print" id="printModal">
         <div class="modal-box">
             <div class="modal-header-custom">
                 <h3><i class="fas fa-cog"></i> إعدادات الطباعة</h3>
@@ -616,7 +423,7 @@
                         <label><i class="fas fa-image"></i> شعار الشركة</label>
                         <div class="hf-preview-box" id="logoPreviewBox">
                             <img id="logoPreviewImg" src="" alt="شعار" style="max-height:65px; display:none;">
-                            <span id="logoPreviewPlaceholder" style="font-size:0.8rem; color:#999;">لا يوجد شعار</span>
+                            <span id="logoPreviewPlaceholder" style="font-size:0.8rem; color:var(--text-muted);">لا يوجد شعار</span>
                         </div>
                     </div>
                     <div class="hf-input-group">
@@ -628,7 +435,7 @@
                         <input type="text" id="companyDetailsInput" readonly>
                     </div>
                     <div class="hf-input-group" style="grid-column: 1 / -1;">
-                        <label><i class="fas fa-pen"></i> ملاحظات إضافية للطباعة <span style="font-size:0.65rem; color:#999;">(تظهر في آخر صفحة فقط مع دعم الأسطر المتعددة)</span></label>
+                        <label><i class="fas fa-pen"></i> ملاحظات إضافية للطباعة <span style="font-size:0.65rem; color:var(--text-muted);">(تظهر في آخر صفحة فقط مع دعم الأسطر المتعددة)</span></label>
                         <textarea id="printNotes" rows="4" placeholder="أضف ملاحظاتك هنا..."></textarea>
                     </div>
                 </div>
@@ -679,40 +486,40 @@
                 </div>
             </div>
             <div class="modal-footer-custom">
-                <div class="btn-group-actions" style="display:flex; gap:0.35rem; flex-wrap:wrap;">
-                    <button class="btn btn-secondary-print" id="selectAllBtn"><i class="fas fa-check-double"></i> تحديد الكل</button>
-                    <button class="btn btn-secondary-print" id="deselectAllBtn"><i class="fas fa-times"></i> إلغاء الكل</button>
-                    <button class="btn btn-secondary-print" id="saveSettingsBtn"><i class="fas fa-save"></i> حفظ</button>
-                    <button class="btn btn-secondary-print" id="resetSettingsBtn"><i class="fas fa-undo"></i> استعادة</button>
+                <div style="display:flex; gap:0.35rem; flex-wrap:wrap;">
+                    <button class="btn btn-secondary-teal" id="selectAllBtn"><i class="fas fa-check-double"></i> تحديد الكل</button>
+                    <button class="btn btn-secondary-teal" id="deselectAllBtn"><i class="fas fa-times"></i> إلغاء الكل</button>
+                    <button class="btn btn-secondary-teal" id="saveSettingsBtn"><i class="fas fa-save"></i> حفظ</button>
+                    <button class="btn btn-secondary-teal" id="resetSettingsBtn"><i class="fas fa-undo"></i> استعادة</button>
                 </div>
                 <div style="display:flex; gap:0.5rem; flex-wrap:wrap;">
-                    <button class="btn btn-secondary-print" id="exportPdfBtn"><i class="fas fa-file-pdf"></i> PDF</button>
-                    <button class="btn btn-primary-print" id="executePrintBtn"><i class="fas fa-print"></i> طباعة الآن</button>
+                    <button class="btn btn-secondary-teal" id="exportPdfBtn"><i class="fas fa-file-pdf"></i> PDF</button>
+                    <button class="btn btn-primary-teal" id="executePrintBtn"><i class="fas fa-print"></i> طباعة الآن</button>
                 </div>
             </div>
         </div>
     </div>
 
-    <div class="modal-overlay no-print" id="pdfExportModal" style="display:none;">
+    <div class="modal-overlay no-print" id="pdfExportModal">
         <div class="modal-box" style="width: 500px;">
             <div class="modal-header-custom">
                 <h3><i class="fas fa-file-pdf"></i> تصدير كملف PDF</h3>
                 <button class="modal-close" id="closePdfModalBtn"><i class="fas fa-times"></i></button>
             </div>
             <div class="modal-body-custom">
-                <div class="pdf-export-instructions" style="text-align: center; padding: 1rem;">
-                    <div class="icon" style="font-size: 3rem; color: var(--primary-4); margin-bottom: 1rem;"><i class="fas fa-file-arrow-down"></i></div>
+                <div style="text-align: center; padding: 1rem;">
+                    <div style="font-size: 3rem; color: var(--primary-4); margin-bottom: 1rem;"><i class="fas fa-file-arrow-down"></i></div>
                     <h4 style="font-size: 1.1rem; color: var(--text-dark); margin-bottom: 0.5rem;">جاهز لتصدير المستند</h4>
-                    <p style="font-size: 0.85rem; color: #555; margin-bottom: 1.5rem; line-height: 1.6;">لضمان الحفاظ على روابط الأحرف العربية وجودة النصوص، يعتمد النظام على محرك الطباعة المتقدم.</p>
-                    <ul class="pdf-steps" style="text-align: right; background: #f8f9fa; padding: 1rem; border-radius: 8px; margin-bottom: 1rem; list-style: none; padding-right: 2rem;">
-                        <li style="margin-bottom: 0.5rem; font-size: 0.85rem; color: #444;">1. سيتم فتح نافذة الطباعة الخاصة بمتصفحك.</li>
-                        <li style="margin-bottom: 0.5rem; font-size: 0.85rem; color: #444;">2. من قائمة "الطابعة" (Printer)، اختر <strong>حفظ كـ PDF (Save as PDF)</strong>.</li>
-                        <li style="margin-bottom: 0.5rem; font-size: 0.85rem; color: #444;">3. اضغط على <strong>حفظ (Save)</strong> لتنزيل الملف.</li>
+                    <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1.5rem; line-height: 1.6;">لضمان الحفاظ على روابط الأحرف العربية وجودة النصوص، يعتمد النظام على محرك الطباعة المتقدم.</p>
+                    <ul style="text-align: right; background: var(--bg-input); padding: 1rem; border-radius: 8px; margin-bottom: 1rem; list-style: none; padding-right: 2rem; border: 1px solid var(--border-color);">
+                        <li style="margin-bottom: 0.5rem; font-size: 0.85rem; color: var(--text-dark);">1. سيتم فتح نافذة الطباعة الخاصة بمتصفحك.</li>
+                        <li style="margin-bottom: 0.5rem; font-size: 0.85rem; color: var(--text-dark);">2. من قائمة "الطابعة" (Printer)، اختر <strong>حفظ كـ PDF (Save as PDF)</strong>.</li>
+                        <li style="margin-bottom: 0.5rem; font-size: 0.85rem; color: var(--text-dark);">3. اضغط على <strong>حفظ (Save)</strong> لتنزيل الملف.</li>
                     </ul>
                 </div>
             </div>
             <div class="modal-footer-custom" style="justify-content: center;">
-                <button class="btn btn-primary-print" id="confirmPdfExportBtn" style="padding: 0.6rem 2rem; font-size: 0.9rem;">
+                <button class="btn btn-primary-teal" id="confirmPdfExportBtn" style="padding: 0.6rem 2rem; font-size: 0.9rem;">
                     <i class="fas fa-print"></i> فتح نافذة الحفظ
                 </button>
             </div>
@@ -850,7 +657,6 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 
-    // ===== منطق زر إظهار/إخفاء الكل =====
     if (toggleAllBtn) {
         toggleAllBtn.addEventListener('click', function() {
             isAllExpanded = !isAllExpanded;
@@ -872,16 +678,15 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             });
 
-            // تحديث نص الزر
             var btnText = toggleAllBtn.querySelector('.btn-text');
             var btnIcon = toggleAllBtn.querySelector('i');
             if (isAllExpanded) {
                 toggleAllBtn.classList.add('expanded');
-                btnText.textContent = 'إخفاء كل السيريالات';
+                btnText.textContent = 'إخفاء الكل';
                 btnIcon.className = 'fas fa-chevron-circle-up';
             } else {
                 toggleAllBtn.classList.remove('expanded');
-                btnText.textContent = 'إظهار كل السيريالات';
+                btnText.textContent = 'إظهار الكل';
                 btnIcon.className = 'fas fa-chevron-circle-down';
             }
         });
@@ -925,7 +730,6 @@ document.addEventListener('DOMContentLoaded', function() {
 {% endblock %}
 
 {% block extra_js %}
-<!-- ===== كود نظام الطباعة الموحد (JS) ===== -->
 <script nonce="{{ csp_nonce }}">
 document.addEventListener('DOMContentLoaded', function() {
     function generateTableColumns() {
@@ -934,7 +738,7 @@ document.addEventListener('DOMContentLoaded', function() {
         grid.innerHTML = ''; 
         const headers = document.querySelectorAll('#printableArea th[data-print-field]');
         if (headers.length === 0) {
-            grid.innerHTML = '<div style="grid-column: 1 / -1; text-align: center; color: #999; font-size: 0.8rem; padding: 0.5rem;">لا توجد أعمدة قابلة للطباعة</div>';
+            grid.innerHTML = '<div style="grid-column: 1 / -1; text-align: center; color: var(--text-muted); font-size: 0.8rem; padding: 0.5rem;">لا توجد أعمدة قابلة للطباعة</div>';
             return;
         }
         headers.forEach(th => {
@@ -967,9 +771,6 @@ document.addEventListener('DOMContentLoaded', function() {
             if (scriptTag) {
                 const data = JSON.parse(scriptTag.textContent);
                 if (!data.logo_url || data.logo_url === '' || data.logo_url === 'None') data.logo_url = '';
-                if (data.logo_url && !data.logo_url.startsWith('/media/') && !data.logo_url.startsWith('http://') && !data.logo_url.startsWith('https://')) {
-                    data.logo_url = '/media/company_logos/' + data.logo_url;
-                }
                 return data;
             }
         } catch (e) { console.warn('❌ خطأ في قراءة بيانات الشركة:', e); }
@@ -1011,7 +812,7 @@ document.addEventListener('DOMContentLoaded', function() {
         paperSize: 'a4', marginSize: 'normal', format: 'standard', logoSize: 'large', 
         printColors: true, printLines: true, showIndex: true, showWatermark: true, notes: '' 
     };
-    var printState = { ...defaultState };
+    var printState = Object.assign({}, defaultState);
     var printModal = document.getElementById('printModal');
     var pdfExportModal = document.getElementById('pdfExportModal');
     var toastEl = document.getElementById('toast');
@@ -1053,7 +854,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function resetPrintSettings() {
         localStorage.removeItem('print_settings');
-        printState = { ...defaultState };
+        printState = Object.assign({}, defaultState);
         document.querySelectorAll('#paperSizeGroup .btn-opt').forEach(btn => btn.classList.toggle('active', btn.dataset.value === 'a4'));
         document.querySelectorAll('#marginGroup .btn-opt').forEach(btn => btn.classList.toggle('active', btn.dataset.value === 'normal'));
         document.querySelectorAll('#formatGroup .btn-opt').forEach(btn => btn.classList.toggle('active', btn.dataset.value === 'standard'));

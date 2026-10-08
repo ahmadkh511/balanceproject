@@ -5,172 +5,225 @@
 {% block title %}{{ title }}{% endblock %}
 
 {% block content %}
+<!-- ========================================================== -->
+<!-- 1) CSS — تصميم SaaS حديث ومركز                              -->
+<!-- ========================================================== -->
 <style nonce="{{ csp_nonce }}">
-    :root {
-        --primary-1: #e0f7fa;
-        --primary-2: #b2ebf2;
-        --primary-4: #0097a7;
-        --primary-dark: #006064;
-        --danger-color: #dc2626;
-        --danger-bg: #fee2e2;
-        --radius: 8px;
-        --ease: cubic-bezier(0.4, 0, 0.2, 1);
-    }
+@import url('https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;600;700;800&display=swap');
 
-    .specs-container { max-width: 800px; margin: 0 auto; }
-    
-    /* الهيدر */
-    .specs-hero {
-        background: linear-gradient(135deg, var(--primary-4), var(--primary-dark));
-        border-radius: var(--radius); padding: 1.5rem; color: #fff;
-        margin-bottom: 1.5rem; display: flex; align-items: center; gap: 1rem;
-        box-shadow: 0 4px 12px rgba(0,150,167,0.2);
-    }
-    .specs-hero i { font-size: 1.5rem; background: rgba(255,255,255,0.2); width: 45px; height: 45px; display: flex; align-items: center; justify-content: center; border-radius: var(--radius); }
-    .specs-hero h1 { font-size: 1.2rem; margin: 0; font-weight: 700; }
-    .specs-hero p { margin: 0; font-size: 0.8rem; opacity: 0.85; }
+:root {
+    --primary-1: #f0fdfa;
+    --primary-2: #ccfbf1;
+    --primary-3: #5eead4;
+    --primary-4: #0d9488; /* Teal 600 */
+    --primary-dark: #0f766e;
+    --text-dark: #0f172a; /* Slate 900 */
+    --text-muted: #64748b; /* Slate 500 */
+    --bg-input: #f8fafc; /* Slate 50 */
+    --border-color: #e2e8f0; /* Slate 200 */
+    --danger-color: #ef4444;
+    --danger-bg: #fef2f2;
+    --shadow-sm: 0 1px 3px rgba(15, 23, 42, 0.05);
+    --shadow-md: 0 4px 6px -1px rgba(15, 23, 42, 0.08);
+    --shadow-lg: 0 10px 15px -3px rgba(15, 23, 42, 0.1);
+    --radius-sm: 8px;
+    --radius: 12px;
+    --radius-lg: 16px;
+    --ease: cubic-bezier(0.4, 0, 0.2, 1);
+}
 
-    /* البطاقات */
-    .spec-card {
-        background: #fff; border: 1px solid #e2e8f0; border-radius: var(--radius);
-        margin-bottom: 1rem; overflow: hidden; transition: box-shadow 0.3s var(--ease);
-    }
-    .spec-card:hover { box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
-    
-    /* ===== الهيدر المنتظم ===== */
-    .spec-header {
-        padding: 15px 20px; 
-        display: flex; 
-        align-items: center; 
-        justify-content: space-between;
-        cursor: pointer; 
-        background: #fff; 
-        transition: background 0.2s;
-        gap: 15px; /* مسافة ثابتة بين النص والأزرار */
-    }
-    .spec-header:hover { background: #f8fafc; }
-    
-    .spec-title {
-        display: flex; align-items: center; gap: 8px;
-        flex: 1; min-width: 0; /* يسمح للنص بالانكماش بدلاً من دفع الأزرار */
-    }
-    .spec-title h3 { 
-        margin: 0; font-size: 1rem; color: var(--primary-dark); font-weight: 600; 
-        white-space: nowrap; overflow: hidden; text-overflow: ellipsis; /* يضع ... إذا كان الاسم طوييل */
-    }
-    .count-badge { 
-        background: var(--primary-1); color: var(--primary-dark); padding: 3px 10px; 
-        border-radius: 12px; font-size: 0.75rem; font-weight: 600; flex-shrink: 0; 
-    }
-    
-    .header-actions {
-        display: flex; align-items: center; gap: 8px;
-        flex-shrink: 0; /* يمنع الأزرار من التضغط أو التشوه */
-    }
-    .name-input {
-        width: 140px; /* عرض ثابت للحقل */
-        padding: 6px 10px; font-size: 0.85rem; 
-        border: 1px solid #e2e8f0; border-radius: 6px;
-    }
-    .name-input:focus { outline: none; border-color: var(--primary-4); box-shadow: 0 0 0 2px rgba(0,150,167,0.1); }
-    
-    .toggle-icon { color: #94a3b8; transition: transform 0.3s var(--ease); flex-shrink: 0; }
-    .spec-card.open .toggle-icon { transform: rotate(180deg); }
+* { box-sizing: border-box; }
 
-    .spec-body { display: none; padding: 20px; border-top: 1px solid #e2e8f0; background: #fdfdfd; }
-    .spec-card.open .spec-body { display: block; }
+body {
+    font-family: 'Tajawal', sans-serif;
+    background: #f1f5f9; /* Slate 100 */
+    min-height: 100vh;
+    padding: 1rem;
+    font-size: 0.9rem;
+    color: var(--text-dark);
+}
 
-    /* القيم */
-    .value-row {
-        display: flex; align-items: center; justify-content: space-between;
-        padding: 8px 12px; background: #fff; border: 1px solid #e2e8f0; border-radius: 6px; margin-bottom: 8px;
-        gap: 10px;
-    }
-    .value-row form { display: flex; gap: 8px; align-items: center; width: 100%; }
-    .value-input { 
-        flex: 1; border: 1px solid #e2e8f0; border-radius: 4px; padding: 8px 12px; font-size: 0.85rem;
-    }
-    .value-input:focus { outline: none; border-color: var(--primary-4); box-shadow: 0 0 0 2px rgba(0,150,167,0.1); }
-    
-    .btn-icon {
-        width: 34px; height: 34px; display: flex; align-items: center; justify-content: center;
-        border-radius: 6px; border: none; cursor: pointer; transition: all 0.2s; flex-shrink: 0;
-    }
-    .btn-save { background: var(--primary-1); color: var(--primary-dark); }
-    .btn-save:hover { background: var(--primary-4); color: #fff; }
-    .btn-delete { background: var(--danger-bg); color: var(--danger-color); }
-    .btn-delete:hover { background: var(--danger-color); color: #fff; }
+.specs-container { max-width: 960px; margin: 0 auto; }
 
-    .add-value-form { display: flex; gap: 8px; margin-top: 12px; }
-    
-    /* إضافة نوع جديد */
-    .add-type-card { background: #fff; border: 1px dashed var(--primary-4); border-radius: var(--radius); padding: 20px; margin-bottom: 1.5rem; }
-    .add-type-form { display: flex; gap: 10px; }
-    .add-type-form input { flex: 1; }
-    
-    .form-control-custom {
-        width: 100%; padding: 10px 15px; border: 1px solid #cbd5e1; border-radius: 6px;
-        font-size: 0.9rem; transition: all 0.2s;
-    }
-    .form-control-custom:focus { outline: none; border-color: var(--primary-4); box-shadow: 0 0 0 3px rgba(0,150,167,0.1); }
-    
-    .btn-primary-custom {
-        background: var(--primary-4); color: #fff; border: none; padding: 10px 20px;
-        border-radius: 6px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 6px;
-        white-space: nowrap;
-    }
-    .btn-primary-custom:hover { background: var(--primary-dark); }
+/* ===== الهيدر المدمج ===== */
+.form-header {
+    background: white;
+    border-radius: var(--radius);
+    padding: 1rem 1.5rem;
+    margin-bottom: 1rem;
+    box-shadow: var(--shadow-sm);
+    border: 1px solid var(--border-color);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+}
+.header-info { display: flex; align-items: center; gap: 0.75rem; }
+.header-icon {
+    width: 40px; height: 40px; background: var(--primary-1);
+    border-radius: var(--radius-sm); display: flex; align-items: center; justify-content: center;
+    color: var(--primary-4); font-size: 1.1rem;
+}
+.header-title { font-size: 1.1rem; font-weight: 700; margin: 0; color: var(--text-dark); }
+.header-subtitle { font-size: 0.75rem; color: var(--text-muted); margin-top: 2px; }
+
+/* ===== البطاقات العامة ===== */
+.card { background: white; border-radius: var(--radius-lg); padding: 1.5rem; box-shadow: var(--shadow-sm); border: 1px solid var(--border-color); margin-bottom: 1rem; }
+.card-title { font-size: 0.95rem; font-weight: 700; color: var(--text-dark); margin: 0 0 1.25rem; display: flex; align-items: center; gap: 0.5rem; }
+.card-title i { color: var(--primary-4); font-size: 0.9rem; }
+
+/* ===== الحقول (Soft Inputs) ===== */
+.form-input, .form-control-custom {
+    width: 100%; padding: 0.6rem 0.8rem;
+    border: 1px solid var(--border-color);
+    background: var(--bg-input);
+    border-radius: var(--radius-sm);
+    font-size: 0.9rem; font-family: 'Tajawal', sans-serif;
+    color: var(--text-dark);
+    transition: all 0.2s var(--ease);
+}
+.form-input:focus, .form-control-custom:focus {
+    background: white;
+    border-color: var(--primary-4);
+    box-shadow: 0 0 0 4px rgba(13, 148, 136, 0.1);
+    outline: none;
+}
+
+/* ===== الأزرار ===== */
+.btn-primary-teal {
+    background: var(--primary-4); color: white; border: none; padding: 0.6rem 1.2rem;
+    border-radius: var(--radius-sm); font-size: 0.85rem; font-weight: 600;
+    cursor: pointer; transition: all 0.2s var(--ease);
+    display: inline-flex; align-items: center; gap: 0.5rem; justify-content: center;
+    white-space: nowrap;
+}
+.btn-primary-teal:hover { background: var(--primary-dark); transform: translateY(-1px); box-shadow: var(--shadow-md); }
+.btn-icon {
+    width: 36px; height: 36px; display: flex; align-items: center; justify-content: center;
+    border-radius: var(--radius-sm); border: 1px solid var(--border-color); cursor: pointer; transition: all 0.2s; flex-shrink: 0;
+    font-size: 0.85rem;
+}
+.btn-save { background: var(--primary-1); color: var(--primary-4); border-color: var(--primary-2); }
+.btn-save:hover { background: var(--primary-4); color: #fff; border-color: var(--primary-4); }
+.btn-delete { background: var(--danger-bg); color: var(--danger-color); border-color: #fecaca; }
+.btn-delete:hover { background: var(--danger-color); color: #fff; border-color: var(--danger-color); }
+
+/* ===== بطاقات الأنواع (Accordion) ===== */
+.spec-card {
+    background: white; border: 1px solid var(--border-color); border-radius: var(--radius);
+    margin-bottom: 1rem; overflow: hidden; transition: box-shadow 0.3s var(--ease);
+}
+.spec-card:hover { box-shadow: var(--shadow-md); }
+.spec-card.open { box-shadow: var(--shadow-md); border-color: var(--primary-3); }
+
+.spec-header {
+    padding: 1rem 1.25rem; display: flex; align-items: center; justify-content: space-between;
+    cursor: pointer; background: white; transition: background 0.2s; gap: 1rem;
+}
+.spec-header:hover { background: var(--bg-input); }
+
+.spec-title { display: flex; align-items: center; gap: 0.75rem; flex: 1; min-width: 0; }
+.spec-title h3 { margin: 0; font-size: 0.95rem; color: var(--text-dark); font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.count-badge { background: var(--primary-1); color: var(--primary-dark); padding: 4px 12px; border-radius: 1rem; font-size: 0.7rem; font-weight: 600; flex-shrink: 0; }
+
+.header-actions { display: flex; align-items: center; gap: 0.5rem; flex-shrink: 0; }
+.name-input {
+    width: 150px; padding: 0.4rem 0.6rem; font-size: 0.85rem;
+    border: 1px solid var(--border-color); border-radius: var(--radius-sm); background: var(--bg-input);
+    font-family: 'Tajawal', sans-serif;
+}
+.name-input:focus { outline: none; background: white; border-color: var(--primary-4); box-shadow: 0 0 0 3px rgba(13,148,136,0.1); }
+
+.toggle-icon { color: var(--text-muted); transition: transform 0.3s var(--ease); flex-shrink: 0; font-size: 0.8rem; }
+.spec-card.open .toggle-icon { transform: rotate(180deg); }
+
+.spec-body { display: none; padding: 1.25rem; border-top: 1px solid var(--border-color); background: var(--bg-input); }
+.spec-card.open .spec-body { display: block; }
+
+/* ===== صفوف القيم ===== */
+.value-row {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0.5rem; background: white; border: 1px solid var(--border-color); border-radius: var(--radius-sm); margin-bottom: 0.5rem;
+    gap: 0.5rem;
+}
+.value-row form { display: flex; gap: 0.5rem; align-items: center; width: 100%; }
+.value-input { 
+    flex: 1; border: 1px solid var(--border-color); border-radius: var(--radius-sm); padding: 0.4rem 0.6rem; font-size: 0.85rem;
+    background: var(--bg-input); font-family: 'Tajawal', sans-serif; transition: all 0.2s var(--ease);
+}
+.value-input:focus { outline: none; background: white; border-color: var(--primary-4); box-shadow: 0 0 0 3px rgba(13,148,136,0.1); }
+
+.add-value-form { display: flex; gap: 0.5rem; margin-top: 0.75rem; }
+
+.empty-state {
+    text-align: center; padding: 3rem 1rem; background: white; border-radius: var(--radius-lg); border: 1px dashed var(--border-color);
+}
+.empty-state i { font-size: 2.5rem; color: #cbd5e1; margin-bottom: 0.5rem; }
+.empty-state p { color: var(--text-muted); margin: 0; }
+
+/* ===== التجاوب ===== */
+@media (max-width: 768px) {
+    .spec-header { flex-direction: column; align-items: stretch; gap: 0.75rem; }
+    .header-actions { justify-content: space-between; }
+    .name-input { width: 100%; flex: 1; }
+    .btn-primary-teal { width: 100%; }
+}
 </style>
 
 <div class="specs-container">
-    <!-- الهيدر -->
-    <div class="specs-hero">
-        <i class="fas fa-sliders-h"></i>
-        <div>
-            <h1>{{ title }}</h1>
-            <p>قم بتنظيم الأنواع والقيم لتسهيل إدخال المواد لاحقاً</p>
+    <!-- ===== الهيدر المدمج ===== -->
+    <div class="form-header">
+        <div class="header-info">
+            <div class="header-icon"><i class="fas fa-sliders-h"></i></div>
+            <div>
+                <h1 class="header-title">{{ title }}</h1>
+                <div class="header-subtitle">{% trans "قم بتنظيم الأنواع والقيم لتسهيل إدخال المواد لاحقاً" %}</div>
+            </div>
         </div>
     </div>
 
-    <!-- التنبيهات -->
+    <!-- ===== التنبيهات ===== -->
     {% if messages %}
         {% for message in messages %}
-            <div class="alert alert-{{ message.tags|default:'info' }} alert-dismissible fade show" role="alert" style="border-radius: 6px; font-size: 0.85rem;">
+            <div class="alert alert-{{ message.tags|default:'info' }} alert-dismissible fade show" role="alert" style="border-radius: 8px; font-size: 0.85rem; margin-bottom: 1rem;">
                 {{ message }}
                 <button type="button" class="btn-close" data-bs-dismiss="alert" style="font-size: 0.7rem;"></button>
             </div>
         {% endfor %}
     {% endif %}
 
-    <!-- بطاقة إضافة نوع جديد -->
-    <div class="add-type-card">
-        <form method="post" action="{% url 'invoice:manage_specs' %}" class="add-type-form">
+    <!-- ===== بطاقة إضافة نوع جديد ===== -->
+    <div class="card">
+        <div class="card-title"><i class="fas fa-plus-circle"></i> {% trans "إضافة نوع جديد" %}</div>
+        <form method="post" action="{% url 'invoice:manage_specs' %}" class="row g-2 align-items-center">
             {% csrf_token %}
-            <input type="text" name="type_name" class="form-control-custom" placeholder="{% trans 'أضف نوع مواصفة جديد (مثال: الألوان، المقاسات)' %}" required>
-            <button type="submit" class="btn-primary-custom">
-                <i class="fas fa-plus"></i> {% trans "إضافة" %}
-            </button>
+            <div class="col-md-9">
+                <input type="text" name="type_name" class="form-input" placeholder="{% trans 'أضف نوع مواصفة جديد (مثال: الألوان، المقاسات)' %}" required>
+            </div>
+            <div class="col-md-3">
+                <button type="submit" class="btn-primary-teal" style="width: 100%;">
+                    <i class="fas fa-plus"></i> {% trans "إضافة النوع" %}
+                </button>
+            </div>
         </form>
     </div>
 
-    <!-- قائمة الأنواع -->
+    <!-- ===== قائمة الأنواع ===== -->
     {% for type in spec_types %}
     <div class="spec-card" id="type-card-{{ type.id }}">
         <div class="spec-header" data-card-id="{{ type.id }}">
-            <!-- يمين: العنوان والعدد -->
             <div class="spec-title">
                 <h3>{{ type.name }}</h3>
                 <span class="count-badge">{{ type.values.count }} {% trans "خيار" %}</span>
             </div>
             
-            <!-- يسار: الأزرار والحقول بتنظيم صارم -->
             <div class="header-actions">
-                <form method="post" action="{% url 'invoice:edit_spec_type' type.id %}">
+                <form method="post" action="{% url 'invoice:edit_spec_type' type.id %}" style="display: flex; gap: 8px; align-items: center;">
                     {% csrf_token %}
                     <input type="text" name="name" value="{{ type.name }}" class="name-input" placeholder="{% trans 'الاسم' %}">
                     <button type="submit" class="btn-icon btn-save" title="{% trans 'حفظ الاسم' %}"><i class="fas fa-check"></i></button>
                 </form>
-                <form method="post" action="{% url 'invoice:delete_spec_type' type.id %}" onsubmit="return confirm('هل أنت متأكد من حذف هذا النوع وكل قيمه؟');">
+                <form method="post" action="{% url 'invoice:delete_spec_type' type.id %}" onsubmit="return confirm('هل أنت متأكد من حذف هذا النوع وكل قيمه؟');" style="display: flex; align-items: center;">
                     {% csrf_token %}
                     <button type="submit" class="btn-icon btn-delete" title="{% trans 'حذف النوع' %}"><i class="fas fa-trash"></i></button>
                 </form>
@@ -194,23 +247,23 @@
                 </div>
                 {% endfor %}
             {% else %}
-                <p style="text-align: center; color: #94a3b8; font-size: 0.85rem; margin-bottom: 15px;">لا توجد قيم مضافة لهذا النوع بعد.</p>
+                <p style="text-align: center; color: var(--text-muted); font-size: 0.85rem; margin: 1rem 0;">لا توجد قيم مضافة لهذا النوع بعد.</p>
             {% endif %}
 
             <div class="add-value-form">
                 <form method="post" action="{% url 'invoice:add_spec_value' %}" style="display: flex; gap: 8px; width: 100%;">
                     {% csrf_token %}
                     <input type="hidden" name="type_id" value="{{ type.id }}">
-                    <input type="text" name="value" class="form-control-custom" placeholder="{% trans 'أضف قيمة جديدة (مثال: أحمر)' %}" required>
-                    <button type="submit" class="btn-primary-custom"><i class="fas fa-plus"></i></button>
+                    <input type="text" name="value" class="form-input" placeholder="{% trans 'أضف قيمة جديدة (مثال: أحمر)' %}" required>
+                    <button type="submit" class="btn-primary-teal"><i class="fas fa-plus"></i> {% trans "إضافة" %}</button>
                 </form>
             </div>
         </div>
     </div>
     {% empty %}
-        <div style="text-align: center; padding: 40px; background: #fff; border-radius: 8px; border: 1px solid #e2e8f0;">
-            <i class="fas fa-folder-open" style="font-size: 2rem; color: #cbd5e1;"></i>
-            <p style="color: #64748b; margin-top: 10px;">لم تقم بإضافة أي أنواع مواصفات بعد.<br>ابدأ بإضافة نوع من الأعلى.</p>
+        <div class="empty-state">
+            <i class="fas fa-folder-open"></i>
+            <p>لم تقم بإضافة أي أنواع مواصفات بعد.<br>ابدأ بإضافة نوع من الأعلى.</p>
         </div>
     {% endfor %}
 </div>
@@ -224,8 +277,8 @@ document.addEventListener('DOMContentLoaded', function() {
     
     headers.forEach(function(header) {
         header.addEventListener('click', function(e) {
-            // إذا تم الضغط على حاوية الأزرار أو أي زر بداخلها، لا تقم بفتح/إغلاق الأكورديون
-            if (e.target.closest('.header-actions') || e.target.closest('button')) return;
+            // منع فتح/إغلاق الأكورديون إذا تم الضغط على الحقول أو الأزرار
+            if (e.target.closest('.header-actions') || e.target.closest('input') || e.target.closest('button')) return;
             
             var cardId = this.getAttribute('data-card-id');
             if (cardId) {

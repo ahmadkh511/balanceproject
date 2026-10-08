@@ -8,65 +8,158 @@
     <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
-    <style>
-        body {
-            font-family: 'Tajawal', sans-serif;
-            text-align: center;
-            margin: 0;
-            padding: 20px;
-            box-sizing: border-box;
-            background: #eef2f5; /* خلفية رمادية فاتحة للتمييز */
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            min-height: 100vh;
+    <style nonce="{{ csp_nonce }}">
+        :root {
+            --primary-1: #f0fdfa;
+            --primary-2: #ccfbf1;
+            --primary-3: #5eead4;
+            --primary-4: #0d9488;
+            --primary-dark: #0f766e;
+            --text-dark: #0f172a;
+            --text-muted: #64748b;
+            --bg-input: #f8fafc;
+            --border-color: #e2e8f0;
+            --shadow-sm: 0 1px 3px rgba(15, 23, 42, 0.05);
+            --shadow-md: 0 4px 6px -1px rgba(15, 23, 42, 0.08);
+            --shadow-lg: 0 10px 15px -3px rgba(15, 23, 42, 0.1);
+            --radius-sm: 8px;
+            --radius: 12px;
+            --ease: cubic-bezier(0.4, 0, 0.2, 1);
         }
 
-        /* === صندوق المعاينة (يتغير حجمه حسب المقاس المختار) === */
-        .label-preview {
-            background: #fff;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: 'Tajawal', sans-serif;
+            background-color: #f1f5f9;
+            background-image: radial-gradient(#e2e8f0 1px, transparent 1px);
+            background-size: 20px 20px;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            color: var(--text-dark);
+        }
+
+        /* === شريط الأدوات العلوي === */
+        .toolbar-header {
+            position: sticky;
+            top: 0;
+            width: 100%;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(8px);
+            border-bottom: 1px solid var(--border-color);
+            box-shadow: var(--shadow-sm);
+            z-index: 9999;
+            padding: 0.75rem 1.5rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .header-info { display: flex; align-items: center; gap: 0.75rem; }
+        .header-icon {
+            width: 40px; height: 40px; background: var(--primary-1); border-radius: var(--radius-sm);
+            display: flex; align-items: center; justify-content: center; color: var(--primary-4); font-size: 1.1rem;
+        }
+        .header-title { font-size: 1.1rem; font-weight: 700; margin: 0; color: var(--text-dark); }
+        .header-subtitle { font-size: 0.75rem; color: var(--text-muted); margin-top: 2px; max-width: 250px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+        .header-actions { display: flex; gap: 0.75rem; align-items: center; flex-wrap: wrap; }
+
+        .form-select-custom {
+            padding: 0.5rem 2rem 0.5rem 0.8rem;
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-sm);
+            background-color: var(--bg-input);
+            font-family: 'Tajawal', sans-serif;
+            font-size: 0.85rem;
+            color: var(--text-dark);
+            cursor: pointer;
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='%2364748b'%3E%3Cpath fill-rule='evenodd' d='M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z' clip-rule='evenodd' /%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: left 0.5rem center;
+            background-size: 1.2em;
+            transition: all 0.2s var(--ease);
+        }
+        .form-select-custom:focus { outline: none; border-color: var(--primary-4); background-color: white; box-shadow: 0 0 0 4px rgba(13, 148, 136, 0.1); }
+
+        .btn-primary-teal {
+            background: var(--primary-4); color: white; border: none; padding: 0.5rem 1.2rem;
+            border-radius: var(--radius-sm); font-size: 0.85rem; font-weight: 600; cursor: pointer;
+            transition: all 0.2s var(--ease); display: inline-flex; align-items: center; gap: 0.4rem; text-decoration: none; white-space: nowrap;
+        }
+        .btn-primary-teal:hover { background: var(--primary-dark); transform: translateY(-1px); box-shadow: var(--shadow-md); }
+
+        /* === مساحة العمل === */
+        .workspace {
+            flex: 1;
+            width: 100%;
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            padding: 2mm;
+            padding: 4rem 1rem 2rem 1rem;
+        }
+
+        /* === صندوق المعاينة (الملصق) === */
+        .label-container {
+            position: relative;
+            background: white;
+            box-shadow: var(--shadow-lg);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 1.5mm;
             box-sizing: border-box;
             overflow: hidden;
-            transition: all 0.3s ease; /* انتقال سلس عند تغيير الحجم */
+            transition: width 0.3s var(--ease), height 0.3s var(--ease);
+            /* خط قطع افتراضي لا يؤثر على المقاس الفعلي */
+            outline: 1px dashed var(--border-color);
+            outline-offset: 4px;
         }
 
         .product-name {
-            font-size: 10px; font-weight: 700; color: #000;
+            font-size: 10px; font-weight: 800; color: #000;
             margin: 0 0 1px 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-            width: 100%;
+            width: 100%; text-align: center;
         }
-        .specs-text { font-size: 8px; color: #333; margin: 0 0 2px 0; font-weight: 600; }
-        .price { font-size: 12px; font-weight: 800; color: #006064; margin: 1px 0 0 0; }
-        #barcodeSvg { display: block; margin: 0 auto; max-width: 100%; }
+        .specs-text {
+            font-size: 8px; color: #333; margin: 0 0 2px 0; font-weight: 600; text-align: center;
+            background: #f8fafc; padding: 0 4px; border-radius: 2px; width: fit-content; max-width: 100%;
+        }
+        .price {
+            font-size: 13px; font-weight: 800; color: #000; margin: 1px 0 0 0; background: #000; color: #fff;
+            padding: 0 4px; border-radius: 2px;
+        }
+        #barcodeSvg { display: block; margin: 0 auto; max-width: 100%; height: auto; }
         
-        .toolbar-area {
-            position: fixed; top: 10px; right: 10px; z-index: 9999;
-            display: flex; gap: 10px; align-items: center;
-            background: white; padding: 10px 15px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        .workspace-hint {
+            margin-top: 2rem;
+            color: var(--text-muted);
+            font-size: 0.8rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: white;
+            padding: 0.5rem 1rem;
+            border-radius: 50px;
+            box-shadow: var(--shadow-sm);
+            border: 1px solid var(--border-color);
         }
-        .size-select {
-            padding: 8px 15px; border: 1px solid #b2ebf2; border-radius: 6px;
-            font-family: 'Tajawal', sans-serif; font-size: 14px; cursor: pointer;
-        }
-        .print-btn {
-            background: #0097a7; color: white; border: none; padding: 8px 15px;
-            border-radius: 6px; cursor: pointer; font-family: 'Tajawal', sans-serif;
-            font-size: 14px; box-shadow: 0 2px 5px rgba(0,0,0,0.2);
-        }
-        
+
         /* === إعدادات الطباعة === */
         @media print {
-            body { background: white !important; padding: 0 !important; display: block !important; }
+            body { background: white !important; padding: 0 !important; display: block !important; background-image: none !important; }
             .no-print { display: none !important; }
-            .label-preview {
+            .workspace { padding: 0 !important; display: block !important; }
+            .label-container {
                 box-shadow: none !important;
+                outline: none !important; /* إزالة الخط المتقطع عند الطباعة */
                 padding: 1mm 2mm !important;
                 margin: 0 !important;
                 width: 100% !important;
@@ -81,31 +174,48 @@
 <!-- وضع القيم في data-* لقراءتها بالجافاسكريبت -->
 <body data-label-width="{{ selected_size.width }}" data-label-height="{{ selected_size.height }}">
 
-    <!-- شريط الأدوات (يختفي عند الطباعة) -->
-    <div class="toolbar-area no-print">
-        <select class="size-select" id="sizeSelector">
-            {% for size in sizes %}
-                <option value="{{ size.id }}" {% if size.id == selected_size.id %}selected{% endif %}>
-                    {{ size.name }} ({{ size.width }}x{{ size.height }}mm)
-                </option>
-            {% endfor %}
-        </select>
-        <button class="print-btn" id="printBarcodeBtn">
-            <i class="fas fa-print"></i> طباعة
-        </button>
-    </div>
+    <!-- شريط الأدوات العلوي -->
+    <header class="toolbar-header no-print">
+        <div class="header-info">
+            <div class="header-icon"><i class="fas fa-barcode"></i></div>
+            <div>
+                <h1 class="header-title">{% trans "طباعة ملصق الباركود" %}</h1>
+                <div class="header-subtitle">{{ product.product_name }}</div>
+            </div>
+        </div>
+        <div class="header-actions">
+            <select class="form-select-custom" id="sizeSelector" title="اختر مقاس الملصق">
+                {% for size in sizes %}
+                    <option value="{{ size.id }}" {% if size.id == selected_size.id %}selected{% endif %}>
+                        {{ size.name }} ({{ size.width }}x{{ size.height }}mm)
+                    </option>
+                {% endfor %}
+            </select>
+            <button class="btn-primary-teal" id="printBarcodeBtn">
+                <i class="fas fa-print"></i> {% trans "طباعة الآن" %}
+            </button>
+        </div>
+    </header>
 
-    <!-- صندوق المعاينة الذي يتغير حجمه -->
-    <div class="label-preview" id="labelPreview">
-        <div class="product-name">{{ product.product_name }}</div>
+    <!-- مساحة العمل (الخلفية الشبكية) -->
+    <div class="workspace">
+        <!-- صندوق المعاينة الذي يتغير حجمه -->
+        <div class="label-container" id="labelContainer">
+            <div class="product-name">{{ product.product_name }}</div>
 
-        {% if product.barcode_specs_text %}
-        <div class="specs-text">{{ product.barcode_specs_text }}</div>
-        {% endif %}
+            {% if product.barcode_specs_text %}
+            <div class="specs-text">{{ product.barcode_specs_text }}</div>
+            {% endif %}
 
-        <svg id="barcodeSvg" data-barcode-value="{{ product.main_barcode|default:product.uniqueId }}"></svg>
+            <svg id="barcodeSvg" data-barcode-value="{{ product.main_barcode|default:product.uniqueId }}"></svg>
 
-        <div class="price">{{ product.sale_price }} $</div>
+            <div class="price">{{ product.sale_price }} $</div>
+        </div>
+
+        <div class="workspace-hint no-print">
+            <i class="fas fa-info-circle"></i>
+            <span>{% trans "المقاس المعروض يطابق مقاس الورقة الحقيقي. اختر المقاس المناسب من الأعلى." %}</span>
+        </div>
     </div>
 
     <!-- كود خداع الميدل وير (حماية BalanceIq) -->
@@ -121,14 +231,16 @@
             var w = parseInt(bodyEl.getAttribute('data-label-width'), 10);
             var h = parseInt(bodyEl.getAttribute('data-label-height'), 10);
             
-            var labelPreview = document.getElementById('labelPreview');
+            var labelContainer = document.getElementById('labelContainer');
             var barcodeSvg = document.getElementById('barcodeSvg');
             var barcodeValue = barcodeSvg.getAttribute('data-barcode-value');
 
             // 1. تطبيق المقاس المختار على صندوق المعاينة في الشاشة
-            if (labelPreview && w && h) {
-                labelPreview.style.width = w + 'mm';
-                labelPreview.style.height = h + 'mm';
+            if (labelContainer && w && h) {
+                // تحويل المليمتر إلى بكسل تقريباً للعرض على الشاشة (1mm ≈ 3.78px)
+                // لتجنب أن يكون الملصق صغيراً جداً لا يُرى على الشاشات الكبيرة، نطبق المقاس الحقيقي
+                labelContainer.style.width = w + 'mm';
+                labelContainer.style.height = h + 'mm';
             }
 
             // 2. حساب أبعاد الباركود ديناميكياً لتناسب الصندوق
@@ -147,7 +259,9 @@
                         fontSize: fontSize, 
                         margin: 1, 
                         height: barHeight, 
-                        width: barWidth
+                        width: barWidth,
+                        background: "#ffffff",
+                        lineColor: "#000000"
                     });
                 } catch(e) { console.error('Error generating barcode:', e); }
             }

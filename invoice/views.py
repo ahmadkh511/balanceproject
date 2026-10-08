@@ -92,6 +92,40 @@ from .backup_engine import (
 )
 from .utils import send_custom_email, verify_pricing_password
 
+
+
+from django.views.decorators.http import require_POST
+from django.shortcuts import get_object_or_404
+
+
+import json
+from django.http import JsonResponse
+from django.views.decorators.http import require_GET
+# تأكد من استيراد النماذج الجديدة
+from .models import Product, ProdSpec, SpecType, SpecValue
+
+from django.shortcuts import render, redirect, get_object_or_404
+from django.contrib import messages
+from django.views.decorators.http import require_POST
+from .models import SpecType, SpecValue
+
+
+
+import json
+from decimal import Decimal
+import json
+from decimal import Decimal
+
+from accounts.models import LabelSize # استيراد النموذج من تطبيق accounts
+
+
+from accounts.models import LabelSize # تأكد أن الاستيراد من accounts.models كما اتفقنا
+from django.views.decorators.http import require_POST
+
+
+from itertools import groupby
+from operator import attrgetter
+
 # ==================== إعدادات التسجيل ====================
 logger = logging.getLogger(__name__)
 User = get_user_model()
@@ -2804,12 +2838,6 @@ def check_barcode_for_return(request, product_id):
 # ===============================================
 
 
-import json
-from django.http import JsonResponse
-from django.views.decorators.http import require_GET
-# تأكد من استيراد النماذج الجديدة
-from .models import Product, ProdSpec, SpecType, SpecValue
-
 @login_required
 @permission_required('invoice.add_product', raise_exception=True)
 def product_create(request):
@@ -2898,7 +2926,7 @@ def product_create(request):
     })
 
 
-# دالة AJAX لجلب قيم المواصفات بناءً على النوع المختار
+
 @require_GET
 @login_required
 def get_spec_values_api(request, type_id):
@@ -2913,12 +2941,6 @@ def get_spec_values_api(request, type_id):
 
 
 
-
-
-from django.shortcuts import render, redirect, get_object_or_404
-from django.contrib import messages
-from django.views.decorators.http import require_POST
-from .models import SpecType, SpecValue
 
 @login_required
 @permission_required('invoice.add_spectype', raise_exception=True)
@@ -2967,10 +2989,6 @@ def add_spec_value(request):
 
 
 
-from django.views.decorators.http import require_POST
-from django.shortcuts import get_object_or_404
-
-# ... (دوال manage_specs و add_spec_value السابقة تبقى كما هي) ...
 
 @require_POST
 @login_required
@@ -3017,9 +3035,6 @@ def delete_spec_value(request, pk):
 
 
 
-from accounts.models import LabelSize # استيراد النموذج من تطبيق accounts
-
-
 @login_required
 def print_product_barcode(request, pk):
     """عرض صفحة طباعة الباركود للمادة المحددة"""
@@ -3054,8 +3069,6 @@ def print_product_barcode(request, pk):
 
 
 
-from accounts.models import LabelSize # تأكد أن الاستيراد من accounts.models كما اتفقنا
-from django.views.decorators.http import require_POST
 
 @login_required
 @permission_required('accounts.add_labelsize', raise_exception=True)
@@ -3100,20 +3113,6 @@ def delete_label_size(request, pk):
     return redirect('invoice:manage_label_sizes')
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 @login_required
 @permission_required('invoice.view_product', raise_exception=True)
 def product_list(request):
@@ -3128,9 +3127,6 @@ def product_list(request):
     })
 
 
-
-from itertools import groupby
-from operator import attrgetter
 
 @login_required
 @permission_required('invoice.view_product', raise_exception=True)
@@ -3185,10 +3181,6 @@ def product_delete(request, slug):
 
 
 
-import json
-from decimal import Decimal
-import json
-from decimal import Decimal
 
 @login_required
 @permission_required('invoice.change_product', raise_exception=True)

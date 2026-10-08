@@ -4,89 +4,174 @@
 
 {% block title %}{{ title }}{% endblock %}
 
-{% block extra_css %}
-<style>
-    :root {
-        --primary-1: #e0f7fa;
-        --primary-2: #b2ebf2;
-        --primary-3: #4dd0e1;
-        --primary-4: #0097a7;
-        --primary-dark: #006064;
-        --text-dark: #006064;
-        --shadow-sm: 0 2px 8px rgba(0, 150, 167, 0.08);
-        --shadow-md: 0 4px 12px rgba(0, 150, 167, 0.12);
-        --radius: 8px;
-        --radius-sm: 4px;
-        --ease: cubic-bezier(0.4, 0, 0.2, 1);
-    }
-
-    .page-container { max-width: 1000px; margin: 0 auto; padding: 1rem; }
-
-    /* === الهيدر === */
-    .page-header-bar { display: flex; justify-content: space-between; align-items: center; background: white; padding: 1rem 1.5rem; border-radius: var(--radius); box-shadow: var(--shadow-sm); margin-bottom: 1rem; border-left: 4px solid var(--primary-4); flex-wrap: wrap; gap: 1rem; }
-    .header-title-group { display: flex; align-items: center; gap: 0.75rem; }
-    .header-icon-box { width: 45px; height: 45px; background: var(--primary-1); color: var(--primary-4); border-radius: var(--radius); display: flex; align-items: center; justify-content: center; font-size: 1.2rem; }
-    .header-title-text h1 { font-size: 1.2rem; font-weight: 700; color: var(--text-dark); margin: 0; }
-    .header-title-text span { font-size: 0.85rem; color: #64748b; }
-
-    /* === البطاقات === */
-    .card { background: white; border-radius: var(--radius); padding: 1.5rem; box-shadow: var(--shadow-sm); border: 1px solid rgba(0,0,0,0.04); margin-bottom: 1rem; }
-    .card-title { font-size: 1rem; font-weight: 700; color: var(--text-dark); margin: 0 0 1.2rem; padding-bottom: 0.6rem; border-bottom: 2px solid var(--primary-1); display: flex; align-items: center; gap: 8px; }
-    .card-title i { color: var(--primary-4); }
-
-    /* === المقاسات المقترحة === */
-    .preset-btn { background: white; border: 1px solid var(--primary-2); color: var(--text-dark); padding: 6px 14px; border-radius: 20px; font-size: 0.8rem; font-weight: 600; cursor: pointer; transition: all 0.2s var(--ease); }
-    .preset-btn:hover { background: var(--primary-1); border-color: var(--primary-4); color: var(--primary-4); transform: translateY(-1px); }
-
-    /* === الحقول === */
-    .form-group-custom { margin-bottom: 1rem; }
-    .form-group-custom label { font-size: 0.85rem; font-weight: 600; color: var(--text-dark); margin-bottom: 0.4rem; display: block; }
-    .form-control-custom { width: 100%; padding: 0.6rem 0.75rem; border: 1px solid var(--primary-2); border-radius: var(--radius-sm); font-size: 0.9rem; font-family: 'Tajawal', sans-serif; background: white; color: #1a1a2e; transition: all 0.2s var(--ease); }
-    .form-control-custom:focus { border-color: var(--primary-3); box-shadow: 0 0 0 3px rgba(77, 208, 225, 0.2); outline: none; }
-
-    /* === الأزرار === */
-    .btn-custom-primary { background: linear-gradient(135deg, var(--primary-4), var(--primary-dark)); color: white; border: none; padding: 0.6rem 1.5rem; border-radius: var(--radius-sm); font-size: 0.9rem; font-weight: 600; cursor: pointer; transition: all 0.2s var(--ease); display: inline-flex; align-items: center; justify-content: center; gap: 0.4rem; box-shadow: 0 3px 8px rgba(0, 150, 167, 0.2); }
-    .btn-custom-primary:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(0, 150, 167, 0.3); }
-    
-    .checkbox-wrapper { display: flex; align-items: center; gap: 8px; background: var(--primary-1); padding: 0.6rem 1rem; border-radius: var(--radius-sm); border: 1px solid var(--primary-2); height: 42px; }
-    .checkbox-wrapper input { width: 18px; height: 18px; accent-color: var(--primary-4); cursor: pointer; }
-    .checkbox-wrapper label { margin: 0; cursor: pointer; font-size: 0.85rem; color: var(--text-dark); }
-
-    /* === الجدول === */
-    .table-wrap { overflow-x: auto; }
-    .table-order { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
-    .table-order thead th { background: var(--primary-1); color: var(--text-dark); padding: 0.8rem 1rem; text-align: right; font-weight: 700; border-bottom: 2px solid var(--primary-2); white-space: nowrap; }
-    .table-order tbody td { padding: 0.8rem 1rem; border-bottom: 1px solid var(--primary-1); }
-    .table-order tbody tr:last-child td { border-bottom: none; }
-    
-    .badge-custom { background: var(--primary-4); color: white; padding: 0.2rem 0.6rem; border-radius: 12px; font-size: 0.75rem; font-weight: 600; }
-    .text-muted-custom { color: #94a3b8; font-size: 0.85rem; }
-
-    .btn-delete-custom { background: #fee2e2; color: #dc2626; border: none; width: 32px; height: 32px; border-radius: var(--radius-sm); cursor: pointer; transition: all 0.2s var(--ease); display: inline-flex; align-items: center; justify-content: center; }
-    .btn-delete-custom:hover { background: #dc2626; color: white; }
-
-    @media (max-width: 768px) {
-        .page-header-bar { padding: 0.8rem; }
-        .card { padding: 1rem; }
-    }
-</style>
-{% endblock %}
-
 {% block content %}
+<!-- ========================================================== -->
+<!-- 1) CSS — تصميم SaaS حديث ومركز                              -->
+<!-- ========================================================== -->
+<style nonce="{{ csp_nonce }}">
+@import url('https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;600;700;800&display=swap');
+
+:root {
+    --primary-1: #f0fdfa;
+    --primary-2: #ccfbf1;
+    --primary-3: #5eead4;
+    --primary-4: #0d9488; /* Teal 600 */
+    --primary-dark: #0f766e;
+    --text-dark: #0f172a; /* Slate 900 */
+    --text-muted: #64748b; /* Slate 500 */
+    --bg-input: #f8fafc; /* Slate 50 */
+    --border-color: #e2e8f0; /* Slate 200 */
+    --danger-color: #ef4444;
+    --danger-bg: #fef2f2;
+    --shadow-sm: 0 1px 3px rgba(15, 23, 42, 0.05);
+    --shadow-md: 0 4px 6px -1px rgba(15, 23, 42, 0.08);
+    --shadow-lg: 0 10px 15px -3px rgba(15, 23, 42, 0.1);
+    --radius-sm: 8px;
+    --radius: 12px;
+    --radius-lg: 16px;
+    --ease: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+* { box-sizing: border-box; }
+
+body {
+    font-family: 'Tajawal', sans-serif;
+    background: #f1f5f9; /* Slate 100 */
+    min-height: 100vh;
+    padding: 1rem;
+    font-size: 0.9rem;
+    color: var(--text-dark);
+}
+
+.page-container { max-width: 960px; margin: 0 auto; }
+
+/* ===== الهيدر المدمج ===== */
+.form-header {
+    background: white;
+    border-radius: var(--radius);
+    padding: 1rem 1.5rem;
+    margin-bottom: 1rem;
+    box-shadow: var(--shadow-sm);
+    border: 1px solid var(--border-color);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+}
+.header-info { display: flex; align-items: center; gap: 0.75rem; }
+.header-icon {
+    width: 40px; height: 40px; background: var(--primary-1);
+    border-radius: var(--radius-sm); display: flex; align-items: center; justify-content: center;
+    color: var(--primary-4); font-size: 1.1rem;
+}
+.header-title { font-size: 1.1rem; font-weight: 700; margin: 0; color: var(--text-dark); }
+.header-subtitle { font-size: 0.75rem; color: var(--text-muted); margin-top: 2px; }
+
+/* ===== البطاقات ===== */
+.card { background: white; border-radius: var(--radius-lg); padding: 1.5rem; box-shadow: var(--shadow-sm); border: 1px solid var(--border-color); margin-bottom: 1rem; }
+.card-title { font-size: 0.95rem; font-weight: 700; color: var(--text-dark); margin: 0 0 1.25rem; display: flex; align-items: center; gap: 0.5rem; }
+.card-title i { color: var(--primary-4); font-size: 0.9rem; }
+
+/* ===== الحقول ===== */
+.form-label { font-size: 0.8rem; font-weight: 600; color: var(--text-muted); margin-bottom: 0.4rem; display: block; }
+.form-input {
+    width: 100%; padding: 0.6rem 0.8rem;
+    border: 1px solid var(--border-color);
+    background: var(--bg-input);
+    border-radius: var(--radius-sm);
+    font-size: 0.9rem; font-family: 'Tajawal', sans-serif;
+    color: var(--text-dark);
+    transition: all 0.2s var(--ease);
+}
+.form-input:focus {
+    background: white;
+    border-color: var(--primary-4);
+    box-shadow: 0 0 0 4px rgba(13, 148, 136, 0.1);
+    outline: none;
+}
+
+/* ===== شرائح المقاسات المقترحة ===== */
+.preset-btn {
+    background: white; border: 1px solid var(--border-color); color: var(--text-muted);
+    padding: 0.4rem 0.8rem; border-radius: 20px; font-size: 0.8rem; font-weight: 600;
+    cursor: pointer; transition: all 0.2s var(--ease);
+}
+.preset-btn:hover {
+    background: var(--primary-1); border-color: var(--primary-4); color: var(--primary-dark);
+    transform: translateY(-1px);
+}
+
+/* ===== الأزرار ===== */
+.btn-primary-teal {
+    background: var(--primary-4); color: white; border: none; padding: 0.6rem 1.2rem;
+    border-radius: var(--radius-sm); font-size: 0.85rem; font-weight: 600;
+    cursor: pointer; transition: all 0.2s var(--ease);
+    display: inline-flex; align-items: center; gap: 0.5rem; justify-content: center;
+    white-space: nowrap;
+}
+.btn-primary-teal:hover { background: var(--primary-dark); transform: translateY(-1px); box-shadow: var(--shadow-md); }
+
+/* ===== مربع الاختيار (Checkbox) ===== */
+.checkbox-wrapper {
+    display: flex; align-items: center; gap: 8px;
+    background: var(--bg-input); padding: 0.6rem 0.8rem;
+    border-radius: var(--radius-sm); border: 1px solid var(--border-color);
+    height: 38px; /* ليتناسب مع ارتفاع الحقول */
+}
+.checkbox-wrapper input { width: 16px; height: 16px; accent-color: var(--primary-4); cursor: pointer; }
+.checkbox-wrapper label { margin: 0; cursor: pointer; font-size: 0.8rem; color: var(--text-muted); font-weight: 600; }
+
+/* ===== الجدول العصري ===== */
+.table-wrap { overflow-x: auto; border-radius: var(--radius-sm); border: 1px solid var(--border-color); }
+.table-order { width: 100%; border-collapse: collapse; font-size: 0.9rem; min-width: 500px; }
+.table-order thead th {
+    background: var(--bg-input); color: var(--text-muted); padding: 0.75rem 1rem;
+    text-align: right; font-weight: 600; font-size: 0.75rem; border-bottom: 1px solid var(--border-color);
+    text-transform: uppercase;
+}
+.table-order tbody td { padding: 0.75rem 1rem; border-bottom: 1px solid #f1f5f9; color: var(--text-dark); }
+.table-order tbody tr:last-child td { border-bottom: none; }
+.table-order tbody tr { transition: background 0.2s var(--ease); }
+.table-order tbody tr:hover { background: var(--bg-input); }
+
+.badge-teal { background: var(--primary-1); color: var(--primary-dark); padding: 0.2rem 0.6rem; border-radius: 1rem; font-size: 0.7rem; font-weight: 700; }
+.badge-muted { background: #f1f5f9; color: var(--text-muted); padding: 0.2rem 0.6rem; border-radius: 1rem; font-size: 0.7rem; font-weight: 700; }
+
+.btn-icon {
+    width: 32px; height: 32px; display: flex; align-items: center; justify-content: center;
+    border-radius: var(--radius-sm); border: 1px solid var(--border-color); cursor: pointer; transition: all 0.2s; flex-shrink: 0;
+    font-size: 0.75rem;
+}
+.btn-delete { background: var(--danger-bg); color: var(--danger-color); border-color: #fecaca; }
+.btn-delete:hover { background: var(--danger-color); color: #fff; border-color: var(--danger-color); }
+
+/* ===== حالة فارغة ===== */
+.empty-state { text-align: center; padding: 3rem 1rem; }
+.empty-state i { font-size: 2.5rem; color: #cbd5e1; margin-bottom: 0.5rem; display: block; }
+.empty-state p { color: var(--text-muted); margin: 0; }
+.empty-state small { color: #94a3b8; font-size: 0.8rem; }
+
+/* ===== التجاوب ===== */
+@media (max-width: 768px) {
+    .form-header { flex-direction: column; align-items: flex-start; gap: 0.5rem; }
+    .card { padding: 1rem; }
+    .btn-primary-teal { width: 100%; }
+}
+</style>
+
 <div class="page-container">
-    
-    <!-- الهيدر -->
-    <div class="page-header-bar">
-        <div class="header-title-group">
-            <div class="header-icon-box"><i class="fas fa-ruler-combined"></i></div>
-            <div class="header-title-text">
-                <h1>{{ title }}</h1>
-                <span>{% trans "إدارة وتخصيص مقاسات ملصقات الباركود للمنتجات" %}</span>
+    <!-- ===== الهيدر المدمج ===== -->
+    <div class="form-header">
+        <div class="header-info">
+            <div class="header-icon"><i class="fas fa-ruler-combined"></i></div>
+            <div>
+                <h1 class="header-title">{{ title }}</h1>
+                <div class="header-subtitle">{% trans "إدارة وتخصيص مقاسات ملصقات الباركود للمنتجات" %}</div>
             </div>
         </div>
     </div>
 
-    <!-- التنبيهات -->
+    <!-- ===== التنبيهات ===== -->
     {% if messages %}
         {% for message in messages %}
             <div class="alert alert-{{ message.tags|default:'info' }} alert-dismissible fade show" role="alert" style="border-radius: 8px; font-size: 0.85rem; margin-bottom: 1rem;">
@@ -96,13 +181,13 @@
         {% endfor %}
     {% endif %}
 
-    <!-- بطاقة إضافة مقاس والمقاسات المقترحة -->
+    <!-- ===== بطاقة إضافة مقاس والمقاسات المقترحة ===== -->
     <div class="card">
         <div class="card-title"><i class="fas fa-plus-circle"></i> {% trans "إضافة مقاس جديد" %}</div>
         
         <!-- قسم المقاسات المقترحة -->
         <div style="margin-bottom: 1.5rem;">
-            <label style="font-size: 0.85rem; color: #64748b; margin-bottom: 0.5rem; display: block;">{% trans "مقاسات عالمية مقترحة (اضغط للتعبئة التلقائية)" %}</label>
+            <label class="form-label">{% trans "مقاسات عالمية مقترحة (اضغط للتعبئة التلقائية)" %}</label>
             <div class="d-flex flex-wrap gap-2">
                 <button type="button" class="preset-btn" data-name="صغير جداً" data-w="30" data-h="20">30×20 (صغير جداً)</button>
                 <button type="button" class="preset-btn" data-name="صغير" data-w="40" data-h="30">40×30 (صغير)</button>
@@ -117,26 +202,26 @@
             {% csrf_token %}
             <div class="row g-3 align-items-end">
                 <div class="col-md-4">
-                    <div class="form-group-custom">
-                        <label>{% trans "اسم المقاس" %}</label>
-                        <input type="text" name="name" id="size_name" class="form-control-custom" required placeholder="{% trans 'مثال: مقاس متوسط' %}">
+                    <div>
+                        <label class="form-label">{% trans "اسم المقاس" %}</label>
+                        <input type="text" name="name" id="size_name" class="form-input" required placeholder="{% trans 'مثال: مقاس متوسط' %}">
                     </div>
                 </div>
                 <div class="col-6 col-md-2">
-                    <div class="form-group-custom">
-                        <label>{% trans "العرض (مم)" %}</label>
-                        <input type="number" name="width" id="size_width" class="form-control-custom" required placeholder="50">
+                    <div>
+                        <label class="form-label">{% trans "العرض (مم)" %}</label>
+                        <input type="number" name="width" id="size_width" class="form-input" required placeholder="50">
                     </div>
                 </div>
                 <div class="col-6 col-md-2">
-                    <div class="form-group-custom">
-                        <label>{% trans "الارتفاع (مم)" %}</label>
-                        <input type="number" name="height" id="size_height" class="form-control-custom" required placeholder="30">
+                    <div>
+                        <label class="form-label">{% trans "الارتفاع (مم)" %}</label>
+                        <input type="number" name="height" id="size_height" class="form-input" required placeholder="30">
                     </div>
                 </div>
                 <div class="col-md-2">
-                    <div class="form-group-custom">
-                        <label>&nbsp;</label>
+                    <div>
+                        <label class="form-label">&nbsp;</label>
                         <div class="checkbox-wrapper">
                             <input type="checkbox" name="is_default" id="is_default">
                             <label for="is_default">{% trans "افتراضي" %}</label>
@@ -144,13 +229,13 @@
                     </div>
                 </div>
                 <div class="col-md-2">
-                    <button type="submit" class="btn-custom-primary w-100"><i class="fas fa-save"></i> {% trans "حفظ" %}</button>
+                    <button type="submit" class="btn-primary-teal w-100"><i class="fas fa-save"></i> {% trans "حفظ" %}</button>
                 </div>
             </div>
         </form>
     </div>
 
-    <!-- قائمة المقاسات المتاحة -->
+    <!-- ===== قائمة المقاسات المتاحة ===== -->
     <div class="card">
         <div class="card-title"><i class="fas fa-list"></i> {% trans "المقاسات المتاحة" %}</div>
         <div class="table-wrap">
@@ -172,15 +257,15 @@
                         <td>{{ size.height }} مم</td>
                         <td>
                             {% if size.is_default %}
-                                <span class="badge-custom">{% trans "افتراضي" %}</span>
+                                <span class="badge-teal">{% trans "افتراضي" %}</span>
                             {% else %}
-                                <span class="text-muted-custom">{% trans "عادي" %}</span>
+                                <span class="badge-muted">{% trans "عادي" %}</span>
                             {% endif %}
                         </td>
                         <td style="text-align: center;">
                             <form method="post" action="{% url 'invoice:delete_label_size' size.id %}" onsubmit="return confirm('هل أنت متأكد من حذف هذا المقاس؟');" style="display: inline;">
                                 {% csrf_token %}
-                                <button type="submit" class="btn-delete-custom" title="حذف">
+                                <button type="submit" class="btn-icon btn-delete" title="حذف">
                                     <i class="fas fa-trash-alt"></i>
                                 </button>
                             </form>
@@ -188,10 +273,12 @@
                     </tr>
                     {% empty %}
                     <tr>
-                        <td colspan="5" style="text-align: center; padding: 3rem 0; color: #94a3b8;">
-                            <i class="fas fa-inbox" style="font-size: 2.5rem; display: block; margin-bottom: 0.8rem; opacity: 0.5;"></i>
-                            <div style="font-weight: 600; margin-bottom: 0.2rem;">{% trans "لا توجد مقاسات مضافة بعد" %}</div>
-                            <div style="font-size: 0.85rem;">{% trans "استخدم المقاسات المقترحة بالأعلى أو أضف مقاساً مخصصاً." %}</div>
+                        <td colspan="5">
+                            <div class="empty-state">
+                                <i class="fas fa-inbox"></i>
+                                <p>{% trans "لا توجد مقاسات مضافة بعد" %}</p>
+                                <small>{% trans "استخدم المقاسات المقترحة بالأعلى أو أضف مقاساً مخصصاً." %}</small>
+                            </div>
                         </td>
                     </tr>
                     {% endfor %}
@@ -200,24 +287,25 @@
         </div>
     </div>
 </div>
-{% endblock %}
 
-{% block extra_js %}
+<!-- ========================================================== -->
+<!-- JavaScript — مع nonce، لا يوجد Django بداخله                -->
+<!-- ========================================================== -->
 <script nonce="{{ csp_nonce }}">
-    document.addEventListener('DOMContentLoaded', function() {
-        var presetBtns = document.querySelectorAll('.preset-btn');
-        var nameInput = document.getElementById('size_name');
-        var widthInput = document.getElementById('size_width');
-        var heightInput = document.getElementById('size_height');
+document.addEventListener('DOMContentLoaded', function() {
+    var presetBtns = document.querySelectorAll('.preset-btn');
+    var nameInput = document.getElementById('size_name');
+    var widthInput = document.getElementById('size_width');
+    var heightInput = document.getElementById('size_height');
 
-        presetBtns.forEach(function(btn) {
-            btn.addEventListener('click', function() {
-                if (nameInput) nameInput.value = this.getAttribute('data-name');
-                if (widthInput) widthInput.value = this.getAttribute('data-w');
-                if (heightInput) heightInput.value = this.getAttribute('data-h');
-                nameInput.focus();
-            });
+    presetBtns.forEach(function(btn) {
+        btn.addEventListener('click', function() {
+            if (nameInput) nameInput.value = this.getAttribute('data-name');
+            if (widthInput) widthInput.value = this.getAttribute('data-w');
+            if (heightInput) heightInput.value = this.getAttribute('data-h');
+            if (nameInput) nameInput.focus();
         });
     });
+});
 </script>
 {% endblock %}

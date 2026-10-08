@@ -6,248 +6,237 @@
 
 {% block content %}
 <!-- ========================================================== -->
-<!-- 1) CSS — مع nonce للـ CSP                                   -->
+<!-- 1) CSS — تصميم SaaS حديث ومركز                              -->
 <!-- ========================================================== -->
 <style nonce="{{ csp_nonce }}">
 @import url('https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;600;700;800&display=swap');
 
 :root {
-    --primary-1: #e0f7fa;
-    --primary-2: #b2ebf2;
-    --primary-3: #4dd0e1;
-    --primary-4: #0097a7;
-    --primary-dark: #006064;
-    --text-dark: #006064;
+    --primary-1: #f0fdfa;
+    --primary-2: #ccfbf1;
+    --primary-3: #5eead4;
+    --primary-4: #0d9488; /* Teal 600 - أعمق وأكثر احترافية */
+    --primary-dark: #0f766e;
+    --text-dark: #0f172a; /* Slate 900 */
+    --text-muted: #64748b; /* Slate 500 */
     --text-light: #ffffff;
-    --shadow-sm: 0 2px 8px rgba(0, 150, 167, 0.08);
-    --shadow-md: 0 4px 12px rgba(0, 150, 167, 0.12);
-    --shadow-lg: 0 8px 30px rgba(0, 150, 167, 0.2);
-    --radius: 8px;
-    --radius-sm: 4px;
-    --radius-lg: 12px;
+    --bg-input: #f8fafc; /* Slate 50 - لخلفية الحقول */
+    --border-color: #e2e8f0; /* Slate 200 - حدود ناعمة */
+    --shadow-sm: 0 1px 3px rgba(15, 23, 42, 0.05);
+    --shadow-md: 0 4px 6px -1px rgba(15, 23, 42, 0.08);
+    --shadow-lg: 0 10px 15px -3px rgba(15, 23, 42, 0.1);
+    --radius-sm: 8px;
+    --radius: 12px;
+    --radius-lg: 16px;
     --ease: cubic-bezier(0.4, 0, 0.2, 1);
-    --transition-speed: 0.3s;
-    --success-color: #059669;
-    --success-bg: #d1fae5;
-    --danger-color: #dc2626;
-    --danger-bg: #fee2e2;
-    --warning-color: #d97706;
-    --warning-bg: #fef3c7;
 }
 
 * { box-sizing: border-box; }
 
 body {
     font-family: 'Tajawal', sans-serif;
-    background: linear-gradient(135deg, #f8fafc 0%, var(--primary-1) 100%);
+    background: #f1f5f9; /* Slate 100 */
     min-height: 100vh;
     padding: 1rem;
     font-size: 0.9rem;
-    color: #1a1a2e;
+    color: var(--text-dark);
 }
 
-.page-container { max-width: 1200px; margin: 0 auto; }
+.page-container { max-width: 960px; margin: 0 auto; } /* عرض أصغر لزيادة التركيز */
 
-/* ===== الهيدر ===== */
-.form-hero {
-    background: linear-gradient(135deg, var(--primary-4), var(--primary-dark));
-    border-radius: var(--radius-lg);
-    padding: 1.5rem 2rem;
+/* ===== الهيدر المدمج ===== */
+.form-header {
+    background: white;
+    border-radius: var(--radius);
+    padding: 1rem 1.5rem;
     margin-bottom: 1rem;
-    color: #fff;
-    position: relative;
-    overflow: hidden;
-    box-shadow: var(--shadow-lg);
+    box-shadow: var(--shadow-sm);
+    border: 1px solid var(--border-color);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
 }
-.form-hero::before {
-    content: ''; position: absolute; top: -40%; left: -5%;
-    width: 300px; height: 300px;
-    background: radial-gradient(circle, rgba(255,255,255,0.12) 0%, transparent 70%);
-    border-radius: 50%; pointer-events: none;
+.header-info { display: flex; align-items: center; gap: 0.75rem; }
+.header-icon {
+    width: 40px; height: 40px; background: var(--primary-1);
+    border-radius: var(--radius-sm); display: flex; align-items: center; justify-content: center;
+    color: var(--primary-4); font-size: 1.1rem;
 }
-.form-hero::after {
-    content: ''; position: absolute; bottom: -30%; right: -5%;
-    width: 250px; height: 250px;
-    background: radial-gradient(circle, rgba(255,255,255,0.08) 0%, transparent 70%);
-    border-radius: 50%; pointer-events: none;
-}
-.form-hero-content { position: relative; z-index: 2; display: flex; align-items: center; gap: 1rem; }
-.form-hero-icon {
-    width: 50px; height: 50px; background: rgba(255, 255, 255, 0.2);
-    backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.25);
-    border-radius: var(--radius); display: flex; align-items: center; justify-content: center;
-    font-size: 1.35rem; flex-shrink: 0;
-}
-.form-hero-title { font-size: 1.4rem; font-weight: 700; margin: 0; line-height: 1.2; }
-.form-hero-subtitle { font-size: 0.85rem; opacity: 0.85; margin-top: 0.2rem; }
+.header-title { font-size: 1.1rem; font-weight: 700; margin: 0; color: var(--text-dark); }
+.header-subtitle { font-size: 0.75rem; color: var(--text-muted); margin-top: 2px; }
+
+/* ===== شريط التقدم ===== */
+.progress-wrapper { flex-grow: 1; max-width: 200px; }
+.progress-teal { height: 6px; background: var(--bg-input); border-radius: 1rem; overflow: hidden; }
+.progress-teal-bar { height: 100%; background: var(--primary-4); border-radius: 1rem; transition: width 0.4s var(--ease); width: 0%; }
+.progress-label { font-size: 0.7rem; color: var(--text-muted); margin-bottom: 4px; text-align: left; font-weight: 600; }
 
 /* ===== البطاقات ===== */
-.card { background: white; border-radius: var(--radius); padding: 20px 24px; box-shadow: var(--shadow-sm); border: 1px solid rgba(0, 0, 0, 0.04); margin-bottom: 16px; transition: box-shadow 0.3s var(--ease); }
-.card:hover { box-shadow: var(--shadow-md); }
-.card-title { font-size: 0.95rem; font-weight: 700; color: var(--text-dark); margin: 0 0 16px; padding-bottom: 10px; border-bottom: 2px solid var(--primary-1); display: flex; align-items: center; gap: 8px; }
-.card-title i { color: var(--primary-4); }
+.card { background: white; border-radius: var(--radius-lg); padding: 1.5rem; box-shadow: var(--shadow-sm); border: 1px solid var(--border-color); margin-bottom: 1rem; }
+.card-title { font-size: 0.95rem; font-weight: 700; color: var(--text-dark); margin: 0 0 1.25rem; display: flex; align-items: center; gap: 0.5rem; }
+.card-title i { color: var(--primary-4); font-size: 0.9rem; }
 
-/* ===== الحقول ===== */
-.form-label { font-size: 0.85rem; font-weight: 600; color: var(--text-dark); margin-bottom: 0.4rem; display: block; }
-.form-label .required { color: var(--danger-color); }
-.form-label .optional { color: #94a3b8; font-weight: 400; font-size: 0.8rem; }
+/* ===== الحقول (Modern Soft Inputs) ===== */
+.form-label { font-size: 0.8rem; font-weight: 600; color: var(--text-muted); margin-bottom: 0.4rem; display: block; }
+.form-label .required { color: #ef4444; }
+.form-label .optional { color: #cbd5e1; font-weight: 400; font-size: 0.75rem; }
+
 .input-group-custom { position: relative; display: flex; align-items: stretch; }
 .input-icon {
     display: flex; align-items: center; justify-content: center;
-    width: 42px; background: var(--primary-1);
-    border: 1px solid var(--primary-2); border-left: none;
+    width: 40px; background: var(--bg-input);
+    border: 1px solid var(--border-color); border-left: none;
     border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
-    color: var(--primary-4); font-size: 0.9rem; flex-shrink: 0;
+    color: var(--text-muted); font-size: 0.85rem; flex-shrink: 0;
 }
+
 .form-input, .form-textarea, .form-select-custom {
-    flex: 1; width: 100%; padding: 0.55rem 0.75rem;
-    border: 1px solid var(--primary-2);
+    flex: 1; width: 100%; padding: 0.6rem 0.8rem;
+    border: 1px solid var(--border-color);
+    background: var(--bg-input); /* خلفية رمادية فاتحة */
     border-radius: var(--radius-sm);
-    font-size: 0.88rem; font-family: 'Tajawal', sans-serif;
-    background: white; color: #1a1a2e;
+    font-size: 0.9rem; font-family: 'Tajawal', sans-serif;
+    color: var(--text-dark);
     transition: all 0.2s var(--ease);
 }
 .form-input:focus, .form-textarea:focus, .form-select-custom:focus {
-    border-color: var(--primary-3);
-    box-shadow: 0 0 0 3px rgba(77, 208, 225, 0.2);
+    background: white;
+    border-color: var(--primary-4);
+    box-shadow: 0 0 0 4px rgba(13, 148, 136, 0.1);
     outline: none;
 }
 .input-group-custom .form-input { border-radius: var(--radius-sm) 0 0 var(--radius-sm); border-left: none; }
-.form-textarea { resize: vertical; min-height: 100px; }
-.form-hint { font-size: 0.75rem; color: #94a3b8; margin-top: 0.3rem; }
-.form-hint i { margin-left: 0.2rem; color: var(--primary-3); }
+.form-textarea { resize: vertical; min-height: 80px; }
+.form-hint { font-size: 0.7rem; color: var(--text-muted); margin-top: 0.3rem; }
 
-.is-valid { border-color: var(--success-color) !important; }
-.is-invalid { border-color: var(--danger-color) !important; }
+.is-valid { border-color: #10b981 !important; background: #f0fdf4 !important; }
+.is-invalid { border-color: #ef4444 !important; background: #fef2f2 !important; }
 
 /* ===== رفع الصورة ===== */
 .image-upload-box {
-    border: 2px dashed var(--primary-2); border-radius: var(--radius);
-    padding: 1.5rem 1rem; text-align: center; background: var(--primary-1);
-    cursor: pointer; transition: all 0.3s var(--ease); min-height: 220px;
+    border: 2px dashed var(--border-color); border-radius: var(--radius);
+    padding: 1rem; text-align: center; background: var(--bg-input);
+    cursor: pointer; transition: all 0.3s var(--ease); min-height: 140px;
     display: flex; align-items: center; justify-content: center;
 }
-.image-upload-box:hover { border-color: var(--primary-4); background: #f0fdfa; transform: scale(1.01); }
-.image-upload-box.has-image { padding: 0.5rem; background: white; border-style: solid; }
-.image-placeholder-text { color: var(--primary-4); }
-.image-placeholder-text i { font-size: 2.5rem; margin-bottom: 0.5rem; display: block; }
-.image-placeholder-text span { font-size: 0.85rem; }
-.image-placeholder-text small { font-size: 0.7rem; color: #94a3b8; }
-.image-preview { max-width: 100%; max-height: 200px; border-radius: var(--radius-sm); }
-.image-info { font-size: 0.75rem; color: #94a3b8; text-align: center; margin-top: 0.5rem; }
+.image-upload-box:hover { border-color: var(--primary-4); background: var(--primary-1); }
+.image-upload-box.has-image { padding: 0.5rem; background: white; border-style: solid; border-color: var(--primary-3); }
+.image-placeholder-text { color: var(--text-muted); }
+.image-placeholder-text i { font-size: 1.5rem; margin-bottom: 0.3rem; display: block; color: var(--primary-4); }
+.image-placeholder-text span { font-size: 0.8rem; display: block; }
+.image-placeholder-text small { font-size: 0.65rem; color: #cbd5e1; }
+.image-preview { max-width: 100%; max-height: 130px; border-radius: var(--radius-sm); }
 .btn-remove-image {
     width: 100%; margin-top: 0.5rem; padding: 0.4rem;
-    background: var(--danger-bg); color: var(--danger-color);
-    border: 1px solid var(--danger-color); border-radius: var(--radius-sm);
-    font-size: 0.8rem; font-weight: 600; cursor: pointer;
+    background: #fef2f2; color: #ef4444;
+    border: 1px solid #fecaca; border-radius: var(--radius-sm);
+    font-size: 0.75rem; font-weight: 600; cursor: pointer;
     font-family: 'Tajawal', sans-serif; transition: all 0.2s var(--ease);
 }
-.btn-remove-image:hover { background: var(--danger-color); color: white; }
+.btn-remove-image:hover { background: #ef4444; color: white; }
 
 /* ===== CKEditor ===== */
-.ck-container { border-radius: var(--radius); overflow: hidden; }
-.ck-container .ck-toolbar { background: var(--primary-1) !important; border: 1px solid var(--primary-2) !important; border-bottom: 1px solid var(--primary-2) !important; border-radius: 0 !important; }
-.ck-container .ck-toolbar .ck-button { color: var(--text-dark) !important; }
-.ck-container .ck-toolbar .ck-button.ck-on { background: var(--primary-2) !important; }
-.ck-container .ck-content { min-height: 180px !important; padding: 1rem !important; border: 1px solid var(--primary-2) !important; border-top: none !important; border-radius: 0 0 var(--radius) var(--radius) !important; font-family: 'Tajawal', sans-serif !important; font-size: 0.88rem !important; line-height: 1.8 !important; }
-.ck-container .ck-content img { max-width: 100% !important; height: auto; border-radius: var(--radius-sm); }
-.ck-container .ck-content table { width: 100%; border-collapse: collapse; }
-.ck-container .ck-content table td, .ck-container .ck-content table th { border: 1px solid var(--primary-2); padding: 0.4rem; }
-.ck-container .ck-focused { border-color: var(--primary-3) !important; box-shadow: 0 0 0 3px rgba(77, 208, 225, 0.2) !important; }
-#id_Prodnots { width: 100%; padding: 0.75rem; border: 1px solid var(--primary-2); border-radius: var(--radius); font-family: 'Tajawal', sans-serif; font-size: 0.88rem; min-height: 180px; resize: vertical; }
+.ck-container { border-radius: var(--radius-sm); overflow: hidden; }
+.ck-container .ck-toolbar { background: var(--bg-input) !important; border: 1px solid var(--border-color) !important; border-bottom: none !important; }
+.ck-container .ck-content { min-height: 120px !important; padding: 0.75rem !important; border: 1px solid var(--border-color) !important; border-top: none !important; border-radius: 0 0 var(--radius-sm) var(--radius-sm) !important; font-family: 'Tajawal', sans-serif !important; font-size: 0.9rem !important; background: var(--bg-input) !important; }
+.ck-container .ck-focused { border-color: var(--primary-4) !important; box-shadow: 0 0 0 4px rgba(13, 148, 136, 0.1) !important; background: white !important; }
+#id_Prodnots { width: 100%; padding: 0.75rem; border: 1px solid var(--border-color); background: var(--bg-input); border-radius: var(--radius-sm); font-family: 'Tajawal', sans-serif; font-size: 0.9rem; min-height: 120px; resize: vertical; }
 
 /* ===== أزرار ===== */
 .btn-primary-teal {
-    background: linear-gradient(135deg, var(--primary-4), var(--primary-dark));
-    color: white; border: none; padding: 0.65rem 1.5rem;
+    background: var(--primary-4); color: white; border: none; padding: 0.6rem 1.5rem;
     border-radius: var(--radius-sm); font-size: 0.9rem; font-weight: 600;
-    font-family: 'Tajawal', sans-serif; cursor: pointer; transition: all 0.25s var(--ease);
+    cursor: pointer; transition: all 0.2s var(--ease);
     display: inline-flex; align-items: center; gap: 0.5rem;
-    box-shadow: 0 3px 12px rgba(0, 150, 167, 0.3);
 }
-.btn-primary-teal:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(0, 150, 167, 0.4); color: white; }
-.btn-primary-teal:active { transform: scale(0.98); }
+.btn-primary-teal:hover { background: var(--primary-dark); transform: translateY(-1px); box-shadow: var(--shadow-md); }
 .btn-secondary-teal {
-    background: white; color: var(--text-dark); border: 1px solid var(--primary-2);
-    padding: 0.65rem 1.5rem; border-radius: var(--radius-sm);
-    font-size: 0.9rem; font-weight: 600; font-family: 'Tajawal', sans-serif;
-    cursor: pointer; transition: all 0.25s var(--ease);
+    background: white; color: var(--text-muted); border: 1px solid var(--border-color);
+    padding: 0.6rem 1.5rem; border-radius: var(--radius-sm);
+    font-size: 0.9rem; font-weight: 600; cursor: pointer; transition: all 0.2s var(--ease);
     display: inline-flex; align-items: center; gap: 0.5rem; text-decoration: none;
 }
-.btn-secondary-teal:hover { background: var(--primary-1); border-color: var(--primary-3); color: var(--text-dark); }
+.btn-secondary-teal:hover { background: var(--bg-input); color: var(--text-dark); }
 
-/* ===== شريط التقدم ===== */
-.progress-teal { height: 3px; background: var(--primary-1); border-radius: 1.5rem; overflow: hidden; margin: 1rem 0; }
-.progress-teal-bar { height: 100%; background: linear-gradient(90deg, var(--primary-3), var(--primary-4)); border-radius: 1.5rem; transition: width 0.3s var(--ease); width: 0%; }
-
-/* ===== تنبيهات ===== */
-.alert-teal { border-radius: var(--radius); border: 1px solid; padding: 0.75rem 1rem; margin-bottom: 1rem; font-size: 0.85rem; display: flex; align-items: center; gap: 0.5rem; }
-.alert-teal.alert-success { background: var(--success-bg); border-color: var(--success-color); color: var(--success-color); }
-.alert-teal.alert-error { background: var(--danger-bg); border-color: var(--danger-color); color: var(--danger-color); }
-.alert-teal.alert-info { background: var(--primary-1); border-color: var(--primary-3); color: var(--text-dark); }
-
-/* ===== المواصفات الديناميكية (UX) ===== */
-.spec-row {
-    background: #fdfdfd;
-    border: 1px solid var(--primary-2);
+/* ===== شريط الأزرار السفلي (Sticky بدلاً من Fixed) ===== */
+.sticky-actions {
+    position: sticky; 
+    bottom: 1rem;
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+    border: 1px solid var(--border-color);
     border-radius: var(--radius);
-    padding: 15px;
-    margin-bottom: 15px;
-    position: relative;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+    padding: 0.75rem;
+    z-index: 100;
+    display: flex;
+    gap: 0.75rem;
+    box-shadow: var(--shadow-md);
+    margin-top: 1rem;
 }
-.spec-row .form-label { font-size: 0.75rem; color: #64748b; }
+.sticky-actions .btn-primary-teal, .sticky-actions .btn-secondary-teal { 
+    flex: 1; 
+    justify-content: center; 
+}
+
+/* ===== المواصفات الديناميكية ===== */
+.spec-row {
+    background: var(--bg-input);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius);
+    padding: 12px;
+    margin-bottom: 12px;
+    position: relative;
+    transition: all 0.2s var(--ease);
+}
+.spec-row:hover { border-color: var(--primary-3); }
 .btn-remove-spec {
-    background: var(--danger-bg);
-    color: var(--danger-color);
-    border: 1px solid var(--danger-color);
+    background: white; color: #ef4444;
+    border: 1px solid #fecaca;
     border-radius: var(--radius-sm);
     width: 38px; height: 38px;
     display: flex; align-items: center; justify-content: center;
     cursor: pointer; transition: all 0.2s var(--ease); flex-shrink: 0;
-    margin-top: 1.6rem;
+    margin-top: 1.4rem;
 }
-.btn-remove-spec:hover { background: var(--danger-color); color: white; }
-.checkbox-container { display: flex; align-items: center; gap: 8px; margin-top: 1.8rem; }
-.checkbox-container input { width: 20px; height: 20px; accent-color: var(--primary-4); cursor: pointer; }
-.checkbox-container label { margin: 0; cursor: pointer; font-size: 0.8rem; color: var(--text-dark); }
+.btn-remove-spec:hover { background: #ef4444; color: white; border-color: #ef4444; }
+.checkbox-container { display: flex; align-items: center; gap: 6px; margin-top: 1.4rem; background: white; padding: 8px; border-radius: var(--radius-sm); border: 1px solid var(--border-color); }
+.checkbox-container input { width: 16px; height: 16px; accent-color: var(--primary-4); cursor: pointer; }
+.checkbox-container label { margin: 0; cursor: pointer; font-size: 0.75rem; color: var(--text-muted); }
 
-/* ===== القائمة المنسدلة متعددة الاختيار (Multi-select) ===== */
+/* ===== القائمة المنسدلة متعددة الاختيار ===== */
 .multiselect-container { position: relative; width: 100%; }
 .multiselect-trigger {
     display: flex; justify-content: space-between; align-items: center;
-    padding: 0.55rem 0.75rem; border: 1px solid var(--primary-2);
-    border-radius: var(--radius-sm); background: white; cursor: pointer;
-    font-size: 0.88rem; color: #1a1a2e; transition: all 0.2s var(--ease);
+    padding: 0.6rem 0.8rem; border: 1px solid var(--border-color);
+    background: var(--bg-input); border-radius: var(--radius-sm); cursor: pointer;
+    font-size: 0.9rem; color: var(--text-dark); transition: all 0.2s var(--ease);
     min-height: 38px;
 }
-.multiselect-trigger.disabled { background: #f8fafc; color: #94a3b8; cursor: not-allowed; }
-.multiselect-trigger.active { border-color: var(--primary-3); box-shadow: 0 0 0 3px rgba(77, 208, 225, 0.2); }
-.multiselect-trigger i { color: var(--primary-4); transition: transform 0.3s var(--ease); }
+.multiselect-trigger.disabled { color: #cbd5e1; cursor: not-allowed; }
+.multiselect-trigger.active { background: white; border-color: var(--primary-4); box-shadow: 0 0 0 4px rgba(13, 148, 136, 0.1); }
+.multiselect-trigger i { color: var(--text-muted); transition: transform 0.3s var(--ease); }
 .multiselect-trigger.active i { transform: rotate(180deg); }
 .multiselect-menu {
     display: none; position: absolute; top: calc(100% + 4px); left: 0; right: 0;
-    background: white; border: 1px solid var(--primary-2); border-radius: var(--radius-sm);
-    box-shadow: var(--shadow-md); z-index: 100; max-height: 200px; overflow-y: auto; padding: 5px;
+    background: white; border: 1px solid var(--border-color); border-radius: var(--radius-sm);
+    box-shadow: var(--shadow-lg); z-index: 100; max-height: 180px; overflow-y: auto; padding: 6px;
 }
 .multiselect-menu.show { display: block; }
 .multiselect-item {
     display: flex; align-items: center; gap: 8px; padding: 8px 10px; cursor: pointer;
-    border-radius: var(--radius-sm); transition: background 0.15s var(--ease); font-size: 0.85rem;
+    border-radius: var(--radius-sm); transition: background 0.15s var(--ease); font-size: 0.85rem; color: var(--text-dark);
 }
 .multiselect-item:hover { background: var(--primary-1); }
 .multiselect-item input { accent-color: var(--primary-4); cursor: pointer; width: 16px; height: 16px; }
-.multiselect-empty { padding: 10px; text-align: center; color: #94a3b8; font-size: 0.8rem; }
+.multiselect-empty { padding: 12px; text-align: center; color: var(--text-muted); font-size: 0.8rem; }
 
 /* ===== التجاوب ===== */
 @media (max-width: 768px) {
-    .form-hero { padding: 1.25rem 1rem; }
-    .form-hero-title { font-size: 1.15rem; }
-    .card { padding: 14px 16px; }
-    .btn-primary-teal, .btn-secondary-teal { width: 100%; justify-content: center; }
-    .actions-row { flex-direction: column; gap: 0.5rem; }
-    .ck-container .ck-content { min-height: 140px; }
-    .btn-remove-spec { margin-top: 0.5rem; width: 100%; height: 40px; }
+    .form-header { flex-direction: column; align-items: flex-start; gap: 0.5rem; }
+    .progress-wrapper { width: 100%; max-width: 100%; }
+    .card { padding: 1rem; }
+    .btn-remove-spec { margin-top: 0.5rem; width: 100%; }
     .checkbox-container { margin-top: 0.5rem; }
 }
 </style>
@@ -271,7 +260,6 @@ body {
      data-spec-values-url="{% url 'invoice:get_spec_values_api' 0 %}">
 </div>
 
-<!-- حاوية بيانات أنواع المواصفات (JSON آمن لا يسبب أخطاء في VS Code) -->
 <script id="specTypesData" type="application/json">
 [
     {% for type in spec_types %}
@@ -281,13 +269,19 @@ body {
 </script>
 
 <div class="page-container">
-    <!-- ===== الهيدر ===== -->
-    <div class="form-hero">
-        <div class="form-hero-content">
-            <div class="form-hero-icon"><i class="fas fa-cube"></i></div>
+    <!-- ===== الهيدر المدمج وشريط التقدم ===== -->
+    <div class="form-header">
+        <div class="header-info">
+            <div class="header-icon"><i class="fas fa-cube"></i></div>
             <div>
-                <h1 class="form-hero-title">{{ title }}</h1>
-                <div class="form-hero-subtitle">{% trans "إضافة مادة جديدة" %}</div>
+                <h1 class="header-title">{{ title }}</h1>
+                <div class="header-subtitle">{% trans "أدخل تفاصيل المادة الجديدة بدقة" %}</div>
+            </div>
+        </div>
+        <div class="progress-wrapper">
+            <div class="progress-label">{% trans "اكتمال البيانات" %}</div>
+            <div class="progress-teal">
+                <div class="progress-teal-bar" id="progressBar"></div>
             </div>
         </div>
     </div>
@@ -295,10 +289,9 @@ body {
     <!-- ===== التنبيهات ===== -->
     {% if messages %}
         {% for message in messages %}
-            <div class="alert-teal alert-{{ message.tags|default:'info' }} alert-dismissible fade show" role="alert">
-                <i class="fas fa-{% if message.tags == 'success' %}check-circle{% elif message.tags == 'error' %}exclamation-circle{% else %}info-circle{% endif %}"></i>
-                <span>{{ message }}</span>
-                <button type="button" class="btn-close ms-auto" data-bs-dismiss="alert"></button>
+            <div class="alert alert-{{ message.tags|default:'info' }} alert-dismissible fade show" role="alert">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
             </div>
         {% endfor %}
     {% endif %}
@@ -306,59 +299,48 @@ body {
     <!-- ===== بداية النموذج ===== -->
     <form method="post" enctype="multipart/form-data" id="productForm" action="{% url 'invoice:product_create' %}">
         {% csrf_token %}
-
-        <!-- حقل مخفي لحمل بيانات المواصفات بصيغة JSON -->
         <input type="hidden" name="specs_data" id="specsData" value="[]">
 
         <!-- ===== بطاقة المعلومات الأساسية ===== -->
         <div class="card">
-            <div class="card-title"><i class="fas fa-edit"></i> {% trans "معلومات المادة الأساسية" %}</div>
+            <div class="card-title"><i class="fas fa-edit"></i> {% trans "المعلومات الأساسية" %}</div>
 
-            <div class="row g-4">
-                <div class="col-lg-8">
-                    <div class="mb-3">
-                        <label for="id_product_name" class="form-label">{% trans "اسم المادة" %} <span class="required">*</span></label>
-                        <div class="input-group-custom">
-                            <span class="input-icon"><i class="fas fa-tag"></i></span>
-                            <input type="text" class="form-input" id="id_product_name" name="product_name" required autofocus placeholder="{% trans 'أدخل اسم المادة' %}">
-                        </div>
-                        <div class="form-hint"><i class="fas fa-info-circle fa-xs"></i> {% trans "أدخل اسم المادة كاملاً كما يجب أن يظهر في الفواتير" %}</div>
-                    </div>
-
-                    <div class="mb-3">
-                        <label for="id_main_barcode" class="form-label">{% trans "الباركود الأساسي" %} <span class="optional">({% trans "اختياري" %})</span></label>
-                        <div class="input-group-custom">
-                            <span class="input-icon"><i class="fas fa-barcode"></i></span>
-                            <input type="text" class="form-input" id="id_main_barcode" name="main_barcode" placeholder="{% trans 'أدخل الباركود الأساسي (اختياري)' %}">
-                        </div>
-                        <div class="form-hint"><i class="fas fa-info-circle fa-xs"></i> {% trans "الباركود الأساسي للمادة - يجب أن يكون فريداً" %}</div>
-                    </div>
-
-                    <div class="mb-3">
-                        <label for="id_product_description" class="form-label">{% trans "وصف المادة" %} <span class="optional">({% trans "اختياري" %})</span></label>
-                        <textarea class="form-textarea" id="id_product_description" name="product_description" rows="4" placeholder="{% trans 'أضف وصفاً تفصيلياً للمادة (اختياري)' %}"></textarea>
+            <div class="row g-3 mb-3">
+                <div class="col-md-8">
+                    <label for="id_product_name" class="form-label">{% trans "اسم المادة" %} <span class="required">*</span></label>
+                    <div class="input-group-custom">
+                        <span class="input-icon"><i class="fas fa-tag"></i></span>
+                        <input type="text" class="form-input" id="id_product_name" name="product_name" required autofocus placeholder="{% trans 'مثال: قميص قطني' %}">
                     </div>
                 </div>
+                <div class="col-md-4">
+                    <label for="id_main_barcode" class="form-label">{% trans "الباركود" %} <span class="optional">({% trans "اختياري" %})</span></label>
+                    <div class="input-group-custom">
+                        <span class="input-icon"><i class="fas fa-barcode"></i></span>
+                        <input type="text" class="form-input" id="id_main_barcode" name="main_barcode" placeholder="{% trans '62012345...' %}">
+                    </div>
+                </div>
+            </div>
 
-                <div class="col-lg-4">
-                    <label class="form-label"><i class="fas fa-image ms-1"></i> {% trans "صورة المادة" %} <span class="optional">({% trans "اختياري" %})</span></label>
+            <div class="row g-3">
+                <div class="col-md-8">
+                    <label for="id_product_description" class="form-label">{% trans "وصف المادة" %} <span class="optional">({% trans "اختياري" %})</span></label>
+                    <textarea class="form-textarea" id="id_product_description" name="product_description" rows="4" placeholder="{% trans 'اكتب وصفاً تفصيلياً يظهر في الفواتير' %}"></textarea>
+                    <div class="form-hint">{% trans "سيظهر هذا الوصف للعميل في الفاتورة النهائية" %}</div>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">{% trans "صورة المادة" %} <span class="optional">({% trans "اختياري" %})</span></label>
                     <div class="image-upload-box" id="imageUploadBox">
                         <div id="noImagePlaceholder" class="image-placeholder-text">
                             <i class="fas fa-cloud-upload-alt"></i>
-                            <span>{% trans 'اضغط لاختيار صورة للمادة' %}</span>
-                            <br>
-                            <small>JPG, PNG, GIF — 5MB {% trans "كحد أقصى" %}</small>
+                            <span>{% trans 'اضغط لرفع الصورة' %}</span>
+                            <small>PNG, JPG (5MB)</small>
                         </div>
                         <img id="imagePreview" src="#" alt="" class="image-preview" style="display:none;">
                     </div>
                     <input type="file" class="d-none" id="id_product_image" name="product_image" accept="image/*">
-                    <div id="imageInfo" class="image-info" style="display:none;">
-                        <i class="fas fa-file-image ms-1"></i>
-                        <span id="imageName"></span>
-                        <span id="imageSize" class="ms-2"></span>
-                    </div>
                     <button type="button" class="btn-remove-image" id="removeImageBtn" style="display:none;">
-                        <i class="fas fa-trash-alt ms-1"></i> {% trans "إزالة الصورة" %}
+                        <i class="fas fa-trash-alt ms-1"></i> {% trans "إزالة" %}
                     </button>
                 </div>
             </div>
@@ -366,43 +348,32 @@ body {
 
         <!-- ===== بطاقة المواصفات الديناميكية ===== -->
         <div class="card">
-            <div class="card-title"><i class="fas fa-sliders-h"></i> {% trans "المواصفات والأسعار " %}</div>
-            <div class="form-hint mb-3">
-                <i class="fas fa-info-circle fa-xs"></i> {% trans "أضف مواصفات (اللون، الحجم) ويمكنك اختيار أكثر من قيمة (أحمر، أسود) لنفس المواصفة." %}
-            </div>
+            <div class="card-title"><i class="fas fa-sliders-h"></i> {% trans "المواصفات (Variants)" %}</div>
+            <div class="form-hint mb-3">{% trans "أضف ألواناً أو مقاسات، ويمكنك اختيار أكثر من قيمة لكل مواصفة." %}</div>
             
-            <div id="specsContainer">
-                <!-- سيتم حقن صفوف المواصفات هنا بواسطة JS -->
-            </div>
+            <div id="specsContainer"></div>
             
-            <button type="button" class="btn-secondary-teal" id="addSpecBtn">
+            <button type="button" class="btn-secondary-teal mt-2" id="addSpecBtn" style="width: 100%; justify-content: center; border-style: dashed;">
                 <i class="fas fa-plus"></i> {% trans "إضافة مواصفة جديدة" %}
             </button>
         </div>
 
         <!-- ===== بطاقة الملاحظات ===== -->
         <div class="card">
-            <div class="card-title"><i class="fas fa-sticky-note"></i> {% trans "ملاحظات عامة" %}</div>
-            <div class="mb-3">
-                <label for="id_Prodnots" class="form-label">{% trans "ملاحظات" %} <span class="optional">({% trans "اختياري" %})</span></label>
-                <div class="ck-container">
-                    <textarea name="Prodnots" id="id_Prodnots" rows="8" placeholder="{% trans 'أضف ملاحظات تفصيلية للمادة... (يدعم التنسيق، الصور، الجداول)' %}"></textarea>
-                </div>
-                <div class="form-hint"><i class="fas fa-info-circle fa-xs"></i> {% trans "ملاحظات غنية بالتنسيق تظهر في صفحة تفاصيل المادة" %}</div>
+            <div class="card-title"><i class="fas fa-sticky-note"></i> {% trans "ملاحظات داخلية" %}</div>
+            <div class="ck-container">
+                <textarea name="Prodnots" id="id_Prodnots" rows="5" placeholder="{% trans 'ملاحظات للموظفين (لا تظهر للعميل)' %}"></textarea>
             </div>
+        </div>
 
-            <div class="progress-teal">
-                <div class="progress-teal-bar" id="progressBar"></div>
-            </div>
-
-            <div class="d-flex gap-2 actions-row mt-4">
-                <button type="submit" class="btn-primary-teal">
-                    <i class="fas fa-save"></i> {% trans "حفظ المادة" %}
-                </button>
-                <a href="{% url 'invoice:product_list' %}" class="btn-secondary-teal">
-                    <i class="fas fa-times"></i> {% trans "إلغاء" %}
-                </a>
-            </div>
+        <!-- ===== شريط الأزرار السفلي (Sticky) ===== -->
+        <div class="sticky-actions">
+            <a href="{% url 'invoice:product_list' %}" class="btn-secondary-teal">
+                <i class="fas fa-times"></i> {% trans "إلغاء" %}
+            </a>
+            <button type="submit" class="btn-primary-teal">
+                <i class="fas fa-save"></i> {% trans "حفظ المادة" %}
+            </button>
         </div>
 
     </form>
@@ -420,25 +391,18 @@ body {
 (function() {
     'use strict';
 
-    /* ===== قراءة السلاسل المترجمة والروابط ===== */
     var i18nEl = document.getElementById('i18nStrings');
     var i18n = i18nEl ? i18nEl.dataset : {};
     
     var apiUrlsEl = document.getElementById('apiUrls');
     var specValuesBaseUrl = apiUrlsEl ? apiUrlsEl.dataset.specValuesUrl : '';
 
-    /* ===== قراءة بيانات أنواع المواصفات من JSON الآمن ===== */
     var specTypesElement = document.getElementById('specTypesData');
     var specTypesData = [];
     if (specTypesElement) {
-        try {
-            specTypesData = JSON.parse(specTypesElement.textContent.trim());
-        } catch(e) {
-            console.error('Error parsing spec types JSON:', e);
-        }
+        try { specTypesData = JSON.parse(specTypesElement.textContent.trim()); } catch(e) { console.error('Error parsing spec types JSON:', e); }
     }
 
-    /* ===== العناصر الأساسية ===== */
     var form = document.getElementById('productForm');
     var nameInput = document.getElementById('id_product_name');
     var barcodeInput = document.getElementById('id_main_barcode');
@@ -448,21 +412,14 @@ body {
     var imagePreview = document.getElementById('imagePreview');
     var noImagePh = document.getElementById('noImagePlaceholder');
     var removeImgBtn = document.getElementById('removeImageBtn');
-    var imageInfo = document.getElementById('imageInfo');
-    var imageName = document.getElementById('imageName');
-    var imageSize = document.getElementById('imageSize');
     var progressBar = document.getElementById('progressBar');
     var prodnotsTextarea = document.getElementById('id_Prodnots');
     var ckeditorInstance = null;
 
-    /* ===== عناصر المواصفات ===== */
     var specsContainer = document.getElementById('specsContainer');
     var addSpecBtn = document.getElementById('addSpecBtn');
     var specsDataInput = document.getElementById('specsData');
 
-    console.log('✅ ' + (i18n.loaded || 'تم تحميل صفحة إنشاء المادة'));
-
-    /* ===== شريط التقدم ===== */
     function updateProgress() {
         var filled = 0;
         if (nameInput && nameInput.value.trim()) filled += 40;
@@ -473,17 +430,12 @@ body {
         if (progressBar) progressBar.style.width = filled + '%';
     }
 
-    /* ===== تنبيه ===== */
     function showAlert(msg, type) {
         var t = type || 'info';
         var alertEl = document.createElement('div');
-        alertEl.className = 'alert-teal alert-' + (t === 'error' ? 'error' : t === 'success' ? 'success' : 'info') + ' alert-dismissible fade show';
-        alertEl.style.cssText = 'position:fixed; top:1rem; left:50%; transform:translateX(-50%); z-index:9999; min-width:300px; max-width:90%;';
-        alertEl.innerHTML = '<i class="fas fa-' + (t === 'error' ? 'exclamation-circle' : t === 'success' ? 'check-circle' : 'info-circle') + '"></i><span>' + msg + '</span>';
-        var closeBtn = document.createElement('button');
-        closeBtn.className = 'btn-close ms-auto';
-        closeBtn.setAttribute('data-bs-dismiss', 'alert');
-        alertEl.appendChild(closeBtn);
+        alertEl.className = 'alert alert-' + (t === 'error' ? 'danger' : t === 'success' ? 'success' : 'info') + ' alert-dismissible fade show';
+        alertEl.style.cssText = 'position:fixed; top:1rem; left:50%; transform:translateX(-50%); z-index:9999; min-width:300px; max-width:90%; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1);';
+        alertEl.innerHTML = '<span>' + msg + '</span><button type="button" class="btn-close" data-bs-dismiss="alert"></button>';
         document.body.appendChild(alertEl);
         setTimeout(function() {
             alertEl.style.transition = 'opacity 0.4s';
@@ -492,13 +444,11 @@ body {
         }, 3000);
     }
 
-    /* ===== تهيئة CKEditor 5 ===== */
     function initCKEditor() {
         if (typeof ClassicEditor === 'undefined') { setTimeout(initCKEditor, 200); return; }
         if (!prodnotsTextarea) return;
         ClassicEditor.create(prodnotsTextarea, {
-            toolbar: { items: ['heading', '|', 'bold', 'italic', 'underline', 'strikethrough', '|', 'fontColor', '|', 'link', 'bulletedList', 'numberedList', '|', 'blockQuote', 'insertTable', '|', 'undo', 'redo'] },
-            table: { contentToolbar: ['tableColumn', 'tableRow', 'mergeTableCells'] }
+            toolbar: { items: ['heading', '|', 'bold', 'italic', 'underline', '|', 'link', 'bulletedList', 'numberedList', '|', 'blockQuote', '|', 'undo', 'redo'] }
         }).then(function(editor) {
             ckeditorInstance = editor;
             editor.model.document.on('change:data', updateProgress);
@@ -508,7 +458,6 @@ body {
         });
     }
 
-    /* ===== إدارة المواصفات الديناميكية (Multi-select) ===== */
     function addSpecRow() {
         var row = document.createElement('div');
         row.className = 'spec-row';
@@ -519,15 +468,13 @@ body {
         });
 
         row.innerHTML = `
-            <div class="row g-3 align-items-end">
+            <div class="row g-2 align-items-end">
                 <div class="col-md-3">
                     <label class="form-label">نوع المواصفة</label>
-                    <select class="form-select-custom spec-type-select" required>
-                        ${typeOptions}
-                    </select>
+                    <select class="form-select-custom spec-type-select" required>${typeOptions}</select>
                 </div>
                 <div class="col-md-3">
-                    <label class="form-label">القيمة (يمكن اختيار أكثر من واحدة)</label>
+                    <label class="form-label">القيم (متعدد)</label>
                     <div class="multiselect-container">
                         <div class="multiselect-trigger disabled spec-value-trigger">
                             <span class="trigger-text">${i18n.specSelect || 'اختر القيمة'}</span>
@@ -539,17 +486,20 @@ body {
                     </div>
                 </div>
                 <div class="col-md-2">
-                    <label class="form-label">السعر الإضافي</label>
+                    <label class="form-label">سعر إضافي</label>
                     <input type="number" step="0.01" class="form-input spec-price-input" placeholder="0.00" value="0.00">
                 </div>
                 <div class="col-md-2">
-                    <div class="checkbox-container">
+                    <label class="form-label">ملاحظات</label>
+                    <input type="text" class="form-input spec-notes-input" placeholder="اختياري">
+                </div>
+                <div class="col-md-1">
+                    <div class="checkbox-container" title="إظهار في الباركود">
                         <input type="checkbox" class="spec-barcode-check" checked>
-                        <label>إظهار بالباركود</label>
+                        <label>باركود</label>
                     </div>
                 </div>
-                <div class="col-md-2 d-flex gap-2">
-                    <input type="text" class="form-input spec-notes-input" placeholder="ملاحظات">
+                <div class="col-md-1 d-flex justify-content-end">
                     <button type="button" class="btn-remove-spec" title="حذف"><i class="fas fa-times"></i></button>
                 </div>
             </div>
@@ -598,7 +548,7 @@ body {
             .then(data => {
                 menuEl.innerHTML = '';
                 if (data.length === 0) {
-                    menuEl.innerHTML = '<div class="multiselect-empty">لا توجد قيم لهذا النوع</div>';
+                    menuEl.innerHTML = '<div class="multiselect-empty">لا توجد قيم</div>';
                     return;
                 }
                 data.forEach(function(item) {
@@ -622,15 +572,12 @@ body {
             });
     }
 
-    // التعامل مع فتح/إغلاق القائمة المنسدلة وتحديث النص
     document.addEventListener('click', function(e) {
-        // فتح/إغلاق القائمة
         if (e.target.closest('.spec-value-trigger')) {
             var trigger = e.target.closest('.spec-value-trigger');
             if (trigger.classList.contains('disabled')) return;
             var menu = trigger.nextElementSibling;
             
-            // إغلاق القوائم الأخرى المفتوحة
             document.querySelectorAll('.spec-value-trigger.active').forEach(function(otherTrigger) {
                 if (otherTrigger !== trigger) {
                     otherTrigger.classList.remove('active');
@@ -642,14 +589,12 @@ body {
             menu.classList.toggle('show');
             e.stopPropagation();
         } else if (!e.target.closest('.multiselect-container')) {
-            // إغلاق القوائم عند الضغط خارجها
             document.querySelectorAll('.spec-value-trigger.active').forEach(function(trigger) {
                 trigger.classList.remove('active');
                 trigger.nextElementSibling.classList.remove('show');
             });
         }
 
-        // تحديث نص التريجر عند تغيير مربعات الاختيار
         if (e.target.matches('.spec-value-menu input[type="checkbox"]')) {
             var menu = e.target.closest('.spec-value-menu');
             var trigger = menu.previousElementSibling;
@@ -676,7 +621,6 @@ body {
             var menu = row.querySelector('.spec-value-menu');
             var checkedBoxes = menu.querySelectorAll('input[type="checkbox"]:checked');
             
-            // لكل قيمة مختارة، ننشئ كائناً مستقلاً في المصفوفة
             checkedBoxes.forEach(function(cb) {
                 specs.push({
                     type_id: typeSelect.value,
@@ -695,7 +639,6 @@ body {
         addSpecBtn.addEventListener('click', addSpecRow);
     }
 
-    /* ===== الصورة ===== */
     if (imageBox) {
         imageBox.addEventListener('click', function(e) {
             if (e.target.closest('#removeImageBtn')) return;
@@ -723,9 +666,6 @@ body {
                 imagePreview.style.display = 'block';
                 noImagePh.style.display = 'none';
                 imageBox.classList.add('has-image');
-                imageName.textContent = file.name.length > 28 ? file.name.substring(0, 25) + '...' : file.name;
-                imageSize.textContent = '(' + (file.size / 1024).toFixed(1) + ' KB)';
-                imageInfo.style.display = 'block';
                 removeImgBtn.style.display = 'block';
                 updateProgress();
             };
@@ -746,12 +686,10 @@ body {
         imagePreview.style.display = 'none';
         noImagePh.style.display = 'block';
         imageBox.classList.remove('has-image');
-        imageInfo.style.display = 'none';
         removeImgBtn.style.display = 'none';
         updateProgress();
     }
 
-    /* ===== التحقق من النموذج قبل الإرسال ===== */
     if (form) {
         form.addEventListener('submit', function(e) {
             var name = nameInput.value.trim();
@@ -763,12 +701,11 @@ body {
             } else {
                 nameInput.classList.remove('is-invalid');
                 if (ckeditorInstance) { ckeditorInstance.updateSourceElement(); }
-                collectSpecsData(); // تجميع بيانات المواصفات (متعددة) قبل الإرسال
+                collectSpecsData();
             }
         });
     }
 
-    /* ===== تحديث الشريط عند الكتابة ===== */
     var inputs = [nameInput, barcodeInput, descInput];
     inputs.forEach(function(inp) {
         if (inp) {
@@ -780,13 +717,9 @@ body {
         }
     });
 
-    /* ===== التهيئة ===== */
     initCKEditor();
     updateProgress();
 
-    window.addEventListener('load', function() {
-        console.log('✅ ' + (i18n.fullLoad || 'تم تحميل الصفحة بالكامل'));
-    });
 })();
 </script>
 {% endblock %}

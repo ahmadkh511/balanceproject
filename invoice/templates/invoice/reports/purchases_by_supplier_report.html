@@ -1,305 +1,390 @@
 {% extends "base.html" %}
-{% load static %} <!-- ✅ (1) تم التأكد من استدعاء static -->
+{% load static %}
+{% load i18n %}
+
+{% block title %}{% trans "ملخص المشتريات وأرصدة الموردين" %}{% endblock %}
 
 {% block extra_css %}
-    <!-- ✅ (2) استدعاء ملف الستايل الخاص بالطباعة -->
     <link rel="stylesheet" href="{% static 'css/print_system.css' %}">
 {% endblock %}
 
 {% block content %}
-<!-- ✅ (3) وضعنا id="printableArea" و class="invoice-print-area" للـ Div الرئيسي -->
-<div class="container-fluid mt-4 invoice-print-area" id="printableArea" data-page="purchases-supplier-report">
-    <div class="card shadow">
-        <!-- Card Header -->
-        <!-- ✅ (4) أضفنا no-print للهيدر والفورم كي لا يظهرا في الورقة المطبوعة -->
-        <div class="card-header bg-warning text-dark d-flex justify-content-between align-items-center no-print">
-            <h5 class="mb-0">
-                <i class="fas fa-truck ml-2"></i>
-                تقرير المشتريات حسب المورد
-            </h5>
-            <span class="badge badge-light" data-total-invoices="{{ total_invoices }}">
-                إجمالي الفواتير: {{ total_invoices }}
-            </span>
-        </div>
+<style nonce="{{ csp_nonce }}">
+@import url('https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;600;700;800&display=swap');
+
+:root {
+    --primary-1: #f0fdfa;
+    --primary-2: #ccfbf1;
+    --primary-3: #5eead4;
+    --primary-4: #0d9488; /* Teal 600 */
+    --primary-dark: #0f766e;
+    --text-dark: #0f172a;
+    --text-muted: #64748b;
+    --bg-input: #f8fafc;
+    --border-color: #e2e8f0;
+    --danger-color: #ef4444;
+    --danger-bg: #fef2f2;
+    --success-color: #10b981;
+    --success-bg: #ecfdf5;
+    --shadow-sm: 0 1px 3px rgba(15, 23, 42, 0.05);
+    --shadow-md: 0 4px 6px -1px rgba(15, 23, 42, 0.08);
+    --shadow-lg: 0 10px 15px -3px rgba(15, 23, 42, 0.1);
+    --radius-sm: 8px;
+    --radius: 12px;
+    --radius-lg: 16px;
+    --ease: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+* { box-sizing: border-box; }
+
+body {
+    font-family: 'Tajawal', sans-serif;
+    background: #f1f5f9;
+    min-height: 100vh;
+    padding: 1rem;
+    font-size: 0.9rem;
+    color: var(--text-dark);
+}
+
+.page-container { max-width: 1200px; margin: 0 auto; }
+
+/* ===== الهيدر ===== */
+.form-header {
+    background: white; border-radius: var(--radius); padding: 1rem 1.5rem; margin-bottom: 1rem;
+    box-shadow: var(--shadow-sm); border: 1px solid var(--border-color);
+    display: flex; align-items: center; justify-content: space-between; gap: 1rem; flex-wrap: wrap;
+}
+.header-info { display: flex; align-items: center; gap: 0.75rem; }
+.header-icon { width: 40px; height: 40px; background: var(--primary-1); border-radius: var(--radius-sm); display: flex; align-items: center; justify-content: center; color: var(--primary-4); font-size: 1.1rem; }
+.header-title { font-size: 1.1rem; font-weight: 700; margin: 0; color: var(--text-dark); }
+.header-subtitle { font-size: 0.75rem; color: var(--text-muted); margin-top: 2px; }
+
+.balance-badge { background: var(--danger-bg); color: var(--danger-color); padding: 0.4rem 0.8rem; border-radius: var(--radius-sm); font-weight: 700; font-size: 0.8rem; border: 1px solid #fecaca; }
+
+/* ===== بطاقات الإحصائيات ===== */
+.stats-strip { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem; margin-bottom: 1rem; }
+.stat-card { background: white; border-radius: var(--radius); padding: 1rem 1.25rem; box-shadow: var(--shadow-sm); border: 1px solid var(--border-color); border-right: 4px solid var(--primary-4); }
+.stat-card.bg-success-soft { border-right-color: var(--success-color); }
+.stat-card.bg-danger-soft { border-right-color: var(--danger-color); }
+.stat-label { font-size: 0.75rem; color: var(--text-muted); font-weight: 600; margin-bottom: 0.25rem; display: flex; align-items: center; gap: 0.3rem; }
+.stat-value { font-size: 1.5rem; font-weight: 700; color: var(--text-dark); margin-bottom: 0.1rem; }
+.stat-sub { font-size: 0.7rem; color: var(--text-muted); }
+.stat-card.bg-success-soft .stat-value { color: var(--success-color); }
+.stat-card.bg-danger-soft .stat-value { color: var(--danger-color); }
+
+/* ===== البطاقات العامة ===== */
+.card { background: white; border-radius: var(--radius-lg); box-shadow: var(--shadow-sm); border: 1px solid var(--border-color); margin-bottom: 1rem; overflow: hidden; }
+.card-title { font-size: 0.95rem; font-weight: 700; color: var(--text-dark); margin: 0; padding: 1rem 1.5rem; display: flex; align-items: center; gap: 0.5rem; }
+.card-title i { color: var(--primary-4); font-size: 0.9rem; }
+
+.filter-body { padding: 0 1.5rem 1.5rem 1.5rem; }
+.form-label { font-size: 0.8rem; font-weight: 600; color: var(--text-muted); margin-bottom: 0.4rem; display: block; }
+.form-control { width: 100%; padding: 0.5rem 0.75rem; border: 1px solid var(--border-color); background: var(--bg-input); border-radius: var(--radius-sm); font-size: 0.85rem; font-family: 'Tajawal', sans-serif; color: var(--text-dark); transition: all 0.2s var(--ease); }
+.form-control:focus { background: white; border-color: var(--primary-4); box-shadow: 0 0 0 4px rgba(13, 148, 136, 0.1); outline: none; }
+
+.btn-primary-teal { background: var(--primary-4); color: white; border: none; padding: 0.5rem 1.2rem; border-radius: var(--radius-sm); font-size: 0.85rem; font-weight: 600; cursor: pointer; transition: all 0.2s var(--ease); display: inline-flex; align-items: center; gap: 0.4rem; }
+.btn-primary-teal:hover { background: var(--primary-dark); transform: translateY(-1px); box-shadow: var(--shadow-md); }
+.btn-secondary-teal { background: white; color: var(--text-muted); border: 1px solid var(--border-color); padding: 0.5rem 1.2rem; border-radius: var(--radius-sm); font-size: 0.85rem; font-weight: 600; cursor: pointer; transition: all 0.2s var(--ease); display: inline-flex; align-items: center; gap: 0.4rem; text-decoration: none; }
+.btn-secondary-teal:hover { background: var(--bg-input); color: var(--text-dark); }
+
+/* ===== الجدول ===== */
+.table-wrap { overflow-x: auto; border-top: 1px solid var(--border-color); }
+.tx-table { width: 100%; border-collapse: collapse; font-size: 0.85rem; min-width: 800px; }
+.tx-table thead th { background: var(--bg-input); color: var(--text-muted); padding: 0.75rem 1rem; text-align: right; font-weight: 600; font-size: 0.75rem; border-bottom: 1px solid var(--border-color); text-transform: uppercase; white-space: nowrap; cursor: pointer; user-select: none; transition: all 0.2s var(--ease); }
+.tx-table thead th:hover { background: #e2e8f0; color: var(--text-dark); }
+.tx-table thead th .sort-icon { margin-right: 5px; font-size: 0.7rem; opacity: 0.4; }
+.tx-table thead th.active-sort .sort-icon { opacity: 1; color: var(--primary-4); }
+.tx-table thead th.active-sort { color: var(--primary-dark); background: var(--primary-1); }
+
+.tx-table tbody td { padding: 0.75rem 1rem; border-bottom: 1px solid #f1f5f9; color: var(--text-dark); white-space: nowrap; }
+.tx-table tbody tr:last-child td { border-bottom: none; }
+.tx-table tbody tr { transition: background 0.2s var(--ease); cursor: pointer; }
+.tx-table tbody tr:hover { background: var(--bg-input); }
+
+.supplier-link { color: var(--primary-4); text-decoration: none; font-weight: 600; display: inline-block; }
+.supplier-link:hover { color: var(--primary-dark); text-decoration: underline; }
+
+.badge-sm { padding: 0.2rem 0.6rem; border-radius: 1rem; font-size: 0.7rem; font-weight: 700; display: inline-block; }
+.bg-warning-soft { background: #fffbeb; color: #f59e0b; border: 1px solid #fde68a; }
+.bg-success-soft { background: var(--success-bg); color: var(--success-color); border: 1px solid #a7f3d0; }
+.bg-danger-soft { background: var(--danger-bg); color: var(--danger-color); border: 1px solid #fecaca; }
+
+.text-success { color: var(--success-color) !important; font-weight: 700; }
+.text-danger { color: var(--danger-color) !important; font-weight: 700; }
+.text-muted { color: var(--text-muted) !important; font-weight: 700; }
+
+.tx-table tfoot td { font-weight: 600; font-size: 0.85rem; padding: 0.75rem 1rem; text-align: right; border-top: 1.5px solid var(--border-color); background: white; }
+.tx-table tfoot tr:last-child td { background: var(--primary-1); border-top: 2px solid var(--primary-4); font-size: 0.9rem; }
+
+.empty-state { text-align: center; padding: 3rem 1rem; color: var(--text-muted); }
+.empty-state i { font-size: 2.5rem; color: #cbd5e1; margin-bottom: 0.5rem; display: block; }
+
+@media (max-width: 768px) {
+    .stats-strip { grid-template-columns: 1fr 1fr; }
+    .tx-table { font-size: 0.75rem; }
+    .tx-table thead th, .tx-table tbody td { padding: 0.5rem; }
+}
+
+/* === إعدادات الطباعة === */
+@media print {
+    body { background: white !important; padding: 0 !important; }
+    .no-print { display: none !important; }
+    .card { border: none !important; box-shadow: none !important; border-radius: 0 !important; }
+    .tx-table thead th { background: #f1f5f9 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    .tx-table tfoot tr:last-child td { background: #f0fdfa !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+}
+</style>
+
+<div class="page-container">
+    <div class="invoice-print-area" id="printableArea" data-page="purchases-supplier-report">
         
-        <!-- Card Body -->
-        <div class="card-body">
-            <!-- Search Bar -->
-            <!-- ✅ (4) أضفنا no-print لشريط البحث -->
-            <div class="search-container mb-4 no-print">
-                <form method="GET" class="row" data-search-form>
-                    <div class="col-md-6 col-lg-4">
-                        <div class="input-group">
-                            <input type="text" 
-                                   name="q" 
-                                   class="form-control" 
-                                   placeholder="بحث باسم المورد..." 
-                                   value="{{ search_query }}"
-                                   data-search-input>
-                            <div class="input-group-append">
-                                <button type="submit" class="btn btn-secondary">
-                                    <i class="fas fa-search"></i>
-                                </button>
-                                <a href="{% url 'invoice:purchases_by_supplier_report' %}" 
-                                   class="btn btn-outline-dark">
-                                    <i class="fas fa-undo"></i>
-                                </a>
-                            </div>
-                        </div>
+        <!-- ===== الهيدر ===== -->
+        <div class="form-header no-print">
+            <div class="header-info">
+                <div class="header-icon"><i class="fas fa-truck"></i></div>
+                <div>
+                    <h1 class="header-title">{% trans "ملخص المشتريات وأرصدة الموردين" %}</h1>
+                    <div class="header-subtitle">{% trans "عرض تفصيلي للفواتير والمبالغ المستحقة" %}</div>
+                </div>
+            </div>
+            <div class="balance-badge">
+                <i class="fas fa-file-invoice"></i> {% trans "إجمالي الفواتير" %}: {{ total_invoices }}
+            </div>
+        </div>
+
+        <!-- ===== بطاقات الإحصائيات ===== -->
+        <div class="stats-strip">
+            <div class="stat-card">
+                <div class="stat-label"><i class="fas fa-users"></i> {% trans "إجمالي الموردين" %}</div>
+                <div class="stat-value">{{ total_suppliers }}</div>
+                <div class="stat-sub">
+                    <span class="text-danger">{{ suppliers_with_debt }}</span> {% trans "لهم مستحقات" %}
+                </div>
+            </div>
+            <div class="stat-card bg-success-soft">
+                <div class="stat-label"><i class="fas fa-check-circle"></i> {% trans "موردين مسددين" %}</div>
+                <div class="stat-value">{{ suppliers_paid }}</div>
+                <div class="stat-sub">
+                    {% if total_suppliers > 0 %}{{ suppliers_paid|floatformat:0 }}% {% trans "من الإجمالي" %}{% else %}0%{% endif %}
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label"><i class="fas fa-calculator"></i> {% trans "متوسط قيمة الفاتورة" %}</div>
+                <div class="stat-value" id="avgInvoiceValue">
+                    {% if total_invoices > 0 %}
+                        {{ grand_total|floatformat:2 }}
+                    {% else %}
+                        0.00
+                    {% endif %}
+                </div>
+                <div class="stat-sub">{% trans "لكل فاتورة" %}</div>
+            </div>
+            <div class="stat-card bg-success-soft">
+                <div class="stat-label"><i class="fas fa-percentage"></i> {% trans "نسبة المدفوعات" %}</div>
+                <div class="stat-value">
+                    {% if grand_total > 0 %}{{ grand_paid|floatformat:1 }}%{% else %}0%{% endif %}
+                </div>
+                <div class="stat-sub">{% trans "من إجمالي المشتريات" %}</div>
+            </div>
+        </div>
+
+        <!-- ===== بطاقة البحث ===== -->
+        <div class="card no-print">
+            <div class="filter-body" style="padding-top: 1.5rem;">
+                <form method="GET" class="row g-2 align-items-end" data-search-form>
+                    <div class="col-md-8">
+                        <label class="form-label">{% trans "بحث باسم المورد" %}</label>
+                        <input type="text" name="q" class="form-control" placeholder="{% trans 'اكتب اسم المورد هنا...' %}" value="{{ search_query }}" data-search-input>
+                    </div>
+                    <div class="col-md-4 d-flex gap-2">
+                        <button type="submit" class="btn-primary-teal flex-grow-1"><i class="fas fa-search"></i> {% trans "بحث" %}</button>
+                        <a href="{% url 'invoice:purchases_by_supplier_report' %}" class="btn-secondary-teal"><i class="fas fa-undo"></i></a>
                     </div>
                 </form>
             </div>
+        </div>
 
-            <!-- Results Table -->
-            <div class="table-responsive">
-                <table class="table table-striped table-hover" id="supplier-report-table">
-                    <thead class="thead-dark">
+        <!-- ===== جدول الموردين ===== -->
+        <div class="card">
+            <div class="table-wrap">
+                <table class="tx-table" id="supplier-report-table">
+                    <thead>
                         <tr>
-                            <th class="text-center">#</th>
-                            <!-- ✅ (5) أضفنا data-print-field لكل عمود نريد التحكم بإظهاره/إخفائه -->
-                            <th class="text-right" data-print-field="col-name">اسم المورد</th>
-                            <th class="text-center" data-print-field="col-invoices">عدد الفواتير</th>
-                            <th class="text-left" data-print-field="col-total">إجمالي المشتريات</th>
-                            <th class="text-left" data-print-field="col-paid">إجمالي المدفوع</th>
-                            <th class="text-left" data-print-field="col-balance">المتبقي</th>
+                            <th style="width:40px" data-sort="index">#</th>
+                            <th data-sort="name" data-print-field="col-name">{% trans "اسم المورد" %} <span class="sort-icon"><i class="fas fa-sort"></i></span></th>
+                            <th data-sort="invoices" data-print-field="col-invoices">{% trans "عدد الفواتير" %} <span class="sort-icon"><i class="fas fa-sort"></i></span></th>
+                            <th data-sort="total" data-print-field="col-total">{% trans "إجمالي المشتريات" %} <span class="sort-icon"><i class="fas fa-sort"></i></span></th>
+                            <th data-sort="paid" data-print-field="col-paid">{% trans "إجمالي المدفوع" %} <span class="sort-icon"><i class="fas fa-sort"></i></span></th>
+                            <th data-sort="balance" data-print-field="col-balance">{% trans "المتبقي (المستحق)" %} <span class="sort-icon"><i class="fas fa-sort"></i></span></th>
                         </tr>
                     </thead>
-                    <tbody>
+                    <tbody id="tableBody">
                         {% for row in report_data %}
-                        <tr data-supplier-id="{{ row.purch_supplier__id }}"
-                            data-total="{{ row.total_amount|floatformat:2 }}"
-                            data-paid="{{ row.paid_amount|floatformat:2 }}"
-                            data-balance="{{ row.balance_due|floatformat:2 }}">
-                            <td class="text-center">{{ forloop.counter }}</td>
-                            <!-- ✅ (7) تكرار نفس data-print-field في خلايا td -->
-                            <td class="supplier-cell" data-print-field="col-name">
-                                <a href="{% url 'invoice:statement_report' %}?user_id={{ row.purch_supplier__id }}"
-                                   class="supplier-link"
-                                   data-supplier-id="{{ row.purch_supplier__id }}">
+                        <tr data-supplier-id="{{ row.purch_supplier__id }}" data-balance="{{ row.balance_due|floatformat:2 }}">
+                            <td data-sort="index">{{ forloop.counter }}</td>
+                            <td data-print-field="col-name" data-sort="name">
+                                <a href="{% url 'invoice:statement_report' %}?user_id={{ row.purch_supplier__id }}" class="supplier-link" data-supplier-id="{{ row.purch_supplier__id }}">
                                     {{ row.purch_supplier__first_name }} {{ row.purch_supplier__last_name }}
                                 </a>
                             </td>
-                            <td class="text-center" data-print-field="col-invoices">
-                                <span class="badge badge-warning invoice-badge" 
-                                      data-invoice-count="{{ row.invoice_count }}">
+                            <td data-print-field="col-invoices" data-sort="invoices" data-value="{{ row.invoice_count }}" style="text-align: center;">
+                                <span class="badge-sm bg-warning-soft" data-invoice-count="{{ row.invoice_count }}">
                                     {{ row.invoice_count }}
                                 </span>
                             </td>
-                            <td class="text-left font-weight-bold total-amount" data-print-field="col-total" data-amount="{{ row.total_amount|floatformat:2 }}">
+                            <td data-print-field="col-total" data-sort="total" data-value="{{ row.total_amount }}" style="text-align: left; font-weight: 700;">
                                 {{ row.total_amount|floatformat:2 }}
                             </td>
-                            <td class="text-left text-success paid-amount" data-print-field="col-paid" data-amount="{{ row.paid_amount|floatformat:2 }}">
+                            <td data-print-field="col-paid" data-sort="paid" data-value="{{ row.paid_amount }}" style="text-align: left; font-weight: 700;" class="text-success">
                                 {{ row.paid_amount|floatformat:2 }}
                             </td>
-                            <td class="text-left text-danger font-weight-bold balance-amount" data-print-field="col-balance" data-balance="{{ row.balance_due|floatformat:2 }}">
+                            <td data-print-field="col-balance" data-sort="balance" data-value="{{ row.balance_due|floatformat:2 }}" style="text-align: left; font-weight: 700;" class="{% if row.balance_due > 0 %}text-danger{% elif row.balance_due == 0 %}text-muted{% else %}text-success{% endif %}">
                                 {% if row.balance_due > 0 %}
                                     {{ row.balance_due|floatformat:2 }}
-                                    <i class="fas fa-exclamation-circle" style="font-size: 0.8rem;"></i>
+                                    <i class="fas fa-exclamation-circle" style="font-size: 0.75rem;"></i>
                                 {% elif row.balance_due == 0 %}
                                     {{ row.balance_due|floatformat:2 }}
-                                    <i class="fas fa-check-circle text-success" style="font-size: 0.8rem;"></i>
+                                    <i class="fas fa-check-circle text-success" style="font-size: 0.75rem;"></i>
                                 {% else %}
                                     {{ row.balance_due|floatformat:2 }}
-                                    <i class="fas fa-arrow-up text-info" style="font-size: 0.8rem;"></i>
+                                    <i class="fas fa-arrow-up text-info" style="font-size: 0.75rem;"></i>
                                 {% endif %}
                             </td>
                         </tr>
                         {% empty %}
-                        <tr class="no-data-row">
-                            <td colspan="6" class="text-center text-muted py-4">
-                                <i class="fas fa-inbox fa-2x d-block mb-2"></i>
-                                لا توجد بيانات مشتريات
+                        <tr class="empty-state">
+                            <td colspan="6" style="border:none;">
+                                <i class="fas fa-inbox"></i>
+                                <p>{% trans "لا توجد بيانات مشتريات" %}</p>
                             </td>
                         </tr>
                         {% endfor %}
                     </tbody>
-                    <tfoot class="font-weight-bold bg-light">
-                        <tr class="table-footer">
-                            <td colspan="2" class="text-center">الإجمالي الكلي</td>
-                            <td class="text-center total-invoices-footer">{{ total_invoices }}</td>
-                            <td class="text-left grand-total" data-total="{{ grand_total|floatformat:2 }}">
-                                {{ grand_total|floatformat:2 }}
-                            </td>
-                            <td class="text-left grand-paid" data-paid="{{ grand_paid|floatformat:2 }}">
-                                {{ grand_paid|floatformat:2 }}
-                            </td>
-                            <td class="text-left grand-balance font-weight-bold" 
-                                data-balance="{{ grand_balance|floatformat:2 }}">
-                                {% if grand_balance > 0 %}
-                                    <span class="text-danger">{{ grand_balance|floatformat:2 }}</span>
-                                {% elif grand_balance < 0 %}
-                                    <span class="text-success">{{ grand_balance|floatformat:2 }}</span>
-                                {% else %}
-                                    <span class="text-muted">{{ grand_balance|floatformat:2 }}</span>
-                                {% endif %}
+                    <tfoot>
+                        <tr>
+                            <td colspan="2" style="text-align: left;">{% trans "الإجمالي الكلي" %}</td>
+                            <td style="text-align: center;">{{ total_invoices }}</td>
+                            <td style="text-align: left; font-weight: 700;">{{ grand_total|floatformat:2 }}</td>
+                            <td style="text-align: left; font-weight: 700;" class="text-success">{{ grand_paid|floatformat:2 }}</td>
+                            <td style="text-align: left; font-weight: 700;" class="{% if grand_balance > 0 %}text-danger{% elif grand_balance < 0 %}text-success{% else %}text-muted{% endif %}">
+                                {{ grand_balance|floatformat:2 }}
                             </td>
                         </tr>
                     </tfoot>
                 </table>
             </div>
-            
-            <!-- Summary Statistics -->
-            <!-- بطاقات الملخصات ستطبع لأنها لا تحتوي على no-print -->
-            <div class="row mt-4 summary-stats">
-                <div class="col-md-3 col-sm-6 mb-3 mb-md-0">
-                    <div class="card bg-light h-100">
-                        <div class="card-body text-center">
-                            <h6 class="text-muted">إجمالي الموردين</h6>
-                            <h4 class="mb-0">{{ total_suppliers }}</h4>
-                            <small class="text-muted">
-                                <span class="text-danger">{{ suppliers_with_debt }}</span> عليهم ديون
-                            </small>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-3 col-sm-6 mb-3 mb-md-0">
-                    <div class="card bg-light h-100">
-                        <div class="card-body text-center">
-                            <h6 class="text-muted">الموردين المسددين</h6>
-                            <h4 class="mb-0 text-success">{{ suppliers_paid }}</h4>
-                            <small class="text-muted">
-                                {% if total_suppliers > 0 %}
-                                    {{ suppliers_paid|floatformat:0 }}%
-                                {% else %}
-                                    0%
-                                {% endif %}
-                            </small>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-3 col-sm-6 mb-3 mb-md-0">
-                    <div class="card bg-light h-100">
-                        <div class="card-body text-center">
-                            <h6 class="text-muted">متوسط قيمة الفاتورة</h6>
-                            <h4 class="mb-0">
-                                {% if total_invoices > 0 %}
-                                    {{ grand_total|divisibleby:total_invoices|floatformat:2 }}
-                                {% else %}
-                                    0.00
-                                {% endif %}
-                            </h4>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-3 col-sm-6">
-                    <div class="card bg-light h-100">
-                        <div class="card-body text-center">
-                            <h6 class="text-muted">نسبة المدفوعات</h6>
-                            <h4 class="mb-0">
-                                {% if grand_total > 0 %}
-                                    {{ grand_paid|divisibleby:grand_total|floatformat:1 }}%
-                                {% else %}
-                                    0%
-                                {% endif %}
-                            </h4>
-                        </div>
-                    </div>
-                </div>
-            </div>
         </div>
+
+        <!-- استدعاء كود المودال والهيدر والفوتر من ملف خارجي -->
+        {% include 'includes/print_system.html' %}
     </div>
-
-    <!-- ✅ (8) استدعاء كود المودال والهيدر والفوتر من ملف خارجي -->
-    {% include 'includes/print_system.html' %}
-
 </div>
-
-<!-- Custom Styles -->
-<style>
-    .card-header {
-        border-bottom: 3px solid #ffc107;
-    }
-    .table th { font-size: 0.9rem; white-space: nowrap; }
-    .table td { vertical-align: middle; padding: 0.75rem; }
-    .supplier-link { color: #007bff; text-decoration: none; font-weight: 500; display: inline-block; }
-    .supplier-link:hover { color: #0056b3; text-decoration: underline; }
-    .invoice-badge { font-size: 0.85rem; padding: 0.35rem 0.65rem; min-width: 30px; }
-    .total-amount, .paid-amount, .balance-amount { font-size: 0.95rem; }
-    .table-footer td { padding: 0.75rem; border-top: 2px solid #dee2e6; }
-    .grand-total, .grand-paid, .grand-balance { font-size: 1.05rem; }
-    .summary-stats .card { border: none; box-shadow: 0 2px 4px rgba(0,0,0,0.05); transition: transform 0.2s; }
-    .summary-stats .card:hover { transform: translateY(-3px); box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
-    .table tbody tr { transition: background-color 0.2s; }
-    .table tbody tr:hover { background-color: #f8f9fa; }
-    .table tbody tr[data-balance="0.00"] { background-color: #f0fff0; }
-    .table tbody tr[data-balance="0.00"]:hover { background-color: #e0f0e0; }
-    .balance-amount i { margin-right: 3px; }
-    .no-data-row i { color: #6c757d; }
-    .table tbody tr[data-balance] { transition: all 0.3s; }
-    @media (max-width: 768px) {
-        .table { font-size: 0.8rem; }
-        .table td, .table th { padding: 0.4rem; }
-        .summary-stats .card-body { padding: 0.75rem; }
-        .summary-stats h4 { font-size: 1.1rem; }
-        .summary-stats small { font-size: 0.7rem; }
-    }
-</style>
 
 {% endblock %}
 
 {% block extra_js %}
-    <!-- ✅ (9) استدعاء ملف الجافاسكريبت الخاص بالطباعة -->
     <script src="{% static 'js/print_system.js' %}"></script>
 
     <!-- JavaScript for interactivity الخاص بالصفحة فقط -->
-    <script>
+    <script nonce="{{ csp_nonce }}">
         (function() {
             'use strict';
-            console.log('Supplier purchases report initialized');
-            const rows = document.querySelectorAll('tbody tr[data-supplier-id]');
-            console.log('Total suppliers:', rows.length);
-            rows.forEach(row => {
+
+            // 1. تصحيح حساب متوسط الفاتورة عبر JS (لتجنب قيمة True/False من Django)
+            var grandTotal = parseFloat("{{ grand_total }}") || 0;
+            var totalInvoices = parseInt("{{ total_invoices }}") || 0;
+            var avgEl = document.getElementById('avgInvoiceValue');
+            if (avgEl && totalInvoices > 0) {
+                var avg = grandTotal / totalInvoices;
+                avgEl.textContent = avg.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+            }
+
+            // 2. جعل صف المورد قابلاً للنقر بالكامل لفتح كشف الحساب
+            var rows = document.querySelectorAll('tbody tr[data-supplier-id]');
+            rows.forEach(function(row) {
                 row.addEventListener('click', function(e) {
                     if (e.target.tagName === 'A' || e.target.closest('a')) return;
-                    const link = this.querySelector('.supplier-link');
+                    var link = this.querySelector('.supplier-link');
                     if (link) window.location.href = link.href;
                 });
-                row.style.cursor = 'pointer';
             });
-            rows.forEach(row => {
-                const balance = parseFloat(row.dataset.balance) || 0;
-                if (balance > 5000) row.classList.add('table-danger');
-                else if (balance > 1000) row.classList.add('table-warning');
-            });
-            const balanceElements = document.querySelectorAll('.balance-amount');
-            balanceElements.forEach(element => {
-                const balance = parseFloat(element.dataset.balance) || 0;
-                if (balance > 0) {
-                    element.title = 'هذا المورد عليه مبلغ مستحق';
-                    element.setAttribute('data-toggle', 'tooltip');
-                } else if (balance === 0) {
-                    element.title = 'تم تسوية جميع المدفوعات';
-                    element.setAttribute('data-toggle', 'tooltip');
+
+            // 3. ميزة فرز الجدول (Column Sorting)
+            var table = document.getElementById('supplier-report-table');
+            var headers = table.querySelectorAll('thead th[data-sort]');
+            var tableBody = document.getElementById('tableBody');
+            var currentSort = { column: null, direction: 'asc' };
+
+            function sortTable(column, direction) {
+                var rows = Array.from(tableBody.querySelectorAll('tr')).filter(function(r) { return !r.classList.contains('empty-state'); });
+
+                function getSortValue(row) {
+                    var cell = row.querySelector('td[data-sort="' + column + '"]');
+                    if (!cell) return '';
+                    if (['total', 'paid', 'balance', 'invoices'].includes(column)) {
+                        return parseFloat(cell.getAttribute('data-value')) || 0;
+                    }
+                    if (column === 'index') return parseInt(cell.textContent.trim(), 10) || 0;
+                    return cell.textContent.trim().toLowerCase();
                 }
+
+                rows.sort(function(a, b) {
+                    var valA = getSortValue(a);
+                    var valB = getSortValue(b);
+                    if (['total', 'paid', 'balance', 'invoices', 'index'].includes(column)) {
+                        return direction === 'asc' ? valA - valB : valB - valA;
+                    } else {
+                        if (valA < valB) return direction === 'asc' ? -1 : 1;
+                        if (valA > valB) return direction === 'asc' ? 1 : -1;
+                        return 0;
+                    }
+                });
+
+                rows.forEach(function(row) { tableBody.appendChild(row); });
+            }
+
+            headers.forEach(function(header) {
+                header.addEventListener('click', function() {
+                    var column = this.getAttribute('data-sort');
+                    var direction = 'asc';
+                    if (currentSort.column === column && currentSort.direction === 'asc') direction = 'desc';
+                    else if (currentSort.column === column && currentSort.direction === 'desc') direction = 'asc';
+                    
+                    currentSort.column = column;
+                    currentSort.direction = direction;
+
+                    headers.forEach(function(th) {
+                        th.classList.remove('active-sort');
+                        var icon = th.querySelector('.sort-icon i');
+                        if (icon) icon.className = 'fas fa-sort';
+                    });
+
+                    this.classList.add('active-sort');
+                    var icon = this.querySelector('.sort-icon i');
+                    if (icon) icon.className = direction === 'asc' ? 'fas fa-sort-up' : 'fas fa-sort-down';
+
+                    sortTable(column, direction);
+                });
             });
-            const searchInput = document.querySelector('[data-search-input]');
-            const searchForm = document.querySelector('[data-search-form]');
+
+            // 4. البحث التلقائي (Auto Submit)
+            var searchInput = document.querySelector('[data-search-input]');
+            var searchForm = document.querySelector('[data-search-form]');
             if (searchInput && searchForm) {
-                let timeoutId = null;
-                searchInput.addEventListener('input', function(e) {
+                var timeoutId = null;
+                searchInput.addEventListener('input', function() {
                     clearTimeout(timeoutId);
-                    timeoutId = setTimeout(() => { searchForm.submit(); }, 500);
-                });
-                searchInput.addEventListener('keypress', function(e) {
-                    if (e.key === 'Enter') { e.preventDefault(); searchForm.submit(); }
+                    timeoutId = setTimeout(function() { searchForm.submit(); }, 500);
                 });
             }
+
+            // 5. تمرير لأسفل عند وجود بحث
             if (window.location.search.includes('q=')) {
-                const table = document.querySelector('.table-responsive');
-                if (table) {
-                    setTimeout(() => { table.scrollIntoView({ behavior: 'smooth', block: 'start' }); }, 300);
+                var tableCard = document.querySelector('.card .table-wrap');
+                if (tableCard) {
+                    setTimeout(function() { tableCard.scrollIntoView({ behavior: 'smooth', block: 'start' }); }, 300);
                 }
             }
-            const summaryCards = document.querySelectorAll('.summary-stats .card');
-            summaryCards.forEach((card, index) => {
-                card.style.opacity = '0';
-                card.style.transform = 'translateY(20px)';
-                setTimeout(() => {
-                    card.style.transition = 'all 0.5s ease';
-                    card.style.opacity = '1';
-                    card.style.transform = 'translateY(0)';
-                }, 200 + (index * 100));
-            });
         })();
     </script>
 {% endblock %}

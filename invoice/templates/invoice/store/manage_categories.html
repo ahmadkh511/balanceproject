@@ -1,71 +1,188 @@
 {% extends 'base.html' %}
 {% load static %}
+{% load i18n %}
 
 {% block extra_css %}
-<style>
-    .cat-card { border: none; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); margin-bottom: 1rem; padding: 1rem; }
-    .cat-header { display: flex; justify-content: space-between; align-items: center; }
-    .tier-badge { background: #e3f2fd; color: #1565c0; padding: 3px 10px; border-radius: 12px; font-size: 0.8rem; font-weight: 600; }
-    .custom-toast { position: fixed; bottom: 20px; left: 20px; padding: 10px 20px; color: white; border-radius: 5px; font-weight: bold; opacity: 0; transition: 0.3s; z-index: 9999; }
-    .custom-toast.show { opacity: 1; }
-    .toast-success { background: #1cc88a; }
-    .toast-error { background: #e74a3b; }
+<style nonce="{{ csp_nonce }}">
+@import url('https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;600;700;800&display=swap');
+
+:root {
+    --primary-1: #f0fdfa;
+    --primary-2: #ccfbf1;
+    --primary-3: #5eead4;
+    --primary-4: #0d9488;
+    --primary-dark: #0f766e;
+    --text-dark: #0f172a;
+    --text-muted: #64748b;
+    --bg-input: #f8fafc;
+    --border-color: #e2e8f0;
+    --danger-color: #ef4444;
+    --danger-bg: #fef2f2;
+    --success-color: #10b981;
+    --success-bg: #ecfdf5;
+    --shadow-sm: 0 1px 3px rgba(15, 23, 42, 0.05);
+    --shadow-md: 0 4px 6px -1px rgba(15, 23, 42, 0.08);
+    --shadow-lg: 0 10px 15px -3px rgba(15, 23, 42, 0.1);
+    --radius-sm: 8px;
+    --radius: 12px;
+    --radius-lg: 16px;
+    --ease: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+* { box-sizing: border-box; }
+
+body {
+    font-family: 'Tajawal', sans-serif;
+    background: #f1f5f9;
+    min-height: 100vh;
+    padding: 1rem;
+    font-size: 0.9rem;
+    color: var(--text-dark);
+}
+
+.page-container { max-width: 1200px; margin: 0 auto; }
+
+/* ===== الهيدر ===== */
+.form-header {
+    background: white; border-radius: var(--radius); padding: 1rem 1.5rem; margin-bottom: 1.5rem;
+    box-shadow: var(--shadow-sm); border: 1px solid var(--border-color);
+    display: flex; align-items: center; justify-content: space-between; gap: 1rem; flex-wrap: wrap;
+}
+.header-info { display: flex; align-items: center; gap: 0.75rem; }
+.header-icon { width: 40px; height: 40px; background: var(--primary-1); border-radius: var(--radius-sm); display: flex; align-items: center; justify-content: center; color: var(--primary-4); font-size: 1.1rem; }
+.header-title { font-size: 1.1rem; font-weight: 700; margin: 0; color: var(--text-dark); }
+
+.btn-primary-teal { background: var(--primary-4); color: white; border: none; padding: 0.5rem 1.2rem; border-radius: var(--radius-sm); font-size: 0.85rem; font-weight: 600; cursor: pointer; transition: all 0.2s var(--ease); display: inline-flex; align-items: center; gap: 0.4rem; text-decoration: none; white-space: nowrap; }
+.btn-primary-teal:hover { background: var(--primary-dark); transform: translateY(-1px); box-shadow: var(--shadow-md); }
+.btn-secondary-teal { background: white; color: var(--text-muted); border: 1px solid var(--border-color); padding: 0.5rem 1.2rem; border-radius: var(--radius-sm); font-size: 0.85rem; font-weight: 600; cursor: pointer; transition: all 0.2s var(--ease); display: inline-flex; align-items: center; gap: 0.4rem; text-decoration: none; white-space: nowrap; }
+.btn-secondary-teal:hover { background: var(--bg-input); color: var(--text-dark); }
+
+/* ===== شبكة البطاقات ===== */
+.cat-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1rem; }
+
+.cat-card { 
+    background: white; border: 1px solid var(--border-color); border-radius: var(--radius); 
+    padding: 1.25rem; transition: all 0.2s var(--ease); display: flex; flex-direction: column; gap: 0.75rem;
+}
+.cat-card:hover { box-shadow: var(--shadow-md); transform: translateY(-2px); border-color: var(--primary-3); }
+
+.cat-header { display: flex; justify-content: space-between; align-items: flex-start; gap: 0.5rem; }
+.cat-title-group { display: flex; align-items: center; gap: 0.75rem; }
+.cat-icon { width: 40px; height: 40px; background: var(--primary-1); color: var(--primary-4); border-radius: var(--radius-sm); display: flex; align-items: center; justify-content: center; font-size: 1.1rem; }
+.cat-name { font-size: 1rem; font-weight: 700; color: var(--text-dark); margin: 0; display: flex; align-items: center; gap: 0.5rem; }
+
+.badge-inactive { background: #f1f5f9; color: var(--text-muted); padding: 0.2rem 0.6rem; border-radius: 1rem; font-size: 0.65rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; }
+
+.tier-badge { background: var(--primary-1); color: var(--primary-dark); padding: 0.3rem 0.75rem; border-radius: var(--radius-sm); font-size: 0.75rem; font-weight: 600; display: inline-flex; align-items: center; gap: 0.4rem; border: 1px solid var(--primary-2); }
+.text-muted-small { font-size: 0.75rem; color: var(--text-muted); display: inline-flex; align-items: center; gap: 0.3rem; }
+
+.cat-actions { display: flex; gap: 0.5rem; margin-top: auto; padding-top: 0.75rem; border-top: 1px solid #f1f5f9; }
+.btn-icon-sm { width: 32px; height: 32px; border-radius: var(--radius-sm); border: 1px solid var(--border-color); background: var(--bg-input); color: var(--text-muted); cursor: pointer; transition: all 0.2s var(--ease); display: inline-flex; align-items: center; justify-content: center; font-size: 0.8rem; }
+.btn-icon-sm:hover { background: white; }
+.btn-icon-sm.btn-edit:hover { background: var(--primary-4); color: white; border-color: var(--primary-4); }
+.btn-icon-sm.btn-del:hover { background: var(--danger-color); color: white; border-color: var(--danger-color); }
+
+/* ===== المودال ===== */
+.modal-content { border: none; border-radius: var(--radius-lg); overflow: hidden; box-shadow: var(--shadow-lg); }
+.modal-header { background: white; border-bottom: 1px solid var(--border-color); padding: 1.25rem 1.5rem; }
+.modal-title { font-weight: 700; color: var(--text-dark); display: flex; align-items: center; gap: 0.5rem; }
+.modal-title i { color: var(--primary-4); }
+.modal-body { padding: 1.5rem; background: white; }
+.modal-footer { border-top: 1px solid var(--border-color); padding: 1rem 1.5rem; background: var(--bg-input); }
+
+.form-label { font-size: 0.8rem; font-weight: 600; color: var(--text-muted); margin-bottom: 0.4rem; display: block; }
+.form-control, .form-select { width: 100%; padding: 0.6rem 0.8rem; border: 1px solid var(--border-color); background: var(--bg-input); border-radius: var(--radius-sm); font-size: 0.9rem; font-family: 'Tajawal', sans-serif; color: var(--text-dark); transition: all 0.2s var(--ease); }
+.form-control:focus, .form-select:focus { background: white; border-color: var(--primary-4); box-shadow: 0 0 0 4px rgba(13, 148, 136, 0.1); outline: none; }
+
+/* مفتاح التبديل (Toggle Switch) */
+.form-check-input { width: 2.5em; height: 1.4em; margin-top: 0; cursor: pointer; accent-color: var(--primary-4); }
+.form-check-label { cursor: pointer; font-size: 0.85rem; font-weight: 600; color: var(--text-dark); }
+.form-check { display: flex; align-items: center; gap: 0.75rem; background: var(--bg-input); padding: 0.75rem 1rem; border-radius: var(--radius-sm); border: 1px solid var(--border-color); }
+
+/* ===== حالة فارغة ===== */
+.empty-state { text-align: center; padding: 4rem 1rem; color: var(--text-muted); grid-column: 1 / -1; }
+.empty-state i { font-size: 3rem; color: #cbd5e1; margin-bottom: 1rem; display: block; }
+.empty-state h5 { color: var(--text-dark); margin-bottom: 0.25rem; }
+
+/* ===== Toast ===== */
+.custom-toast { position: fixed; bottom: 2rem; left: 2rem; padding: 1rem 1.5rem; color: white; border-radius: var(--radius-sm); font-weight: 600; opacity: 0; transition: all 0.4s var(--ease); z-index: 9999; box-shadow: var(--shadow-lg); display: flex; align-items: center; gap: 0.5rem; transform: translateY(20px); }
+.custom-toast.show { opacity: 1; transform: translateY(0); }
+.toast-success { background: var(--primary-4); }
+.toast-error { background: var(--danger-color); }
+
 </style>
 {% endblock %}
 
 {% block content %}
-<div class="container mt-4">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <h3 class="text-dark font-weight-bold"><i class="fas fa-tags me-2"></i>{{ title }}</h3>
+<div class="page-container">
+    
+    <!-- ===== الهيدر ===== -->
+    <div class="form-header">
+        <div class="header-info">
+            <div class="header-icon"><i class="fas fa-tags"></i></div>
+            <div>
+                <h1 class="header-title">{{ title }}</h1>
+            </div>
+        </div>
         <div class="d-flex gap-2">
-            <a href="{% url 'invoice:control_store' %}" class="btn btn-outline-secondary btn-sm"><i class="fas fa-arrow-right me-1"></i> العودة</a>
-            <button class="btn btn-primary btn-sm" id="btnAddCat"><i class="fas fa-plus me-1"></i> تصنيف جديد</button>
+            <a href="{% url 'invoice:control_store' %}" class="btn-secondary-teal">
+                <i class="fas fa-arrow-right"></i> العودة
+            </a>
+            <button class="btn-primary-teal" id="btnAddCat">
+                <i class="fas fa-plus"></i> تصنيف جديد
+            </button>
         </div>
     </div>
 
-    <div id="categoriesList">
+    <!-- ===== شبكة التصنيفات ===== -->
+    <div class="cat-grid" id="categoriesList">
         {% for cat in categories %}
         <div class="cat-card" data-id="{{ cat.id }}" data-name="{{ cat.name }}" data-tier="{{ cat.pricing_tier.id|default:'' }}" data-active="{{ cat.is_active|lower }}">
             <div class="cat-header">
-                <div>
-                    <h5 class="mb-1">{{ cat.name }} 
-                        {% if not cat.is_active %}<span class="badge bg-secondary">معطل</span>{% endif %}
-                    </h5>
-                    {% if cat.pricing_tier %}
-                        <span class="tier-badge"><i class="fas fa-link me-1"></i> مرتبط بـ: {{ cat.pricing_tier.name }} ({{ cat.pricing_tier.discount_percent }}%)</span>
-                    {% else %}
-                        <span class="text-muted small">غير مرتبط بسعر ديناميكي</span>
-                    {% endif %}
+                <div class="cat-title-group">
+                    <div class="cat-icon"><i class="fas fa-folder"></i></div>
+                    <div>
+                        <h5 class="cat-name">
+                            {{ cat.name }} 
+                            {% if not cat.is_active %}<span class="badge-inactive">معطل</span>{% endif %}
+                        </h5>
+                        {% if cat.pricing_tier %}
+                            <span class="tier-badge"><i class="fas fa-link"></i> {{ cat.pricing_tier.name }} ({{ cat.pricing_tier.discount_percent }}%)</span>
+                        {% else %}
+                            <span class="text-muted-small"><i class="fas fa-unlink"></i> سعر افتراضي</span>
+                        {% endif %}
+                    </div>
                 </div>
-                <div>
-                    <button class="btn btn-sm btn-outline-info btn-edit-cat"><i class="fas fa-pen"></i></button>
-                    <button class="btn btn-sm btn-outline-danger btn-del-cat"><i class="fas fa-trash"></i></button>
-                </div>
+            </div>
+            <div class="cat-actions">
+                <button class="btn-icon-sm btn-edit btn-edit-cat" title="تعديل"><i class="fas fa-pen"></i></button>
+                <button class="btn-icon-sm btn-del btn-del-cat" title="حذف"><i class="fas fa-trash"></i></button>
             </div>
         </div>
         {% empty %}
-        <div class="text-center text-muted mt-5">
-            <i class="fas fa-folder-open fa-3x mb-3"></i>
-            <p>لا توجد تصنيفات بعد.</p>
+        <div class="empty-state">
+            <i class="fas fa-folder-open"></i>
+            <h5>لا توجد تصنيفات بعد</h5>
+            <p>ابدأ بإنشاء تصنيفات لتنظيم منتجاتك.</p>
         </div>
         {% endfor %}
     </div>
 </div>
 
-<!-- مودال الإضافة/التعديل -->
-<div class="modal fade" id="catModal" tabindex="-1">
-  <div class="modal-dialog">
+<!-- ===== مودال الإضافة/التعديل ===== -->
+<div class="modal fade" id="catModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
     <div class="modal-content">
-      <div class="modal-header bg-primary text-white">
-        <h5 class="modal-title" id="catModalTitle">إضافة تصنيف</h5>
-        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      <div class="modal-header">
+        <h5 class="modal-title" id="catModalTitle"><i class="fas fa-folder-plus"></i> إضافة تصنيف</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
       <div class="modal-body">
         {% csrf_token %}
         <input type="hidden" id="catId">
         <div class="mb-3">
             <label class="form-label">اسم التصنيف</label>
-            <input type="text" class="form-control" id="catName" required>
+            <input type="text" class="form-control" id="catName" required placeholder="مثال: ملابس رجالية">
         </div>
         <div class="mb-3">
             <label class="form-label">ربط بمستوى تسعير (اختياري)</label>
@@ -75,16 +192,16 @@
                 <option value="{{ tier.id }}">{{ tier.name }} (خصم {{ tier.discount_percent }}%)</option>
                 {% endfor %}
             </select>
-            <div class="form-text">إذا اخترت مستوى، سيتم استخدام سعر هذا المستوى لكل منتجات هذا التصنيف في المتجر.</div>
+            <div class="form-text text-muted mt-2" style="font-size: 0.75rem;">إذا اخترت مستوى، سيتم استخدام سعر هذا المستوى لكل منتجات هذا التصنيف في المتجر.</div>
         </div>
-        <div class="form-check form-switch mb-3">
+        <div class="form-check form-switch">
             <input class="form-check-input" type="checkbox" id="catActive" checked>
             <label class="form-check-label" for="catActive">ظاهر في المتجر</label>
         </div>
       </div>
       <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إلغاء</button>
-        <button type="button" class="btn btn-primary" id="btnSaveCat">حفظ</button>
+        <button type="button" class="btn-secondary-teal" data-bs-dismiss="modal">إلغاء</button>
+        <button type="button" class="btn-primary-teal" id="btnSaveCat"><i class="fas fa-save"></i> حفظ</button>
       </div>
     </div>
   </div>
@@ -102,7 +219,8 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function showToast(msg, type) {
         var t = document.getElementById('toastMsg');
-        t.textContent = msg;
+        var icon = type === 'error' ? 'fa-exclamation-circle' : 'fa-check-circle';
+        t.innerHTML = '<i class="fas ' + icon + '"></i> ' + msg;
         t.className = 'custom-toast ' + (type === 'error' ? 'toast-error' : 'toast-success');
         setTimeout(function() { t.classList.add('show'); }, 10);
         setTimeout(function() { t.classList.remove('show'); }, 3000);
@@ -110,7 +228,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     document.getElementById('btnAddCat').addEventListener('click', function() {
         isEditing = false;
-        document.getElementById('catModalTitle').textContent = 'إضافة تصنيف جديد';
+        document.getElementById('catModalTitle').innerHTML = '<i class="fas fa-folder-plus"></i> إضافة تصنيف جديد';
         document.getElementById('catId').value = '';
         document.getElementById('catName').value = '';
         document.getElementById('catTier').value = '';
@@ -122,7 +240,7 @@ document.addEventListener('DOMContentLoaded', function() {
         if (e.target.closest('.btn-edit-cat')) {
             isEditing = true;
             var card = e.target.closest('.cat-card');
-            document.getElementById('catModalTitle').textContent = 'تعديل التصنيف';
+            document.getElementById('catModalTitle').innerHTML = '<i class="fas fa-edit"></i> تعديل التصنيف';
             document.getElementById('catId').value = card.dataset.id;
             document.getElementById('catName').value = card.dataset.name;
             document.getElementById('catTier').value = card.dataset.tier;
@@ -135,11 +253,18 @@ document.addEventListener('DOMContentLoaded', function() {
             var id = card.dataset.id;
             
             fetch('/invoice/api/categories/' + id + '/delete/', {
-                method: 'POST', headers: { 'X-CSRFToken': csrftoken }
+                method: 'POST', 
+                headers: { 'X-CSRFToken': csrftoken }
             }).then(r => r.json()).then(data => {
-                if(data.success) { card.remove(); showToast('تم الحذف'); }
-                else showToast(data.message, 'error');
-            });
+                if(data.success) { 
+                    card.style.transition = 'all 0.3s ease';
+                    card.style.opacity = '0';
+                    card.style.transform = 'scale(0.9)';
+                    setTimeout(() => card.remove(), 300);
+                    showToast('تم الحذف بنجاح'); 
+                }
+                else showToast(data.message || 'حدث خطأ', 'error');
+            }).catch(() => showToast('خطأ في الاتصال', 'error'));
         }
     });
 
@@ -149,7 +274,10 @@ document.addEventListener('DOMContentLoaded', function() {
         var tierId = document.getElementById('catTier').value;
         var isActive = document.getElementById('catActive').checked;
         
-        if(!name) { alert('الاسم مطلوب'); return; }
+        if(!name) { 
+            showToast('الاسم مطلوب', 'error'); 
+            return; 
+        }
 
         var url = id ? '/invoice/api/categories/' + id + '/update/' : '/invoice/api/categories/add/';
         
@@ -160,9 +288,11 @@ document.addEventListener('DOMContentLoaded', function() {
         }).then(r => r.json()).then(data => {
             if(data.success) {
                 catModal.hide();
-                showToast(id ? 'تم التحديث' : 'تم الإضافة');
-                setTimeout(function() { location.reload(); }, 500);
-            } else { showToast(data.message, 'error'); }
+                showToast(id ? 'تم التحديث بنجاح' : 'تمت الإضافة بنجاح');
+                setTimeout(function() { location.reload(); }, 1000);
+            } else { 
+                showToast(data.message || 'حدث خطأ', 'error'); 
+            }
         }).catch(() => showToast('خطأ في الاتصال', 'error'));
     });
 });

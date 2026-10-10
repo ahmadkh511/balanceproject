@@ -2115,7 +2115,7 @@
                                 <li class="{% if current_url_name == 'profit_report' %}sub-active{% endif %}"><a href="{% url 'invoice:profit_report' %}"><i class="fas fa-chart-line"></i>تقرير الأرباح</a></li>
                                 <li class="{% if current_url_name == 'daily_sales_summary' %}sub-active{% endif %}"><a href="{% url 'invoice:daily_sales_summary' %}"><i class="fas fa-calendar-day"></i>ملخص المبيعات اليومي</a></li>
                                 <li class="{% if current_url_name == 'sales_by_customer_report' %}sub-active{% endif %}"><a href="{% url 'invoice:sales_by_customer_report' %}"><i class="fas fa-users"></i>مبيعات العملاء</a></li>
-                                <li class="{% if current_url_name == 'purchases_by_supplier_report' %}sub-active{% endif %}"><a href="{% url 'invoice:purchases_by_supplier_report' %}"><i class="fas fa-truck"></i>مشتريات الموردين</a></li>
+                                <li class="{% if current_url_name == 'purchases_by_supplier_report' %}sub-active{% endif %}"><a href="{% url 'invoice:purchases_by_supplier_report' %}"><i class="fas fa-truck"></i> المشتريات وأرصدة الموردين</a></li>
                                 <li class="{% if current_url_name == 'unpaid_invoices_report' %}sub-active{% endif %}"><a href="{% url 'invoice:unpaid_invoices_report' %}"><i class="fas fa-file-invoice-dollar"></i>فواتير غير مسددة</a></li>
                                 <li class="{% if current_url_name == 'unpaid_sales_report' %}sub-active{% endif %}"><a href="{% url 'invoice:unpaid_sales_report' %}"><i class="fas fa-exclamation-triangle"></i>الديون المتراكمة</a></li>
                                 <li class="{% if current_url_name == 'dead_stock_report' %}sub-active{% endif %}"><a href="{% url 'invoice:dead_stock_report' %}"><i class="fas fa-box-open"></i>منتجات راكدة</a></li>
@@ -2153,7 +2153,7 @@
                                 <li class="{% if current_url_name == 'status_list' %}sub-active{% endif %}"><a href="{% url 'invoice:status_list' %}"><i class="fas fa-info-circle"></i>الحالات</a></li>
                                 <li class="{% if current_url_name == 'price_type_list' %}sub-active{% endif %}"><a href="{% url 'invoice:price_type_list' %}"><i class="fas fa-tags"></i>أنواع الأسعار</a></li>
                                 <li class="{% if current_url_name == 'manage_specs' %}sub-active{% endif %}"><a href="{% url 'invoice:manage_specs' %}"><i class="fas fa-sliders-h"></i>إدارة المواصفات</a></li>
-                                <li class="{% if current_url_name == 'manage_label_sizes' %}sub-active{% endif %}"><a href="{% url 'invoice:manage_label_sizes' %}"><i class="fas fa-ruler-combined"></i>مقاسات الملصقات</a></li>
+                                <li class="{% if current_url_name == 'manage_label_sizes' %}sub-active{% endif %}"><a href="{% url 'invoice:manage_label_sizes' %}"><i class="fas fa-ruler-combined"></i> قياس لصاقات الباركود  </a></li>
                             </ul>
                         </li>
                         {% endif %}

@@ -128,17 +128,22 @@ body {
 .main-barcode-svg-container { text-align: center; margin-top: 0.5rem; background: #fff; padding: 5px; border-radius: 6px; }
 .main-barcode-svg { max-width: 100%; height: auto; }
 
-/* --- الجدول --- */
-.table-wrap { overflow-x: auto; border-radius: var(--radius-sm); border: 1px solid var(--border-color); }
-.table-order { width: 100%; border-collapse: collapse; font-size: 0.85rem; min-width: 400px; }
-.table-order thead th { background: var(--bg-input); color: var(--text-muted); padding: 0.75rem 1rem; text-align: right; font-weight: 600; font-size: 0.75rem; border-bottom: 1px solid var(--border-color); text-transform: uppercase; }
-.table-order tbody td { padding: 0.75rem 1rem; border-bottom: 1px solid #f1f5f9; }
-.table-order tbody tr:last-child td { border-bottom: none; }
-.table-order tbody tr { transition: background 0.2s var(--ease); }
-.table-order tbody tr:hover { background: var(--bg-input); }
-.barcode-print-cell { text-align: center; background: #fff; border-radius: 6px; }
-.table-barcode-svg { max-width: 100%; height: auto; }
-.barcode-text { font-family: 'Courier New', monospace; font-size: 0.75rem; font-weight: bold; margin-top: 4px; letter-spacing: 1px; }
+/* --- شبكة الباركودات الأفقية (جديد) --- */
+.barcodes-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr); /* 4 بطاقات في كل صف */
+    gap: 0.75rem;
+}
+.barcode-card {
+    background: var(--bg-input); border: 1px solid var(--border-color); border-radius: var(--radius-sm);
+    padding: 0.5rem; display: flex; flex-direction: column; align-items: center; text-align: center;
+    transition: all 0.2s var(--ease);
+}
+.barcode-card:hover { border-color: var(--primary-3); box-shadow: var(--shadow-sm); }
+.barcode-card .barcode-status { margin-bottom: 0.5rem; }
+.barcode-card .barcode-print-cell { background: #fff; border-radius: 6px; padding: 0.25rem; width: 100%; }
+.barcode-card .table-barcode-svg { max-width: 100%; height: auto; }
+.barcode-card .barcode-text { font-family: 'Courier New', monospace; font-size: 0.7rem; font-weight: bold; margin-top: 4px; letter-spacing: 0.5px; color: var(--text-dark); }
 
 /* --- المواصفات المجمعة --- */
 .spec-group { background: var(--bg-input); border: 1px solid var(--border-color); border-radius: var(--radius); padding: 1rem; margin-bottom: 0.75rem; }
@@ -201,7 +206,7 @@ body {
 .hf-preview-box:hover { border-color: var(--primary-4); background: var(--primary-1); }
 .hf-preview-box .placeholder-text { font-size: 0.8rem; color: var(--text-muted); }
 
-/* --- الطباعة (تبقى كما هي تقريباً لضمان خروج الورقة بشكل صحيح) --- */
+/* --- الطباعة --- */
 .print-header-area { display: none; padding: 6pt 10mm; border-bottom: 1.5pt solid #333; background: white; text-align: center; }
 .print-logo-small .ph-logo { max-height: 20pt !important; max-width: 35pt !important; }
 .print-logo-medium .ph-logo { max-height: 30pt !important; max-width: 50pt !important; }
@@ -234,16 +239,12 @@ body {
     .invoice-print-area { padding-top: 25pt !important; padding-bottom: 20pt !important; }
     [data-print-hidden="true"] { display: none !important; }
     .print-grayscale * { filter: grayscale(100%) !important; }
-    .print-no-lines .table-order td, .print-no-lines .table-order th { border: none !important; }
-    .print-compact .table-order td, .print-compact .table-order th { padding: 1pt 3pt !important; font-size: 7pt !important; }
-    .print-detailed .table-order td, .print-detailed .table-order th { padding: 6pt 8pt !important; font-size: 10pt !important; }
-    .table-order td, .table-order th { padding: 3pt 5pt !important; font-size: 8pt !important; }
-    .toast { display: none !important; }
+    
     .card, .spec-group { box-shadow: none !important; border: 1px solid #ddd !important; border-radius: 0 !important; page-break-inside: avoid; margin-bottom: 8pt !important; padding: 8pt !important; }
     .notes-body { padding: 5pt !important; min-height: auto !important; line-height: 1.5 !important; font-size: 8pt !important; }
     .product-image-wrap, .main-barcode-box, .page-header-bar, .stats-strip { display: none !important; }
     .main-grid { display: block !important; }
-    .table-wrap { overflow: visible !important; }
+    
     .info-list { display: flex; flex-wrap: wrap; padding: 0 !important; gap: 5px; }
     .info-list li { width: 48% !important; border: 1px solid #eee !important; border-radius: 4pt !important; padding: 3pt 6pt !important; margin: 0 !important; font-size: 8pt !important; display: flex !important; justify-content: space-between !important; }
     .info-list .info-label, .info-list .info-value { font-size: 8pt !important; }
@@ -251,15 +252,13 @@ body {
     .card .card-title { display: block !important; width: 100% !important; font-size: 10pt !important; font-weight: bold !important; margin-bottom: 10pt !important; text-align: right !important; border-bottom: 1px solid #000 !important; padding-bottom: 5pt !important; }
     .card .card-title .badge-teal { display: none !important; }
     .card .card-title i { display: none !important; }
-    .table-order thead { display: none !important; }
-    .table-order { display: block !important; width: 100% !important; border: none !important; }
-    .table-order tbody { display: flex !important; flex-wrap: wrap !important; justify-content: flex-start !important; gap: 8px !important; padding: 0 !important; }
-    .table-order tr { flex: 0 0 calc(12.5% - 8px) !important; display: block !important; border: none !important; padding: 0 !important; margin: 0 !important; }
-    .table-order td { display: none !important; }
-    .table-order td[data-label="الباركود"] { display: flex !important; flex-direction: column; align-items: center; justify-content: center; width: 100% !important; font-size: 9pt !important; font-weight: bold !important; border: 1px solid #333 !important; border-radius: 3px !important; padding: 5pt 2pt !important; margin: 0 !important; text-align: center !important; background-color: #f9f9f9 !important; }
-    .main-barcode-svg, .table-barcode-svg { width: 100% !important; max-height: 40pt !important; }
-    .barcode-text { font-size: 7pt !important; }
-    .barcode-print-cell { background: #fff !important; }
+    
+    /* طباعة شبكة الباركودات */
+    .barcodes-grid { grid-template-columns: repeat(4, 1fr) !important; gap: 8px !important; }
+    .barcode-card { border: 1px solid #ccc !important; padding: 5pt !important; background: #fff !important; page-break-inside: avoid; }
+    .barcode-card .barcode-text { font-size: 7pt !important; }
+    .table-barcode-svg { width: 100% !important; max-height: 40pt !important; }
+    
     .badge-teal, .badge-success, .badge-danger, .badge-info { font-size: 6pt !important; padding: 1pt 4pt !important; }
     .price-tag, .barcode-tag { font-size: 7pt !important; padding: 1pt 4pt !important; }
 }
@@ -270,12 +269,8 @@ body {
     .header-footer-inputs { grid-template-columns: 1fr; }
     .modal-box { width: 98vw; max-height: 95vh; }
     .stats-strip { grid-template-columns: 1fr 1fr; }
-    .table-order { font-size: 0.75rem; }
-    .table-order thead { display: none; }
-    .table-order, .table-order tbody, .table-order tr, .table-order td { display: block; width: 100% !important; }
-    .table-order tr { margin-bottom: 0.5rem; border: 1px solid var(--border-color); border-radius: var(--radius-sm); }
-    .table-order td { border-bottom: 1px solid #f1f5f9 !important; padding: 0.5rem 0.75rem !important; }
-    .table-order td::before { content: attr(data-label); display: block; font-size: 0.65rem; color: var(--primary-4); font-weight: 600; margin-bottom: 0.15rem; }
+    /* على الجوال، نعرض بطاقتين في كل صف لضمان وضوح الباركود */
+    .barcodes-grid { grid-template-columns: repeat(2, 1fr); }
 }
 </style>
 
@@ -395,7 +390,7 @@ body {
             <div>
                 <div class="card">
                     <div class="card-title">
-                        <span class="left-title"><i class="fas fa-barcode"></i> باركودات المنتج</span>
+                        <span class="left-title"><i class="fas fa-barcode"></i> الباركود العام</span>
                         <span class="badge-teal">{{ barcodes.count }} باركود</span>
                     </div>
                     
@@ -403,7 +398,7 @@ body {
                     <div class="main-barcode-box">
                         <div class="main-barcode-icon"><i class="fas fa-star"></i></div>
                         <div style="flex:1;">
-                            <div class="main-barcode-label">الباركود الأساسي</div>
+                            <div class="main-barcode-label">الباركود العام</div>
                             <div class="main-barcode-svg-container">
                                 <svg class="main-barcode-svg" data-value="{{ product.main_barcode|default:'000000' }}"></svg>
                                 <div class="main-barcode-value">{{ product.main_barcode }}</div>
@@ -413,26 +408,22 @@ body {
                     {% endif %}
                     
                     {% if barcodes %}
-                    <div class="table-wrap">
-                        <table class="table-order">
-                            <thead><tr>
-                                <th data-print-field="col-barcode">الباركود</th>
-                                <th data-print-field="col-status">الحالة</th>
-                            </tr></thead>
-                            <tbody>
-                                {% for barcode in barcodes %}
-                                <tr>
-                                    <td data-print-field="col-barcode" data-label="الباركود">
-                                        <div class="barcode-print-cell">
-                                            <svg class="table-barcode-svg" data-value="{{ barcode.barcode_in|default:'000000' }}"></svg>
-                                            <div class="barcode-text">{{ barcode.barcode_in }}</div>
-                                        </div>
-                                    </td>
-                                    <td data-print-field="col-status" data-label="الحالة">{% if barcode.is_active %}<span class="badge-success"><i class="fas fa-circle ms-1" style="font-size:0.45rem;"></i>نشط</span>{% else %}<span class="badge-danger"><i class="fas fa-ban ms-1"></i>غير نشط</span>{% endif %}</td>
-                                </tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
+                    <div class="barcodes-grid">
+                        {% for barcode in barcodes %}
+                        <div class="barcode-card">
+                            <span class="barcode-status">
+                                {% if barcode.is_active %}
+                                    <span class="badge-success" data-print-field="col-status"><i class="fas fa-circle ms-1" style="font-size:0.45rem;"></i>نشط</span>
+                                {% else %}
+                                    <span class="badge-danger" data-print-field="col-status"><i class="fas fa-ban ms-1"></i>غير نشط</span>
+                                {% endif %}
+                            </span>
+                            <div class="barcode-print-cell" data-print-field="col-barcode">
+                                <svg class="table-barcode-svg" data-value="{{ barcode.barcode_in|default:'000000' }}"></svg>
+                                <div class="barcode-text">{{ barcode.barcode_in }}</div>
+                            </div>
+                        </div>
+                        {% endfor %}
                     </div>
                     {% else %}
                         {% if not product.main_barcode %}
@@ -623,7 +614,6 @@ body {
         }
     } catch(e) { console.warn('خطأ في قراءة بيانات الشركة:', e); }
 
-    // قراءة الملاحظات الأصلية من الحقل المخفي (CSP Compliant)
     var hiddenNotesEl = document.getElementById('hiddenOriginalNotes');
     var originalNotes = hiddenNotesEl ? hiddenNotesEl.innerHTML : '';
 

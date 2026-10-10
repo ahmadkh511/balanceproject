@@ -1,469 +1,368 @@
 {% extends 'base.html' %}
 {% load static %}
+{% load i18n %}
 
-{% block title %}حركات الصندوق{% endblock %}
+{% block title %}{% trans "حركات الصندوق" %}{% endblock %}
 
 {% block extra_css %}
     <link rel="stylesheet" href="{% static 'css/print_system.css' %}">
-    
-    <style>
-    /* ============================================
-       [DESIGN-GUIDE] نظام التصميم الموحد
-       General Design System
-       ============================================ */
-    :root {
-        --primary-1: #e0f7fa;
-        --primary-2: #b2ebf2;
-        --primary-3: #4dd0e1;
-        --primary-4: #0097a7;
-        --primary-dark: #006064;
-        --text-dark: #006064;
-        --text-light: #ffffff;
-        --shadow-sm: 0 2px 8px rgba(0, 150, 167, 0.08);
-        --shadow-md: 0 4px 12px rgba(0, 150, 167, 0.12);
-        --radius: 8px;
-        --radius-sm: 4px;
-        --ease: cubic-bezier(0.4, 0, 0.2, 1);
-        --print-margin: 10mm;
-    }
-
-    /* ============================================
-       أنماط المكونات الأساسية
-       ============================================ */
-
-    .card {
-        border: none;
-        border-radius: var(--radius);
-        box-shadow: var(--shadow-sm);
-        margin-bottom: 0;
-        overflow: hidden;
-    }
-
-    .card-header {
-        background: linear-gradient(135deg, var(--primary-4), var(--primary-dark));
-        color: var(--text-light);
-        padding: 0.45rem 0.85rem;
-        font-weight: 600;
-        font-size: 0.82rem;
-        display: flex;
-        align-items: center;
-        gap: 0.4rem;
-    }
-
-    .card-body {
-        padding: 0.6rem 0.75rem;
-    }
-
-    /* ============================================
-       أنماط حركات الصندوق
-       ============================================ */
-
-    .btn {
-        border-radius: var(--radius-sm);
-        padding: 0.28rem 0.55rem;
-        font-weight: 600;
-        font-size: 0.78rem;
-        border: none;
-        transition: all 0.2s var(--ease);
-        display: inline-flex;
-        align-items: center;
-        gap: 0.25rem;
-        font-family: 'Tajawal', sans-serif;
-    }
-    .btn-primary  { background: linear-gradient(135deg, var(--primary-4), var(--primary-dark)); color: #fff; }
-    .btn-success  { background: linear-gradient(135deg, #00897b, #00695c); color: #fff; }
-    .btn-warning  { background: linear-gradient(135deg, #ffb300, #ff8f00); color: #fff; }
-    .btn-danger   { background: linear-gradient(135deg, #e53935, #b71c1c); color: #fff; }
-    .btn-secondary{ background: linear-gradient(135deg, #78909c, #546e7a); color: #fff; }
-    .btn:hover { transform: translateY(-1px); box-shadow: var(--shadow-md); }
-    .btn:active { transform: translateY(0); }
-
-    .form-label { font-weight: 500; font-size: 0.7rem; margin-bottom: 0.1rem; color: var(--text-dark); display: flex; align-items: center; gap: 0.2rem; }
-    .form-control, .form-select { border-radius: var(--radius-sm); border: 1px solid var(--primary-2); padding: 0.28rem 0.45rem; font-size: 0.78rem; font-family: 'Tajawal', sans-serif; transition: all 0.2s var(--ease); accent-color: var(--primary-4); background-color: #fff; }
-    .form-control:focus, .form-select:focus { border-color: var(--primary-3); box-shadow: 0 0 0 2px rgba(77, 208, 225, 0.2); }
-
-    .page-root {
-        display: flex;
-        flex-direction: column;
-        gap: 0.6rem;
-        padding: 0.5rem 1rem 2rem;
-    }
-
-    .page-bar { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem; }
-    .page-bar h5 { margin: 0; font-size: 1.05rem; font-weight: 700; color: var(--text-dark); display: flex; align-items: center; gap: 0.45rem; }
-    .page-bar h5 i { font-size: 0.95rem; opacity: 0.7; }
-    .page-actions { display: flex; gap: 0.35rem; flex-wrap: wrap; }
-
-    .balance-card { background: linear-gradient(135deg, var(--primary-4) 0%, var(--primary-dark) 100%); color: var(--text-light); border-radius: var(--radius); padding: 0.85rem 1rem; display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 1.25rem; box-shadow: var(--shadow-md); position: relative; overflow: hidden; }
-    .balance-card::after { content: ''; position: absolute; inset: 0; background: radial-gradient(ellipse at 20% 50%, rgba(255,255,255,0.07) 0%, transparent 60%); pointer-events: none; }
-    .balance-card.negative { background: linear-gradient(135deg, #d32f2f 0%, #b71c1c 100%); }
-    .balance-card.negative::after { background: radial-gradient(ellipse at 20% 50%, rgba(255,255,255,0.05) 0%, transparent 60%); }
-    .balance-main { position: relative; z-index: 1; }
-    .balance-label { font-size: 0.72rem; opacity: 0.8; display: flex; align-items: center; gap: 0.3rem; margin-bottom: 0.15rem; }
-    .balance-value { font-size: clamp(1.3rem, 2.8vw, 1.8rem); font-weight: 700; letter-spacing: -0.3px; line-height: 1.2; }
-
-    .balance-day-stats { display: flex; gap: 0.5rem; position: relative; z-index: 1; flex-wrap: wrap; }
-    .day-stat { text-align: center; padding: 0.35rem 0.65rem; background: rgba(255, 255, 255, 0.1); border-radius: var(--radius-sm); backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px); min-width: 85px; transition: background 0.2s var(--ease); }
-    .day-stat:hover { background: rgba(255, 255, 255, 0.18); }
-    .day-stat__label { font-size: 0.6rem; opacity: 0.75; display: block; margin-bottom: 0.05rem; }
-    .day-stat__value { font-size: 0.85rem; font-weight: 700; display: block; }
-
-    .filter-card .card-header { cursor: pointer; user-select: none; padding: 0.4rem 0.85rem; }
-    .filter-card .card-header .chevron-icon { margin-right: auto; font-size: 0.65rem; transition: transform 0.3s var(--ease); }
-    .filter-card .card-header[aria-expanded="false"] .chevron-icon { transform: rotate(-90deg); }
-    .filter-body { overflow: visible; transition: max-height 0.35s var(--ease), padding 0.3s var(--ease), opacity 0.2s ease; max-height: 0; opacity: 0; padding: 0 0.75rem; }
-    .filter-body.show { max-height: 500px; opacity: 1; padding: 0.6rem 0.75rem; overflow: visible; }
-
-    .table-card { display: flex; flex-direction: column; }
-    .table-card .card-body { padding: 0; display: flex; flex-direction: column; }
-
-    .table-scroll { overflow-x: auto; }
-    .table-scroll::-webkit-scrollbar { width: 5px; height: 5px; }
-    .table-scroll::-webkit-scrollbar-thumb { background: var(--primary-3); border-radius: 3px; }
-    .table-scroll::-webkit-scrollbar-track { background: transparent; }
-
-    .tx-table { width: 100%; font-size: 0.76rem; border-collapse: separate; border-spacing: 0; margin: 0; }
-    .tx-table thead th { background: linear-gradient(135deg, var(--primary-3), var(--primary-4)); color: #fff; font-weight: 600; font-size: 0.72rem; text-align: center; padding: 0.4rem 0.35rem; white-space: nowrap; border: none; }
-    .tx-table tbody td { padding: 0.32rem 0.35rem; vertical-align: middle; text-align: center; border-bottom: 1px solid var(--primary-1); transition: background 0.15s var(--ease); }
-    .tx-table tbody tr { transition: background 0.15s var(--ease); }
-    .tx-table tbody tr:hover td { background: rgba(224, 247, 250, 0.6); }
-    .tx-table tbody tr:last-child td { border-bottom: none; }
-    .tx-table tbody tr[data-dir="in"] td:first-child { box-shadow: inset 3px 0 0 #00897b; }
-    .tx-table tbody tr[data-dir="out"] td:first-child { box-shadow: inset 3px 0 0 #e53935; }
-    .tx-table tbody tr[data-dir="neutral"] td:first-child { box-shadow: inset 3px 0 0 var(--primary-3); }
-
-    .amt-in  { color: #00897b; font-weight: 600; font-variant-numeric: tabular-nums; }
-    .amt-out { color: #e53935; font-weight: 600; font-variant-numeric: tabular-nums; }
-    .amt-net { color: var(--primary-4); font-weight: 700; font-variant-numeric: tabular-nums; }
-
-    .tx-badge { font-size: 0.63rem; padding: 0.12rem 0.45rem; border-radius: 20px; font-weight: 600; white-space: nowrap; display: inline-block; }
-    .tx-badge[data-type="deposit"], .tx-badge[data-type="sale_receipt"], .tx-badge[data-type="purchase_return"] { background: #e0f2f1; color: #00695c; }
-    .tx-badge[data-type="withdrawal"], .tx-badge[data-type="expense"], .tx-badge[data-type="purchase_payment"], .tx-badge[data-type="sale_return"] { background: #fce4ec; color: #c62828; }
-    .tx-badge:not([data-type]) { background: var(--primary-1); color: var(--text-dark); }
-
-    .inv-link { font-size: 0.65rem; color: var(--primary-4); text-decoration: none; display: inline-flex; align-items: center; gap: 0.15rem; transition: color 0.15s var(--ease); }
-    .inv-link:hover { color: var(--text-dark); text-decoration: underline; }
-
-    .tx-date { font-variant-numeric: tabular-nums; direction: ltr; text-align: center; line-height: 1.3; }
-    .tx-date small { color: #90a4ae; font-size: 0.65rem; }
-
-    .btn-view { padding: 0.2rem 0.4rem; font-size: 0.75rem; border-radius: var(--radius-sm); display: inline-flex; align-items: center; justify-content: center; min-width: 28px; height: 28px; }
-
-    .tx-table tfoot td { font-weight: 600; font-size: 0.76rem; padding: 0.35rem; text-align: center; border-top: 1.5px solid var(--primary-2); background: #fff; }
-    .tx-table tfoot tr:last-child td { background: var(--primary-1); border-top: 2px solid var(--primary-4); font-size: 0.8rem; }
-
-    .empty-state { text-align: center; padding: 2.5rem 1rem; color: #90a4ae; }
-    .empty-state i { font-size: 2.2rem; opacity: 0.4; display: block; margin-bottom: 0.4rem; }
-    .empty-state p { font-size: 0.82rem; margin: 0; }
-
-    .pager-bar { display: flex; justify-content: center; align-items: center; padding: 0.4rem 0.75rem; border-top: 1px solid var(--primary-1); gap: 0.2rem; flex-wrap: wrap; }
-    .pager-bar .page-link { border: none; border-radius: var(--radius-sm); padding: 0.18rem 0.45rem; font-size: 0.72rem; color: var(--text-dark); background: transparent; transition: all 0.15s var(--ease); min-width: 26px; text-align: center; line-height: 1.5; }
-    .pager-bar .page-link:hover { background: var(--primary-1); color: var(--primary-4); }
-    .pager-bar .page-item.active .page-link { background: linear-gradient(135deg, var(--primary-4), var(--primary-dark)); color: #fff; box-shadow: 0 2px 6px rgba(0, 150, 167, 0.25); }
-
-    .results-count { text-align: center; font-size: 0.7rem; color: #90a4ae; padding: 0.25rem; border-top: 1px solid var(--primary-1); }
-
-    .partner-name {
-        font-weight: 600;
-        color: var(--text-dark);
-        font-size: 0.78rem;
-        white-space: nowrap;
-    }
-    .partner-name .partner-icon {
-        font-size: 0.7rem;
-        opacity: 0.6;
-        margin-left: 0.2rem;
-    }
-
-    /* ============================================
-       أنماط الطباعة الخاصة (متبقية من القالب الأصلي)
-       ============================================ */
-    @media print {
-        .balance-card {
-            background: #fff !important;
-            color: var(--text-dark) !important;
-            border: 1px solid #ddd !important;
-        }
-        .balance-card::after {
-            display: none !important;
-        }
-        .balance-card.negative {
-            background: #fff !important;
-        }
-        .tx-table thead th {
-            background: var(--primary-1) !important;
-            color: var(--text-dark) !important;
-            -webkit-print-color-adjust: exact;
-            print-color-adjust: exact;
-        }
-        .tx-table tfoot tr:last-child td {
-            background: var(--primary-1) !important;
-            -webkit-print-color-adjust: exact;
-            print-color-adjust: exact;
-        }
-        .day-stat {
-            background: #f5f5f5 !important;
-            backdrop-filter: none !important;
-        }
-        .day-stat__value[style*="color:#a5d6a7"] {
-            color: #00897b !important;
-        }
-        .day-stat__value[style*="color:#ef9a9a"] {
-            color: #e53935 !important;
-        }
-    }
-
-    /* ============================================
-       استجابة (Responsive)
-       ============================================ */
-    @media (max-width: 992px) {
-        .balance-card { grid-template-columns: 1fr; text-align: center; gap: 0.6rem; padding: 0.7rem; }
-        .balance-label { justify-content: center; }
-        .balance-day-stats { justify-content: center; }
-    }
-
-    @media (max-width: 576px) {
-        .page-root { padding: 0.35rem 0.5rem 0.75rem; gap: 0.4rem; }
-        .page-bar h5 { font-size: 0.9rem; }
-        .btn { font-size: 0.72rem; padding: 0.25rem 0.45rem; }
-        .day-stat { min-width: 70px; padding: 0.25rem 0.4rem; }
-        .day-stat__value { font-size: 0.78rem; }
-        .tx-table { font-size: 0.7rem; }
-        .tx-table thead th { padding: 0.3rem 0.2rem; font-size: 0.66rem; }
-        .tx-table tbody td { padding: 0.25rem 0.2rem; }
-        .partner-name { font-size: 0.7rem; }
-    }
-
-    @media (prefers-reduced-motion: reduce) { 
-        *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; } 
-    }
-
-    .btn:focus-visible, .form-control:focus-visible, .form-select:focus-visible, .page-link:focus-visible, [role="button"]:focus-visible { 
-        outline: 2px solid var(--primary-3); outline-offset: 2px; 
-    }
-    html { scroll-behavior: smooth; }
-    </style>
 {% endblock %}
 
 {% block content %}
+<style nonce="{{ csp_nonce }}">
+@import url('https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;600;700;800&display=swap');
+
+:root {
+    --primary-1: #f0fdfa;
+    --primary-2: #ccfbf1;
+    --primary-3: #5eead4;
+    --primary-4: #0d9488; /* Teal 600 */
+    --primary-dark: #0f766e;
+    --text-dark: #0f172a; /* Slate 900 */
+    --text-muted: #64748b; /* Slate 500 */
+    --bg-input: #f8fafc; /* Slate 50 */
+    --border-color: #e2e8f0; /* Slate 200 */
+    --danger-color: #ef4444;
+    --danger-bg: #fef2f2;
+    --success-color: #10b981;
+    --success-bg: #ecfdf5;
+    --shadow-sm: 0 1px 3px rgba(15, 23, 42, 0.05);
+    --shadow-md: 0 4px 6px -1px rgba(15, 23, 42, 0.08);
+    --shadow-lg: 0 10px 15px -3px rgba(15, 23, 42, 0.1);
+    --radius-sm: 8px;
+    --radius: 12px;
+    --radius-lg: 16px;
+    --ease: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+* { box-sizing: border-box; }
+
+body {
+    font-family: 'Tajawal', sans-serif;
+    background: #f1f5f9; /* Slate 100 */
+    min-height: 100vh;
+    padding: 1rem;
+    font-size: 0.9rem;
+    color: var(--text-dark);
+}
+
+.page-container { max-width: 1200px; margin: 0 auto; }
+
+/* ===== الهيدر المدمج ===== */
+.form-header {
+    background: white; border-radius: var(--radius); padding: 1rem 1.5rem; margin-bottom: 1rem;
+    box-shadow: var(--shadow-sm); border: 1px solid var(--border-color);
+    display: flex; align-items: center; justify-content: space-between; gap: 1rem; flex-wrap: wrap;
+}
+.header-info { display: flex; align-items: center; gap: 0.75rem; }
+.header-icon { width: 40px; height: 40px; background: var(--primary-1); border-radius: var(--radius-sm); display: flex; align-items: center; justify-content: center; color: var(--primary-4); font-size: 1.1rem; }
+.header-title { font-size: 1.1rem; font-weight: 700; margin: 0; color: var(--text-dark); }
+
+.header-actions { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+
+/* ===== الأزرار ===== */
+.btn-primary-teal { background: var(--primary-4); color: white; border: none; padding: 0.5rem 1.2rem; border-radius: var(--radius-sm); font-size: 0.85rem; font-weight: 600; cursor: pointer; transition: all 0.2s var(--ease); display: inline-flex; align-items: center; gap: 0.4rem; text-decoration: none; white-space: nowrap; }
+.btn-primary-teal:hover { background: var(--primary-dark); transform: translateY(-1px); box-shadow: var(--shadow-md); }
+.btn-secondary-teal { background: white; color: var(--text-muted); border: 1px solid var(--border-color); padding: 0.5rem 1.2rem; border-radius: var(--radius-sm); font-size: 0.85rem; font-weight: 600; cursor: pointer; transition: all 0.2s var(--ease); display: inline-flex; align-items: center; gap: 0.4rem; text-decoration: none; white-space: nowrap; }
+.btn-secondary-teal:hover { background: var(--bg-input); color: var(--text-dark); }
+.btn-warning-soft { background: var(--primary-1); color: var(--primary-dark); border: 1px solid var(--primary-2); padding: 0.5rem 1.2rem; border-radius: var(--radius-sm); font-size: 0.85rem; font-weight: 600; cursor: pointer; transition: all 0.2s var(--ease); display: inline-flex; align-items: center; gap: 0.4rem; text-decoration: none; white-space: nowrap; }
+.btn-warning-soft:hover { background: var(--primary-2); }
+
+/* ===== بطاقة الرصيد ===== */
+.stats-strip { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem; margin-bottom: 1rem; }
+.stat-card { background: white; border-radius: var(--radius); padding: 1rem 1.25rem; box-shadow: var(--shadow-sm); border: 1px solid var(--border-color); border-right: 4px solid var(--primary-4); }
+.stat-card.bg-success-soft { border-right-color: var(--success-color); }
+.stat-card.bg-danger-soft { border-right-color: var(--danger-color); }
+.stat-label { font-size: 0.75rem; color: var(--text-muted); font-weight: 600; margin-bottom: 0.25rem; display: flex; align-items: center; gap: 0.3rem; }
+.stat-value { font-size: 1.25rem; font-weight: 700; color: var(--text-dark); }
+.stat-card.bg-success-soft .stat-value { color: var(--success-color); }
+.stat-card.bg-danger-soft .stat-value { color: var(--danger-color); }
+
+/* ===== بطاقات عامة ===== */
+.card { background: white; border-radius: var(--radius-lg); box-shadow: var(--shadow-sm); border: 1px solid var(--border-color); margin-bottom: 1rem; overflow: hidden; }
+.card-title { font-size: 0.95rem; font-weight: 700; color: var(--text-dark); margin: 0; padding: 1rem 1.5rem; display: flex; align-items: center; gap: 0.5rem; cursor: pointer; user-select: none; }
+.card-title i { color: var(--primary-4); font-size: 0.9rem; }
+.card-title .chevron-icon { margin-right: auto; font-size: 0.75rem; transition: transform 0.3s var(--ease); color: var(--text-muted); }
+.card-title[aria-expanded="false"] .chevron-icon { transform: rotate(-90deg); }
+
+.filter-body { padding: 0 1.5rem 1rem 1.5rem; }
+.form-label { font-size: 0.8rem; font-weight: 600; color: var(--text-muted); margin-bottom: 0.4rem; display: block; }
+.form-control, .form-select { width: 100%; padding: 0.5rem 0.75rem; border: 1px solid var(--border-color); background: var(--bg-input); border-radius: var(--radius-sm); font-size: 0.85rem; font-family: 'Tajawal', sans-serif; color: var(--text-dark); transition: all 0.2s var(--ease); }
+.form-control:focus, .form-select:focus { background: white; border-color: var(--primary-4); box-shadow: 0 0 0 4px rgba(13, 148, 136, 0.1); outline: none; }
+
+/* ===== الجدول ===== */
+.table-wrap { overflow-x: auto; border-radius: var(--radius-sm); border: 1px solid var(--border-color); }
+.tx-table { width: 100%; border-collapse: collapse; font-size: 0.85rem; min-width: 800px; }
+.tx-table thead th { background: var(--bg-input); color: var(--text-muted); padding: 0.75rem 1rem; text-align: right; font-weight: 600; font-size: 0.75rem; border-bottom: 1px solid var(--border-color); text-transform: uppercase; white-space: nowrap; cursor: pointer; user-select: none; transition: all 0.2s var(--ease); }
+.tx-table thead th:hover { background: #e2e8f0; color: var(--text-dark); }
+.tx-table thead th .sort-icon { margin-right: 5px; font-size: 0.7rem; opacity: 0.4; }
+.tx-table thead th.active-sort .sort-icon { opacity: 1; color: var(--primary-4); }
+.tx-table thead th.active-sort { color: var(--primary-dark); background: var(--primary-1); }
+.tx-table tbody td { padding: 0.75rem 1rem; border-bottom: 1px solid #f1f5f9; color: var(--text-dark); white-space: nowrap; }
+.tx-table tbody tr:last-child td { border-bottom: none; }
+.tx-table tbody tr { transition: background 0.2s var(--ease); }
+.tx-table tbody tr:hover { background: var(--bg-input); }
+
+.amt-in { color: var(--success-color); font-weight: 700; font-variant-numeric: tabular-nums; }
+.amt-out { color: var(--danger-color); font-weight: 700; font-variant-numeric: tabular-nums; }
+.amt-net { color: var(--primary-4); font-weight: 700; font-variant-numeric: tabular-nums; }
+
+.tx-badge { font-size: 0.7rem; padding: 0.2rem 0.6rem; border-radius: 1rem; font-weight: 700; white-space: nowrap; display: inline-block; }
+.tx-badge[data-type="deposit"], .tx-badge[data-type="sale_receipt"], .tx-badge[data-type="purchase_return"] { background: var(--success-bg); color: var(--success-color); }
+.tx-badge[data-type="withdrawal"], .tx-badge[data-type="expense"], .tx-badge[data-type="purchase_payment"], .tx-badge[data-type="sale_return"] { background: var(--danger-bg); color: var(--danger-color); }
+.tx-badge:not([data-type]) { background: var(--primary-1); color: var(--primary-dark); }
+
+.inv-link { font-size: 0.7rem; color: var(--primary-4); text-decoration: none; display: inline-flex; align-items: center; gap: 0.2rem; transition: color 0.15s var(--ease); }
+.inv-link:hover { color: var(--primary-dark); text-decoration: underline; }
+
+.btn-view { width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; border-radius: var(--radius-sm); border: 1px solid var(--border-color); color: var(--text-muted); background: var(--bg-input); transition: all 0.2s var(--ease); text-decoration: none; }
+.btn-view:hover { background: var(--primary-4); color: white; border-color: var(--primary-4); }
+
+.tx-table tfoot td { font-weight: 600; font-size: 0.85rem; padding: 0.75rem 1rem; text-align: right; border-top: 1.5px solid var(--border-color); background: white; }
+.tx-table tfoot tr:last-child td { background: var(--primary-1); border-top: 2px solid var(--primary-4); font-size: 0.9rem; }
+
+.empty-state { text-align: center; padding: 3rem 1rem; color: var(--text-muted); }
+.empty-state i { font-size: 2.5rem; color: #cbd5e1; margin-bottom: 0.5rem; display: block; }
+.empty-state p { margin: 0; font-size: 0.9rem; }
+
+.pager-bar { display: flex; justify-content: center; align-items: center; padding: 1rem 1.5rem; border-top: 1px solid var(--border-color); gap: 0.25rem; flex-wrap: wrap; }
+.pager-bar .page-link { border: none; border-radius: var(--radius-sm); padding: 0.35rem 0.75rem; font-size: 0.8rem; color: var(--text-muted); background: white; transition: all 0.2s var(--ease); min-width: 32px; text-align: center; text-decoration: none; }
+.pager-bar .page-link:hover { background: var(--bg-input); color: var(--text-dark); }
+.pager-bar .page-item.active .page-link { background: var(--primary-4); color: white; box-shadow: var(--shadow-sm); }
+
+.results-count { text-align: center; font-size: 0.75rem; color: var(--text-muted); padding: 0.5rem; border-top: 1px solid var(--border-color); background: var(--bg-input); }
+
+@media (max-width: 992px) {
+    .stats-strip { grid-template-columns: 1fr 1fr; }
+}
+@media (max-width: 768px) {
+    .stats-strip { grid-template-columns: 1fr; }
+    .tx-table { font-size: 0.75rem; }
+    .tx-table thead th, .tx-table tbody td { padding: 0.5rem; }
+}
+
+/* === إعدادات الطباعة المتقدمة === */
+@media print {
+    body { background: white !important; padding: 0 !important; }
+    .no-print { display: none !important; }
+    .card { border: none !important; box-shadow: none !important; border-radius: 0 !important; }
+    .tx-table thead th { background: #f1f5f9 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    .tx-table tfoot tr:last-child td { background: #f0fdfa !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+}
+</style>
+
 <!-- ============================================
      منطقة الطباعة (المحتوى القابل للطباعة)
      ============================================ -->
 <div class="invoice-print-area" id="printableArea">
-    
-    <!-- ===== المحتوى الأساسي (حركات الصندوق) ===== -->
-    <main class="page-root">
-
-        <!-- شريط العنوان والأزرار -->
-        <div class="page-bar no-print">
-            <h5><i class="fas fa-solid fa-cash-register"></i> حركات الصندوق</h5>
-            <div class="page-actions">
-                <a href="?{% for key, value in request.GET.items %}{{ key }}={{ value }}&{% endfor %}export=csv" class="btn btn-warning" title="تصدير CSV" aria-label="تصدير CSV">
-                    <i class="fas fa-solid fa-file-csv"></i>
-                    <span class="d-none d-sm-inline">تصدير</span>
+    <div class="page-container">
+        
+        <!-- ===== الهيدر ===== -->
+        <div class="form-header no-print">
+            <div class="header-info">
+                <div class="header-icon"><i class="fas fa-cash-register"></i></div>
+                <div>
+                    <h1 class="header-title">{% trans "حركات الصندوق" %}</h1>
+                </div>
+            </div>
+            <div class="header-actions">
+                <a href="?{% for key, value in request.GET.items %}{{ key }}={{ value }}&{% endfor %}export=csv" class="btn-warning-soft">
+                    <i class="fas fa-file-csv"></i> {% trans "تصدير CSV" %}
                 </a>
-                <a href="{% url 'invoice:cash_transaction_create' %}" class="btn btn-success" aria-label="إضافة حركة">
-                    <i class="fas fa-solid fa-plus"></i>
-                    <span class="d-none d-sm-inline">إضافة حركة</span>
+                <a href="{% url 'invoice:cash_transaction_create' %}" class="btn-primary-teal">
+                    <i class="fas fa-plus"></i> {% trans "إضافة حركة" %}
                 </a>
             </div>
         </div>
 
-        <!-- بطاقة الرصيد -->
-        <div class="balance-card {% if is_balance_negative %}negative{% endif %}" role="status" aria-label="الرصيد الإجمالي">
-            <div class="balance-main">
-                <div class="balance-label"><i class="fas fa-solid fa-wallet"></i> الرصيد الإجمالي للصندوق</div>
-                <div class="balance-value">{{ overall_balance|floatformat:2 }}</div>
+        <!-- ===== بطاقات الرصيد والإحصائيات ===== -->
+        <div class="stats-strip">
+            <div class="stat-card">
+                <div class="stat-label"><i class="fas fa-wallet"></i> {% trans "الرصيد الإجمالي" %}</div>
+                <div class="stat-value">{{ overall_balance|floatformat:2 }}</div>
             </div>
-            <div class="balance-day-stats">
-                <div class="day-stat">
-                    <span class="day-stat__label">إيداعات اليوم</span>
-                    <span class="day-stat__value" style="color:#a5d6a7">{{ today_in|floatformat:2 }}</span>
-                </div>
-                <div class="day-stat">
-                    <span class="day-stat__label">مسحوبات اليوم</span>
-                    <span class="day-stat__value" style="color:#ef9a9a">{{ today_out|floatformat:2 }}</span>
-                </div>
-                <div class="day-stat">
-                    <span class="day-stat__label">صافي اليوم</span>
-                    <span class="day-stat__value">{{ today_net|floatformat:2 }}</span>
+            <div class="stat-card bg-success-soft">
+                <div class="stat-label"><i class="fas fa-arrow-down"></i> {% trans "إيداعات اليوم" %}</div>
+                <div class="stat-value">{{ today_in|floatformat:2 }}</div>
+            </div>
+            <div class="stat-card bg-danger-soft">
+                <div class="stat-label"><i class="fas fa-arrow-up"></i> {% trans "مسحوبات اليوم" %}</div>
+                <div class="stat-value">{{ today_out|floatformat:2 }}</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label"><i class="fas fa-calculator"></i> {% trans "صافي اليوم" %}</div>
+                <div class="stat-value">{{ today_net|floatformat:2 }}</div>
+            </div>
+        </div>
+
+        <!-- ===== فلتر البحث ===== -->
+        <div class="card no-print">
+            <div class="card-title" data-bs-toggle="collapse" data-bs-target="#filterPanel" role="button" aria-expanded="true" aria-controls="filterPanel">
+                <i class="fas fa-sliders-h"></i> {% trans "تصفية النتائج" %}
+                <i class="fas fa-chevron-down chevron-icon"></i>
+            </div>
+            <div class="collapse show" id="filterPanel">
+                <div class="filter-body">
+                    <form method="get" id="filterForm">
+                        <div class="row g-3 align-items-end">
+                            <div class="col-lg-3 col-md-4 col-6">
+                                <label for="f_q" class="form-label">{% trans "بحث" %}</label>
+                                <input type="text" name="q" id="f_q" class="form-control" placeholder="{% trans 'ملاحظات...' %}" value="{{ current_filter.q }}">
+                            </div>
+                            <div class="col-lg-2 col-md-4 col-6">
+                                <label for="f_type" class="form-label">{% trans "النوع" %}</label>
+                                <select name="type" id="f_type" class="form-select">
+                                    <option value="">{% trans "الكل" %}</option>
+                                    {% for choice in CashTransaction.TRANSACTION_TYPES %}
+                                    <option value="{{ choice.0 }}" {% if current_filter.type == choice.0 %}selected{% endif %}>{{ choice.1 }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="col-lg-2 col-md-4 col-6">
+                                <label for="f_from" class="form-label">{% trans "من" %}</label>
+                                <input type="date" name="start_date" id="f_from" class="form-control" value="{{ current_filter.start_date }}">
+                            </div>
+                            <div class="col-lg-2 col-md-4 col-6">
+                                <label for="f_to" class="form-label">{% trans "إلى" %}</label>
+                                <input type="date" name="end_date" id="f_to" class="form-control" value="{{ current_filter.end_date }}">
+                            </div>
+                            <div class="col-lg-3 col-md-8 col-12 d-flex gap-2">
+                                <button type="submit" class="btn-primary-teal flex-grow-1"><i class="fas fa-check"></i> {% trans "تطبيق" %}</button>
+                                <button type="button" class="btn-secondary-teal" id="clearFilterBtn"><i class="fas fa-eraser"></i> {% trans "مسح" %}</button>
+                            </div>
+                        </div>
+                    </form>
                 </div>
             </div>
         </div>
 
-        <!-- فلتر البحث -->
-        <div class="card filter-card no-print">
-            <div class="card-header" data-bs-toggle="collapse" data-bs-target="#filterPanel" role="button" aria-expanded="true" aria-controls="filterPanel">
-                <i class="fas fa-solid fa-sliders-h"></i> تصفية النتائج
-                <i class="fas fa-solid fa-chevron-down chevron-icon"></i>
-            </div>
-            <div class="filter-body show" id="filterPanel">
-                <form method="get" id="filterForm">
-                    <div class="row g-2 align-items-end">
-                        <div class="col-lg-3 col-md-4 col-6">
-                            <label for="f_q" class="form-label"><i class="fas fa-solid fa-search"></i> بحث</label>
-                            <input type="text" name="q" id="f_q" class="form-control" placeholder="ملاحظات..." value="{{ current_filter.q }}">
-                        </div>
-                        <div class="col-lg-2 col-md-4 col-6">
-                            <label for="f_type" class="form-label"><i class="fas fa-solid fa-tag"></i> النوع</label>
-                            <select name="type" id="f_type" class="form-select">
-                                <option value="">الكل</option>
-                                {% for choice in CashTransaction.TRANSACTION_TYPES %}
-                                <option value="{{ choice.0 }}" {% if current_filter.type == choice.0 %}selected{% endif %}>{{ choice.1 }}</option>
-                                {% endfor %}
-                            </select>
-                        </div>
-                        <div class="col-lg-2 col-md-4 col-6">
-                            <label for="f_from" class="form-label"><i class="fas fa-solid fa-calendar"></i> من</label>
-                            <input type="date" name="start_date" id="f_from" class="form-control" value="{{ current_filter.start_date }}">
-                        </div>
-                        <div class="col-lg-2 col-md-4 col-6">
-                            <label for="f_to" class="form-label"><i class="fas fa-solid fa-calendar-check"></i> إلى</label>
-                            <input type="date" name="end_date" id="f_to" class="form-control" value="{{ current_filter.end_date }}">
-                        </div>
-                        <div class="col-lg-3 col-md-8 col-12 d-flex gap-1">
-                            <button type="submit" class="btn btn-primary"><i class="fas fa-solid fa-check"></i> تطبيق</button>
-                            <button type="button" class="btn btn-secondary" id="clearFilterBtn"><i class="fas fa-solid fa-eraser"></i> مسح</button>
-                        </div>
-                    </div>
-                </form>
-            </div>
-        </div>
-
-        <!-- جدول الحركات -->
-        <div class="card table-card">
-            <div class="card-body">
-                <div class="table-scroll">
-                    <table class="tx-table" aria-label="جدول حركات الصندوق">
-                        <thead>
-                            <tr>
-                                <th style="width:38px" data-print-field="col-index">#</th>
-                                <th data-print-field="col-date">التاريخ</th>
-                                <th data-print-field="col-type">النوع</th>
-                                <th data-print-field="col-in">داخل</th>
-                                <th data-print-field="col-out">خارج</th>
-                                <th style="text-align:start" data-print-field="col-notes">البيان</th>
-                                <th data-print-field="col-partner">الطرف الآخر</th>
-                                <th data-print-field="col-user">بواسطة</th>
-                                <th style="width:36px" class="no-print"></th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for transaction in page_obj %}
-                            <tr data-amount-in="{{ transaction.amount_in|default:0 }}" data-amount-out="{{ transaction.amount_out|default:0 }}">
-                                <td data-print-field="col-index">{{ page_obj.start_index|add:forloop.counter0 }}</td>
-                                <td data-print-field="col-date">
-                                    <span class="tx-date">
-                                        {{ transaction.transaction_date|date:"Y-m-d" }}
-                                        <br><small>{{ transaction.transaction_date|date:"H:i" }}</small>
-                                    </span>
-                                </td>
-                                <td data-print-field="col-type">
-                                    <span class="tx-badge" data-type="{{ transaction.transaction_type }}">
-                                        {{ transaction.get_transaction_type_display }}
-                                    </span>
-                                </td>
-                                <td class="amt-in" data-print-field="col-in">{{ transaction.amount_in|floatformat:2|default:"—" }}</td>
-                                <td class="amt-out" data-print-field="col-out">{{ transaction.amount_out|floatformat:2|default:"—" }}</td>
-                                <td style="text-align:start; max-width:220px;" data-print-field="col-notes">
-                                    <span>{{ transaction.notes|truncatechars:40|default:"—" }}</span>
-                                    
-                                    {% if transaction.purchase_invoice %}
-                                    <br>
-                                    <a href="{% url 'invoice:purch_detail' transaction.purchase_invoice.slug %}" class="inv-link no-print">
-                                        <i class="fas fa-solid fa-file-invoice"></i>
-                                        {{ transaction.purchase_invoice.uniqueId }}
-                                    </a>
-                                    <span class="d-print-inline" style="display:none;">
-                                        {{ transaction.purchase_invoice.uniqueId }}
-                                    </span>
-                                    {% endif %}
-                                    
-                                    {% if transaction.sale_invoice %}
-                                    <br>
-                                    <span class="inv-link" style="cursor: default; opacity: 0.6;">
-                                        <i class="fas fa-solid fa-file-invoice-dollar"></i>
-                                        {{ transaction.sale_invoice.uniqueId }}
-                                    </span>
-                                    {% endif %}
-                                </td>
-                                <td data-print-field="col-partner">
-                                    {% if transaction.partner_name and transaction.partner_name != "—" %}
-                                    <span class="partner-name">
-                                        <i class="fas fa-solid fa-user partner-icon"></i>
-                                        {{ transaction.partner_name }}
-                                    </span>
-                                    {% else %}
-                                    <span style="color: #90a4ae; font-size: 0.7rem;">—</span>
-                                    {% endif %}
-                                </td>
-                                <td data-print-field="col-user">{{ transaction.created_by.get_full_name|default:transaction.created_by.username|default:"—" }}</td>
-                                <td class="no-print">
-                                    <a href="{% url 'invoice:cash_transaction_detail' transaction.pk %}" class="btn btn-primary btn-view" title="عرض التفاصيل" aria-label="عرض الحركة">
-                                        <i class="fas fa-solid fa-eye"></i>
-                                    </a>
-                                </td>
-                            </tr>
-                            {% empty %}
-                            <tr>
-                                <td colspan="9" style="border:none;">
-                                    <div class="empty-state">
-                                        <i class="fas fa-solid fa-inbox"></i>
-                                        <p>لا توجد حركات مطابقة للتصفية</p>
-                                    </div>
-                                </td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                        {% if page_obj.object_list %}
-                        <tfoot>
-                            <tr>
-                                <td colspan="3" style="text-align:end">إجمالي الصفحة</td>
-                                <td class="amt-in">{{ page_total_in|floatformat:2 }}</td>
-                                <td class="amt-out">{{ page_total_out|floatformat:2 }}</td>
-                                <td colspan="4" class="amt-net">{{ page_total_net|floatformat:2 }}</td>
-                            </tr>
-                            <tr>
-                                <td colspan="3" style="text-align:end">الإجمالي العام</td>
-                                <td class="amt-in">{{ total_in|floatformat:2 }}</td>
-                                <td class="amt-out">{{ total_out|floatformat:2 }}</td>
-                                <td colspan="4" class="amt-net">{{ net_total|floatformat:2 }}</td>
-                            </tr>
-                        </tfoot>
-                        {% endif %}
-                    </table>
-                </div>
-
-                <div class="results-count no-print">
-                    عرض {{ page_obj.start_index|default:"0" }}–{{ page_obj.end_index|default:"0" }}
-                    من أصل {{ page_obj.paginator.count|default:"0" }}
-                </div>
-
-                {% if page_obj.has_other_pages %}
-                <nav class="pager-bar no-print" aria-label="ترقيم الصفحات">
-                    <ul class="pagination pagination-sm mb-0">
-                        {% if page_obj.has_previous %}
-                        <li class="page-item"><a class="page-link" href="?{% for k, v in request.GET.items %}{% if k != 'page' %}{{ k }}={{ v }}&{% endif %}{% endfor %}page=1" aria-label="الأولى"><i class="fas fa-solid fa-angles-right"></i></a></li>
-                        <li class="page-item"><a class="page-link" href="?{% for k, v in request.GET.items %}{% if k != 'page' %}{{ k }}={{ v }}&{% endif %}{% endfor %}page={{ page_obj.previous_page_number }}" aria-label="السابقة"><i class="fas fa-solid fa-angle-right"></i></a></li>
-                        {% endif %}
-                        {% for num in page_obj.paginator.page_range %}
-                            {% if page_obj.number == num %}
-                            <li class="page-item active" aria-current="page"><span class="page-link">{{ num }}</span></li>
-                            {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
-                            <li class="page-item"><a class="page-link" href="?{% for k, v in request.GET.items %}{% if k != 'page' %}{{ k }}={{ v }}&{% endif %}{% endfor %}page={{ num }}">{{ num }}</a></li>
-                            {% endif %}
+        <!-- ===== جدول الحركات ===== -->
+        <div class="card">
+            <div class="table-wrap">
+                <table class="tx-table" id="transactionTable">
+                    <thead>
+                        <tr>
+                            <th style="width:38px" data-sort="index" data-print-field="col-index"># <span class="sort-icon"><i class="fas fa-sort"></i></span></th>
+                            <th data-sort="date" data-print-field="col-date">{% trans "التاريخ" %} <span class="sort-icon"><i class="fas fa-sort"></i></span></th>
+                            <th data-sort="type" data-print-field="col-type">{% trans "النوع" %} <span class="sort-icon"><i class="fas fa-sort"></i></span></th>
+                            <th data-sort="in" data-print-field="col-in">{% trans "داخل" %} <span class="sort-icon"><i class="fas fa-sort"></i></span></th>
+                            <th data-sort="out" data-print-field="col-out">{% trans "خارج" %} <span class="sort-icon"><i class="fas fa-sort"></i></span></th>
+                            <th style="text-align:right" data-print-field="col-notes">{% trans "البيان" %}</th>
+                            <th data-sort="partner" data-print-field="col-partner">{% trans "الطرف الآخر" %} <span class="sort-icon"><i class="fas fa-sort"></i></span></th>
+                            <th data-print-field="col-user">{% trans "بواسطة" %}</th>
+                            <th style="width:36px" class="no-print"></th>
+                        </tr>
+                    </thead>
+                    <tbody id="tableBody">
+                        {% for transaction in page_obj %}
+                        <tr data-amount-in="{{ transaction.amount_in|default:0 }}" data-amount-out="{{ transaction.amount_out|default:0 }}" data-timestamp="{{ transaction.transaction_date|date:"U" }}">
+                            <td data-print-field="col-index" data-sort="index">{{ page_obj.start_index|add:forloop.counter0 }}</td>
+                            <td data-print-field="col-date" data-sort="date">
+                                <span class="tx-date" style="font-variant-numeric: tabular-nums; direction: ltr; text-align: center; line-height: 1.3; display: inline-block;">
+                                    {{ transaction.transaction_date|date:"Y-m-d" }}<br>
+                                    <small style="color: #94a3b8;">{{ transaction.transaction_date|date:"H:i" }}</small>
+                                </span>
+                            </td>
+                            <td data-print-field="col-type" data-sort="type">
+                                <span class="tx-badge" data-type="{{ transaction.transaction_type }}">
+                                    {{ transaction.get_transaction_type_display }}
+                                </span>
+                            </td>
+                            <td class="amt-in" data-print-field="col-in" data-sort="in">{{ transaction.amount_in|floatformat:2|default:"—" }}</td>
+                            <td class="amt-out" data-print-field="col-out" data-sort="out">{{ transaction.amount_out|floatformat:2|default:"—" }}</td>
+                            <td style="text-align:right; max-width:220px;" data-print-field="col-notes">
+                                <span>{{ transaction.notes|truncatechars:40|default:"—" }}</span>
+                                
+                                {% if transaction.purchase_invoice %}
+                                <br>
+                                <a href="{% url 'invoice:purch_detail' transaction.purchase_invoice.slug %}" class="inv-link no-print">
+                                    <i class="fas fa-file-invoice"></i> {{ transaction.purchase_invoice.uniqueId }}
+                                </a>
+                                {% endif %}
+                                
+                                {% if transaction.sale_invoice %}
+                                <br>
+                                <span class="inv-link" style="cursor: default; opacity: 0.6;">
+                                    <i class="fas fa-file-invoice-dollar"></i> {{ transaction.sale_invoice.uniqueId }}
+                                </span>
+                                {% endif %}
+                            </td>
+                            <td data-print-field="col-partner" data-sort="partner">
+                                {% if transaction.partner_name and transaction.partner_name != "—" %}
+                                <span style="font-weight: 600; color: var(--text-dark); font-size: 0.8rem; white-space: nowrap;">
+                                    <i class="fas fa-user" style="font-size: 0.7rem; opacity: 0.6; margin-left: 0.2rem;"></i>
+                                    {{ transaction.partner_name }}
+                                </span>
+                                {% else %}
+                                <span style="color: #cbd5e1;">—</span>
+                                {% endif %}
+                            </td>
+                            <td data-print-field="col-user">{{ transaction.created_by.get_full_name|default:transaction.created_by.username|default:"—" }}</td>
+                            <td class="no-print">
+                                <a href="{% url 'invoice:cash_transaction_detail' transaction.pk %}" class="btn-view" title="{% trans 'عرض' %}">
+                                    <i class="fas fa-eye" style="font-size: 0.75rem;"></i>
+                                </a>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr class="empty-row">
+                            <td colspan="9" style="border:none;">
+                                <div class="empty-state">
+                                    <i class="fas fa-inbox"></i>
+                                    <p>{% trans "لا توجد حركات مطابقة للتصفية" %}</p>
+                                </div>
+                            </td>
+                        </tr>
                         {% endfor %}
-                        {% if page_obj.has_next %}
-                        <li class="page-item"><a class="page-link" href="?{% for k, v in request.GET.items %}{% if k != 'page' %}{{ k }}={{ v }}&{% endif %}{% endfor %}page={{ page_obj.next_page_number }}" aria-label="التالية"><i class="fas fa-solid fa-angle-left"></i></a></li>
-                        <li class="page-item"><a class="page-link" href="?{% for k, v in request.GET.items %}{% if k != 'page' %}{{ k }}={{ v }}&{% endif %}{% endfor %}page={{ page_obj.paginator.num_pages }}" aria-label="الأخيرة"><i class="fas fa-solid fa-angles-left"></i></a></li>
-                        {% endif %}
-                    </ul>
-                </nav>
-                {% endif %}
+                    </tbody>
+                    {% if page_obj.object_list %}
+                    <tfoot>
+                        <tr>
+                            <td colspan="3" style="text-align:left">{% trans "إجمالي الصفحة" %}</td>
+                            <td class="amt-in">{{ page_total_in|floatformat:2 }}</td>
+                            <td class="amt-out">{{ page_total_out|floatformat:2 }}</td>
+                            <td colspan="4" class="amt-net">{{ page_total_net|floatformat:2 }}</td>
+                        </tr>
+                        <tr>
+                            <td colspan="3" style="text-align:left">{% trans "الإجمالي العام" %}</td>
+                            <td class="amt-in">{{ total_in|floatformat:2 }}</td>
+                            <td class="amt-out">{{ total_out|floatformat:2 }}</td>
+                            <td colspan="4" class="amt-net">{{ net_total|floatformat:2 }}</td>
+                        </tr>
+                    </tfoot>
+                    {% endif %}
+                </table>
             </div>
+
+            <div class="results-count no-print">
+                {% trans "عرض" %} {{ page_obj.start_index|default:"0" }}–{{ page_obj.end_index|default:"0" }}
+                {% trans "من أصل" %} {{ page_obj.paginator.count|default:"0" }}
+            </div>
+
+            {% if page_obj.has_other_pages %}
+            <nav class="pager-bar no-print" aria-label="{% trans 'ترقيم الصفحات' %}">
+                <ul class="pagination pagination-sm mb-0">
+                    {% if page_obj.has_previous %}
+                    <li class="page-item"><a class="page-link" href="?{% for k, v in request.GET.items %}{% if k != 'page' %}{{ k }}={{ v }}&{% endif %}{% endfor %}page=1" aria-label="{% trans 'الأولى' %}"><i class="fas fa-angles-right"></i></a></li>
+                    <li class="page-item"><a class="page-link" href="?{% for k, v in request.GET.items %}{% if k != 'page' %}{{ k }}={{ v }}&{% endif %}{% endfor %}page={{ page_obj.previous_page_number }}" aria-label="{% trans 'السابقة' %}"><i class="fas fa-angle-right"></i></a></li>
+                    {% endif %}
+                    {% for num in page_obj.paginator.page_range %}
+                        {% if page_obj.number == num %}
+                        <li class="page-item active" aria-current="page"><span class="page-link">{{ num }}</span></li>
+                        {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                        <li class="page-item"><a class="page-link" href="?{% for k, v in request.GET.items %}{% if k != 'page' %}{{ k }}={{ v }}&{% endif %}{% endfor %}page={{ num }}">{{ num }}</a></li>
+                        {% endif %}
+                    {% endfor %}
+                    {% if page_obj.has_next %}
+                    <li class="page-item"><a class="page-link" href="?{% for k, v in request.GET.items %}{% if k != 'page' %}{{ k }}={{ v }}&{% endif %}{% endfor %}page={{ page_obj.next_page_number }}" aria-label="{% trans 'التالية' %}"><i class="fas fa-angle-left"></i></a></li>
+                    <li class="page-item"><a class="page-link" href="?{% for k, v in request.GET.items %}{% if k != 'page' %}{{ k }}={{ v }}&{% endif %}{% endfor %}page={{ page_obj.paginator.num_pages }}" aria-label="{% trans 'الأخيرة' %}"><i class="fas fa-angles-left"></i></a></li>
+                    {% endif %}
+                </ul>
+            </nav>
+            {% endif %}
         </div>
 
-    </main>
+    </div>
 </div>
 
 <!-- ===== استدعاء نظام الطباعة الموحد ===== -->
@@ -475,9 +374,7 @@
 <script nonce="{{ csp_nonce }}">
 document.addEventListener('DOMContentLoaded', function () {
 
-    /* ==========================================
-       الكود الأصلي لحركات الصندوق (بدون كود الطباعة)
-       ========================================== */
+    // 1. منطق الفلترة والتخزين
     var STORAGE_KEY = 'cash_tx_filter';
     var form   = document.getElementById('filterForm');
     var fQ     = document.getElementById('f_q');
@@ -510,24 +407,100 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
-    document.querySelectorAll('.tx-table tbody tr[data-amount-in]').forEach(function (row) {
-        var inVal  = parseFloat(row.getAttribute('data-amount-in'))  || 0;
-        var outVal = parseFloat(row.getAttribute('data-amount-out')) || 0;
-        if (inVal > 0) row.setAttribute('data-dir', 'in');
-        else if (outVal > 0) row.setAttribute('data-dir', 'out');
-        else row.setAttribute('data-dir', 'neutral');
-    });
-
+    // 2. إخفاء فلتر البحث إذا كان فارغاً
     var panel = document.getElementById('filterPanel');
     if (panel && form) {
         var hasValue = Array.from(form.querySelectorAll('input, select')).some(function (el) { return el.value.trim() !== ''; });
         if (!hasValue) {
             if (typeof bootstrap !== 'undefined' && bootstrap.Collapse) {
                 bootstrap.Collapse.getOrCreateInstance(panel, { toggle: false }).hide();
-                panel.closest('.filter-card').querySelector('.card-header').setAttribute('aria-expanded', 'false');
+                panel.closest('.card').querySelector('.card-title').setAttribute('aria-expanded', 'false');
             }
         }
     }
+
+    // 3. ميزة فرز الجدول (Column Sorting)
+    var table = document.getElementById('transactionTable');
+    var headers = table.querySelectorAll('thead th[data-sort]');
+    var tableBody = document.getElementById('tableBody');
+    var currentSort = { column: null, direction: 'asc' };
+
+    function sortTable(column, direction) {
+        // جلب أسطر البيانات فقط وتجاهل أسطر الفراغ أو التذييل
+        var rows = Array.from(tableBody.querySelectorAll('tr')).filter(r => !r.classList.contains('empty-row'));
+        
+        function getSortValue(row) {
+            // للترتيب حسب التاريخ نعتمد على الـ timestamp المخزن في السطر
+            if (column === 'date') {
+                return parseInt(row.getAttribute('data-timestamp'), 10) || 0;
+            }
+            
+            var cell = row.querySelector('td[data-sort="' + column + '"]');
+            if (!cell) return '';
+
+            var val = cell.textContent.trim();
+            
+            // للترتيب حسب المبالغ نعتمد على الداتا المخزنة في السطر
+            if (column === 'in' || column === 'out') {
+                val = row.getAttribute(column === 'in' ? 'data-amount-in' : 'data-amount-out') || '0';
+                return parseFloat(val) || 0;
+            }
+            if (column === 'index') {
+                return parseInt(val, 10) || 0;
+            }
+            return val.toLowerCase();
+        }
+
+        rows.sort(function(a, b) {
+            var valA = getSortValue(a);
+            var valB = getSortValue(b);
+
+            if (['in', 'out', 'index', 'date'].includes(column)) {
+                valA = parseFloat(valA) || 0;
+                valB = parseFloat(valB) || 0;
+                return direction === 'asc' ? valA - valB : valB - valA;
+            } else {
+                if (valA < valB) return direction === 'asc' ? -1 : 1;
+                if (valA > valB) return direction === 'asc' ? 1 : -1;
+                return 0;
+            }
+        });
+
+        // إعادة بناء الجدول بالترتيب الجديد داخل tbody فقط
+        rows.forEach(function(row) { tableBody.appendChild(row); });
+    }
+
+    headers.forEach(function(header) {
+        header.addEventListener('click', function() {
+            var column = this.getAttribute('data-sort');
+            var direction = 'asc';
+            
+            if (currentSort.column === column && currentSort.direction === 'asc') {
+                direction = 'desc';
+            } else if (currentSort.column === column && currentSort.direction === 'desc') {
+                direction = 'asc';
+            }
+            
+            currentSort.column = column;
+            currentSort.direction = direction;
+            
+            // تحديث الأيقونات
+            headers.forEach(function(th) {
+                th.classList.remove('active-sort');
+                var icon = th.querySelector('.sort-icon i');
+                if (icon) icon.className = 'fas fa-sort';
+            });
+            
+            this.classList.add('active-sort');
+            var icon = this.querySelector('.sort-icon i');
+            if (icon) {
+                icon.className = direction === 'asc' ? 'fas fa-sort-up' : 'fas fa-sort-down';
+            }
+            
+            sortTable(column, direction);
+        });
+    });
+
 });
 </script>
 {% endblock %}

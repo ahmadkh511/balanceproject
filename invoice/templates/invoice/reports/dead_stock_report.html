@@ -1,205 +1,249 @@
 {% extends "base.html" %}
 {% load static %}
+{% load i18n %}
+
+{% block title %}{% trans "تقرير المخزون الراكد" %}{% endblock %}
 
 {% block extra_css %}
-    <!-- نظام الطباعة المتقدم -->
-    <link rel="stylesheet" href="{% static 'css/print_system.css' %}">
+<!-- المكتبات الخارجية للمرجع الشامل -->
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.rtl.min.css" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+<style nonce="{{ csp_nonce }}">
+@import url('https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;600;700;800&display=swap');
+
+/* ============================================================
+   القسم 1: متغيرات الهوية البصرية (Design Tokens - Aqua Theme)
+   ============================================================ */
+:root {
+    --aqua-1: #e0f7fa;
+    --aqua-2: #b2ebf2;
+    --aqua-3: #4dd0e1;
+    --aqua-4: #0097a7;
+    --text-dark: #006064;
+    --text-light: #ffffff;
     
-    <style>
-        /* ===== التصميم العصري للقالب ===== */
-        .dead-stock-dashboard {
-            padding: 1.5rem 0;
-        }
-        
-        .stat-card {
-            background: white;
-            border-radius: 12px;
-            padding: 1.25rem 1.5rem;
-            box-shadow: 0 2px 12px rgba(0,0,0,0.06);
-            border-right: 4px solid #0097a7;
-            transition: all 0.3s ease;
-            height: 100%;
-        }
-        .stat-card:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 25px rgba(0,0,0,0.08);
-        }
-        .stat-card .stat-icon {
-            font-size: 1.8rem;
-            color: #0097a7;
-            opacity: 0.6;
-            margin-left: 0.75rem;
-        }
-        .stat-card .stat-label {
-            font-size: 0.8rem;
-            color: #888;
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 0.3px;
-        }
-        .stat-card .stat-value {
-            font-size: 1.6rem;
-            font-weight: 700;
-            color: #006064;
-            margin-top: 0.25rem;
-        }
-        .stat-card .stat-sub {
-            font-size: 0.75rem;
-            color: #aaa;
-            margin-top: 0.15rem;
-        }
-        .stat-card.warning {
-            border-right-color: #f59e0b;
-        }
-        .stat-card.warning .stat-icon { color: #f59e0b; }
-        .stat-card.warning .stat-value { color: #b45309; }
-        
-        /* ===== الجدول ===== */
-        .table-modern {
-            border-collapse: separate;
-            border-spacing: 0;
-            width: 100%;
-            font-size: 0.9rem;
-        }
-        .table-modern thead th {
-            background: linear-gradient(135deg, #e0f7fa, #b2ebf2);
-            color: #006064;
-            font-weight: 700;
-            padding: 0.75rem 1rem;
-            border-bottom: 2px solid #4dd0e1;
-            font-size: 0.8rem;
-            text-transform: uppercase;
-            letter-spacing: 0.3px;
-            position: sticky;
-            top: 0;
-            z-index: 10;
-        }
-        .table-modern thead th:first-child {
-            border-radius: 0 8px 0 0;
-        }
-        .table-modern thead th:last-child {
-            border-radius: 8px 0 0 0;
-        }
-        .table-modern tbody td {
-            padding: 0.7rem 1rem;
-            border-bottom: 1px solid #f0f4f8;
-            vertical-align: middle;
-            color: #1a202c;
-        }
-        .table-modern tbody tr {
-            transition: background 0.15s ease;
-        }
-        .table-modern tbody tr:hover {
-            background: #f8fafc;
-        }
-        .table-modern tbody tr:last-child td {
-            border-bottom: none;
-        }
-        
-        .badge-qty {
-            background: #e0f7fa;
-            color: #006064;
-            font-weight: 700;
-            padding: 0.25rem 0.7rem;
-            border-radius: 20px;
-            font-size: 0.8rem;
-        }
-        .badge-value {
-            background: #fef3c7;
-            color: #b45309;
-            font-weight: 700;
-            padding: 0.25rem 0.7rem;
-            border-radius: 20px;
-            font-size: 0.8rem;
-        }
-        .text-muted-date {
-            color: #94a3b8;
-            font-size: 0.8rem;
-        }
-        .text-danger-light {
-            color: #dc2626;
-            font-weight: 600;
-            font-size: 0.8rem;
-        }
-        
-        .table-wrapper {
-            overflow-x: auto;
-            scrollbar-width: none;
-            -ms-overflow-style: none;
-            border-radius: 8px;
-            border: 1px solid #eef2f6;
-        }
-        .table-wrapper::-webkit-scrollbar {
-            display: none;
-            height: 0;
-            width: 0;
-        }
-        
-        .invoice-print-area {
-            background: #f8fafc;
-            min-height: 100vh;
-        }
-        .invoice-print-area .card {
-            border: none;
-            border-radius: 16px;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
-        }
-        .invoice-print-area .card-header {
-            background: white;
-            border-bottom: 1px solid #eef2f6;
-            border-radius: 16px 16px 0 0 !important;
-            padding: 1rem 1.5rem;
-        }
-        .invoice-print-area .card-body {
-            background: white;
-            border-radius: 0 0 16px 16px;
-            padding: 1.5rem;
-        }
-        
-        @media (max-width: 768px) {
-            .stat-card .stat-value {
-                font-size: 1.2rem;
-            }
-            .table-modern {
-                font-size: 0.75rem;
-            }
-            .table-modern thead th,
-            .table-modern tbody td {
-                padding: 0.4rem 0.5rem;
-            }
-            .dead-stock-dashboard {
-                padding: 0.5rem 0;
-            }
-        }
-        
-        @media print {
-            .stat-card {
-                box-shadow: none !important;
-                border: 1px solid #ddd !important;
-            }
-            .stat-card .stat-value {
-                font-size: 1.2rem !important;
-            }
-            .table-modern thead th {
-                background: #f0f0f0 !important;
-                color: #000 !important;
-                border-bottom: 2px solid #333 !important;
-            }
-            .table-modern tbody td {
-                padding: 0.4rem 0.6rem !important;
-            }
-            .badge-qty, .badge-value {
-                background: #eee !important;
-                color: #000 !important;
-            }
-            .no-print {
-                display: none !important;
-            }
-        }
-    </style>
+    --text-muted: #64748b;
+    --bg-input: #f8fafc;
+    --border-color: #e2e8f0;
+    --danger-color: #ef4444;
+    --danger-bg: #fef2f2;
+    --success-color: #10b981;
+    --success-bg: #ecfdf5;
+    --warning-color: #f59e0b;
+    --warning-bg: #fffbeb;
+    
+    --shadow-sm: 0 2px 8px rgba(0, 150, 167, 0.08);
+    --shadow-md: 0 4px 12px rgba(0, 150, 167, 0.12);
+    --shadow-lg: 0 10px 15px -3px rgba(15, 23, 42, 0.1);
+    --radius-sm: 8px;
+    --radius: 12px;
+    --radius-lg: 16px;
+    --ease: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+* { box-sizing: border-box; }
+
+body {
+    font-family: 'Tajawal', sans-serif;
+    background: #f1f5f9;
+    min-height: 100vh;
+    padding: 1rem;
+    font-size: 0.9rem;
+    color: #1a1a2e;
+}
+
+.dead-stock-dashboard { padding: 1.5rem 0; }
+
+/* ===== بطاقات الإحصائيات ===== */
+.stat-card {
+    background: white;
+    border-radius: var(--radius);
+    padding: 1.25rem 1.5rem;
+    box-shadow: var(--shadow-sm);
+    border: 1px solid var(--border-color);
+    border-right: 4px solid var(--aqua-4);
+    transition: all 0.3s var(--ease);
+    height: 100%;
+}
+.stat-card:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+}
+.stat-card .stat-icon {
+    font-size: 1.8rem;
+    color: var(--aqua-4);
+    opacity: 0.6;
+    margin-left: 0.75rem;
+}
+.stat-card .stat-label {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+}
+.stat-card .stat-value {
+    font-size: 1.6rem;
+    font-weight: 700;
+    color: var(--text-dark);
+    margin-top: 0.25rem;
+}
+.stat-card .stat-sub {
+    font-size: 0.75rem;
+    color: #aaa;
+    margin-top: 0.15rem;
+}
+.stat-card.warning {
+    border-right-color: var(--warning-color);
+}
+.stat-card.warning .stat-icon { color: var(--warning-color); }
+.stat-card.warning .stat-value { color: #b45309; }
+
+/* ===== الجدول ===== */
+.table-modern {
+    border-collapse: separate;
+    border-spacing: 0;
+    width: 100%;
+    font-size: 0.9rem;
+}
+.table-modern thead th {
+    background: linear-gradient(135deg, var(--aqua-3), var(--aqua-4));
+    color: white;
+    font-weight: 700;
+    padding: 0.75rem 1rem;
+    border-bottom: 2px solid var(--aqua-4);
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+}
+.table-modern thead th:first-child { border-radius: 0 8px 0 0; }
+.table-modern thead th:last-child { border-radius: 8px 0 0 0; }
+.table-modern tbody td {
+    padding: 0.7rem 1rem;
+    border-bottom: 1px solid #f0f4f8;
+    vertical-align: middle;
+    color: #1a202c;
+}
+.table-modern tbody tr { transition: background 0.15s var(--ease); }
+.table-modern tbody tr:hover { background: var(--aqua-1); }
+.table-modern tbody tr:last-child td { border-bottom: none; }
+
+.badge-qty {
+    background: var(--aqua-1);
+    color: var(--text-dark);
+    font-weight: 700;
+    padding: 0.25rem 0.7rem;
+    border-radius: 20px;
+    font-size: 0.8rem;
+}
+.badge-value {
+    background: var(--warning-bg);
+    color: #b45309;
+    font-weight: 700;
+    padding: 0.25rem 0.7rem;
+    border-radius: 20px;
+    font-size: 0.8rem;
+}
+.text-muted-date { color: #94a3b8; font-size: 0.8rem; }
+.text-danger-light { color: var(--danger-color); font-weight: 600; font-size: 0.8rem; }
+
+.table-wrapper {
+    overflow-x: auto;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+    border-radius: var(--radius-sm);
+    border: 1px solid #eef2f6;
+}
+.table-wrapper::-webkit-scrollbar { display: none; height: 0; width: 0; }
+
+/* ===== البطاقات العامة ===== */
+.card { background: white; border-radius: var(--radius-lg); box-shadow: var(--shadow-sm); border: 1px solid var(--aqua-1); margin-bottom: 1rem; overflow: hidden; }
+.card-header { background: white; border-bottom: 1px solid #eef2f6; border-radius: var(--radius-lg) var(--radius-lg) 0 0 !important; padding: 1rem 1.5rem; }
+.card-body { background: white; border-radius: 0 0 var(--radius-lg) var(--radius-lg); padding: 1.5rem; }
+
+.btn-aqua { background: var(--aqua-4); color: white; border: none; border-radius: var(--radius-sm); padding: 0.3rem 0.8rem; font-size: 0.85rem; font-weight: 600; }
+.btn-outline-aqua { border: 1px solid var(--aqua-4); color: var(--aqua-4); background: transparent; border-radius: 20px; font-size: 0.7rem; padding: 0.2rem 0.8rem; text-decoration: none; }
+.btn-outline-aqua:hover { background: var(--aqua-1); }
+
+/* ============================================================
+   القسم 3: نظام الطباعة الموحد (CSS)
+   ============================================================ */
+.print-fab { position: fixed; bottom: 1.5rem; left: 1.5rem; z-index: 1050; padding: 0.6rem 1.2rem; border-radius: 50px; box-shadow: 0 4px 15px rgba(0, 150, 167, 0.35); font-weight: 600; background: linear-gradient(135deg, var(--aqua-4), var(--text-dark)); color: white; border: none; cursor: pointer; display: inline-flex; align-items: center; gap: 0.5rem; }
+
+.modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 9999; justify-content: center; align-items: center; }
+.modal-overlay.active { display: flex; }
+.modal-box { background:white; border-radius: 12px; width: 720px; max-width: 95vw; }
+.modal-header { display: flex; justify-content: space-between; padding: 14px 20px; background: linear-gradient(135deg, var(--aqua-4), var(--text-dark)); color: white; border-radius: 12px 12px 0 0; }
+.modal-body { padding: 18px 22px; }
+.modal-footer { padding: 10px 18px; background: var(--aqua-1); border-radius: 0 0 12px 12px; text-align: left; }
+
+.print-watermark { display: none; }
+
+@media print {
+    * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+    body { background: white !important; padding: 0 !important; font-size: 10pt !important; color: #000 !important; margin: 0 !important; }
+    
+    /* إخفاء العناصر غير المرغوبة */
+    .modal-overlay, .print-fab, .no-print { display: none !important; visibility: hidden !important; }
+    nav, aside, .navbar, .sidebar, .side-bar, .breadcrumb, header:not(.print-header-area), footer:not(.print-footer-area) { display: none !important; width: 0 !important; height: 0 !important; overflow: hidden !important; }
+    .whatsapp-icon, .btn-whatsapp, [class*="whatsapp"] { display: none !important; }
+
+    /* إلزام رؤوس الجداول بلون Aqua عند الطباعة */
+    .table-modern thead th, table thead th {
+        background: var(--aqua-4) !important; 
+        color: white !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+    }
+
+    /* الهيدر والفوتر */
+    .print-header-area { display: block !important; position: fixed; top: 0; left: 0; right: 0; z-index: 10000; }
+    .print-footer-area { display: none !important; }
+    .print-last-page-notes { display: block !important; margin-top: 20px !important; padding: 8pt 0 !important; border-top: 1.5pt solid #333 !important; white-space: pre-wrap !important; word-wrap: break-word !important; }
+    
+    .print-watermark.show-watermark { display: block !important; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%) rotate(-45deg); opacity: 0.06; font-size: 48pt; font-weight: 700; z-index: 9999; }
+    .invoice-print-area { padding-top: 50pt !important; padding-bottom: 10pt !important; background: white !important; }
+    .card { border: none !important; box-shadow: none !important; border-radius: 0 !important; }
+    
+    [data-print-hidden="true"] { display: none !important; }
+    .print-grayscale * { filter: grayscale(100%) !important; }
+    .print-no-lines .table td, .print-no-lines .table th { border: none !important; }
+    .print-compact .table td, .print-compact .table th { padding: 2pt 4pt !important; font-size: 8pt !important; }
+}
+
+@media (max-width: 768px) {
+    .stat-card .stat-value { font-size: 1.2rem; }
+    .table-modern { font-size: 0.75rem; }
+    .table-modern thead th, .table-modern tbody td { padding: 0.4rem 0.5rem; }
+    .dead-stock-dashboard { padding: 0.5rem 0; }
+}
+</style>
 {% endblock %}
 
 {% block content %}
+<!-- بيانات الشركة التلقائية (JSON) -->
+<script id="companyData" type="application/json">
+{
+    "name": "اسم الشركة من قاعدة البيانات",
+    "logo_url": "/media/logo.png",
+    "phone": "0591234567",
+    "address": "دمشق - سوريا",
+    "footer_text": "شكراً لتعاملكم معنا"
+}
+</script>
+
+<!-- زر الطباعة العائم -->
+<button class="print-fab no-print" id="openPrintModalBtn">
+    <i class="fas fa-print"></i> طباعة
+</button>
+
+<!-- العلامة المائية -->
+<div class="print-watermark" id="watermarkText">اسم الشركة</div>
+
 <!-- ===== حاوية الطباعة الرئيسية ===== -->
 <div class="dead-stock-dashboard invoice-print-area" id="printableArea">
     <div class="container-fluid px-2 px-md-4">
@@ -211,9 +255,9 @@
                     <div class="d-flex align-items-center">
                         <span class="stat-icon"><i class="fas fa-box"></i></span>
                         <div>
-                            <div class="stat-label">إجمالي الأصناف</div>
+                            <div class="stat-label">{% trans "إجمالي الأصناف" %}</div>
                             <div class="stat-value">{{ dead_items|length }}</div>
-                            <div class="stat-sub">منتج راكد</div>
+                            <div class="stat-sub">{% trans "منتج راكد" %}</div>
                         </div>
                     </div>
                 </div>
@@ -223,9 +267,9 @@
                     <div class="d-flex align-items-center">
                         <span class="stat-icon"><i class="fas fa-coins"></i></span>
                         <div>
-                            <div class="stat-label">قيمة المخزون الراكد</div>
+                            <div class="stat-label">{% trans "قيمة المخزون الراكد" %}</div>
                             <div class="stat-value">{{ total_dead_value|floatformat:1 }}</div>
-                            <div class="stat-sub">إجمالي القيمة</div>
+                            <div class="stat-sub">{% trans "إجمالي القيمة" %}</div>
                         </div>
                     </div>
                 </div>
@@ -235,9 +279,9 @@
                     <div class="d-flex align-items-center">
                         <span class="stat-icon"><i class="fas fa-calendar-alt"></i></span>
                         <div>
-                            <div class="stat-label">مدة التوقف</div>
+                            <div class="stat-label">{% trans "مدة التوقف" %}</div>
                             <div class="stat-value">{{ days_threshold|default:30 }}</div>
-                            <div class="stat-sub">يوم فأكثر</div>
+                            <div class="stat-sub">{% trans "يوم فأكثر" %}</div>
                         </div>
                     </div>
                 </div>
@@ -248,25 +292,25 @@
         <div class="card">
             <div class="card-header no-print">
                 <div class="d-flex flex-wrap align-items-center justify-content-between gap-2">
-                    <h5 class="mb-0 fw-bold" style="color: #006064 !important;">
+                    <h5 class="mb-0 fw-bold" style="color: var(--text-dark) !important;">
                         <i class="fas fa-warehouse me-2"></i> {{ title|default:"تقرير المخزون الراكد" }}
                     </h5>
                     <form method="get" class="d-flex align-items-center gap-2 flex-wrap">
-                        <label class="text-muted small mb-0">عرض المواد غير المباعة منذ:</label>
+                        <label class="text-muted small mb-0">{% trans "عرض المواد غير المباعة منذ:" %}</label>
                         <input type="number" name="days" value="{{ days_threshold|default:30 }}" 
                                class="form-control form-control-sm" style="width: 70px;" min="1" max="365">
-                        <span class="text-muted small">يوم</span>
-                        <button type="submit" class="btn btn-sm" style="background: #0097a7; color: white; border: none; border-radius: 6px; padding: 0.3rem 0.8rem;">
-                            <i class="fas fa-sync-alt"></i> تحديث
+                        <span class="text-muted small">{% trans "يوم" %}</span>
+                        <button type="submit" class="btn btn-sm btn-aqua">
+                            <i class="fas fa-sync-alt"></i> {% trans "تحديث" %}
                         </button>
                     </form>
                 </div>
             </div>
             <div class="card-body">
                 <!-- تنبيه إجمالي القيمة -->
-                <div class="alert alert-info d-flex align-items-center gap-2 no-print" style="border-radius: 10px;">
-                    <i class="fas fa-info-circle fa-lg" style="color: #0097a7;"></i>
-                    <span>إجمالي قيمة المخزون الراكد: <strong style="color: #006064; font-size: 1.1rem;">{{ total_dead_value|floatformat:1 }}</strong></span>
+                <div class="alert alert-info d-flex align-items-center gap-2 no-print" style="border-radius: 10px; background: var(--aqua-1); color: var(--text-dark); border-color: var(--aqua-2);">
+                    <i class="fas fa-info-circle fa-lg" style="color: var(--aqua-4);"></i>
+                    <span>{% trans "إجمالي قيمة المخزون الراكد:" %} <strong style="color: var(--text-dark); font-size: 1.1rem;">{{ total_dead_value|floatformat:1 }}</strong></span>
                 </div>
 
                 <!-- ===== الجدول ===== -->
@@ -275,12 +319,12 @@
                         <thead>
                             <tr>
                                 <th data-print-field="col-index" style="width: 45px; text-align: center;">#</th>
-                                <th data-print-field="col-name">اسم المادة</th>
-                                <th data-print-field="col-qty" style="text-align: center;">الكمية</th>
-                                <th data-print-field="col-cost" style="text-align: center;">سعر التكلفة</th>
-                                <th data-print-field="col-value" style="text-align: center;">قيمة المخزون</th>
-                                <th data-print-field="col-date" style="text-align: center;">آخر بيع</th>
-                                <th class="no-print" style="text-align: center; width: 100px;">إجراء</th>
+                                <th data-print-field="col-name">{% trans "اسم المادة" %}</th>
+                                <th data-print-field="col-qty" style="text-align: center;">{% trans "الكمية" %}</th>
+                                <th data-print-field="col-cost" style="text-align: center;">{% trans "سعر التكلفة" %}</th>
+                                <th data-print-field="col-value" style="text-align: center;">{% trans "قيمة المخزون" %}</th>
+                                <th data-print-field="col-date" style="text-align: center;">{% trans "آخر بيع" %}</th>
+                                <th class="no-print" style="text-align: center; width: 100px;">{% trans "إجراء" %}</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -305,23 +349,21 @@
                                     {% if item.last_sale_date %}
                                         <span class="text-muted-date">{{ item.last_sale_date }}</span>
                                     {% else %}
-                                        <span class="text-danger-light"><i class="fas fa-exclamation-circle"></i> لم يبع</span>
+                                        <span class="text-danger-light"><i class="fas fa-exclamation-circle"></i> {% trans "لم يبع" %}</span>
                                     {% endif %}
                                 </td>
                                 <td class="no-print" style="text-align: center;">
-                                    <a href="{% url 'invoice:product_detail' item.product.slug %}" 
-                                       class="btn btn-sm btn-outline-primary" 
-                                       style="border-radius: 20px; font-size: 0.7rem; padding: 0.2rem 0.8rem; border-color: #0097a7; color: #0097a7;">
-                                        <i class="fas fa-eye"></i> عرض
+                                    <a href="{% url 'invoice:product_detail' item.product.slug %}" class="btn btn-sm btn-outline-aqua">
+                                        <i class="fas fa-eye"></i> {% trans "عرض" %}
                                     </a>
                                 </td>
                             </tr>
                             {% empty %}
                             <tr>
                                 <td colspan="7" class="text-center py-4 text-success">
-                                    <i class="fas fa-check-circle fa-2x d-block mb-2" style="color: #10b981;"></i>
-                                    <span style="font-size: 1.1rem; font-weight: 600;">ممتاز!</span><br>
-                                    <span class="text-muted">جميع المنتجات تتحرك بانتظام، لا يوجد مخزون راكد.</span>
+                                    <i class="fas fa-check-circle fa-2x d-block mb-2" style="color: var(--success-color);"></i>
+                                    <span style="font-size: 1.1rem; font-weight: 600;">{% trans "ممتاز!" %}</span><br>
+                                    <span class="text-muted">{% trans "جميع المنتجات تتحرك بانتظام، لا يوجد مخزون راكد." %}</span>
                                 </td>
                             </tr>
                             {% endfor %}
@@ -331,38 +373,105 @@
                 
                 <!-- ===== ملخص ===== -->
                 <div class="d-flex justify-content-between align-items-center mt-3 pt-2 border-top no-print" style="border-color: #eef2f6 !important;">
-                    <span class="text-muted small">عدد الأصناف الراكدة: <strong>{{ dead_items|length }}</strong></span>
-                    <span class="text-muted small">القيمة الإجمالية: <strong style="color: #006064;">{{ total_dead_value|floatformat:1 }}</strong></span>
+                    <span class="text-muted small">{% trans "عدد الأصناف الراكدة:" %} <strong>{{ dead_items|length }}</strong></span>
+                    <span class="text-muted small">{% trans "القيمة الإجمالية:" %} <strong style="color: var(--text-dark);">{{ total_dead_value|floatformat:1 }}</strong></span>
                 </div>
             </div>
         </div>
         
-        <!-- ===== تضمين نظام الطباعة المتقدم ===== -->
-        {% include 'includes/print_system.html' %}
-        
+        <!-- ===== نافذة إعدادات الطباعة (مدمجة محلياً) ===== -->
+        <div class="modal-overlay no-print" id="printModal">
+            <div class="modal-box">
+                <div class="modal-header">
+                    <h3 style="margin:0;"><i class="fas fa-cog"></i> {% trans "إعدادات الطباعة" %}</h3>
+                    <button id="closeModalBtn" style="background:transparent; border:none; color:white; font-size:1.2rem; cursor:pointer;"><i class="fas fa-times"></i></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">{% trans "ملاحظات تظهر في آخر صفحة فقط" %}</label>
+                        <textarea id="printNotes" rows="4" class="form-control" placeholder="{% trans 'أدخل الملاحظات هنا...' %}"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn-aqua" id="executePrintBtn">
+                        <i class="fas fa-print"></i> {% trans "طباعة الآن" %}
+                    </button>
+                </div>
+            </div>
+        </div>
+
     </div>
 </div>
-
-<!-- ===== زر الطباعة الخاص بالنظام المتقدم (موجود داخل print_system.html) ===== -->
-<!-- تم حذف الزر المكرر هنا -->
-
 {% endblock %}
 
 {% block extra_js %}
-    <!-- نظام الطباعة المتقدم -->
-    <script src="{% static 'js/print_system.js' %}"></script>
-    
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            // تنسيق الأرقام بصفر واحد بعد الفاصلة
-            document.querySelectorAll('[data-print-field="col-cost"], [data-print-field="col-value"]').forEach(function(el) {
-                let val = parseFloat(el.textContent.trim().replace(/,/g, ''));
-                if (!isNaN(val)) {
-                    el.textContent = val.toFixed(1);
-                }
-            });
-            
-            console.log('✅ نظام الطباعة المتقدم جاهز');
+<script nonce="{{ csp_nonce }}">
+    document.addEventListener('DOMContentLoaded', function() {
+        // 1. تنسيق الأرقام بصفر واحد بعد الفاصلة
+        document.querySelectorAll('[data-print-field="col-cost"], [data-print-field="col-value"]').forEach(function(el) {
+            let val = parseFloat(el.textContent.trim().replace(/,/g, ''));
+            if (!isNaN(val)) {
+                el.textContent = val.toFixed(1);
+            }
         });
-    </script>
+
+        // 2. ======== نظام الطباعة الموحد (JavaScript) ========
+        function getCompanySettings() {
+            const scriptTag = document.getElementById('companyData');
+            if (scriptTag) {
+                try { return JSON.parse(scriptTag.textContent); } 
+                catch(e) { console.error("Error parsing company data", e); }
+            }
+            return { name: 'شركة', logo_url: '', phone: '', address: '', footer_text: '' };
+        }
+
+        const company = getCompanySettings();
+        const watermarkEl = document.getElementById('watermarkText');
+        if (watermarkEl && company.name) {
+            watermarkEl.textContent = company.name;
+        }
+
+        function executePrint() {
+            const notes = document.getElementById('printNotes').value.trim();
+            const printableArea = document.getElementById('printableArea');
+            let lastPageNotes = document.getElementById('lastPageNotes');
+            
+            if (!lastPageNotes) {
+                lastPageNotes = document.createElement('div');
+                lastPageNotes.id = 'lastPageNotes';
+                lastPageNotes.className = 'print-last-page-notes';
+                printableArea.appendChild(lastPageNotes);
+            }
+            
+            if (notes) {
+                lastPageNotes.innerHTML = '<div class="notes-label" style="font-weight:bold; margin-bottom:5px;">📝 ملاحظات:</div><div class="notes-content">' + notes.replace(/\n/g, '<br>') + '</div>';
+            } else {
+                lastPageNotes.innerHTML = '';
+            }
+
+            if (watermarkEl) watermarkEl.classList.add('show-watermark');
+            
+            setTimeout(function() {
+                window.print();
+                
+                if (watermarkEl) watermarkEl.classList.remove('show-watermark');
+                if (lastPageNotes) lastPageNotes.innerHTML = '';
+            }, 300);
+        }
+
+        document.getElementById('executePrintBtn')?.addEventListener('click', executePrint);
+        document.getElementById('openPrintModalBtn')?.addEventListener('click', () => {
+            document.getElementById('printModal').classList.add('active');
+        });
+        document.getElementById('closeModalBtn')?.addEventListener('click', () => {
+            document.getElementById('printModal').classList.remove('active');
+        });
+        
+        document.getElementById('printModal')?.addEventListener('click', function(e) {
+            if (e.target === this) this.classList.remove('active');
+        });
+        
+        console.log('✅ نظام الطباعة المتقدم جاهز');
+    });
+</script>
 {% endblock %}

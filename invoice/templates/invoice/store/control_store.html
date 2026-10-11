@@ -1,10 +1,15 @@
 {% extends "base.html" %}
 {% load static %}
+{% load i18n %}
 
-{% block title %} إدارة المتجر {% endblock %}
+{% block title %}{% trans "إدارة المتجر" %}{% endblock %}
 
 {% block extra_css %}
-<style>
+<!-- المكتبات الخارجية للمرجع الشامل -->
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.rtl.min.css" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+<style nonce="{{ csp_nonce }}">
     :root {
         --aqua-1: #e0f7fa;
         --aqua-2: #b2ebf2;
@@ -41,15 +46,6 @@
         display: flex; align-items: center; gap: 10px;
     }
     .page-header p { color: rgba(255,255,255,0.75); }
-    .page-header .btn {
-        background: rgba(255,255,255,0.14);
-        border: 1px solid rgba(255,255,255,0.28);
-        color: white; font-weight: 600;
-    }
-    .page-header .btn:hover {
-        background: rgba(255,255,255,0.28); color: white;
-        transform: translateY(-1px);
-    }
 
     .stat-card {
         background: white; border-radius: var(--radius);
@@ -75,8 +71,9 @@
         border-radius: var(--radius);
         box-shadow: var(--shadow-sm);
         border: 1px solid #e8f0f1;
-        flex-wrap: wrap; gap: 4px;
+        display: flex; flex-wrap: wrap; gap: 4px;
         margin-bottom: 1.25rem;
+        align-items: center;
     }
     .control-tabs .nav-link {
         border-radius: 8px; color: #546e7a;
@@ -84,6 +81,7 @@
         padding: 0.55rem 1.1rem;
         display: flex; align-items: center; gap: 8px;
         transition: all 0.2s; border: 1px solid transparent;
+        cursor: pointer;
     }
     .control-tabs .nav-link i { font-size: 0.95rem; }
     .control-tabs .nav-link:hover { background: var(--aqua-1); color: var(--aqua-4); }
@@ -91,9 +89,20 @@
         background: linear-gradient(135deg, var(--aqua-4), #00838f);
         color: white; box-shadow: 0 3px 10px rgba(0,151,167,0.3);
     }
+    .control-tabs .nav-link.external-link {
+        background: var(--aqua-1); color: var(--aqua-4);
+        border: 1px dashed var(--aqua-3);
+    }
+    .control-tabs .nav-link.external-link:hover {
+        background: var(--aqua-2); color: var(--aqua-5);
+    }
+    .control-tabs .nav-divider {
+        width: 1px; height: 25px; background: #e0e8e9; margin: 0 5px;
+    }
     @media (max-width: 576px) {
         .control-tabs .nav-link { font-size: 0.78rem; padding: 0.45rem 0.7rem; }
         .page-header { padding: 1.2rem; }
+        .control-tabs .nav-divider { display: none; }
     }
 
     .control-page .card {
@@ -339,11 +348,6 @@
             <h2><i class="fas fa-store-alt"></i> إدارة المتجر</h2>
             <p class="mb-0 small">تحكم كامل بالواجهة والمنتجات والعروض</p>
         </div>
-        <div class="d-flex gap-2 flex-wrap">
-            <a href="{% url 'invoice:manage_categories' %}" class="btn"><i class="fas fa-tags me-1"></i> التصنيفات</a>
-          
-            <a href="{% url 'invoice:product_bulk_update' %}" class="btn"><i class="fas fa-dollar-sign me-1"></i> نظام التسعير</a>
-        </div>
     </div>
 
     <!-- ===== بطاقات الإحصائيات ===== -->
@@ -386,7 +390,7 @@
         </div>
     </div>
 
-    <!-- ===== شريط التبويبات ===== -->
+    <!-- ===== شريط التبويبات والأزرار ===== -->
     <ul class="nav control-tabs" role="tablist">
         <li class="nav-item" role="presentation">
             <button class="nav-link active" data-bs-toggle="pill" data-bs-target="#tabAnnouncements" type="button" role="tab">
@@ -412,6 +416,21 @@
             <button class="nav-link" data-bs-toggle="pill" data-bs-target="#tabFlash" type="button" role="tab">
                 <i class="fas fa-bolt"></i> عروض الفلاش
             </button>
+        </li>
+        
+        <!-- فاصل -->
+        <li class="nav-divider"></li>
+        
+        <!-- أزرار إدارة خارجية منقولة للشريط -->
+        <li class="nav-item" role="presentation">
+            <a href="{% url 'invoice:manage_categories' %}" class="nav-link external-link">
+                <i class="fas fa-tags"></i> التصنيفات <i class="fas fa-external-link-alt ms-1 fa-xs opacity-50"></i>
+            </a>
+        </li>
+        <li class="nav-item" role="presentation">
+            <a href="{% url 'invoice:product_bulk_update' %}" class="nav-link external-link">
+                <i class="fas fa-dollar-sign"></i> نظام التسعير <i class="fas fa-external-link-alt ms-1 fa-xs opacity-50"></i>
+            </a>
         </li>
     </ul>
 
@@ -447,7 +466,6 @@
         </div>
 
         <!-- ===== تبويب 2: البنرات ===== -->
-                 <!-- ===== تبويب 2: البنرات ===== -->
         <div class="tab-pane fade" id="tabBanners" role="tabpanel">
             <div class="card">
                 <div class="card-header">
@@ -488,6 +506,7 @@
                 </div>
             </div>
         </div>
+        
         <!-- ===== تبويب 3: المنتجات ===== -->
         <div class="tab-pane fade" id="tabProducts" role="tabpanel">
             <div class="card">
@@ -533,7 +552,7 @@
                                     </td>
                                     <td>
                                         {% if product.badge_url %}
-                                        <img src="{{ product.badge_url }}" style="width:30px; height:30px; object-fit:contain;" alt="شعار">
+                                        <img src="{{ product.badge_url }}" style="width:30px; height:30px; object-fit:contain;" alt="شارة">
                                         {% endif %}
                                         <button class="btn btn-outline-primary btn-sm" data-open-badge="{{ product.id }}" data-badge-name="{{ product.name|escapejs }}"><i class="fas fa-camera"></i></button>
                                     </td>
@@ -1538,7 +1557,6 @@ document.addEventListener('DOMContentLoaded', function() {
                     document.getElementById('flashHoursInput').value = '6';
                     flashHoursModal.show();
                 } else {
-                    /* احتياط إذا لم يوجد المودال */
                     var input = prompt('هذا العرض منتهي.\nكم ساعة تريد تفعيله من الآن؟', '6');
                     if (input === null) return;
                     var h = parseFloat(input);
@@ -1626,4 +1644,4 @@ document.addEventListener('DOMContentLoaded', function() {
 
 });
 </script>
-{% endblock %}555
+{% endblock %}

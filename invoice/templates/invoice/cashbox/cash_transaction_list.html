@@ -13,64 +13,67 @@
 @import url('https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;600;700;800&display=swap');
 
 :root {
-    --primary-1: #f0fdfa;
-    --primary-2: #ccfbf1;
-    --primary-3: #5eead4;
-    --primary-4: #0d9488; /* Teal 600 */
-    --primary-dark: #0f766e;
-    --text-dark: #0f172a; /* Slate 900 */
-    --text-muted: #64748b; /* Slate 500 */
-    --bg-input: #f8fafc; /* Slate 50 */
-    --border-color: #e2e8f0; /* Slate 200 */
+    /* ===== ألوان الهوية البصرية الموحدة (Aqua Theme) ===== */
+    --aqua-1: #e0f7fa;
+    --aqua-2: #b2ebf2;
+    --aqua-3: #4dd0e1;
+    --aqua-4: #0097a7;
+    --primary-dark: #006064;
+    --text-dark: #006064;
+    --text-muted: #64748b;
+    --bg-input: #f8fafc;
+    --border-color: #e2e8f0;
     --danger-color: #ef4444;
     --danger-bg: #fef2f2;
     --success-color: #10b981;
     --success-bg: #ecfdf5;
-    --shadow-sm: 0 1px 3px rgba(15, 23, 42, 0.05);
-    --shadow-md: 0 4px 6px -1px rgba(15, 23, 42, 0.08);
-    --shadow-lg: 0 10px 15px -3px rgba(15, 23, 42, 0.1);
-    --radius-sm: 8px;
-    --radius: 12px;
-    --radius-lg: 16px;
+    --shadow-sm: 0 2px 8px rgba(0, 150, 167, 0.08);
+    --shadow-md: 0 4px 12px rgba(0, 150, 167, 0.12);
+    --shadow-lg: 0 8px 30px rgba(0, 150, 167, 0.2);
+    --radius-sm: 4px;
+    --radius: 8px;
+    --radius-lg: 12px;
     --ease: cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-speed: 0.3s;
 }
 
 * { box-sizing: border-box; }
 
 body {
     font-family: 'Tajawal', sans-serif;
-    background: #f1f5f9; /* Slate 100 */
+    background: linear-gradient(135deg, #f8fafc 0%, var(--aqua-1) 100%);
     min-height: 100vh;
     padding: 1rem;
     font-size: 0.9rem;
-    color: var(--text-dark);
+    color: #1a1a2e;
 }
 
 .page-container { max-width: 1200px; margin: 0 auto; }
 
 /* ===== الهيدر المدمج ===== */
 .form-header {
-    background: white; border-radius: var(--radius); padding: 1rem 1.5rem; margin-bottom: 1rem;
-    box-shadow: var(--shadow-sm); border: 1px solid var(--border-color);
+    background: white; border-radius: var(--radius-lg); padding: 1rem 1.5rem; margin-bottom: 1rem;
+    box-shadow: var(--shadow-sm); border: 1px solid var(--aqua-1);
     display: flex; align-items: center; justify-content: space-between; gap: 1rem; flex-wrap: wrap;
 }
 .header-info { display: flex; align-items: center; gap: 0.75rem; }
-.header-icon { width: 40px; height: 40px; background: var(--primary-1); border-radius: var(--radius-sm); display: flex; align-items: center; justify-content: center; color: var(--primary-4); font-size: 1.1rem; }
+.header-icon { width: 40px; height: 40px; background: var(--aqua-1); border-radius: var(--radius); display: flex; align-items: center; justify-content: center; color: var(--aqua-4); font-size: 1.1rem; }
 .header-title { font-size: 1.1rem; font-weight: 700; margin: 0; color: var(--text-dark); }
 
 .header-actions { display: flex; gap: 0.5rem; flex-wrap: wrap; }
 
 /* ===== الأزرار ===== */
-.btn-primary-teal { background: var(--primary-4); color: white; border: none; padding: 0.5rem 1.2rem; border-radius: var(--radius-sm); font-size: 0.85rem; font-weight: 600; cursor: pointer; transition: all 0.2s var(--ease); display: inline-flex; align-items: center; gap: 0.4rem; text-decoration: none; white-space: nowrap; }
-.btn-primary-teal:hover { background: var(--primary-dark); transform: translateY(-1px); box-shadow: var(--shadow-md); }
+.btn-primary-teal { background: linear-gradient(135deg, var(--aqua-4), var(--primary-dark)); color: white; border: none; padding: 0.5rem 1.2rem; border-radius: var(--radius-sm); font-size: 0.85rem; font-weight: 600; cursor: pointer; transition: all 0.2s var(--ease); display: inline-flex; align-items: center; gap: 0.4rem; text-decoration: none; white-space: nowrap; box-shadow: 0 3px 12px rgba(0, 150, 167, 0.3); }
+.btn-primary-teal:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(0, 150, 167, 0.4); color: white; }
 .btn-secondary-teal { background: white; color: var(--text-muted); border: 1px solid var(--border-color); padding: 0.5rem 1.2rem; border-radius: var(--radius-sm); font-size: 0.85rem; font-weight: 600; cursor: pointer; transition: all 0.2s var(--ease); display: inline-flex; align-items: center; gap: 0.4rem; text-decoration: none; white-space: nowrap; }
 .btn-secondary-teal:hover { background: var(--bg-input); color: var(--text-dark); }
-.btn-warning-soft { background: var(--primary-1); color: var(--primary-dark); border: 1px solid var(--primary-2); padding: 0.5rem 1.2rem; border-radius: var(--radius-sm); font-size: 0.85rem; font-weight: 600; cursor: pointer; transition: all 0.2s var(--ease); display: inline-flex; align-items: center; gap: 0.4rem; text-decoration: none; white-space: nowrap; }
-.btn-warning-soft:hover { background: var(--primary-2); }
+.btn-warning-soft { background: var(--aqua-1); color: var(--primary-dark); border: 1px solid var(--aqua-2); padding: 0.5rem 1.2rem; border-radius: var(--radius-sm); font-size: 0.85rem; font-weight: 600; cursor: pointer; transition: all 0.2s var(--ease); display: inline-flex; align-items: center; gap: 0.4rem; text-decoration: none; white-space: nowrap; }
+.btn-warning-soft:hover { background: var(--aqua-2); }
 
 /* ===== بطاقة الرصيد ===== */
 .stats-strip { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem; margin-bottom: 1rem; }
-.stat-card { background: white; border-radius: var(--radius); padding: 1rem 1.25rem; box-shadow: var(--shadow-sm); border: 1px solid var(--border-color); border-right: 4px solid var(--primary-4); }
+.stat-card { background: white; border-radius: var(--radius-lg); padding: 1rem 1.25rem; box-shadow: var(--shadow-sm); border: 1px solid var(--aqua-1); border-right: 4px solid var(--aqua-4); transition: box-shadow 0.3s var(--ease); }
+.stat-card:hover { box-shadow: var(--shadow-md); }
 .stat-card.bg-success-soft { border-right-color: var(--success-color); }
 .stat-card.bg-danger-soft { border-right-color: var(--danger-color); }
 .stat-label { font-size: 0.75rem; color: var(--text-muted); font-weight: 600; margin-bottom: 0.25rem; display: flex; align-items: center; gap: 0.3rem; }
@@ -79,58 +82,59 @@ body {
 .stat-card.bg-danger-soft .stat-value { color: var(--danger-color); }
 
 /* ===== بطاقات عامة ===== */
-.card { background: white; border-radius: var(--radius-lg); box-shadow: var(--shadow-sm); border: 1px solid var(--border-color); margin-bottom: 1rem; overflow: hidden; }
-.card-title { font-size: 0.95rem; font-weight: 700; color: var(--text-dark); margin: 0; padding: 1rem 1.5rem; display: flex; align-items: center; gap: 0.5rem; cursor: pointer; user-select: none; }
-.card-title i { color: var(--primary-4); font-size: 0.9rem; }
+.card { background: white; border-radius: var(--radius-lg); box-shadow: var(--shadow-sm); border: 1px solid var(--aqua-1); margin-bottom: 1rem; overflow: hidden; transition: box-shadow 0.3s var(--ease); }
+.card:hover { box-shadow: var(--shadow-md); }
+.card-title { font-size: 0.95rem; font-weight: 700; color: var(--text-dark); margin: 0; padding: 1rem 1.5rem; display: flex; align-items: center; gap: 0.5rem; cursor: pointer; user-select: none; border-bottom: 1px solid var(--aqua-1); }
+.card-title i { color: var(--aqua-4); font-size: 0.9rem; }
 .card-title .chevron-icon { margin-right: auto; font-size: 0.75rem; transition: transform 0.3s var(--ease); color: var(--text-muted); }
 .card-title[aria-expanded="false"] .chevron-icon { transform: rotate(-90deg); }
 
 .filter-body { padding: 0 1.5rem 1rem 1.5rem; }
 .form-label { font-size: 0.8rem; font-weight: 600; color: var(--text-muted); margin-bottom: 0.4rem; display: block; }
 .form-control, .form-select { width: 100%; padding: 0.5rem 0.75rem; border: 1px solid var(--border-color); background: var(--bg-input); border-radius: var(--radius-sm); font-size: 0.85rem; font-family: 'Tajawal', sans-serif; color: var(--text-dark); transition: all 0.2s var(--ease); }
-.form-control:focus, .form-select:focus { background: white; border-color: var(--primary-4); box-shadow: 0 0 0 4px rgba(13, 148, 136, 0.1); outline: none; }
+.form-control:focus, .form-select:focus { background: white; border-color: var(--aqua-3); box-shadow: 0 0 0 4px rgba(77, 208, 225, 0.1); outline: none; }
 
 /* ===== الجدول ===== */
-.table-wrap { overflow-x: auto; border-radius: var(--radius-sm); border: 1px solid var(--border-color); }
-.tx-table { width: 100%; border-collapse: collapse; font-size: 0.85rem; min-width: 800px; }
-.tx-table thead th { background: var(--bg-input); color: var(--text-muted); padding: 0.75rem 1rem; text-align: right; font-weight: 600; font-size: 0.75rem; border-bottom: 1px solid var(--border-color); text-transform: uppercase; white-space: nowrap; cursor: pointer; user-select: none; transition: all 0.2s var(--ease); }
-.tx-table thead th:hover { background: #e2e8f0; color: var(--text-dark); }
-.tx-table thead th .sort-icon { margin-right: 5px; font-size: 0.7rem; opacity: 0.4; }
-.tx-table thead th.active-sort .sort-icon { opacity: 1; color: var(--primary-4); }
-.tx-table thead th.active-sort { color: var(--primary-dark); background: var(--primary-1); }
-.tx-table tbody td { padding: 0.75rem 1rem; border-bottom: 1px solid #f1f5f9; color: var(--text-dark); white-space: nowrap; }
+.table-wrap { overflow-x: auto; border-radius: var(--radius-sm); }
+.tx-table { width: 100%; border-collapse: collapse; font-size: 0.85rem; min-width: 800px; scrollbar-width: none; }
+.tx-table::-webkit-scrollbar { display: none; }
+.tx-table thead th { background: linear-gradient(135deg, var(--aqua-3), var(--aqua-4)); color: white; padding: 0.75rem 1rem; text-align: right; font-weight: 700; font-size: 0.75rem; border-bottom: 2px solid var(--aqua-4); white-space: nowrap; cursor: pointer; user-select: none; transition: all 0.2s var(--ease); }
+.tx-table thead th:hover { background: linear-gradient(135deg, var(--aqua-4), var(--primary-dark)); }
+.tx-table thead th .sort-icon { margin-right: 5px; font-size: 0.7rem; opacity: 0.6; }
+.tx-table thead th.active-sort .sort-icon { opacity: 1; }
+.tx-table tbody td { padding: 0.75rem 1rem; border-bottom: 1px solid var(--aqua-1); color: #1a1a2e; white-space: nowrap; }
 .tx-table tbody tr:last-child td { border-bottom: none; }
 .tx-table tbody tr { transition: background 0.2s var(--ease); }
-.tx-table tbody tr:hover { background: var(--bg-input); }
+.tx-table tbody tr:hover { background: var(--aqua-1); }
 
 .amt-in { color: var(--success-color); font-weight: 700; font-variant-numeric: tabular-nums; }
 .amt-out { color: var(--danger-color); font-weight: 700; font-variant-numeric: tabular-nums; }
-.amt-net { color: var(--primary-4); font-weight: 700; font-variant-numeric: tabular-nums; }
+.amt-net { color: var(--aqua-4); font-weight: 700; font-variant-numeric: tabular-nums; }
 
 .tx-badge { font-size: 0.7rem; padding: 0.2rem 0.6rem; border-radius: 1rem; font-weight: 700; white-space: nowrap; display: inline-block; }
 .tx-badge[data-type="deposit"], .tx-badge[data-type="sale_receipt"], .tx-badge[data-type="purchase_return"] { background: var(--success-bg); color: var(--success-color); }
 .tx-badge[data-type="withdrawal"], .tx-badge[data-type="expense"], .tx-badge[data-type="purchase_payment"], .tx-badge[data-type="sale_return"] { background: var(--danger-bg); color: var(--danger-color); }
-.tx-badge:not([data-type]) { background: var(--primary-1); color: var(--primary-dark); }
+.tx-badge:not([data-type]) { background: var(--aqua-1); color: var(--primary-dark); }
 
-.inv-link { font-size: 0.7rem; color: var(--primary-4); text-decoration: none; display: inline-flex; align-items: center; gap: 0.2rem; transition: color 0.15s var(--ease); }
+.inv-link { font-size: 0.7rem; color: var(--aqua-4); text-decoration: none; display: inline-flex; align-items: center; gap: 0.2rem; transition: color 0.15s var(--ease); }
 .inv-link:hover { color: var(--primary-dark); text-decoration: underline; }
 
 .btn-view { width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; border-radius: var(--radius-sm); border: 1px solid var(--border-color); color: var(--text-muted); background: var(--bg-input); transition: all 0.2s var(--ease); text-decoration: none; }
-.btn-view:hover { background: var(--primary-4); color: white; border-color: var(--primary-4); }
+.btn-view:hover { background: var(--aqua-4); color: white; border-color: var(--aqua-4); }
 
-.tx-table tfoot td { font-weight: 600; font-size: 0.85rem; padding: 0.75rem 1rem; text-align: right; border-top: 1.5px solid var(--border-color); background: white; }
-.tx-table tfoot tr:last-child td { background: var(--primary-1); border-top: 2px solid var(--primary-4); font-size: 0.9rem; }
+.tx-table tfoot td { font-weight: 600; font-size: 0.85rem; padding: 0.75rem 1rem; text-align: right; border-top: 1.5px solid var(--aqua-2); background: white; }
+.tx-table tfoot tr:last-child td { background: linear-gradient(135deg, var(--aqua-1), #ffffff); border-top: 2px solid var(--aqua-4); font-size: 0.9rem; }
 
 .empty-state { text-align: center; padding: 3rem 1rem; color: var(--text-muted); }
-.empty-state i { font-size: 2.5rem; color: #cbd5e1; margin-bottom: 0.5rem; display: block; }
+.empty-state i { font-size: 2.5rem; color: var(--aqua-2); margin-bottom: 0.5rem; display: block; }
 .empty-state p { margin: 0; font-size: 0.9rem; }
 
-.pager-bar { display: flex; justify-content: center; align-items: center; padding: 1rem 1.5rem; border-top: 1px solid var(--border-color); gap: 0.25rem; flex-wrap: wrap; }
+.pager-bar { display: flex; justify-content: center; align-items: center; padding: 1rem 1.5rem; border-top: 1px solid var(--aqua-1); gap: 0.25rem; flex-wrap: wrap; }
 .pager-bar .page-link { border: none; border-radius: var(--radius-sm); padding: 0.35rem 0.75rem; font-size: 0.8rem; color: var(--text-muted); background: white; transition: all 0.2s var(--ease); min-width: 32px; text-align: center; text-decoration: none; }
-.pager-bar .page-link:hover { background: var(--bg-input); color: var(--text-dark); }
-.pager-bar .page-item.active .page-link { background: var(--primary-4); color: white; box-shadow: var(--shadow-sm); }
+.pager-bar .page-link:hover { background: var(--aqua-1); color: var(--primary-dark); }
+.pager-bar .page-item.active .page-link { background: linear-gradient(135deg, var(--aqua-4), var(--primary-dark)); color: white; box-shadow: 0 2px 8px rgba(0, 150, 167, 0.2); }
 
-.results-count { text-align: center; font-size: 0.75rem; color: var(--text-muted); padding: 0.5rem; border-top: 1px solid var(--border-color); background: var(--bg-input); }
+.results-count { text-align: center; font-size: 0.75rem; color: var(--text-muted); padding: 0.5rem; border-top: 1px solid var(--aqua-1); background: var(--aqua-1); }
 
 @media (max-width: 992px) {
     .stats-strip { grid-template-columns: 1fr 1fr; }
@@ -141,13 +145,22 @@ body {
     .tx-table thead th, .tx-table tbody td { padding: 0.5rem; }
 }
 
-/* === إعدادات الطباعة المتقدمة === */
+/* === إعدادات الطباعة المتقدمة (صارمة لإخفاء كل شيء خارج المنطقة) === */
 @media print {
-    body { background: white !important; padding: 0 !important; }
+    body { background: white !important; padding: 0 !important; margin: 0 !important; }
+    
+    /* إخفاء قوائم التنقل وال侧bars وأي عناصر غير مرغوبة */
     .no-print { display: none !important; }
+    nav, aside, .navbar, .sidebar, .side-bar, .main-sidebar, .header-area, header, footer, .footer, .breadcrumb {
+        display: none !important; 
+        width: 0 !important;
+        height: 0 !important;
+        overflow: hidden !important;
+    }
+    
     .card { border: none !important; box-shadow: none !important; border-radius: 0 !important; }
-    .tx-table thead th { background: #f1f5f9 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-    .tx-table tfoot tr:last-child td { background: #f0fdfa !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    .tx-table thead th { background: var(--aqua-4) !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+    .tx-table tfoot tr:last-child td { background: var(--aqua-1) !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
 }
 </style>
 
@@ -176,7 +189,7 @@ body {
         </div>
 
         <!-- ===== بطاقات الرصيد والإحصائيات ===== -->
-        <div class="stats-strip">
+        <div class="stats-strip no-print">
             <div class="stat-card">
                 <div class="stat-label"><i class="fas fa-wallet"></i> {% trans "الرصيد الإجمالي" %}</div>
                 <div class="stat-value">{{ overall_balance|floatformat:2 }}</div>
@@ -365,11 +378,11 @@ body {
     </div>
 </div>
 
-<!-- ===== استدعاء نظام الطباعة الموحد ===== -->
+<!-- ===== استدعاء نظام الطباعة الموحد الأصلي (الذي يعمل 100%) ===== -->
 {% include 'includes/print_system.html' %}
 
 <!-- ============================================
-     JavaScript - الوظائف الأصلية للقالب فقط
+     JavaScript - الوظائف الأصلية للقالب فقط (دون التدخل في الطباعة)
      ============================================ -->
 <script nonce="{{ csp_nonce }}">
 document.addEventListener('DOMContentLoaded', function () {
@@ -426,35 +439,26 @@ document.addEventListener('DOMContentLoaded', function () {
     var currentSort = { column: null, direction: 'asc' };
 
     function sortTable(column, direction) {
-        // جلب أسطر البيانات فقط وتجاهل أسطر الفراغ أو التذييل
         var rows = Array.from(tableBody.querySelectorAll('tr')).filter(r => !r.classList.contains('empty-row'));
         
         function getSortValue(row) {
-            // للترتيب حسب التاريخ نعتمد على الـ timestamp المخزن في السطر
             if (column === 'date') {
                 return parseInt(row.getAttribute('data-timestamp'), 10) || 0;
             }
-            
             var cell = row.querySelector('td[data-sort="' + column + '"]');
             if (!cell) return '';
-
             var val = cell.textContent.trim();
-            
-            // للترتيب حسب المبالغ نعتمد على الداتا المخزنة في السطر
             if (column === 'in' || column === 'out') {
                 val = row.getAttribute(column === 'in' ? 'data-amount-in' : 'data-amount-out') || '0';
                 return parseFloat(val) || 0;
             }
-            if (column === 'index') {
-                return parseInt(val, 10) || 0;
-            }
+            if (column === 'index') return parseInt(val, 10) || 0;
             return val.toLowerCase();
         }
 
         rows.sort(function(a, b) {
             var valA = getSortValue(a);
             var valB = getSortValue(b);
-
             if (['in', 'out', 'index', 'date'].includes(column)) {
                 valA = parseFloat(valA) || 0;
                 valB = parseFloat(valB) || 0;
@@ -466,7 +470,6 @@ document.addEventListener('DOMContentLoaded', function () {
             }
         });
 
-        // إعادة بناء الجدول بالترتيب الجديد داخل tbody فقط
         rows.forEach(function(row) { tableBody.appendChild(row); });
     }
 
@@ -474,17 +477,12 @@ document.addEventListener('DOMContentLoaded', function () {
         header.addEventListener('click', function() {
             var column = this.getAttribute('data-sort');
             var direction = 'asc';
-            
-            if (currentSort.column === column && currentSort.direction === 'asc') {
-                direction = 'desc';
-            } else if (currentSort.column === column && currentSort.direction === 'desc') {
-                direction = 'asc';
-            }
+            if (currentSort.column === column && currentSort.direction === 'asc') direction = 'desc';
+            else if (currentSort.column === column && currentSort.direction === 'desc') direction = 'asc';
             
             currentSort.column = column;
             currentSort.direction = direction;
             
-            // تحديث الأيقونات
             headers.forEach(function(th) {
                 th.classList.remove('active-sort');
                 var icon = th.querySelector('.sort-icon i');
@@ -493,9 +491,7 @@ document.addEventListener('DOMContentLoaded', function () {
             
             this.classList.add('active-sort');
             var icon = this.querySelector('.sort-icon i');
-            if (icon) {
-                icon.className = direction === 'asc' ? 'fas fa-sort-up' : 'fas fa-sort-down';
-            }
+            if (icon) icon.className = direction === 'asc' ? 'fas fa-sort-up' : 'fas fa-sort-down';
             
             sortTable(column, direction);
         });
@@ -506,5 +502,6 @@ document.addEventListener('DOMContentLoaded', function () {
 {% endblock %}
 
 {% block extra_js %}
+    <!-- استدعاء ملف الجافاسكريبت الخاص بنظام الطباعة الموحد -->
     <script src="{% static 'js/print_system.js' %}"></script>
 {% endblock %}

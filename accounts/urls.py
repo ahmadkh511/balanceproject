@@ -5,6 +5,8 @@ from django.views.generic import CreateView
 from .forms import CustomUserCreationForm, CustomPasswordResetForm
 from django.conf import settings
 
+from django.views.generic import TemplateView
+
 from . import views
 from .views import CustomLoginForm
 from .views import CustomPasswordChangeView
@@ -75,6 +77,10 @@ urlpatterns = [
 
 
     path('terms/', views.TermsView.as_view(), name='terms'),
+
+
+    
+    path('privacy-policy/', TemplateView.as_view(template_name='accounts/privacy.html'), name='privacy_policy'),
 
     path('profile/', views.profile_view, name='profile'),
 

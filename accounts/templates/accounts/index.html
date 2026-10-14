@@ -3,8 +3,12 @@
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>BalanceIQ | حلول إدارة الأعمال الذكية</title>
+
+    <!-- Preconnect لخطوط جوجل لتسريع الأداء -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.rtl.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -148,7 +152,7 @@
             font-size: 2rem; color: var(--aqua-4); transition: all 0.4s ease;
         }
         .feature-card:hover .feature-icon { background: var(--aqua-4); color: white; }
-        .feature-card h5 { color: var(--text-dark); font-weight: 700; margin-bottom: 1rem; }
+        .feature-card h2 { color: var(--text-dark); font-weight: 700; margin-bottom: 1rem; }
         .feature-card p { color: #546e7a; font-size: 0.95rem; line-height: 1.8; margin: 0; }
 
         .testimonials-section { padding: 6rem 0; background: var(--aqua-1); }
@@ -158,7 +162,7 @@
         .testimonial-text { color: #455a64; font-size: 1rem; line-height: 1.9; margin-bottom: 1.5rem; font-style: italic; }
         .testimonial-author { display: flex; align-items: center; gap: 1rem; }
         .author-avatar { width: 50px; height: 50px; border-radius: 50%; background: var(--aqua-3); color: white; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 1.2rem; }
-        .author-info h6 { margin: 0; color: var(--text-dark); font-weight: 700; }
+        .author-info h3 { margin: 0; color: var(--text-dark); font-weight: 700; font-size: 1rem; }
         .author-info small { color: #78909c; }
 
         .final-cta-section { padding: 5rem 0; background: linear-gradient(135deg, var(--aqua-4) 0%, #006064 100%); text-align: center; color: white; position: relative; overflow: hidden; }
@@ -176,7 +180,6 @@
         /* التجاوب مع الشاشات */
         @media (max-width: 991px) {
             .landing-nav-actions { gap: 8px; }
-            /* تصغير الأزرار وإخفاء نصوصها (ما عدا التجربة المجانية) */
             .landing-btn { padding: 0.5rem 0.8rem; font-size: 0.85rem; }
             .landing-btn .btn-text-full { display: none; }
             .landing-btn-trial-anim .btn-text-full { display: inline !important; font-size: 0.85rem; }
@@ -198,11 +201,9 @@
             .section-title { font-size: 1.5rem; }
             .final-cta-section h2 { font-size: 1.8rem; }
 
-            /* ضبط أحجام الأزرار على الموبايل */
             .landing-nav-actions { gap: 6px; }
             .landing-btn { padding: 0.4rem 0.6rem; font-size: 0.8rem; }
             
-            /* إبراز زر التجربة المجانية ليكون واضحاً وكبير نسبياً */
             .landing-btn-trial-anim { 
                 padding: 0.5rem 0.9rem; 
                 font-size: 0.85rem; 
@@ -212,7 +213,6 @@
         }
 
         @media (max-width: 360px) {
-            /* في الشاشات الصغيرة جداً، نقوم بتصغير زر التجربة المجانية قليلاً لضمان عدم خروجه عن الشاشة */
             .brand-logo { font-size: 1rem; }
             .landing-btn-trial-anim { padding: 0.4rem 0.7rem; font-size: 0.75rem; }
         }
@@ -238,154 +238,158 @@
         </div>
     </div>
 
-    <!-- السلايدر -->
-    <div class="hero-slider" id="heroSlider">
-        <div class="slide active">
-            <img src="https://images.unsplash.com/photo-1551434678-e076c223a692?w=1920&q=80" alt="إدارة أعمال" class="slide-image">
-            <div class="slide-overlay"></div>
-            <div class="slide-content">
-                <div class="glass-card">
-                    <span class="slide-subtitle">مرحباً بكم في</span>
-                    <h1 class="slide-title">إدارة أعمال بذكاء وكفاءة</h1>
-                    <p class="slide-desc">نظام BalanceIQ المتكامل لإدارة المبيعات والمخزون والفواتير بتصميم عصري وسهل الاستخدام.</p>
-                </div>
-            </div>
-        </div>
-        <div class="slide">
-            <img src="https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=1920&q=80" alt="تقارير دقيقة" class="slide-image">
-            <div class="slide-overlay"></div>
-            <div class="slide-content">
-                <div class="glass-card">
-                    <span class="slide-subtitle">تقارير دقيقة</span>
-                    <h1 class="slide-title">لوحة تحكم تفاعلية لاتخاذ القرار</h1>
-                    <p class="slide-desc">تابع إيراداتك ومصروفاتك لحظة بلحظة من خلال رسوم بيائية واضحة ومحدثة تلقائياً.</p>
-                </div>
-            </div>
-        </div>
-        <div class="slide">
-            <img src="https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?w=1920&q=80" alt="مرونة تامة" class="slide-image">
-            <div class="slide-overlay"></div>
-            <div class="slide-content">
-                <div class="glass-card">
-                    <span class="slide-subtitle">مرونة تامة</span>
-                    <h1 class="slide-title">إدارة فواتير ومعاملات بدون تعقيد</h1>
-                    <p class="slide-desc">إنشاء الفواتير، إدارة الباركودات، وتتبع الشحنات بكل سهولة وسرعة فائقة.</p>
-                </div>
-            </div>
-        </div>
-
-        <button class="slider-nav slider-next" id="nextBtn"><i class="fas fa-chevron-right"></i></button>
-        <button class="slider-nav slider-prev" id="prevBtn"><i class="fas fa-chevron-left"></i></button>
-        <div class="slider-dots" id="dotsContainer"></div>
-        
-        <div class="scroll-indicator" id="scrollDownBtn">
-            <span>اكتشف المزيد</span>
-            <i class="fas fa-chevron-down"></i>
-        </div>
-
-        <div class="progress-container"><div class="progress-bar-custom" id="progressBar"></div></div>
-    </div>
-
-    <!-- قسم المميزات -->
-    <section class="features-section" id="features">
-        <div class="container">
-            <h2 class="section-title fade-up">لماذا تختار نظام BalanceIQ؟</h2>
-            <div class="row g-4">
-                <div class="col-lg-4 col-md-6 fade-up">
-                    <div class="feature-card">
-                        <div class="feature-icon"><i class="fas fa-bolt"></i></div>
-                        <h5>سرعة في الأداء</h5>
-                        <p>واجهة عمل خفيفة وسريعة جداً لا تحتاج إلى أجهزة حديثة، مما يوفر الوقت والجهد للموظفين.</p>
-                    </div>
-                </div>
-                <div class="col-lg-4 col-md-6 fade-up">
-                    <div class="feature-card">
-                        <div class="feature-icon"><i class="fas fa-shield-halved"></i></div>
-                        <h5>حماية وأمان عالي</h5>
-                        <p>نظام حماية متقدم لبياناتك مع إمكانية عمل نسخ احتياطية تلقائية لحظية لضمان عدم فقدان أي معلومة.</p>
-                    </div>
-                </div>
-                <div class="col-lg-4 col-md-6 fade-up">
-                    <div class="feature-card">
-                        <div class="feature-icon"><i class="fas fa-barcode"></i></div>
-                        <h5>إدارة باركود ذكية</h5>
-                        <p>ربط مباشر مع أجهزة قراءة الباركود لتسجيل المبيعات وإدارة المخزون بدقة متناهية وبدون أخطاء.</p>
-                    </div>
-                </div>
-                <div class="col-lg-4 col-md-6 fade-up">
-                    <div class="feature-card">
-                        <div class="feature-icon"><i class="fas fa-chart-pie"></i></div>
-                        <h5>تقارير تفصيلية</h5>
-                        <p>لوحة تحكم متكاملة تعرض لك الأرباح، الخسائر، والحركة التشغيلية بشكل رسوم بيائية واضحة.</p>
-                    </div>
-                </div>
-                <div class="col-lg-4 col-md-6 fade-up">
-                    <div class="feature-card">
-                        <div class="feature-icon"><i class="fas fa-users-gear"></i></div>
-                        <h5>صلاحيات متعددة</h5>
-                        <p>تحكم كامل في صلاحيات المستخدمين (محاسب، مدير، بائع)، لضمان تنظيم العمل داخل شركتك.</p>
-                    </div>
-                </div>
-                <div class="col-lg-4 col-md-6 fade-up">
-                    <div class="feature-card">
-                        <div class="feature-icon"><i class="fas fa-headset"></i></div>
-                        <h5>دعم فني متواصل</h5>
-                        <p>فريق دعم فني متخصص جاهز لمساعدتك على مدار الساعة لحل أي استفسار أو مشكلة تقنية فوراً.</p>
+    <!-- المحتوى الرئيسي -->
+    <main>
+        <!-- السلايدر -->
+        <div class="hero-slider" id="heroSlider">
+            <div class="slide active">
+                <img src="{% static 'accounts/images/slides/slaid1.webp' %}" alt="إدارة أعمال" class="slide-image" fetchpriority="high">
+                <div class="slide-overlay"></div>
+                <div class="slide-content">
+                    <div class="glass-card">
+                        <span class="slide-subtitle">مرحباً بكم في</span>
+                        <h1 class="slide-title">إدارة أعمال بذكاء وكفاءة</h1>
+                        <p class="slide-desc">نظام BalanceIQ المتكامل لإدارة المبيعات والمخزون والفواتير بتصميم عصري وسهل الاستخدام.</p>
                     </div>
                 </div>
             </div>
-        </div>
-    </section>
+            <div class="slide">
+                <img src="{% static 'accounts/images/slides/slaid2.webp' %}" alt="تقارير دقيقة" class="slide-image" loading="lazy">
+                <div class="slide-overlay"></div>
+                <div class="slide-content">
+                    <div class="glass-card">
+                        <span class="slide-subtitle">تقارير دقيقة</span>
+                        <h1 class="slide-title">لوحة تحكم تفاعلية لاتخاذ القرار</h1>
+                        <p class="slide-desc">تابع إيراداتك ومصروفاتك لحظة بلحظة من خلال رسوم بيائية واضحة ومحدثة تلقائياً.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="slide">
+                <img src="{% static 'accounts/images/slides/slaid3.webp' %}" alt="مرونة تامة" class="slide-image" loading="lazy">
+                <div class="slide-overlay"></div>
+                <div class="slide-content">
+                    <div class="glass-card">
+                        <span class="slide-subtitle">مرونة تامة</span>
+                        <h1 class="slide-title">إدارة فواتير ومعاملات بدون تعقيد</h1>
+                        <p class="slide-desc">إنشاء الفواتير، إدارة الباركودات، وتتبع الشحنات بكل سهولة وسرعة فائقة.</p>
+                    </div>
+                </div>
+            </div>
 
-    <!-- قسم آراء العملاء -->
-    <section class="testimonials-section">
-        <div class="container">
-            <h2 class="section-title fade-up">ماذا يقول عملاؤنا عنا؟</h2>
-            <div class="row g-4">
-                <div class="col-lg-4 col-md-6 fade-up">
-                    <div class="testimonial-card">
-                        <div class="quote-icon"><i class="fas fa-quote-right"></i></div>
-                        <p class="testimonial-text">"نظام BalanceIQ غير طريقة إدارتنا للمخزون بالكامل. سرعته في تسجيل الفواتير وفر علينا ساعات من العمل اليومي."</p>
-                        <div class="testimonial-author">
-                            <div class="author-avatar">أ.م</div>
-                            <div class="author-info"><h6>أحمد محمد</h6><small>مدير مبيعات - شركة النور</small></div>
+            <!-- أزرار التنقل بين الشرائح (Slider) -->
+            <button class="slider-nav slider-next" id="nextBtn" aria-label="الشريحة التالية"><i class="fas fa-chevron-right"></i></button>
+            <button class="slider-nav slider-prev" id="prevBtn" aria-label="الشريحة السابقة"><i class="fas fa-chevron-left"></i></button>
+            <div class="slider-dots" id="dotsContainer"></div>
+            
+            <div class="scroll-indicator" id="scrollDownBtn">
+                <span>اكتشف المزيد</span>
+                <i class="fas fa-chevron-down"></i>
+            </div>
+
+            <div class="progress-container"><div class="progress-bar-custom" id="progressBar"></div></div>
+        </div>
+
+        <!-- قسم المميزات -->
+        <section class="features-section" id="features">
+            <div class="container">
+                <h2 class="section-title fade-up">لماذا تختار نظام BalanceIQ؟</h2>
+                <div class="row g-4">
+                    <div class="col-lg-4 col-md-6 fade-up">
+                        <div class="feature-card">
+                            <div class="feature-icon"><i class="fas fa-bolt"></i></div>
+                            <h2 class="h5">سرعة في الأداء</h2>
+                            <p>واجهة عمل خفيفة وسريعة جداً لا تحتاج إلى أجهزة حديثة، مما يوفر الوقت والجهد للموظفين.</p>
                         </div>
                     </div>
-                </div>
-                <div class="col-lg-4 col-md-6 fade-up">
-                    <div class="testimonial-card">
-                        <div class="quote-icon"><i class="fas fa-quote-right"></i></div>
-                        <p class="testimonial-text">"تصميم النظام أنيق وسهل الاستخدام جداً، حتى الموظفون غير الملمين بالتكنولوجيا استطاعوا التعامل معه خلال دقائق."</p>
-                        <div class="testimonial-author">
-                            <div class="author-avatar">س.ع</div>
-                            <div class="author-info"><h6>سارة العتيبي</h6><small>محاسبة - مؤسسة الإبداع</small></div>
+                    <div class="col-lg-4 col-md-6 fade-up">
+                        <div class="feature-card">
+                            <div class="feature-icon"><i class="fas fa-shield-halved"></i></div>
+                            <h2 class="h5">حماية وأمان عالي</h2>
+                            <p>نظام حماية متقدم لبياناتك مع إمكانية عمل نسخ احتياطية تلقائية لحظية لضمان عدم فقدان أي معلومة.</p>
                         </div>
                     </div>
-                </div>
-                <div class="col-lg-4 col-md-12 fade-up">
-                    <div class="testimonial-card">
-                        <div class="quote-icon"><i class="fas fa-quote-right"></i></div>
-                        <p class="testimonial-text">"الدعم الفني ممتاز وأسرع من توقعاتي. أي طلب تعديل يتم الاستجابة له بسرعة واحترافية عالية. أنصح به بشدة."</p>
-                        <div class="testimonial-author">
-                            <div class="author-avatar">خ.ف</div>
-                            <div class="author-info"><h6>خالد الفهد</h6><small>صاحب متجر إلكتروني</small></div>
+                    <div class="col-lg-4 col-md-6 fade-up">
+                        <div class="feature-card">
+                            <div class="feature-icon"><i class="fas fa-barcode"></i></div>
+                            <h2 class="h5">إدارة باركود ذكية</h2>
+                            <p>ربط مباشر مع أجهزة قراءة الباركود لتسجيل المبيعات وإدارة المخزون بدقة متناهية وبدون أخطاء.</p>
+                        </div>
+                    </div>
+                    <div class="col-lg-4 col-md-6 fade-up">
+                        <div class="feature-card">
+                            <div class="feature-icon"><i class="fas fa-chart-pie"></i></div>
+                            <h2 class="h5">تقارير تفصيلية</h2>
+                            <p>لوحة تحكم متكاملة تعرض لك الأرباح، الخسائر، والحركة التشغيلية بشكل رسوم بيائية واضحة.</p>
+                        </div>
+                    </div>
+                    <div class="col-lg-4 col-md-6 fade-up">
+                        <div class="feature-card">
+                            <div class="feature-icon"><i class="fas fa-users-gear"></i></div>
+                            <h2 class="h5">صلاحيات متعددة</h2>
+                            <p>تحكم كامل في صلاحيات المستخدمين (محاسب، مدير، بائع)، لضمان تنظيم العمل داخل شركتك.</p>
+                        </div>
+                    </div>
+                    <div class="col-lg-4 col-md-6 fade-up">
+                        <div class="feature-card">
+                            <div class="feature-icon"><i class="fas fa-headset"></i></div>
+                            <h2 class="h5">دعم فني متواصل</h2>
+                            <p>فريق دعم فني متخصص جاهز لمساعدتك على مدار الساعة لحل أي استفسار أو مشكلة تقنية فوراً.</p>
                         </div>
                     </div>
                 </div>
             </div>
-        </div>
-    </section>
+        </section>
 
-    <!-- قسم دعوة للعمل -->
-    <section class="final-cta-section">
-        <div class="container">
-            <h2 class="fade-up">جاهز لتطوير أعمالك؟</h2>
-            <p class="fade-up">انضم لمئات الشركات التي وثقت بنظام BalanceIQ وابدأ رحلتك الآن مجاناً.</p>
-            <a href="{% url 'accounts:trial_request' %}" class="landing-btn landing-btn-trial-anim btn-final fade-up">
-                <i class="fas fa-rocket"></i> ابدأ تجربتك المجانية الآن
-            </a>
-        </div>
-    </section>
+        <!-- قسم آراء العملاء -->
+        <section class="testimonials-section">
+            <div class="container">
+                <h2 class="section-title fade-up">ماذا يقول عملاؤنا عنا؟</h2>
+                <div class="row g-4">
+                    <div class="col-lg-4 col-md-6 fade-up">
+                        <div class="testimonial-card">
+                            <div class="quote-icon"><i class="fas fa-quote-right"></i></div>
+                            <p class="testimonial-text">"نظام BalanceIQ غير طريقة إدارتنا للمخزون بالكامل. سرعته في تسجيل الفواتير وفر علينا ساعات من العمل اليومي."</p>
+                            <div class="testimonial-author">
+                                <div class="author-avatar">أ.م</div>
+                                <div class="author-info"><h3 class="h6">أحمد محمد</h3><small>مدير مبيعات - شركة النور</small></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-lg-4 col-md-6 fade-up">
+                        <div class="testimonial-card">
+                            <div class="quote-icon"><i class="fas fa-quote-right"></i></div>
+                            <p class="testimonial-text">"تصميم النظام أنيق وسهل الاستخدام جداً، حتى الموظفون غير الملمين بالتكنولوجيا استطاعوا التعامل معه خلال دقائق."</p>
+                            <div class="testimonial-author">
+                                <div class="author-avatar">س.ع</div>
+                                <div class="author-info"><h3 class="h6">سارة العتيبي</h3><small>محاسبة - مؤسسة الإبداع</small></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-lg-4 col-md-12 fade-up">
+                        <div class="testimonial-card">
+                            <div class="quote-icon"><i class="fas fa-quote-right"></i></div>
+                            <p class="testimonial-text">"الدعم الفني ممتاز وأسرع من توقعاتي. أي طلب تعديل يتم الاستجابة له بسرعة واحترافية عالية. أنصح به بشدة."</p>
+                            <div class="testimonial-author">
+                                <div class="author-avatar">خ.ف</div>
+                                <div class="author-info"><h3 class="h6">خالد الفهد</h3><small>صاحب متجر إلكتروني</small></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- قسم دعوة للعمل -->
+        <section class="final-cta-section">
+            <div class="container">
+                <h2 class="fade-up">جاهز لتطوير أعمالك؟</h2>
+                <p class="fade-up">انضم لمئات الشركات التي وثقت بنظام BalanceIQ وابدأ رحلتك الآن مجاناً.</p>
+                <a href="{% url 'accounts:trial_request' %}" class="landing-btn landing-btn-trial-anim btn-final fade-up">
+                    <i class="fas fa-rocket"></i> ابدأ تجربتك المجانية الآن
+                </a>
+            </div>
+        </section>
+    </main>
 
     <!-- الفوتر -->
     <footer class="site-footer">

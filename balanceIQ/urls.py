@@ -54,6 +54,8 @@ urlpatterns = [
 
     path('docs/', user_manual, name='user_manual'),
     path('trials/', include('trials.urls')),
+
+    path('chat/', include('chat.urls')),
 ]
 
 # 🔥 التعديل النهائي - الطريقة الموصى بها

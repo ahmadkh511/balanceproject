@@ -63,6 +63,7 @@ INSTALLED_APPS = [
     'markdownify',
     'trials',
     'django_ckeditor_5',
+    'chat',
 
 
 
@@ -114,8 +115,10 @@ TEMPLATES = [
                 'invoice.context_processors.cart_count',
                 # ✅ هذه تجلب csp_nonce (من balanceIQ)
                 'balanceIQ.context_processors.csp_nonce',
+                'chat.context_processors.unread_chat_count',
                 # ❌ احذف هذا السطر إذا كان موجوداً
                 # 'invoice.context_processors.company_settings',
+                'chat.context_processors.unread_chat_count',  
             ],
         },
     },
@@ -427,3 +430,10 @@ CKEDITOR_5_CONFIGS = {
     # يمكنك إضافة إعدادات أخرى إذا أردت رفع الصور لاحقاً
     # 'extends': { ... }
 }
+
+# ==========================================
+# 18. إعدادات المحادثة (chat)
+# ==========================================
+CHAT_MAX_FILE_SIZE = 10 * 1024 * 1024          # 10 MB
+CHAT_ALLOWED_IMAGE_EXTS = {'.jpg', '.jpeg', '.png', '.webp', '.gif'}
+CHAT_ALLOWED_AUDIO_EXTS = {'.mp3', '.wav', '.ogg', '.m4a', '.webm'}

@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<title>صندوق المحادثات</title>
+<style nonce="{{ csp_nonce }}">
+  * { box-sizing: border-box; }
+  body { font-family: sans-serif; background: #f7f7f7; padding: 20px; margin: 0; }
+  .container { max-width: 900px; margin: auto; background: #fff; padding: 20px; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,.08); }
+  h2 { margin-top: 0; }
+  h3 { margin-top: 25px; padding-bottom: 6px; border-bottom: 2px solid #eee; }
+  table { width: 100%; border-collapse: collapse; margin-bottom: 10px; }
+  th, td { padding: 10px; border-bottom: 1px solid #eee; text-align: right; }
+  th { background: #f1f1f1; font-weight: 600; }
+  a { color: #007bff; text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  button.del { background: #dc3545; color: #fff; border: none; padding: 5px 10px; border-radius: 5px; cursor: pointer; }
+  button.del:hover { background: #c82333; }
+  form.inline { display: inline; }
+  .empty-row { text-align: center; color: #888; padding: 15px; }
+  .badge { display: inline-block; padding: 3px 8px; border-radius: 4px; font-size: 12px; font-weight: 600; }
+  .badge-customer { background: #e3f2fd; color: #1565c0; }
+  .badge-internal { background: #f3e5f5; color: #6a1b9a; }
+  .unread-dot {
+    display: inline-block;
+    width: 10px;
+    height: 10px;
+    background: #007bff;
+    border-radius: 50%;
+    margin-left: 6px;
+    vertical-align: middle;
+    box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.2);
+  }
+  hr { border: none; border-top: 1px solid #eee; margin: 30px 0; }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <h2>صندوق المحادثات</h2>
+
+  <!-- ============ محادثات العملاء ============ -->
+  <h3>
+    <span class="badge badge-customer">عملاء</span>
+    محادثات العملاء
+  </h3>
+  <table>
+    <thead>
+      <tr>
+        <th>العميل</th>
+        <th>آخر رسالة</th>
+        <th>عدد الرسائل</th>
+        <th>فتح</th>
+        {% if request.user.is_superuser %}<th>حذف</th>{% endif %}
+      </tr>
+    </thead>
+    <tbody>
+      {% for c in customer_convs %}
+      <tr>
+        <td>
+          {% if c.has_unread %}<span class="unread-dot" title="رسائل غير مقروءة"></span>{% endif %}
+          {{ c.customer.username }}
+        </td>
+        <td>{{ c.messages.last.created_at|date:"Y-m-d H:i"|default:"—" }}</td>
+        <td>{{ c.messages.count }}</td>
+        <td><a href="{% url 'staff_chat' c.id %}">فتح ←</a></td>
+        {% if request.user.is_superuser %}
+        <td>
+          <form method="post" action="{% url 'delete_conversation' c.id %}"
+                class="inline delete-form"
+                data-confirm="حذف المحادثة نهائياً مع كل رسائلها؟">
+            {% csrf_token %}
+            <button type="submit" class="del">🗑️</button>
+          </form>
+        </td>
+        {% endif %}
+      </tr>
+      {% empty %}
+      <tr><td colspan="{% if request.user.is_superuser %}5{% else %}4{% endif %}" class="empty-row">لا توجد محادثات عملاء بعد</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  <!-- ============ المحادثات الداخلية ============ -->
+  <h3>
+    <span class="badge badge-internal">داخلي</span>
+    محادثاتي الداخلية
+  </h3>
+  <table>
+    <thead>
+      <tr>
+        <th>الطرف الآخر</th>
+        <th>بدأها</th>
+        <th>آخر رسالة</th>
+        <th>عدد الرسائل</th>
+        <th>فتح</th>
+        {% if request.user.is_superuser %}<th>حذف</th>{% endif %}
+      </tr>
+    </thead>
+    <tbody>
+      {% for c in internal_convs %}
+      <tr>
+        <td>
+          {% if c.has_unread %}<span class="unread-dot" title="رسائل غير مقروءة"></span>{% endif %}
+          {% if c.customer == request.user %}
+            {{ c.initiator.username|default:"—" }}
+          {% else %}
+            {{ c.customer.username }}
+          {% endif %}
+        </td>
+        <td>
+          {% if c.initiator == request.user %}
+            <span class="badge badge-internal">أنت</span>
+          {% else %}
+            <span class="badge badge-customer">الطرف الآخر</span>
+          {% endif %}
+        </td>
+        <td>{{ c.messages.last.created_at|date:"Y-m-d H:i"|default:"—" }}</td>
+        <td>{{ c.messages.count }}</td>
+        <td><a href="{% url 'staff_chat' c.id %}">فتح ←</a></td>
+        {% if request.user.is_superuser %}
+        <td>
+          <form method="post" action="{% url 'delete_conversation' c.id %}"
+                class="inline delete-form"
+                data-confirm="حذف المحادثة الداخلية نهائياً؟">
+            {% csrf_token %}
+            <button type="submit" class="del">🗑️</button>
+          </form>
+        </td>
+        {% endif %}
+      </tr>
+      {% empty %}
+      <tr><td colspan="{% if request.user.is_superuser %}6{% else %}5{% endif %}" class="empty-row">لا توجد محادثات داخلية بعد</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  <hr>
+
+  <!-- ============ بدء محادثة داخلية جديدة ============ -->
+  <h3>بدء محادثة داخلية جديدة</h3>
+  {% if available_users %}
+  <table>
+    <thead>
+      <tr>
+        <th>المستخدم</th>
+        <th>البريد</th>
+        <th>الحالة</th>
+        <th>بدء</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for u in available_users %}
+      <tr>
+        <td>{{ u.username }}</td>
+        <td>{{ u.email|default:"—" }}</td>
+        <td>
+          {% if u.is_staff %}
+            <span class="badge badge-internal">موظف</span>
+          {% else %}
+            <span class="badge badge-customer">عميل</span>
+          {% endif %}
+        </td>
+        <td><a href="{% url 'start_internal_conversation' u.id %}">بدء ←</a></td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <p class="empty-row">لا يوجد مستخدمون آخرون نشطون.</p>
+  {% endif %}
+
+</div>
+
+<script nonce="{{ csp_nonce }}">
+(function () {
+  'use strict';
+  document.querySelectorAll('.delete-form').forEach(function (form) {
+    form.addEventListener('submit', function (e) {
+      if (!confirm(form.dataset.confirm)) {
+        e.preventDefault();
+      }
+    });
+  });
+})();
+</script>
+</body>
+</html>

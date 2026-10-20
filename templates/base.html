@@ -1,6 +1,7 @@
 {% load static %}
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
+
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -1995,14 +1996,17 @@
 
         <!-- Google tag (gtag.js) -->
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-3FFKDDDMX3"></script>
-    <script>
+    <script nonce="{{ csp_nonce }}">
     window.dataLayer = window.dataLayer || [];
     function gtag(){dataLayer.push(arguments);}
     gtag('js', new Date());
 
     gtag('config', 'G-3FFKDDDMX3');
     </script>
+
+
 </head>
+
 <body>
 
     <script type="application/json" id="baseAppData">
@@ -2176,12 +2180,16 @@
                     <i class="fas fa-shopping-cart"></i>
                     <span class="nav-badge green cart-count" id="cart-count">{{ cart_count|default:0 }}</span>
                 </a>
-                {% if request.user.is_superuser %}
-                <button type="button" id="notificationBtn" class="nav-action-btn tw-hidden sm:tw-inline-flex" title="الإشعارات">
+                <button type="button"
+                        id="notificationBtn"
+                        class="nav-action-btn tw-hidden sm:tw-inline-flex"
+                        title="المحادثات"
+                        data-unread-url="{% url 'unread_count_api' %}"
+                        data-chat-url="{% if request.user.is_staff %}{% url 'staff_inbox' %}{% else %}{% url 'chat_room' %}{% endif %}"
+                        data-initial-count="{{ unread_chat_count|default:0 }}">
                     <i class="fas fa-bell"></i>
-                    <span class="nav-badge red">3</span>
+                    <span class="nav-badge red" id="unreadBadge" style="display:none;">0</span>
                 </button>
-                {% endif %}
 
                 <span class="nav-username d-none d-md-inline-block" title="{{ user.get_full_name|default:user.username }}">
                     {{ user.get_full_name|default:user.username }}
@@ -2532,8 +2540,11 @@
 
 
     <!-- ===== الجافاسكريبت ===== -->
+
+
     <script nonce="{{ csp_nonce }}">
-        document.addEventListener('DOMContentLoaded', function() {
+
+                document.addEventListener('DOMContentLoaded', function() {
 
             /* =============================================
                ⓪ قراءة بيانات التطبيق بشكل آمن
@@ -2890,13 +2901,56 @@
                 });
             }, 5000);
 
+            /* =============================================
+               ⑪ إشعارات المحادثة
+               ============================================= */
+            var notifBtn = document.getElementById('notificationBtn');
+            var unreadBadge = document.getElementById('unreadBadge');
+            if (notifBtn && unreadBadge) {
+                var unreadUrl = notifBtn.dataset.unreadUrl;
+                var chatUrl = notifBtn.dataset.chatUrl;
+                var initialCount = parseInt(notifBtn.dataset.initialCount, 10) || 0;
+
+                function applyUnreadCount(count) {
+                    count = parseInt(count, 10);
+                    if (isNaN(count) || count < 0) count = 0;
+                    if (count > 0) {
+                        unreadBadge.textContent = count > 99 ? '99+' : count;
+                        unreadBadge.style.display = 'flex';
+                    } else {
+                        unreadBadge.style.display = 'none';
+                    }
+                }
+
+                applyUnreadCount(initialCount);
+
+                notifBtn.addEventListener('click', function () {
+                    window.location.href = chatUrl;
+                });
+
+                function refreshUnread() {
+                    fetch(unreadUrl, { credentials: 'same-origin' })
+                        .then(function (r) { return r.json(); })
+                        .then(function (data) {
+                            if (data && typeof data.count === 'number') {
+                                applyUnreadCount(data.count);
+                            }
+                        })
+                        .catch(function () {});
+                }
+
+                setInterval(refreshUnread, 30000);
+            }
+
         });
 
         function confirmDelete(message) {
             if (!message) message = 'هل أنت متأكد من أنك تريد الحذف؟';
             return confirm(message);
         }
+        
     </script>
+
 
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
@@ -2913,5 +2967,5 @@
     </div>
     {% endif %}
 
-</body>55555
+</body>
 </html>}

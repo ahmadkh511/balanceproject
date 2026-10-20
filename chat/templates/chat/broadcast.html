@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<title>رسالة جماعية</title>
+<style nonce="{{ csp_nonce }}">
+  * { box-sizing: border-box; }
+  body { font-family: sans-serif; background: #f7f7f7; padding: 20px; margin: 0; }
+  .container { max-width: 700px; margin: auto; background: #fff; padding: 30px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,.08); }
+  h2 { margin-top: 0; color: #333; }
+  .back { display: inline-block; margin-bottom: 20px; color: #007bff; text-decoration: none; font-size: 14px; }
+  .back:hover { text-decoration: underline; }
+  .alert { padding: 12px 16px; border-radius: 6px; font-size: 14px; margin-bottom: 15px; }
+  .alert-error, .alert-danger { background: #ffebee; color: #b71c1c; border: 1px solid #ffcdd2; }
+  .alert-success { background: #e8f5e9; color: #1b5e20; border: 1px solid #c8e6c9; }
+  .alert-warning { background: #fff8e1; color: #7a5f00; border: 1px solid #ffe082; }
+  .alert-info { background: #e3f2fd; color: #0d47a1; border: 1px solid #bbdefb; }
+  .form-group { margin-bottom: 20px; }
+  label.main-label { display: block; font-weight: 600; margin-bottom: 10px; color: #333; font-size: 15px; }
+  .radio-group { display: flex; gap: 10px; flex-wrap: wrap; }
+  .radio-item {
+    display: flex; align-items: center; gap: 8px;
+    padding: 10px 16px; border: 2px solid #e0e0e0;
+    border-radius: 8px; cursor: pointer; transition: all 0.2s;
+    font-size: 14px; background: #fafafa;
+  }
+  .radio-item:hover { border-color: #007bff; background: #f0f7ff; }
+  .radio-item input { cursor: pointer; }
+  .radio-item.active { border-color: #007bff; background: #f0f7ff; }
+  textarea {
+    width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 6px;
+    resize: vertical; font-family: inherit; font-size: 14px; min-height: 120px;
+  }
+  textarea:focus { outline: none; border-color: #007bff; }
+  .help-text { font-size: 12px; color: #888; margin-top: 5px; }
+  .btn {
+    padding: 10px 24px; border: none; border-radius: 6px;
+    font-family: inherit; font-size: 15px; font-weight: 600;
+    cursor: pointer; transition: all 0.2s;
+  }
+  .btn-primary { background: #007bff; color: #fff; }
+  .btn-primary:hover { background: #0069d9; }
+  .btn-secondary { background: #6c757d; color: #fff; text-decoration: none; display: inline-block; }
+  .btn-secondary:hover { background: #5a6268; }
+  .actions { display: flex; gap: 10px; justify-content: flex-start; margin-top: 20px; }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <a href="{% url 'staff_inbox' %}" class="back">← العودة للصندوق</a>
+
+  <h2>📢 إرسال رسالة جماعية</h2>
+
+  {% if messages %}
+    {% for message in messages %}
+      <div class="alert alert-{{ message.tags }}">{{ message }}</div>
+    {% endfor %}
+  {% endif %}
+
+  <form method="post">
+    {% csrf_token %}
+
+    <div class="form-group">
+      <label class="main-label">المستلمون</label>
+      <div class="radio-group">
+        {% for value, label in target_choices %}
+        <label class="radio-item {% if selected_target == value %}active{% endif %}">
+          <input type="radio" name="target" value="{{ value }}"
+                 {% if selected_target == value %}checked{% endif %}>
+          {{ label }}
+        </label>
+        {% endfor %}
+      </div>
+      <p class="help-text">
+        سيتم إرسال الرسالة لكل مستخدم نشط. من لديه محادثة مسبقة معك، ستُضاف الرسالة إلى محادثته الحالية.
+      </p>
+    </div>
+
+    <div class="form-group">
+      <label class="main-label" for="content">نص الرسالة</label>
+      <textarea id="content" name="content" placeholder="اكتب نص الرسالة هنا..." required>{{ content }}</textarea>
+    </div>
+
+    <div class="actions">
+      <button type="submit" class="btn btn-primary">إرسال الرسالة</button>
+      <a href="{% url 'staff_inbox' %}" class="btn btn-secondary">إلغاء</a>
+    </div>
+  </form>
+
+</div>
+
+<script nonce="{{ csp_nonce }}">
+(function () {
+  'use strict';
+  var radios = document.querySelectorAll('input[name="target"]');
+  radios.forEach(function (radio) {
+    radio.addEventListener('change', function () {
+      document.querySelectorAll('.radio-item').forEach(function (item) {
+        item.classList.remove('active');
+      });
+      if (radio.checked) {
+        radio.closest('.radio-item').classList.add('active');
+      }
+    });
+  });
+})();
+</script>
+</body>
+</html>

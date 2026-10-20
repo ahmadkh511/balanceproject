@@ -5,170 +5,341 @@
 <title>صندوق المحادثات</title>
 <style nonce="{{ csp_nonce }}">
   * { box-sizing: border-box; }
-  body { font-family: sans-serif; background: #f7f7f7; padding: 20px; margin: 0; }
-  .container { max-width: 900px; margin: auto; background: #fff; padding: 20px; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,.08); }
-  h2 { margin-top: 0; }
-  h3 { margin-top: 25px; padding-bottom: 6px; border-bottom: 2px solid #eee; }
-  table { width: 100%; border-collapse: collapse; margin-bottom: 10px; }
-  th, td { padding: 10px; border-bottom: 1px solid #eee; text-align: right; }
-  th { background: #f1f1f1; font-weight: 600; }
-  a { color: #007bff; text-decoration: none; }
-  a:hover { text-decoration: underline; }
-  button.del { background: #dc3545; color: #fff; border: none; padding: 5px 10px; border-radius: 5px; cursor: pointer; }
-  button.del:hover { background: #c82333; }
-  form.inline { display: inline; }
-  .empty-row { text-align: center; color: #888; padding: 15px; }
-  .badge { display: inline-block; padding: 3px 8px; border-radius: 4px; font-size: 12px; font-weight: 600; }
-  .badge-customer { background: #e3f2fd; color: #1565c0; }
-  .badge-internal { background: #f3e5f5; color: #6a1b9a; }
+  body {
+    font-family: 'Tajawal', sans-serif;
+    background: #f0f4f8;
+    padding: 20px;
+    margin: 0;
+    direction: rtl;
+  }
+  .container {
+    max-width: 1000px;
+    margin: auto;
+    background: #fff;
+    padding: 30px;
+    border-radius: 14px;
+    box-shadow: 0 4px 16px rgba(0,0,0,.08);
+  }
+
+  /* رأس الصفحة */
+  .page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 25px;
+    padding-bottom: 15px;
+    border-bottom: 2px solid #e8eef5;
+    flex-wrap: wrap;
+    gap: 15px;
+  }
+  .page-header h2 {
+    margin: 0;
+    color: #1a2b3c;
+    font-size: 22px;
+  }
+  .btn-broadcast {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 20px;
+    background: linear-gradient(135deg, #28a745, #20c997);
+    color: #fff;
+    text-decoration: none;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 14px;
+    transition: all 0.2s;
+    box-shadow: 0 2px 6px rgba(40, 167, 69, 0.3);
+  }
+  .btn-broadcast:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(40, 167, 69, 0.4);
+  }
+
+  /* أقسام */
+  .section {
+    margin-bottom: 30px;
+  }
+  .section-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 12px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid #e8eef5;
+  }
+  .section-header h3 {
+    margin: 0;
+    color: #2c3e50;
+    font-size: 17px;
+    font-weight: 600;
+  }
+  .badge {
+    display: inline-block;
+    padding: 4px 10px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 700;
+  }
+  .badge-customer {
+    background: #e3f2fd;
+    color: #1565c0;
+  }
+  .badge-internal {
+    background: #f3e5f5;
+    color: #6a1b9a;
+  }
+  .badge-staff {
+    background: #fff3e0;
+    color: #e65100;
+  }
+
+  /* جداول */
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 10px;
+    background: #fff;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 1px 4px rgba(0,0,0,.04);
+  }
+  th, td {
+    padding: 12px 14px;
+    text-align: right;
+    border-bottom: 1px solid #f0f4f8;
+    font-size: 14px;
+  }
+  th {
+    background: #f8fafc;
+    font-weight: 700;
+    color: #4a5568;
+    font-size: 13px;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+  }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: #f8fafc; }
+  td a {
+    color: #007bff;
+    text-decoration: none;
+    font-weight: 600;
+  }
+  td a:hover { text-decoration: underline; }
+
+  /* النقطة الزرقاء */
   .unread-dot {
     display: inline-block;
     width: 10px;
     height: 10px;
     background: #007bff;
     border-radius: 50%;
-    margin-left: 6px;
+    margin-left: 8px;
     vertical-align: middle;
-    box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.2);
+    box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.15);
+    animation: pulse 2s infinite;
   }
-  hr { border: none; border-top: 1px solid #eee; margin: 30px 0; }
+  @keyframes pulse {
+    0%, 100% { transform: scale(1); opacity: 1; }
+    50% { transform: scale(1.15); opacity: 0.7; }
+  }
+
+  /* أزرار الحذف */
+  button.del {
+    background: #fdecea;
+    color: #c62828;
+    border: none;
+    padding: 6px 12px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: all 0.2s;
+  }
+  button.del:hover {
+    background: #c62828;
+    color: #fff;
+  }
+  form.inline { display: inline; }
+
+  /* صفوف فارغة */
+  .empty-row {
+    text-align: center;
+    color: #9aa5b1;
+    padding: 20px;
+    font-style: italic;
+    font-size: 14px;
+  }
+
+  /* فاصل */
+  hr {
+    border: none;
+    border-top: 1px dashed #d1d9e0;
+    margin: 30px 0;
+  }
+
+  /* استجابة للجوال */
+  @media (max-width: 600px) {
+    .container { padding: 15px; }
+    th, td { padding: 8px; font-size: 12px; }
+    .page-header { flex-direction: column; align-items: stretch; }
+    .btn-broadcast { justify-content: center; }
+  }
 </style>
 </head>
 <body>
 <div class="container">
 
-  <h2>صندوق المحادثات</h2>
+  <!-- رأس الصفحة -->
+  <div class="page-header">
+    <h2>📬 صندوق المحادثات</h2>
+    {% if request.user.is_superuser %}
+    <a href="{% url 'broadcast' %}" class="btn-broadcast">
+      📢 إرسال رسالة جماعية
+    </a>
+    {% endif %}
+  </div>
 
   <!-- ============ محادثات العملاء ============ -->
-  <h3>
-    <span class="badge badge-customer">عملاء</span>
-    محادثات العملاء
-  </h3>
-  <table>
-    <thead>
-      <tr>
-        <th>العميل</th>
-        <th>آخر رسالة</th>
-        <th>عدد الرسائل</th>
-        <th>فتح</th>
-        {% if request.user.is_superuser %}<th>حذف</th>{% endif %}
-      </tr>
-    </thead>
-    <tbody>
-      {% for c in customer_convs %}
-      <tr>
-        <td>
-          {% if c.has_unread %}<span class="unread-dot" title="رسائل غير مقروءة"></span>{% endif %}
-          {{ c.customer.username }}
-        </td>
-        <td>{{ c.messages.last.created_at|date:"Y-m-d H:i"|default:"—" }}</td>
-        <td>{{ c.messages.count }}</td>
-        <td><a href="{% url 'staff_chat' c.id %}">فتح ←</a></td>
-        {% if request.user.is_superuser %}
-        <td>
-          <form method="post" action="{% url 'delete_conversation' c.id %}"
-                class="inline delete-form"
-                data-confirm="حذف المحادثة نهائياً مع كل رسائلها؟">
-            {% csrf_token %}
-            <button type="submit" class="del">🗑️</button>
-          </form>
-        </td>
-        {% endif %}
-      </tr>
-      {% empty %}
-      <tr><td colspan="{% if request.user.is_superuser %}5{% else %}4{% endif %}" class="empty-row">لا توجد محادثات عملاء بعد</td></tr>
-      {% endfor %}
-    </tbody>
-  </table>
+  <div class="section">
+    <div class="section-header">
+      <span class="badge badge-customer">عملاء</span>
+      <h3>محادثات العملاء</h3>
+    </div>
+    <table>
+      <thead>
+        <tr>
+          <th>العميل</th>
+          <th>آخر رسالة</th>
+          <th>عدد الرسائل</th>
+          <th>فتح</th>
+          {% if request.user.is_superuser %}<th>حذف</th>{% endif %}
+        </tr>
+      </thead>
+      <tbody>
+        {% for c in customer_convs %}
+        <tr>
+          <td>
+            {% if c.has_unread %}<span class="unread-dot" title="رسائل غير مقروءة"></span>{% endif %}
+            <strong>{{ c.customer.username }}</strong>
+          </td>
+          <td>{{ c.messages.last.created_at|date:"Y-m-d H:i"|default:"—" }}</td>
+          <td>{{ c.messages.count }}</td>
+          <td><a href="{% url 'staff_chat' c.id %}">فتح ←</a></td>
+          {% if request.user.is_superuser %}
+          <td>
+            <form method="post" action="{% url 'delete_conversation' c.id %}"
+                  class="inline delete-form"
+                  data-confirm="حذف المحادثة نهائياً مع كل رسائلها؟">
+              {% csrf_token %}
+              <button type="submit" class="del">🗑️ حذف</button>
+            </form>
+          </td>
+          {% endif %}
+        </tr>
+        {% empty %}
+        <tr><td colspan="{% if request.user.is_superuser %}5{% else %}4{% endif %}" class="empty-row">لا توجد محادثات عملاء بعد</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
 
   <!-- ============ المحادثات الداخلية ============ -->
-  <h3>
-    <span class="badge badge-internal">داخلي</span>
-    محادثاتي الداخلية
-  </h3>
-  <table>
-    <thead>
-      <tr>
-        <th>الطرف الآخر</th>
-        <th>بدأها</th>
-        <th>آخر رسالة</th>
-        <th>عدد الرسائل</th>
-        <th>فتح</th>
-        {% if request.user.is_superuser %}<th>حذف</th>{% endif %}
-      </tr>
-    </thead>
-    <tbody>
-      {% for c in internal_convs %}
-      <tr>
-        <td>
-          {% if c.has_unread %}<span class="unread-dot" title="رسائل غير مقروءة"></span>{% endif %}
-          {% if c.customer == request.user %}
-            {{ c.initiator.username|default:"—" }}
-          {% else %}
-            {{ c.customer.username }}
+  <div class="section">
+    <div class="section-header">
+      <span class="badge badge-internal">داخلي</span>
+      <h3>محادثاتي الداخلية</h3>
+    </div>
+    <table>
+      <thead>
+        <tr>
+          <th>الطرف الآخر</th>
+          <th>بدأها</th>
+          <th>آخر رسالة</th>
+          <th>عدد الرسائل</th>
+          <th>فتح</th>
+          {% if request.user.is_superuser %}<th>حذف</th>{% endif %}
+        </tr>
+      </thead>
+      <tbody>
+        {% for c in internal_convs %}
+        <tr>
+          <td>
+            {% if c.has_unread %}<span class="unread-dot" title="رسائل غير مقروءة"></span>{% endif %}
+            <strong>
+            {% if c.customer == request.user %}
+              {{ c.initiator.username|default:"—" }}
+            {% else %}
+              {{ c.customer.username }}
+            {% endif %}
+            </strong>
+          </td>
+          <td>
+            {% if c.initiator == request.user %}
+              <span class="badge badge-internal">أنت</span>
+            {% else %}
+              <span class="badge badge-staff">{{ c.initiator.username|default:"—" }}</span>
+            {% endif %}
+          </td>
+          <td>{{ c.messages.last.created_at|date:"Y-m-d H:i"|default:"—" }}</td>
+          <td>{{ c.messages.count }}</td>
+          <td><a href="{% url 'staff_chat' c.id %}">فتح ←</a></td>
+          {% if request.user.is_superuser %}
+          <td>
+            <form method="post" action="{% url 'delete_conversation' c.id %}"
+                  class="inline delete-form"
+                  data-confirm="حذف المحادثة الداخلية نهائياً؟">
+              {% csrf_token %}
+              <button type="submit" class="del">🗑️ حذف</button>
+            </form>
+          </td>
           {% endif %}
-        </td>
-        <td>
-          {% if c.initiator == request.user %}
-            <span class="badge badge-internal">أنت</span>
-          {% else %}
-            <span class="badge badge-customer">الطرف الآخر</span>
-          {% endif %}
-        </td>
-        <td>{{ c.messages.last.created_at|date:"Y-m-d H:i"|default:"—" }}</td>
-        <td>{{ c.messages.count }}</td>
-        <td><a href="{% url 'staff_chat' c.id %}">فتح ←</a></td>
-        {% if request.user.is_superuser %}
-        <td>
-          <form method="post" action="{% url 'delete_conversation' c.id %}"
-                class="inline delete-form"
-                data-confirm="حذف المحادثة الداخلية نهائياً؟">
-            {% csrf_token %}
-            <button type="submit" class="del">🗑️</button>
-          </form>
-        </td>
-        {% endif %}
-      </tr>
-      {% empty %}
-      <tr><td colspan="{% if request.user.is_superuser %}6{% else %}5{% endif %}" class="empty-row">لا توجد محادثات داخلية بعد</td></tr>
-      {% endfor %}
-    </tbody>
-  </table>
+        </tr>
+        {% empty %}
+        <tr><td colspan="{% if request.user.is_superuser %}6{% else %}5{% endif %}" class="empty-row">لا توجد محادثات داخلية بعد</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
 
   <hr>
 
-  <!-- ============ بدء محادثة داخلية جديدة ============ -->
-  <h3>بدء محادثة داخلية جديدة</h3>
-  {% if available_users %}
-  <table>
-    <thead>
-      <tr>
-        <th>المستخدم</th>
-        <th>البريد</th>
-        <th>الحالة</th>
-        <th>بدء</th>
-      </tr>
-    </thead>
-    <tbody>
-      {% for u in available_users %}
-      <tr>
-        <td>{{ u.username }}</td>
-        <td>{{ u.email|default:"—" }}</td>
-        <td>
-          {% if u.is_staff %}
-            <span class="badge badge-internal">موظف</span>
-          {% else %}
-            <span class="badge badge-customer">عميل</span>
-          {% endif %}
-        </td>
-        <td><a href="{% url 'start_internal_conversation' u.id %}">بدء ←</a></td>
-      </tr>
-      {% endfor %}
-    </tbody>
-  </table>
-  {% else %}
-  <p class="empty-row">لا يوجد مستخدمون آخرون نشطون.</p>
-  {% endif %}
+  <!-- ============ بدء محادثة جديدة ============ -->
+  <div class="section">
+    <div class="section-header">
+      <span class="badge badge-staff">جديد</span>
+      <h3>بدء محادثة جديدة</h3>
+    </div>
+    {% if available_users %}
+    <table>
+      <thead>
+        <tr>
+          <th>المستخدم</th>
+          <th>البريد</th>
+          <th>الحالة</th>
+          <th>بدء</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for u in available_users %}
+        <tr>
+          <td><strong>{{ u.username }}</strong></td>
+          <td>{{ u.email|default:"—" }}</td>
+          <td>
+            {% if u.is_staff %}
+              <span class="badge badge-internal">موظف</span>
+            {% else %}
+              <span class="badge badge-customer">عميل</span>
+            {% endif %}
+          </td>
+          <td><a href="{% url 'start_internal_conversation' u.id %}">بدء ←</a></td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+    <p class="empty-row">لا يوجد مستخدمون آخرون نشطون.</p>
+    {% endif %}
+  </div>
 
 </div>
 

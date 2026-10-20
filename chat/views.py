@@ -424,3 +424,113 @@ def debug_conversations(request):
         }
 
     return JsonResponse(data, json_dumps_params={'ensure_ascii': False, 'indent': 2})
+
+
+
+@login_required
+def broadcast(request):
+    """إرسال رسالة جماعية — superuser فقط"""
+    if not request.user.is_superuser:
+        messages.error(request, 'هذه الصفحة مخصصة للمدير الأعلى فقط.')
+        return redirect('staff_inbox')
+
+    from .models import BroadcastLog
+
+    if request.method == 'POST':
+        target = request.POST.get('target', 'all')
+        content = request.POST.get('content', '').strip()
+
+        if not content:
+            messages.error(request, 'نص الرسالة فارغ.')
+            return render(request, 'chat/broadcast.html', {
+                'target_choices': BroadcastLog.TARGET_CHOICES,
+                'selected_target': target,
+                'content': content,
+            })
+
+        if target not in ('staff', 'customers', 'all'):
+            target = 'all'
+
+        # تحديد المستلمين
+        recipients = User.objects.filter(is_active=True).exclude(id=request.user.id)
+
+        if target == 'staff':
+            recipients = recipients.filter(is_staff=True)
+        elif target == 'customers':
+            recipients = recipients.filter(is_staff=False)
+        # 'all' → الجميع
+
+        recipients = list(recipients)
+        recipients_count = len(recipients)
+
+        if recipients_count == 0:
+            messages.warning(request, 'لا يوجد مستلمون مطابقون لهذه الفئة.')
+            return redirect('broadcast')
+
+        # إرسال الرسالة لكل مستلم
+        conversations_created = 0
+        messages_sent = 0
+
+        for recipient in recipients:
+            if recipient.is_staff:
+                # مستلم موظف → محادثة داخلية
+                conversation = Conversation.objects.filter(
+                    kind='internal'
+                ).filter(
+                    models.Q(customer=request.user, initiator=recipient) |
+                    models.Q(customer=recipient, initiator=request.user)
+                ).first()
+
+                if not conversation:
+                    conversation = Conversation.objects.create(
+                        kind='internal',
+                        customer=recipient,
+                        initiator=request.user,
+                    )
+                    conversations_created += 1
+            else:
+                # مستلم عميل → محادثة customer
+                conversation = Conversation.objects.filter(
+                    kind='customer',
+                    customer=recipient,
+                ).first()
+
+                if not conversation:
+                    conversation = Conversation.objects.create(
+                        kind='customer',
+                        customer=recipient,
+                        initiator=request.user,
+                    )
+                    conversations_created += 1
+
+            # أنشئ الرسالة
+            Message.objects.create(
+                conversation=conversation,
+                sender=request.user,
+                content=content,
+            )
+            messages_sent += 1
+
+        # سجّل العملية
+        BroadcastLog.objects.create(
+            sender=request.user,
+            target=target,
+            content=content,
+            recipients_count=recipients_count,
+            conversations_created=conversations_created,
+        )
+
+        messages.success(
+            request,
+            'تم إرسال الرسالة إلى {} مستلم ({} محادثة جديدة).'.format(
+                messages_sent, conversations_created
+            )
+        )
+        return redirect('staff_inbox')
+
+    # GET — عرض النموذج
+    return render(request, 'chat/broadcast.html', {
+        'target_choices': BroadcastLog.TARGET_CHOICES,
+        'selected_target': 'all',
+        'content': '',
+    })

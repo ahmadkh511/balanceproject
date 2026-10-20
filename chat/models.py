@@ -76,3 +76,43 @@ class MessageRead(models.Model):
 
     def __str__(self):
         return f"{self.user.username} قرأ رسالة #{self.message_id}"
+
+
+
+
+class BroadcastLog(models.Model):
+    """
+    سجل الرسائل الجماعية المرسلة من superuser.
+    - sender: من أرسل
+    - target: الفئة (staff / customers / all)
+    - content: نص الرسالة
+    - recipients_count: عدد من استلمها
+    - conversations_created: عدد المحادثات الجديدة التي أُنشئت
+    - created_at: وقت الإرسال
+    """
+    TARGET_CHOICES = [
+        ('staff', 'الموظفون'),
+        ('customers', 'العملاء'),
+        ('all', 'الجميع'),
+    ]
+
+    sender = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='broadcast_sent',
+    )
+    target = models.CharField(max_length=20, choices=TARGET_CHOICES)
+    content = models.TextField()
+    recipients_count = models.PositiveIntegerField(default=0)
+    conversations_created = models.PositiveIntegerField(default=0)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return "[{}] {} → {}".format(
+            self.get_target_display(),
+            self.sender.username,
+            self.content[:30],
+        )

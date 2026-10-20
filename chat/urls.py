@@ -16,4 +16,6 @@ urlpatterns = [
 
 
     path('debug/', views.debug_conversations, name='debug_conversations'),
+
+    path('broadcast/', views.broadcast, name='broadcast'),
 ]

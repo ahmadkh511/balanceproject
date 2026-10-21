@@ -15,6 +15,7 @@
     line-height: 1.6;
   }
 
+  /* ============ الأزرار العلوية ============ */
   .toolbar {
     max-width: 900px;
     margin: 0 auto 20px;
@@ -45,6 +46,7 @@
   .btn-secondary:hover { background: #5a6268; }
   .btn-sm { padding: 6px 12px; font-size: 13px; }
 
+  /* ============ الحاوية ============ */
   .container {
     max-width: 900px;
     margin: 0 auto;
@@ -67,6 +69,7 @@
     gap: 8px;
   }
 
+  /* ============ صندوق الرابط ============ */
   .url-box {
     display: flex;
     gap: 8px;
@@ -89,6 +92,7 @@
     border-color: #007bff;
   }
 
+  /* ============ قائمة التعليمات ============ */
   .steps {
     list-style: none;
     counter-reset: step;
@@ -123,6 +127,7 @@
     font-size: 13px;
   }
 
+  /* ============ معاينة البطاقة ============ */
   .preview-notice {
     background: #fff3cd;
     border: 1px solid #ffe082;
@@ -133,7 +138,7 @@
     font-size: 13px;
   }
 
-  /* ============ قسم مسح QR من الكمبيوتر (على الشاشة) ============ */
+  /* ============ قسم مسح QR من الكمبيوتر (على الشاشة فقط) ============ */
   .scan-tip {
     background: linear-gradient(135deg, #e3f2fd 0%, #f0f7ff 100%);
     border: 1px solid #bbdefb;
@@ -252,7 +257,7 @@
     background: #fff;
     border: 2px dashed #ccc;
     border-radius: 10px;
-    padding: 20mm 15mm;
+    padding: 15mm 12mm;
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -271,20 +276,20 @@
   .print-card .card-subtitle {
     font-size: 13px;
     color: #666;
-    margin-bottom: 10mm;
+    margin-bottom: 8mm;
   }
 
   .print-card .qr-wrapper {
-    padding: 5mm;
+    padding: 4mm;
     background: #fff;
     border: 4px solid #007bff;
     border-radius: 14px;
-    margin: 4mm 0;
+    margin: 3mm 0;
   }
 
   .print-card .qr-wrapper img {
-    width: 80mm;
-    height: 80mm;
+    width: 78mm;
+    height: 78mm;
     display: block;
   }
 
@@ -292,12 +297,12 @@
     font-size: 13px;
     color: #333;
     line-height: 1.9;
-    margin-top: 8mm;
-    padding-top: 6mm;
+    margin-top: 6mm;
+    padding-top: 5mm;
     border-top: 2px solid #e0e7ef;
     text-align: right;
     width: 100%;
-    max-width: 110mm;
+    max-width: 115mm;
   }
 
   .print-card .card-instructions strong {
@@ -308,44 +313,47 @@
     margin-bottom: 4mm;
   }
 
-  /* ============ ملاحظة webqr داخل البطاقة (تظهر في الطباعة أيضاً) ============ */
-  .card-instructions .webqr-note {
+  /* ============ ملاحظة webqr داخل البطاقة (تُطبع) ============ */
+  .print-card .webqr-note {
     display: block;
-    margin-top: 6mm;
-    padding-top: 4mm;
-    border-top: 1px dashed #ccc;
-    font-size: 11px;
+    margin-top: 5mm;
+    padding-top: 3mm;
+    border-top: 1px dashed #b0b0b0;
+    font-size: 10px;
     font-style: italic;
     color: #555;
-    line-height: 1.6;
+    line-height: 1.5;
     text-align: center;
   }
 
-  .card-instructions .webqr-note strong {
+  .print-card .webqr-note strong {
     display: inline;
     color: #007bff;
     font-style: normal;
     font-weight: 700;
-    font-size: 11px;
+    font-size: 10px;
     margin: 0;
     text-align: inherit;
   }
 
-  .card-instructions .webqr-note .webqr-domains {
+  .print-card .webqr-note .webqr-os {
     display: block;
-    margin-top: 2mm;
+    margin-top: 1.5mm;
     font-family: 'Courier New', monospace;
-    font-size: 10px;
+    font-size: 9px;
     font-style: normal;
     letter-spacing: 0.3px;
+    color: #777;
   }
 
   /* ============ قواعد الطباعة ============ */
   @media print {
+    /* إخفاء كل شيء */
     body > * {
       display: none !important;
     }
 
+    /* إظهار البطاقة فقط */
     body > .print-card {
       display: flex !important;
     }
@@ -381,7 +389,7 @@
       color: #000;
     }
 
-    .card-instructions .webqr-note strong {
+    .print-card .webqr-note strong {
       color: #000;
     }
 
@@ -421,7 +429,7 @@
 <body>
 
 <!-- ============ أزرار التحكم ============ -->
-<div class="toolbar no-print">
+<div class="toolbar">
   <a href="{% url 'staff_inbox' %}" class="btn btn-secondary">
     ← العودة للصندوق
   </a>
@@ -433,7 +441,7 @@
 <div class="container">
 
   <!-- ============ رابط البوابة ============ -->
-  <div class="card no-print">
+  <div class="card">
     <h2>📌 رابط قناة المحادثة</h2>
     <p style="font-size: 14px; color: #666; margin-bottom: 4px;">
       هذا هو الرابط الوحيد الذي تحتاجه لمشاركته مع العملاء. كل عميل يدخل بحسابه.
@@ -446,8 +454,8 @@
     </div>
   </div>
 
-  <!-- ============ التعليمات ============ -->
-  <div class="card no-print">
+  <!-- ============ التعليمات على الشاشة ============ -->
+  <div class="card">
     <h2>📖 كيف يستخدم العميل هذا الرابط؟</h2>
     <ol class="steps">
       <li>يفتح العميل كاميرا هاتفه (أو تطبيق قارئ QR).</li>
@@ -459,7 +467,7 @@
   </div>
 
   <!-- ============ قسم: مسح QR من الكمبيوتر ============ -->
-  <div class="card no-print">
+  <div class="card">
     <h2>💻 هل تريد مسح QR من الكمبيوتر؟</h2>
 
     <div class="scan-tip">
@@ -508,7 +516,7 @@
           <div class="os-name">Linux</div>
         </div>
 
-        <!-- Web (جميع الأنظمة) -->
+        <!-- Web -->
         <div class="os-item">
           <div class="os-logo">
             <svg viewBox="0 0 24 24" fill="#007bff" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
@@ -529,7 +537,7 @@
   </div>
 
   <!-- ============ معاينة البطاقة ============ -->
-  <div class="card no-print">
+  <div class="card">
     <h2>🖨️ معاينة البطاقة</h2>
     <div class="preview-notice">
       💡 اضغط "طباعة" أعلى الصفحة لطباعة نسخة A5 جاهزة.
@@ -556,10 +564,9 @@
     3. سجّل دخولك بحسابك<br>
     4. ابدأ المحادثة مع الإدارة
 
-    <!-- ============ ملاحظة webqr داخل البطاقة (تُطبع أيضاً) ============ -->
     <span class="webqr-note">
-      <strong>ملاحظة:</strong> إذا كانت كاميرا الكمبيوتر ضعيفة ولا تقرأ الكود، استخدم موقع <strong>webqr.com</strong> — يعمل من المتصفح مباشرة على جميع الأنظمة.
-      <span class="webqr-domains">Windows · Mac · Linux · Web</span>
+      <strong>ملاحظة:</strong> إذا كانت كاميرا الكمبيوتر ضعيفة ولا تقرأ الكود، استخدم <strong>webqr.com</strong> مباشرة من المتصفح.
+      <span class="webqr-os">Windows · Mac · Linux · Web</span>
     </span>
   </div>
 </div>

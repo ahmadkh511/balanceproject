@@ -7,18 +7,20 @@
 <style nonce="{{ csp_nonce }}">
   * { box-sizing: border-box; margin: 0; padding: 0; }
 
-  html, body {
+  html {
     height: 100%;
   }
 
   body {
     font-family: 'Tajawal', 'Segoe UI', sans-serif;
     background: linear-gradient(135deg, #f0f7ff 0%, #f7f7f7 100%);
-    padding: 20px;
     min-height: 100vh;
+    min-height: 100dvh;
+    padding: 20px;
     display: flex;
     align-items: center;
     justify-content: center;
+    margin: 0;
   }
 
   .card {
@@ -29,6 +31,7 @@
     text-align: center;
     max-width: 460px;
     width: 100%;
+    margin: auto;
   }
 
   .icon {
@@ -73,7 +76,7 @@
     line-height: 1.6;
   }
 
-  /* ============ استجابة الموبايل (شاشات صغيرة) ============ */
+  /* ============ استجابة الموبايل ============ */
   @media (max-width: 480px) {
     body {
       padding: 12px;
@@ -112,7 +115,7 @@
     }
   }
 
-  /* ============ شاشات صغيرة جداً (360px وأقل) ============ */
+  /* ============ شاشات صغيرة جداً ============ */
   @media (max-width: 360px) {
     body { padding: 8px; }
     .card { padding: 25px 16px; }

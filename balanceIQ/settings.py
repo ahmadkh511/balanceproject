@@ -118,7 +118,7 @@ TEMPLATES = [
                 'chat.context_processors.unread_chat_count',
                 # ❌ احذف هذا السطر إذا كان موجوداً
                 # 'invoice.context_processors.company_settings',
-                'chat.context_processors.unread_chat_count',  
+                
             ],
         },
     },

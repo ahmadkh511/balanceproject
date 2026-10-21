@@ -534,3 +534,47 @@ def broadcast(request):
         'selected_target': 'all',
         'content': '',
     })
+
+
+
+
+@login_required
+def share_qr_view(request):
+    """
+    صفحة مشاركة رابط المحادثة عبر QR Code.
+    - متاحة للموظفين فقط.
+    - تولّد QR من رابط /chat/ الكامل.
+    - QR كصورة Base64 (لا ملفات على القرص).
+    """
+    if not request.user.is_staff:
+        messages.error(request, 'هذه الصفحة مخصصة للموظفين فقط.')
+        return redirect('chat_room')
+
+    import qrcode
+    import io
+    import base64
+    from qrcode.constants import ERROR_CORRECT_H
+
+    # بناء الرابط الكامل (HTTPS في الإنتاج، HTTP في التطوير)
+    chat_url = request.build_absolute_uri('/chat/')
+
+    # توليد QR بمعايير عالية
+    qr = qrcode.QRCode(
+        version=None,                       # تلقائي حسب حجم البيانات
+        error_correction=ERROR_CORRECT_H,   # 30% مقاومة للتلف
+        box_size=12,                        # دقة عالية للطباعة
+        border=4,                           # هامش أبيض (quiet zone - معيار)
+    )
+    qr.add_data(chat_url)
+    qr.make(fit=True)
+
+    img = qr.make_image(fill_color="black", back_color="white")
+
+    buffer = io.BytesIO()
+    img.save(buffer, format='PNG')
+    qr_base64 = base64.b64encode(buffer.getvalue()).decode('utf-8')
+
+    return render(request, 'chat/share_qr.html', {
+        'chat_url': chat_url,
+        'qr_base64': qr_base64,
+    })

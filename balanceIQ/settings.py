@@ -437,3 +437,5 @@ CKEDITOR_5_CONFIGS = {
 CHAT_MAX_FILE_SIZE = 10 * 1024 * 1024          # 10 MB
 CHAT_ALLOWED_IMAGE_EXTS = {'.jpg', '.jpeg', '.png', '.webp', '.gif'}
 CHAT_ALLOWED_AUDIO_EXTS = {'.mp3', '.wav', '.ogg', '.m4a', '.webm'}
+
+

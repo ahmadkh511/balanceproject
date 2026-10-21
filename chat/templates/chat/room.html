@@ -2,51 +2,436 @@
 <html lang="ar" dir="rtl">
 <head>
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>
   {% if request.user.is_staff %}
-    محادثة
+    محادثة{% if conversation.kind == 'internal' and conversation.customer == request.user %} مع {{ conversation.initiator.username|default:"—" }}{% else %} مع {{ conversation.customer.username }}{% endif %}
   {% else %}
     محادثتك مع الإدارة
   {% endif %}
 </title>
+
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.rtl.min.css" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;600;700&display=swap" rel="stylesheet">
+
 <style nonce="{{ csp_nonce }}">
-  * { box-sizing: border-box; }
-  body { font-family: sans-serif; background: #f7f7f7; padding: 20px; margin: 0; }
-  .messages-container { max-width: 700px; margin: 0 auto 15px; }
-  .alert { padding: 12px 16px; border-radius: 6px; font-size: 14px; margin-bottom: 8px; }
-  .alert-error, .alert-danger { background: #ffebee; color: #b71c1c; border: 1px solid #ffcdd2; }
-  .alert-success { background: #e8f5e9; color: #1b5e20; border: 1px solid #c8e6c9; }
-  .alert-info { background: #e3f2fd; color: #0d47a1; border: 1px solid #bbdefb; }
-  .alert-warning { background: #fff8e1; color: #7a5f00; border: 1px solid #ffe082; }
-  .chat-box { max-width: 700px; margin: auto; background: #fff; border-radius: 10px; padding: 15px; box-shadow: 0 2px 8px rgba(0,0,0,.08); }
-  .chat-header { display: flex; justify-content: space-between; align-items: center; margin: 0 0 10px; }
-  .back-link { font-size: 13px; color: #007bff; text-decoration: none; }
-  .back-link:hover { text-decoration: underline; }
-  #chat-log { height: 450px; overflow-y: auto; border: 1px solid #eee; padding: 10px; border-radius: 8px; background: #fafafa; }
-  .msg { margin: 6px 0; display: flex; }
+  :root {
+    --aqua-1: #e0f7fa;
+    --aqua-2: #b2ebf2;
+    --aqua-3: #4dd0e1;
+    --aqua-4: #0097a7;
+    --aqua-5: #006064;
+    --text-dark: #006064;
+    --text-light: #ffffff;
+    --shadow-sm: 0 2px 8px rgba(0, 150, 167, 0.08);
+    --shadow-md: 0 4px 12px rgba(0, 150, 167, 0.12);
+    --radius-sm: 4px;
+    --radius-md: 8px;
+    --radius-lg: 12px;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html, body {
+    height: 100%;
+    font-family: 'Tajawal', sans-serif;
+    background: var(--aqua-1);
+    color: var(--text-dark);
+    direction: rtl;
+    overflow: hidden;
+  }
+
+  body {
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* ============ الشريط العلوي ============ */
+  .top-bar {
+    height: 50px;
+    background: linear-gradient(135deg, var(--aqua-4), var(--aqua-5));
+    color: var(--text-light);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0 16px;
+    box-shadow: var(--shadow-md);
+    flex-shrink: 0;
+    z-index: 100;
+  }
+  .top-bar-left,
+  .top-bar-right {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .top-bar a,
+  .top-bar button {
+    color: var(--text-light);
+    text-decoration: none;
+    padding: 6px 12px;
+    border-radius: var(--radius-sm);
+    background: rgba(255,255,255,0.12);
+    border: 1px solid rgba(255,255,255,0.2);
+    font-size: 13px;
+    font-weight: 500;
+    font-family: 'Tajawal', sans-serif;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    transition: all 0.2s;
+  }
+  .top-bar a:hover,
+  .top-bar button:hover {
+    background: rgba(255,255,255,0.25);
+    color: #fff;
+  }
+  .top-bar .username {
+    font-weight: 600;
+    font-size: 13px;
+    padding: 0 8px;
+    opacity: 0.95;
+  }
+  .top-bar .username i {
+    margin-left: 6px;
+    opacity: 0.8;
+  }
+
+  /* ============ منطقة المحادثة ============ */
+  .chat-wrapper {
+    flex: 1;
+    display: flex;
+    justify-content: center;
+    padding: 12px;
+    overflow: hidden;
+  }
+  .chat-container {
+    width: 100%;
+    max-width: 900px;
+    background: #ffffff;
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-md);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  /* رأس المحادثة */
+  .chat-header {
+    background: linear-gradient(135deg, var(--aqua-4), var(--aqua-5));
+    color: var(--text-light);
+    padding: 12px 18px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+  }
+  .chat-header .title {
+    font-weight: 700;
+    font-size: 15px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .chat-header .title i {
+    font-size: 14px;
+    opacity: 0.9;
+  }
+  .chat-header .actions {
+    display: flex;
+    gap: 8px;
+  }
+  .chat-header .actions a {
+    color: var(--text-light);
+    text-decoration: none;
+    padding: 5px 12px;
+    border-radius: var(--radius-sm);
+    background: rgba(255,255,255,0.15);
+    border: 1px solid rgba(255,255,255,0.25);
+    font-size: 12px;
+    font-weight: 500;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    transition: all 0.2s;
+  }
+  .chat-header .actions a:hover {
+    background: rgba(255,255,255,0.28);
+  }
+
+  /* ============ منطقة الرسائل ============ */
+  #chat-log {
+    flex: 1;
+    overflow-y: auto;
+    padding: 15px 20px;
+    background: var(--aqua-1);
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  #chat-log::-webkit-scrollbar { width: 6px; }
+  #chat-log::-webkit-scrollbar-track { background: transparent; }
+  #chat-log::-webkit-scrollbar-thumb {
+    background: var(--aqua-3);
+    border-radius: 3px;
+  }
+
+  .msg {
+    display: flex;
+    margin: 4px 0;
+    animation: fadeIn 0.25s ease-out;
+  }
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
   .msg.mine { justify-content: flex-start; }
   .msg.other { justify-content: flex-end; }
-  .bubble { padding: 8px 12px; border-radius: 10px; max-width: 75%; word-wrap: break-word; }
-  .bubble.mine { background: #d1f5d3; }
-  .bubble.other { background: #e9e9eb; }
-  .sender { font-weight: bold; font-size: 12px; color: #555; display: block; margin-bottom: 3px; }
-  .input-row { display: flex; gap: 6px; margin-top: 10px; align-items: flex-start; }
-  #msg-input { flex: 1; padding: 8px; border-radius: 6px; border: 1px solid #ccc; resize: vertical; font-family: inherit; }
-  button { padding: 8px 14px; border-radius: 6px; border: none; cursor: pointer; color: #fff; font-family: inherit; }
-  .btn-primary { background: #007bff; }
-  .btn-primary:hover { background: #0069d9; }
-  .btn-secondary { background: #6c757d; }
-  .btn-secondary:hover { background: #5a6268; }
-  .btn-danger-sm { background: #dc3545; padding: 2px 8px; font-size: 12px; }
-  .preview { margin-top: 6px; font-size: 13px; color: #333; display: none; }
-  .preview.show { display: block; }
-  .hidden { display: none !important; }
-  img.attach { max-width: 220px; border-radius: 6px; margin-top: 5px; cursor: pointer; }
-  audio { max-width: 260px; margin-top: 5px; }
+
+  .bubble {
+    padding: 9px 14px;
+    border-radius: 14px;
+    max-width: 75%;
+    word-wrap: break-word;
+    position: relative;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.08);
+  }
+  .bubble.mine {
+    background: linear-gradient(135deg, #d4f4d9, #b8ecc4);
+    border-bottom-right-radius: 4px;
+  }
+  .bubble.other {
+    background: #ffffff;
+    border: 1px solid var(--aqua-2);
+    border-bottom-left-radius: 4px;
+  }
+  .bubble .sender {
+    font-weight: 700;
+    font-size: 11px;
+    color: var(--aqua-5);
+    display: block;
+    margin-bottom: 3px;
+  }
+  .bubble .content {
+    font-size: 14px;
+    color: #1a2b3c;
+    line-height: 1.5;
+    white-space: pre-wrap;
+  }
+  .bubble img.attach {
+    max-width: 220px;
+    border-radius: var(--radius-sm);
+    margin-top: 6px;
+    cursor: pointer;
+    display: block;
+    transition: opacity 0.2s;
+  }
+  .bubble img.attach:hover { opacity: 0.85; }
+  .bubble audio {
+    max-width: 260px;
+    margin-top: 6px;
+    display: block;
+  }
+
+  /* ============ منطقة الإدخال ============ */
+  .input-area {
+    border-top: 1px solid var(--aqua-2);
+    padding: 12px 16px;
+    background: #ffffff;
+    display: flex;
+    gap: 8px;
+    align-items: flex-end;
+    flex-shrink: 0;
+  }
+  .attach-btn {
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    background: var(--aqua-2);
+    color: var(--aqua-5);
+    border: none;
+    cursor: pointer;
+    font-size: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    transition: all 0.2s;
+  }
+  .attach-btn:hover {
+    background: var(--aqua-3);
+    color: white;
+    transform: scale(1.05);
+  }
+  #msg-input {
+    flex: 1;
+    padding: 10px 14px;
+    border: 1px solid var(--aqua-2);
+    border-radius: 20px;
+    resize: none;
+    font-family: 'Tajawal', sans-serif;
+    font-size: 14px;
+    color: var(--text-dark);
+    background: #fafafa;
+    min-height: 42px;
+    max-height: 120px;
+    transition: all 0.2s;
+  }
+  #msg-input:focus {
+    outline: none;
+    border-color: var(--aqua-4);
+    background: #fff;
+    box-shadow: 0 0 0 3px rgba(0, 151, 167, 0.1);
+  }
+  .send-btn {
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--aqua-4), var(--aqua-5));
+    color: white;
+    border: none;
+    cursor: pointer;
+    font-size: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    transition: all 0.2s;
+    box-shadow: 0 2px 6px rgba(0, 151, 167, 0.3);
+  }
+  .send-btn:hover {
+    transform: scale(1.05);
+    box-shadow: 0 4px 12px rgba(0, 151, 167, 0.4);
+  }
+  .send-btn:active { transform: scale(0.95); }
+
+  /* ============ معاينة الملف ============ */
+  #preview {
+    display: none;
+    margin: 0 16px 8px;
+    padding: 8px 12px;
+    background: var(--aqua-1);
+    border: 1px solid var(--aqua-2);
+    border-radius: var(--radius-md);
+    font-size: 13px;
+    color: var(--text-dark);
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+  }
+  #preview.show { display: flex; }
+  #preview .file-info {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  #preview .file-info i {
+    color: var(--aqua-4);
+  }
+  #preview .remove-btn {
+    background: #dc3545;
+    color: white;
+    border: none;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    cursor: pointer;
+    font-size: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  #preview .remove-btn:hover {
+    background: #c82333;
+  }
+
+  /* ============ الرسائل (alerts) ============ */
+  .messages-container {
+    position: fixed;
+    top: 60px;
+    right: 20px;
+    z-index: 1000;
+    max-width: 400px;
+  }
+  .alert {
+    padding: 10px 16px;
+    border-radius: var(--radius-md);
+    font-size: 13px;
+    margin-bottom: 8px;
+    box-shadow: var(--shadow-md);
+    animation: slideIn 0.3s ease-out;
+  }
+  @keyframes slideIn {
+    from { opacity: 0; transform: translateX(20px); }
+    to { opacity: 1; transform: translateX(0); }
+  }
+  .alert-error, .alert-danger {
+    background: #ffebee;
+    color: #b71c1c;
+    border: 1px solid #ffcdd2;
+  }
+  .alert-success {
+    background: #e8f5e9;
+    color: #1b5e20;
+    border: 1px solid #c8e6c9;
+  }
+  .alert-info {
+    background: #e3f2fd;
+    color: #0d47a1;
+    border: 1px solid #bbdefb;
+  }
+  .alert-warning {
+    background: #fff8e1;
+    color: #7a5f00;
+    border: 1px solid #ffe082;
+  }
+
+  /* ============ استجابة للجوال ============ */
+  @media (max-width: 600px) {
+    .chat-wrapper { padding: 0; }
+    .chat-container { border-radius: 0; max-width: 100%; height: 100%; }
+    .top-bar { padding: 0 10px; }
+    .top-bar .username { display: none; }
+    .top-bar a, .top-bar button { padding: 5px 10px; font-size: 12px; }
+    .chat-header { padding: 10px 14px; }
+    .chat-header .title { font-size: 13px; }
+    #chat-log { padding: 12px 14px; }
+    .bubble { max-width: 85%; font-size: 13px; }
+  }
 </style>
 </head>
 <body>
 
+<!-- ============ الشريط العلوي ============ -->
+<div class="top-bar">
+  <div class="top-bar-left">
+    <a href="/">
+      <i class="fas fa-home"></i>
+      الرئيسية
+    </a>
+    {% if request.user.is_staff %}
+    <a href="{% url 'staff_inbox' %}">
+      <i class="fas fa-inbox"></i>
+      الصندوق
+    </a>
+    {% endif %}
+  </div>
+  <div class="top-bar-right">
+    <span class="username">
+      <i class="fas fa-user-circle"></i>
+      {{ request.user.get_full_name|default:request.user.username }}
+    </span>
+    <a href="{% url 'accounts:logout' %}">
+      <i class="fas fa-sign-out-alt"></i>
+      خروج
+    </a>
+  </div>
+</div>
+
+<!-- ============ الرسائل (alerts) ============ -->
 {% if messages %}
 <div class="messages-container">
   {% for message in messages %}
@@ -55,41 +440,68 @@
 </div>
 {% endif %}
 
-<div id="chat-page"
-     data-conv-id="{{ conversation.id }}"
-     data-user-id="{{ request.user.id }}"
-     data-max-size="{{ max_size }}"
-     data-csrf="{{ csrf_token }}"
-     class="chat-box">
+<!-- ============ المحادثة ============ -->
+<div class="chat-wrapper">
+  <div class="chat-container"
+       id="chat-page"
+       data-conv-id="{{ conversation.id }}"
+       data-user-id="{{ request.user.id }}"
+       data-max-size="{{ max_size }}"
+       data-csrf="{{ csrf_token }}">
 
-  <h3 class="chat-header">
-    {% if request.user.is_staff %}
-      {% if conversation.kind == 'internal' and conversation.customer == request.user %}
-        <span>محادثة مع: {{ conversation.initiator.username|default:"—" }}</span>
-      {% else %}
-        <span>محادثة مع: {{ conversation.customer.username }}</span>
+    <!-- رأس المحادثة -->
+    <div class="chat-header">
+      <div class="title">
+        <i class="fas fa-comments"></i>
+        {% if request.user.is_staff %}
+          {% if conversation.kind == 'internal' and conversation.customer == request.user %}
+            محادثة مع: {{ conversation.initiator.username|default:"—" }}
+          {% else %}
+            محادثة مع: {{ conversation.customer.username }}
+          {% endif %}
+        {% else %}
+          محادثتك مع الإدارة
+        {% endif %}
+      </div>
+      {% if request.user.is_staff %}
+      <div class="actions">
+        <a href="{% url 'staff_inbox' %}">
+          <i class="fas fa-arrow-right"></i>
+          العودة
+        </a>
+      </div>
       {% endif %}
-      <a href="{% url 'staff_inbox' %}" class="back-link">← العودة للقائمة</a>
-    {% else %}
-      <span>محادثتك مع الإدارة</span>
-    {% endif %}
-  </h3>
+    </div>
 
-  <div id="chat-log"></div>
+    <!-- منطقة الرسائل -->
+    <div id="chat-log"></div>
 
-  <div id="preview" class="preview">
-    <span id="preview-name"></span>
-    <button type="button" id="remove-file" class="btn-danger-sm">✖</button>
-  </div>
+    <!-- معاينة الملف -->
+    <div id="preview">
+      <div class="file-info">
+        <i class="fas fa-paperclip"></i>
+        <span id="preview-name"></span>
+      </div>
+      <button type="button" id="remove-file" class="remove-btn">
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
 
-  <div class="input-row">
-    <input type="file" id="file-input" accept="image/*,audio/*" class="hidden">
-    <button type="button" id="attach-btn" class="btn-secondary" title="إرفاق ملف">📎</button>
-    <textarea id="msg-input" rows="2" placeholder="اكتب رسالتك... (Enter للإرسال)"></textarea>
-    <button type="button" id="send-btn" class="btn-primary">إرسال</button>
+    <!-- منطقة الإدخال -->
+    <div class="input-area">
+      <input type="file" id="file-input" accept="image/*,audio/*" style="display:none;">
+      <button type="button" id="attach-btn" class="attach-btn" title="إرفاق ملف">
+        <i class="fas fa-paperclip"></i>
+      </button>
+      <textarea id="msg-input" rows="1" placeholder="اكتب رسالتك..."></textarea>
+      <button type="button" id="send-btn" class="send-btn" title="إرسال">
+        <i class="fas fa-paper-plane"></i>
+      </button>
+    </div>
   </div>
 </div>
 
+<!-- ============ JavaScript ============ -->
 <script nonce="{{ csp_nonce }}">
 (function () {
   'use strict';
@@ -104,6 +516,7 @@
   const fileInput = document.getElementById('file-input');
   const preview = document.getElementById('preview');
   const previewName = document.getElementById('preview-name');
+  const msgInput = document.getElementById('msg-input');
 
   let lastMaxId = 0;
   let selectedFile = null;
@@ -129,6 +542,7 @@
 
     if (m.content) {
       const txt = document.createElement('div');
+      txt.className = 'content';
       txt.textContent = m.content;
       bubble.appendChild(txt);
     }
@@ -196,8 +610,7 @@
   });
 
   function sendMessage() {
-    const input = document.getElementById('msg-input');
-    const content = input.value.trim();
+    const content = msgInput.value.trim();
     if (!content && !selectedFile) return;
 
     const fd = new FormData();
@@ -215,7 +628,8 @@
         if (m.error) { alert(m.error); return; }
         renderMessage(m);
         lastMaxId = Math.max(lastMaxId, m.id);
-        input.value = '';
+        msgInput.value = '';
+        msgInput.style.height = 'auto';
         selectedFile = null;
         fileInput.value = '';
         preview.classList.remove('show');
@@ -225,16 +639,22 @@
 
   document.getElementById('send-btn').addEventListener('click', sendMessage);
 
-  document.getElementById('msg-input').addEventListener('keydown', function (e) {
+  msgInput.addEventListener('keydown', function (e) {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
       sendMessage();
     }
   });
 
+  msgInput.addEventListener('input', function () {
+    this.style.height = 'auto';
+    this.style.height = Math.min(this.scrollHeight, 120) + 'px';
+  });
+
   loadMessages();
   setInterval(loadMessages, 3000);
 })();
 </script>
+
 </body>
 </html>

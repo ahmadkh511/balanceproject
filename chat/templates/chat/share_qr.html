@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>مشاركة رابط المحادثة — QR</title>
+<style nonce="{{ csp_nonce }}">
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Tajawal', 'Segoe UI', sans-serif;
+    background: #f0f4f8;
+    padding: 20px;
+    color: #333;
+    line-height: 1.6;
+  }
+
+  .toolbar {
+    max-width: 900px;
+    margin: 0 auto 20px;
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+
+  .btn {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-family: inherit;
+    font-size: 14px;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.2s;
+    text-decoration: none;
+    color: #fff;
+  }
+
+  .btn-primary { background: #007bff; }
+  .btn-primary:hover { background: #0069d9; }
+  .btn-secondary { background: #6c757d; }
+  .btn-secondary:hover { background: #5a6268; }
+  .btn-sm { padding: 6px 12px; font-size: 13px; }
+
+  .container {
+    max-width: 900px;
+    margin: 0 auto;
+  }
+
+  .card {
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 2px 12px rgba(0,0,0,.08);
+    padding: 24px;
+    margin-bottom: 20px;
+  }
+
+  .card h2 {
+    font-size: 18px;
+    margin-bottom: 16px;
+    color: #007bff;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .url-box {
+    display: flex;
+    gap: 8px;
+    margin-top: 10px;
+  }
+
+  .url-box input {
+    flex: 1;
+    padding: 12px 16px;
+    border: 2px solid #e0e7ef;
+    border-radius: 8px;
+    font-family: 'Courier New', monospace;
+    font-size: 13px;
+    direction: ltr;
+    background: #fafbfc;
+  }
+
+  .url-box input:focus {
+    outline: none;
+    border-color: #007bff;
+  }
+
+  .steps {
+    list-style: none;
+    counter-reset: step;
+    margin-top: 12px;
+  }
+
+  .steps li {
+    counter-increment: step;
+    padding: 10px 0 10px 44px;
+    position: relative;
+    border-bottom: 1px dashed #e0e7ef;
+    font-size: 14px;
+  }
+
+  .steps li:last-child { border-bottom: none; }
+
+  .steps li::before {
+    content: counter(step);
+    position: absolute;
+    right: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 30px;
+    height: 30px;
+    background: linear-gradient(135deg, #007bff, #0056b3);
+    color: #fff;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 13px;
+  }
+
+  .preview-notice {
+    background: #fff3cd;
+    border: 1px solid #ffe082;
+    color: #7a5f00;
+    padding: 12px 16px;
+    border-radius: 8px;
+    margin-bottom: 16px;
+    font-size: 13px;
+  }
+
+  /* ============ البطاقة القابلة للطباعة (A5) ============ */
+  .print-card {
+    width: 148mm;
+    min-height: 210mm;
+    margin: 20px auto;
+    background: #fff;
+    border: 2px dashed #ccc;
+    border-radius: 10px;
+    padding: 20mm 15mm;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: space-between;
+    text-align: center;
+    box-shadow: 0 2px 12px rgba(0,0,0,.08);
+  }
+
+  .print-card .card-title {
+    font-size: 20px;
+    font-weight: 700;
+    color: #007bff;
+    margin-bottom: 4mm;
+  }
+
+  .print-card .card-subtitle {
+    font-size: 13px;
+    color: #666;
+    margin-bottom: 10mm;
+  }
+
+  .print-card .qr-wrapper {
+    padding: 5mm;
+    background: #fff;
+    border: 4px solid #007bff;
+    border-radius: 14px;
+    margin: 4mm 0;
+  }
+
+  .print-card .qr-wrapper img {
+    width: 80mm;
+    height: 80mm;
+    display: block;
+  }
+
+  .print-card .card-instructions {
+    font-size: 13px;
+    color: #333;
+    line-height: 1.9;
+    margin-top: 8mm;
+    padding-top: 6mm;
+    border-top: 2px solid #e0e7ef;
+    text-align: right;
+    width: 100%;
+    max-width: 110mm;
+  }
+
+  .print-card .card-instructions strong {
+    display: block;
+    text-align: center;
+    color: #007bff;
+    font-size: 15px;
+    margin-bottom: 4mm;
+  }
+
+  /* ============ قواعد الطباعة ============ */
+  @media print {
+    /* إخفاء كل شيء افتراضياً */
+    body > * {
+      display: none !important;
+    }
+
+    /* إظهار البطاقة فقط */
+    body > .print-card {
+      display: flex !important;
+    }
+
+    body {
+      background: #fff;
+      padding: 0;
+      margin: 0;
+    }
+
+    .print-card {
+      width: 100%;
+      max-width: 100%;
+      min-height: auto;
+      margin: 0;
+      border: none;
+      border-radius: 0;
+      padding: 12mm 10mm;
+      box-shadow: none;
+      page-break-inside: avoid;
+      page-break-after: avoid;
+    }
+
+    .print-card .qr-wrapper {
+      border-color: #000;
+    }
+
+    .print-card .card-title {
+      color: #000;
+    }
+
+    .print-card .card-instructions strong {
+      color: #000;
+    }
+
+    @page {
+      size: A5 portrait;
+      margin: 0;
+    }
+  }
+
+  /* ============ استجابة الجوال ============ */
+  @media (max-width: 600px) {
+    body { padding: 10px; }
+    .toolbar { flex-direction: column; }
+    .btn { width: 100%; justify-content: center; }
+    .url-box { flex-direction: column; }
+    .card { padding: 16px; }
+    .print-card {
+      width: 100%;
+      min-height: auto;
+      padding: 15mm 10mm;
+    }
+    .print-card .qr-wrapper img {
+      width: 70vw;
+      height: 70vw;
+      max-width: 280px;
+      max-height: 280px;
+    }
+  }
+</style>
+</head>
+<body>
+
+<!-- ============ أزرار التحكم ============ -->
+<div class="toolbar no-print">
+  <a href="{% url 'staff_inbox' %}" class="btn btn-secondary">
+    ← العودة للصندوق
+  </a>
+  <button type="button" class="btn btn-primary" id="print-btn">
+    🖨️ طباعة
+  </button>
+</div>
+
+<div class="container">
+
+  <!-- ============ رابط البوابة ============ -->
+  <div class="card no-print">
+    <h2>📌 رابط قناة المحادثة</h2>
+    <p style="font-size: 14px; color: #666; margin-bottom: 4px;">
+      هذا هو الرابط الوحيد الذي تحتاجه لمشاركته مع العملاء. كل عميل يدخل بحسابه.
+    </p>
+    <div class="url-box">
+      <input type="text" id="chat-url" value="{{ chat_url }}" readonly>
+      <button type="button" class="btn btn-primary btn-sm" id="copy-btn">
+        📋 نسخ
+      </button>
+    </div>
+  </div>
+
+  <!-- ============ التعليمات ============ -->
+  <div class="card no-print">
+    <h2>📖 كيف يستخدم العميل هذا الرابط؟</h2>
+    <ol class="steps">
+      <li>يفتح العميل كاميرا هاتفه (أو تطبيق قارئ QR).</li>
+      <li>يمسح رمز QR المطبوع على البطاقة.</li>
+      <li>يفتح المتصفح صفحة "قناة اتصال خاصة".</li>
+      <li>يدخل بريده الإلكتروني وكلمة المرور الخاصة بحسابه.</li>
+      <li>يدخل تلقائياً إلى محادثته مع الإدارة.</li>
+    </ol>
+  </div>
+
+  <!-- ============ معاينة البطاقة ============ -->
+  <div class="card no-print">
+    <h2>🖨️ معاينة البطاقة</h2>
+    <div class="preview-notice">
+      💡 اضغط "طباعة" أعلى الصفحة لطباعة نسخة A5 جاهزة.
+    </div>
+  </div>
+
+</div>
+
+<!-- ============ البطاقة الفعلية (تُطبع فقط) — خارج .container لضمان الطباعة ============ -->
+<div class="print-card">
+  <div>
+    <div class="card-title">🔐 قناة تواصل خاصة</div>
+    <div class="card-subtitle">للتواصل المباشر مع الإدارة</div>
+  </div>
+
+  <div class="qr-wrapper">
+    <img src="data:image/png;base64,{{ qr_base64 }}" alt="QR Code">
+  </div>
+
+  <div class="card-instructions">
+    <strong>كيف تستخدم هذه البطاقة؟</strong>
+    1. افتح كاميرا هاتفك<br>
+    2. امسح الرمز أعلاه<br>
+    3. سجّل دخولك بحسابك<br>
+    4. ابدأ المحادثة مع الإدارة
+  </div>
+</div>
+
+<script nonce="{{ csp_nonce }}">
+(function () {
+  'use strict';
+
+  var printBtn = document.getElementById('print-btn');
+  if (printBtn) {
+    printBtn.addEventListener('click', function () {
+      window.print();
+    });
+  }
+
+  var copyBtn = document.getElementById('copy-btn');
+  var urlInput = document.getElementById('chat-url');
+  if (copyBtn && urlInput) {
+    copyBtn.addEventListener('click', function () {
+      urlInput.select();
+      urlInput.setSelectionRange(0, 99999);
+
+      var done = function () {
+        copyBtn.textContent = '✓ تم النسخ';
+        setTimeout(function () {
+          copyBtn.textContent = '📋 نسخ';
+        }, 2000);
+      };
+
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(urlInput.value).then(done).catch(function () {
+          document.execCommand('copy');
+          done();
+        });
+      } else {
+        document.execCommand('copy');
+        done();
+      }
+    });
+  }
+})();
+</script>
+</body>
+</html>

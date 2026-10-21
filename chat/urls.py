@@ -18,4 +18,6 @@ urlpatterns = [
     path('debug/', views.debug_conversations, name='debug_conversations'),
 
     path('broadcast/', views.broadcast, name='broadcast'),
+
+    path('share/', views.share_qr_view, name='share_qr'),
 ]

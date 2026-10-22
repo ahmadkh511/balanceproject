@@ -2,10 +2,16 @@
 <html lang="ar" dir="rtl">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>مشاركة رابط المحادثة — QR</title>
 <style nonce="{{ csp_nonce }}">
   * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html, body {
+    width: 100%;
+    min-height: 100%;
+    min-height: 100dvh;
+  }
 
   body {
     font-family: 'Tajawal', 'Segoe UI', sans-serif;
@@ -13,6 +19,7 @@
     padding: 20px;
     color: #333;
     line-height: 1.6;
+    overflow-x: hidden;
   }
 
   /* ============ الأزرار العلوية ============ */
@@ -85,6 +92,7 @@
     font-size: 13px;
     direction: ltr;
     background: #fafbfc;
+    min-width: 0;
   }
 
   .url-box input:focus {
@@ -322,7 +330,7 @@
     font-size: 10px;
     font-style: italic;
     color: #555;
-    line-height: 1.5;
+    line-height: 1.6;
     text-align: center;
   }
 
@@ -336,24 +344,30 @@
     text-align: inherit;
   }
 
+  /* ✅ التعديل: سطر أنظمة التشغيل أصبح مضمّناً داخل الملاحظة وليس منفصلاً */
   .print-card .webqr-note .webqr-os {
-    display: block;
-    margin-top: 1.5mm;
+    display: inline-block;            /* مدمج داخل النص */
+    margin: 1mm 2px 0;
+    padding: 0.5mm 2mm;
+    background: #eef4ff;
+    border: 1px solid #d6e4ff;
+    border-radius: 4px;
     font-family: 'Courier New', monospace;
     font-size: 9px;
     font-style: normal;
     letter-spacing: 0.3px;
-    color: #777;
+    color: #555;
+    white-space: nowrap;
+    vertical-align: middle;
+    line-height: 1.4;
   }
 
   /* ============ قواعد الطباعة ============ */
   @media print {
-    /* إخفاء كل شيء */
     body > * {
       display: none !important;
     }
 
-    /* إظهار البطاقة فقط */
     body > .print-card {
       display: flex !important;
     }
@@ -393,6 +407,13 @@
       color: #000;
     }
 
+    /* إبقاء سطر الأنظمة واضحاً في الطباعة */
+    .print-card .webqr-note .webqr-os {
+      background: #f2f2f2;
+      border-color: #ccc;
+      color: #333;
+    }
+
     @page {
       size: A5 portrait;
       margin: 0;
@@ -423,6 +444,14 @@
   @media (max-width: 400px) {
     .scan-tip .os-grid { grid-template-columns: 1fr 1fr; }
     .scan-tip { padding: 16px; }
+
+    /* على الشاشات الصغيرة جداً: إبقاء السطر أنيقاً */
+    .print-card .webqr-note .webqr-os {
+      display: block;
+      margin: 1.5mm auto 0;
+      width: fit-content;
+      font-size: 8.5px;
+    }
   }
 </style>
 </head>
@@ -565,7 +594,7 @@
     4. ابدأ المحادثة مع الإدارة
 
     <span class="webqr-note">
-      <strong>ملاحظة:</strong> إذا كانت كاميرا الكمبيوتر ضعيفة ولا تقرأ الكود، استخدم <strong>webqr.com</strong> مباشرة من المتصفح. متوافق مع جميع انظمة التشغيل 
+      <strong>ملاحظة:</strong> إذا كانت كاميرا الكمبيوتر ضعيفة ولا تقرأ الكود، استخدم <strong>webqr.com</strong> مباشرة من المتصفح. متوافق مع جميع أنظمة التشغيل
       <span class="webqr-os">Windows · Mac · Linux · Web</span>
     </span>
   </div>

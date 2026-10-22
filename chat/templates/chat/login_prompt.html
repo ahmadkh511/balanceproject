@@ -2,25 +2,29 @@
 <html lang="ar" dir="rtl">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>قناة اتصال خاصة</title>
 <style nonce="{{ csp_nonce }}">
   * { box-sizing: border-box; margin: 0; padding: 0; }
 
-  html {
-    height: 100%;
+  html, body {
+    width: 100%;
+    min-height: 100%;
+    min-height: 100dvh;
   }
 
   body {
     font-family: 'Tajawal', 'Segoe UI', sans-serif;
     background: linear-gradient(135deg, #f0f7ff 0%, #f7f7f7 100%);
-    min-height: 100vh;
-    min-height: 100dvh;
     padding: 20px;
+    /* تمركز أفقي وعمودي موثوق */
     display: flex;
+    flex-direction: column;
     align-items: center;
     justify-content: center;
-    margin: 0;
+    text-align: center;
+    /* منع التمرير الأفقي */
+    overflow-x: hidden;
   }
 
   .card {
@@ -31,7 +35,7 @@
     text-align: center;
     max-width: 460px;
     width: 100%;
-    margin: auto;
+    /* إزالة margin:auto لأن flex يتكفل بالتمركز */
   }
 
   .icon {
@@ -55,7 +59,7 @@
   }
 
   a.login-btn {
-    display: inline-block;
+    display: block;          /* block أفضل من inline-block للعرض الكامل */
     padding: 14px 32px;
     background: #007bff;
     color: #fff;
@@ -80,12 +84,18 @@
   @media (max-width: 480px) {
     body {
       padding: 12px;
+      /* ضمان التمركز على الموبايل */
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      min-height: 100dvh;
     }
 
     .card {
       padding: 30px 20px;
       border-radius: 12px;
       max-width: 100%;
+      width: 100%;
     }
 
     .icon {

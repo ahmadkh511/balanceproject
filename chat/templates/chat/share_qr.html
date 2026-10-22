@@ -146,7 +146,7 @@
     font-size: 13px;
   }
 
-  /* ============ قسم مسح QR من الكمبيوتر (على الشاشة فقط) ============ */
+  /* ============ قسم مسح QR من الكمبيوتر ============ */
   .scan-tip {
     background: linear-gradient(135deg, #e3f2fd 0%, #f0f7ff 100%);
     border: 1px solid #bbdefb;
@@ -265,7 +265,7 @@
     background: #fff;
     border: 2px dashed #ccc;
     border-radius: 10px;
-    padding: 15mm 12mm;
+    padding: 10mm 9mm;              /* ✅ تقليل الهوامش الداخلية */
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -278,35 +278,35 @@
     font-size: 20px;
     font-weight: 700;
     color: #007bff;
-    margin-bottom: 4mm;
+    margin-bottom: 3mm;             /* ✅ تقليل */
   }
 
   .print-card .card-subtitle {
     font-size: 13px;
     color: #666;
-    margin-bottom: 8mm;
+    margin-bottom: 5mm;             /* ✅ تقليل */
   }
 
   .print-card .qr-wrapper {
-    padding: 4mm;
+    padding: 3mm;                   /* ✅ تقليل */
     background: #fff;
     border: 4px solid #007bff;
     border-radius: 14px;
-    margin: 3mm 0;
+    margin: 2mm 0;                  /* ✅ تقليل */
   }
 
   .print-card .qr-wrapper img {
-    width: 78mm;
-    height: 78mm;
+    width: 72mm;                    /* ✅ تصغير QR قليلاً */
+    height: 72mm;
     display: block;
   }
 
   .print-card .card-instructions {
     font-size: 13px;
     color: #333;
-    line-height: 1.9;
-    margin-top: 6mm;
-    padding-top: 5mm;
+    line-height: 1.8;
+    margin-top: 4mm;                /* ✅ تقليل */
+    padding-top: 3mm;               /* ✅ تقليل */
     border-top: 2px solid #e0e7ef;
     text-align: right;
     width: 100%;
@@ -318,20 +318,22 @@
     text-align: center;
     color: #007bff;
     font-size: 15px;
-    margin-bottom: 4mm;
+    margin-bottom: 3mm;             /* ✅ تقليل */
   }
 
-  /* ============ ملاحظة webqr داخل البطاقة (تُطبع) ============ */
+  /* ============ ملاحظة webqr داخل البطاقة ============ */
   .print-card .webqr-note {
     display: block;
-    margin-top: 5mm;
-    padding-top: 3mm;
+    margin-top: 3mm;                /* ✅ تقليل */
+    padding-top: 2mm;               /* ✅ تقليل */
     border-top: 1px dashed #b0b0b0;
     font-size: 10px;
     font-style: italic;
     color: #555;
-    line-height: 1.6;
+    line-height: 1.5;
     text-align: center;
+    page-break-inside: avoid;       /* ✅ منع انفصالها لصفحة أخرى */
+    break-inside: avoid;
   }
 
   .print-card .webqr-note strong {
@@ -344,9 +346,9 @@
     text-align: inherit;
   }
 
-  /* ✅ التعديل: سطر أنظمة التشغيل أصبح مضمّناً داخل الملاحظة وليس منفصلاً */
+  /* ✅ سطر الأنظمة مضمّن داخل الملاحظة */
   .print-card .webqr-note .webqr-os {
-    display: inline-block;            /* مدمج داخل النص */
+    display: inline-block;
     margin: 1mm 2px 0;
     padding: 0.5mm 2mm;
     background: #eef4ff;
@@ -381,18 +383,27 @@
     .print-card {
       width: 100%;
       max-width: 100%;
-      min-height: auto;
+      min-height: auto;             /* ✅ لا نطلب ارتفاعاً كاملاً */
+      height: auto;
       margin: 0;
       border: none;
       border-radius: 0;
-      padding: 12mm 10mm;
+      padding: 8mm 9mm;             /* ✅ حشو أقل للطباعة */
       box-shadow: none;
       page-break-inside: avoid;
       page-break-after: avoid;
+      justify-content: flex-start;  /* ✅ منع التوزيع الذي يدفع الملاحظة للأسفل */
+      gap: 3mm;
     }
 
     .print-card .qr-wrapper {
       border-color: #000;
+      margin: 1mm 0;                /* ✅ تقليل أكثر في الطباعة */
+    }
+
+    .print-card .qr-wrapper img {
+      width: 68mm;                  /* ✅ أصغر قليلاً لضمان الملاءمة */
+      height: 68mm;
     }
 
     .print-card .card-title {
@@ -407,7 +418,13 @@
       color: #000;
     }
 
-    /* إبقاء سطر الأنظمة واضحاً في الطباعة */
+    .print-card .webqr-note {
+      margin-top: 2mm;              /* ✅ تقليل في الطباعة */
+      padding-top: 1.5mm;
+      page-break-inside: avoid;
+      break-inside: avoid;
+    }
+
     .print-card .webqr-note .webqr-os {
       background: #f2f2f2;
       border-color: #ccc;
@@ -431,13 +448,13 @@
     .print-card {
       width: 100%;
       min-height: auto;
-      padding: 15mm 10mm;
+      padding: 10mm 8mm;            /* ✅ تقليل على الجوال */
     }
     .print-card .qr-wrapper img {
-      width: 70vw;
-      height: 70vw;
-      max-width: 280px;
-      max-height: 280px;
+      width: 68vw;
+      height: 68vw;
+      max-width: 260px;
+      max-height: 260px;
     }
   }
 
@@ -445,7 +462,6 @@
     .scan-tip .os-grid { grid-template-columns: 1fr 1fr; }
     .scan-tip { padding: 16px; }
 
-    /* على الشاشات الصغيرة جداً: إبقاء السطر أنيقاً */
     .print-card .webqr-note .webqr-os {
       display: block;
       margin: 1.5mm auto 0;
@@ -575,7 +591,7 @@
 
 </div>
 
-<!-- ============ البطاقة الفعلية (تُطبع فقط) — خارج .container ============ -->
+<!-- ============ البطاقة الفعلية (تُطبع فقط) ============ -->
 <div class="print-card">
   <div>
     <div class="card-title">🔐 قناة تواصل خاصة</div>

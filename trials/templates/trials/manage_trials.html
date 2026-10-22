@@ -4,1568 +4,393 @@
 {% block title %}إدارة الفترات التجريبية | BalanceIQ{% endblock %}
 
 {% block extra_css %}
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style nonce="{{ csp_nonce }}">
-    /* ===== متغيرات التصميم ===== */
-    :root {
-        --gradient-start: #667eea;
-        --gradient-end: #764ba2;
-        --primary: #5B6ABF;
-        --primary-light: #7C8CDB;
-        --primary-dark: #3D4A9A;
-        --success: #10B981;
-        --warning: #F59E0B;
-        --danger: #EF4444;
-        --gray-50: #F8FAFC;
-        --gray-100: #F1F5F9;
-        --gray-200: #E2E8F0;
-        --gray-300: #CBD5E1;
-        --gray-400: #94A3B8;
-        --gray-500: #64748B;
-        --gray-600: #475569;
-        --gray-700: #334155;
-        --gray-800: #1E293B;
-        --gray-900: #0F172A;
-        --radius: 12px;
-        --radius-sm: 8px;
-        --radius-lg: 16px;
-        --shadow-sm: 0 1px 3px rgba(0,0,0,0.06);
-        --shadow: 0 4px 20px rgba(0,0,0,0.08);
-        --shadow-lg: 0 10px 40px rgba(0,0,0,0.12);
-        --shadow-xl: 0 20px 60px rgba(0,0,0,0.15);
-        --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    }
-
-    /* ===== التنسيق العام ===== */
-    * {
-        box-sizing: border-box;
-        margin: 0;
-        padding: 0;
-    }
-
-    body {
-        font-family: 'Tajawal', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-        background: var(--gray-50);
-        min-height: 100vh;
-        position: relative;
-    }
-
-    /* ===== خلفية متحركة ===== */
-    .bg-pattern {
-        position: fixed;
-        inset: 0;
-        z-index: -1;
-        background: 
-            radial-gradient(ellipse at 10% 20%, rgba(102, 126, 234, 0.08) 0%, transparent 50%),
-            radial-gradient(ellipse at 90% 80%, rgba(118, 75, 162, 0.08) 0%, transparent 50%),
-            radial-gradient(ellipse at 50% 50%, rgba(102, 126, 234, 0.03) 0%, transparent 70%);
-        animation: bgFloat 20s ease-in-out infinite alternate;
-    }
-
-    @keyframes bgFloat {
-        0% { transform: scale(1) rotate(0deg); }
-        100% { transform: scale(1.05) rotate(2deg); }
-    }
-
-    /* ===== الحاوية الرئيسية ===== */
-    .dashboard-wrapper {
-        max-width: 1440px;
-        margin: 0 auto;
-        padding: 1.5rem;
-        position: relative;
-        z-index: 1;
-    }
-
-    /* ===== الهيدر ===== */
-    .dashboard-header {
-        background: linear-gradient(135deg, var(--gradient-start), var(--gradient-end));
-        border-radius: var(--radius-lg);
-        padding: 2rem 2.5rem;
-        margin-bottom: 2rem;
-        position: relative;
-        overflow: hidden;
-        box-shadow: var(--shadow-lg);
-    }
-
-    .dashboard-header::before {
-        content: '';
-        position: absolute;
-        top: -50%;
-        right: -20%;
-        width: 400px;
-        height: 400px;
-        background: rgba(255, 255, 255, 0.05);
-        border-radius: 50%;
-        animation: floatShape 8s ease-in-out infinite;
-    }
-
-    .dashboard-header::after {
-        content: '';
-        position: absolute;
-        bottom: -40%;
-        left: -10%;
-        width: 300px;
-        height: 300px;
-        background: rgba(255, 255, 255, 0.04);
-        border-radius: 50%;
-        animation: floatShape 10s ease-in-out infinite reverse;
-    }
-
-    @keyframes floatShape {
-        0%, 100% { transform: translate(0, 0) scale(1); }
-        50% { transform: translate(30px, -20px) scale(1.1); }
-    }
-
-    .header-content {
-        position: relative;
-        z-index: 1;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        flex-wrap: wrap;
-        gap: 1rem;
-    }
-
-    .header-text h1 {
-        color: white;
-        font-size: 1.75rem;
-        font-weight: 800;
-        margin: 0;
-        display: flex;
-        align-items: center;
-        gap: 0.75rem;
-        letter-spacing: -0.5px;
-    }
-
-    .header-text h1 i {
-        font-size: 2rem;
-        opacity: 0.9;
-        animation: rocketFloat 3s ease-in-out infinite;
-    }
-
-    @keyframes rocketFloat {
-        0%, 100% { transform: translateY(0) rotate(-5deg); }
-        50% { transform: translateY(-8px) rotate(5deg); }
-    }
-
-    .header-text p {
-        color: rgba(255, 255, 255, 0.85);
-        font-size: 0.95rem;
-        margin: 0.3rem 0 0;
-        font-weight: 400;
-    }
-
-    .header-badge {
-        display: flex;
-        align-items: center;
-        gap: 0.75rem;
-        background: rgba(255, 255, 255, 0.15);
-        backdrop-filter: blur(10px);
-        padding: 0.5rem 1.25rem;
-        border-radius: 50px;
-        border: 1px solid rgba(255, 255, 255, 0.2);
-    }
-
-    .header-badge span {
-        color: white;
-        font-size: 0.85rem;
-        font-weight: 600;
-    }
-
-    .header-badge .dot {
-        width: 8px;
-        height: 8px;
-        border-radius: 50%;
-        background: #34D399;
-        animation: pulse 2s infinite;
-    }
-
-    @keyframes pulse {
-        0%, 100% { opacity: 1; transform: scale(1); }
-        50% { opacity: 0.5; transform: scale(0.8); }
-    }
-
-    /* ===== بطاقات الإحصائيات ===== */
-    .stats-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-        gap: 1.25rem;
-        margin-bottom: 2rem;
-    }
-
-    .stat-card {
-        background: white;
-        border-radius: var(--radius);
-        padding: 1.5rem;
-        display: flex;
-        align-items: center;
-        gap: 1.25rem;
-        box-shadow: var(--shadow);
-        transition: var(--transition);
-        position: relative;
-        overflow: hidden;
-        border: 1px solid rgba(226, 232, 240, 0.5);
-        cursor: default;
-    }
-
-    .stat-card::before {
-        content: '';
-        position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        height: 4px;
-        background: linear-gradient(90deg, var(--gradient-start), var(--gradient-end));
-        opacity: 0;
-        transition: var(--transition);
-    }
-
-    .stat-card:hover {
-        transform: translateY(-4px) scale(1.01);
-        box-shadow: var(--shadow-lg);
-        border-color: transparent;
-    }
-
-    .stat-card:hover::before {
-        opacity: 1;
-    }
-
-    .stat-card .stat-icon-wrapper {
-        width: 56px;
-        height: 56px;
-        border-radius: var(--radius);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 1.5rem;
-        flex-shrink: 0;
-        color: white;
-    }
-
-    .stat-card:nth-child(1) .stat-icon-wrapper {
-        background: linear-gradient(135deg, #10B981, #34D399);
-    }
-
-    .stat-card:nth-child(2) .stat-icon-wrapper {
-        background: linear-gradient(135deg, #F59E0B, #FBBF24);
-    }
-
-    .stat-card:nth-child(3) .stat-icon-wrapper {
-        background: linear-gradient(135deg, #EF4444, #F87171);
-    }
-
-    .stat-info {
-        flex: 1;
-        min-width: 0;
-    }
-
-    .stat-info .stat-number {
-        font-size: 1.75rem;
-        font-weight: 800;
-        color: var(--gray-900);
-        line-height: 1.2;
-        letter-spacing: -0.5px;
-    }
-
-    .stat-info .stat-label {
-        font-size: 0.8rem;
-        color: var(--gray-500);
-        font-weight: 500;
-        margin: 0;
-        display: flex;
-        align-items: center;
-        gap: 0.4rem;
-    }
-
-    .stat-info .stat-change {
-        font-size: 0.7rem;
-        font-weight: 700;
-        padding: 0.15rem 0.6rem;
-        border-radius: 50px;
-        display: inline-block;
-    }
-
-    .stat-change.positive {
-        background: #D1FAE5;
-        color: #065F46;
-    }
-
-    .stat-change.negative {
-        background: #FEE2E2;
-        color: #991B1B;
-    }
-
-    /* ===== بطاقات البيانات ===== */
-    .data-card {
-        background: white;
-        border-radius: var(--radius-lg);
-        box-shadow: var(--shadow);
-        margin-bottom: 1.5rem;
-        overflow: hidden;
-        border: 1px solid rgba(226, 232, 240, 0.5);
-        transition: var(--transition);
-    }
-
-    .data-card:hover {
-        box-shadow: var(--shadow-lg);
-        border-color: transparent;
-    }
-
-    .data-card-header {
-        padding: 1.25rem 1.5rem;
-        background: white;
-        border-bottom: 1px solid var(--gray-200);
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        flex-wrap: wrap;
-        gap: 0.75rem;
-    }
-
-    .data-card-header .card-title {
-        display: flex;
-        align-items: center;
-        gap: 0.6rem;
-        font-weight: 700;
-        font-size: 1rem;
-        color: var(--gray-800);
-    }
-
-    .data-card-header .card-title i {
-        color: var(--primary);
-        font-size: 1.1rem;
-    }
-
-    .data-card-header .card-badge {
-        padding: 0.3rem 1rem;
-        border-radius: 50px;
-        font-size: 0.75rem;
-        font-weight: 700;
-        background: var(--gray-100);
-        color: var(--gray-600);
-    }
-
-    .card-badge.active-badge {
-        background: #D1FAE5;
-        color: #065F46;
-    }
-
-    .card-badge.warning-badge {
-        background: #FEF3C7;
-        color: #92400E;
-    }
-
-    .card-badge.danger-badge {
-        background: #FEE2E2;
-        color: #991B1B;
-    }
-
-    .data-card-body {
-        padding: 0;
-        overflow: hidden;
-    }
-
-    /* ===== الجداول ===== */
-    .table-responsive {
-        overflow-x: auto;
-        -webkit-overflow-scrolling: touch;
-        padding: 0;
-    }
-
-    .table {
-        width: 100%;
-        border-collapse: separate;
-        border-spacing: 0;
-        font-size: 0.85rem;
-        min-width: 600px;
-    }
-
-    .table thead th {
-        background: var(--gray-50);
-        color: var(--gray-600);
-        font-weight: 700;
-        font-size: 0.7rem;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-        padding: 0.8rem 1.25rem;
-        text-align: right;
-        border-bottom: 2px solid var(--gray-200);
-        position: sticky;
-        top: 0;
-        z-index: 5;
-    }
-
-    .table tbody td {
-        padding: 0.8rem 1.25rem;
-        color: var(--gray-700);
-        border-bottom: 1px solid var(--gray-100);
-        vertical-align: middle;
-        transition: var(--transition);
-    }
-
-    .table tbody tr {
-        transition: var(--transition);
-    }
-
-    .table tbody tr:hover {
-        background: var(--gray-50);
-    }
-
-    .table tbody tr:last-child td {
-        border-bottom: none;
-    }
-
-    .table .customer-info {
-        display: flex;
-        flex-direction: column;
-    }
-
-    .table .customer-info .name {
-        font-weight: 600;
-        color: var(--gray-800);
-    }
-
-    .table .customer-info .email {
-        font-size: 0.75rem;
-        color: var(--gray-400);
-    }
-
-    .table .db-name {
-        font-family: 'JetBrains Mono', 'Cascadia Code', monospace;
-        font-size: 0.8rem;
-        background: var(--gray-100);
-        padding: 0.2rem 0.6rem;
-        border-radius: 4px;
-        color: var(--primary);
-        direction: ltr;
-        display: inline-block;
-    }
-
-    .table .db-name.danger {
-        background: #FEE2E2;
-        color: #DC2626;
-    }
-
-    /* ===== الشارات ===== */
-    .badge {
-        padding: 0.25rem 0.75rem;
-        border-radius: 50px;
-        font-size: 0.7rem;
-        font-weight: 600;
-        display: inline-flex;
-        align-items: center;
-        gap: 0.3rem;
-    }
-
-    .badge-primary {
-        background: #E0E7FF;
-        color: #4338CA;
-    }
-
-    .badge-success {
-        background: #D1FAE5;
-        color: #065F46;
-    }
-
-    .badge-warning {
-        background: #FEF3C7;
-        color: #92400E;
-    }
-
-    .badge-danger {
-        background: #FEE2E2;
-        color: #991B1B;
-    }
-
-    .badge-secondary {
-        background: var(--gray-200);
-        color: var(--gray-600);
-    }
-
-    .badge-info {
-        background: #DBEAFE;
-        color: #1E40AF;
-    }
-
-    /* ===== أزرار الإجراءات ===== */
-    .action-group {
-        display: flex;
-        gap: 0.4rem;
-        flex-wrap: wrap;
-        justify-content: center;
-    }
-
-    .btn-action {
-        padding: 0.3rem 0.7rem;
-        border-radius: var(--radius-sm);
-        font-size: 0.7rem;
-        font-weight: 600;
-        border: none;
-        cursor: pointer;
-        transition: var(--transition);
-        font-family: 'Tajawal', sans-serif;
-        display: inline-flex;
-        align-items: center;
-        gap: 0.3rem;
-        text-decoration: none;
-        white-space: nowrap;
-    }
-
-    .btn-action i {
-        font-size: 0.75rem;
-    }
-
-    .btn-action:hover {
-        transform: translateY(-2px);
-        box-shadow: var(--shadow);
-    }
-
-    .btn-action:active {
-        transform: scale(0.95);
-    }
-
-    .btn-stop {
-        background: #FEF3C7;
-        color: #92400E;
-    }
-
-    .btn-stop:hover {
-        background: #FDE68A;
-    }
-
-    .btn-resume {
-        background: #DBEAFE;
-        color: #1E40AF;
-    }
-
-    .btn-resume:hover {
-        background: #BFDBFE;
-    }
-
-    .btn-reset {
-        background: #E0E7FF;
-        color: #4338CA;
-    }
-
-    .btn-reset:hover {
-        background: #C7D2FE;
-    }
-
-    .btn-delete {
-        background: #FEE2E2;
-        color: #991B1B;
-    }
-
-    .btn-delete:hover {
-        background: #FECACA;
-    }
-
-    .btn-disabled {
-        background: var(--gray-100);
-        color: var(--gray-400);
-        cursor: not-allowed;
-        opacity: 0.6;
-    }
-
-    .btn-disabled:hover {
-        transform: none;
-        box-shadow: none;
-    }
-
-    /* ===== الحالة الفارغة ===== */
-    .empty-state {
-        text-align: center;
-        padding: 3rem 1.5rem;
-    }
-
-    .empty-state .empty-icon {
-        font-size: 3.5rem;
-        color: var(--gray-300);
-        margin-bottom: 0.75rem;
-    }
-
-    .empty-state h4 {
-        color: var(--gray-600);
-        font-weight: 600;
-        font-size: 1rem;
-        margin: 0 0 0.25rem;
-    }
-
-    .empty-state p {
-        color: var(--gray-400);
-        font-size: 0.85rem;
-        margin: 0;
-    }
-
-    /* ===== زر الطباعة العائم ===== */
-    .print-fab {
-        position: fixed;
-        bottom: 2rem;
-        left: 2rem;
-        z-index: 1000;
-        padding: 0.8rem 1.6rem;
-        border-radius: 50px;
-        background: linear-gradient(135deg, var(--gradient-start), var(--gradient-end));
-        color: white;
-        border: none;
-        cursor: pointer;
-        font-family: 'Tajawal', sans-serif;
-        font-weight: 700;
-        font-size: 0.9rem;
-        display: inline-flex;
-        align-items: center;
-        gap: 0.6rem;
-        box-shadow: 0 4px 25px rgba(102, 126, 234, 0.4);
-        transition: var(--transition);
-        backdrop-filter: blur(10px);
-        border: 1px solid rgba(255, 255, 255, 0.2);
-    }
-
-    .print-fab:hover {
-        transform: scale(1.05) translateY(-4px);
-        box-shadow: 0 8px 40px rgba(102, 126, 234, 0.5);
-    }
-
-    .print-fab:active {
-        transform: scale(0.95);
-    }
-
-    .print-fab i {
-        font-size: 1.1rem;
-    }
-
-    /* ===== مودال ===== */
-    .modal-overlay {
-        display: none;
-        position: fixed;
-        inset: 0;
-        background: rgba(15, 23, 42, 0.6);
-        backdrop-filter: blur(8px);
-        z-index: 9999;
-        justify-content: center;
-        align-items: center;
-        padding: 1rem;
-        animation: fadeIn 0.3s ease;
-    }
-
-    .modal-overlay.active {
-        display: flex;
-    }
-
-    @keyframes fadeIn {
-        from { opacity: 0; }
-        to { opacity: 1; }
-    }
-
-    .modal-box {
-        background: white;
-        border-radius: var(--radius-lg);
-        width: 780px;
-        max-width: 100%;
-        max-height: 92vh;
-        overflow-y: auto;
-        box-shadow: var(--shadow-xl);
-        animation: slideUp 0.3s ease;
-    }
-
-    @keyframes slideUp {
-        from {
-            opacity: 0;
-            transform: translateY(30px) scale(0.96);
-        }
-        to {
-            opacity: 1;
-            transform: translateY(0) scale(1);
-        }
-    }
-
-    .modal-header {
-        background: linear-gradient(135deg, var(--gradient-start), var(--gradient-end));
-        padding: 1.25rem 1.75rem;
-        border-radius: var(--radius-lg) var(--radius-lg) 0 0;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        position: sticky;
-        top: 0;
-        z-index: 10;
-    }
-
-    .modal-header h3 {
-        color: white;
-        font-size: 1.1rem;
-        font-weight: 700;
-        margin: 0;
-        display: flex;
-        align-items: center;
-        gap: 0.6rem;
-    }
-
-    .modal-close {
-        width: 36px;
-        height: 36px;
-        border-radius: 50%;
-        border: none;
-        background: rgba(255, 255, 255, 0.15);
-        color: white;
-        font-size: 1.2rem;
-        cursor: pointer;
-        transition: var(--transition);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-    }
-
-    .modal-close:hover {
-        background: rgba(255, 255, 255, 0.3);
-        transform: rotate(90deg);
-    }
-
-    .modal-body {
-        padding: 1.5rem 1.75rem;
-    }
-
-    .modal-footer {
-        padding: 1rem 1.75rem;
-        background: var(--gray-50);
-        border-top: 1px solid var(--gray-200);
-        border-radius: 0 0 var(--radius-lg) var(--radius-lg);
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        flex-wrap: wrap;
-        gap: 0.75rem;
-        position: sticky;
-        bottom: 0;
-        z-index: 10;
-    }
-
-    /* ===== مكونات المودال ===== */
-    .section-title {
-        font-size: 0.7rem;
-        font-weight: 700;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-        color: var(--gray-500);
-        margin: 1.25rem 0 0.6rem;
-        padding-bottom: 0.4rem;
-        border-bottom: 2px solid var(--gray-200);
-        display: flex;
-        align-items: center;
-        gap: 0.5rem;
-    }
-
-    .section-title:first-child {
-        margin-top: 0;
-    }
-
-    .section-title i {
-        color: var(--primary);
-        font-size: 0.8rem;
-    }
-
-    .info-box {
-        background: linear-gradient(135deg, #F0FDF4, #ECFDF5);
-        border-right: 4px solid #10B981;
-        padding: 0.75rem 1rem;
-        border-radius: var(--radius-sm);
-        font-size: 0.8rem;
-        color: #065F46;
-        display: flex;
-        align-items: center;
-        gap: 0.6rem;
-        margin-bottom: 0.75rem;
-    }
-
-    .info-box i {
-        color: #10B981;
-        font-size: 1rem;
-    }
-
-    .field-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
-        gap: 0.3rem;
-    }
-
-    .field-check {
-        display: flex;
-        align-items: center;
-        gap: 0.4rem;
-        padding: 0.3rem 0.6rem;
-        border-radius: var(--radius-sm);
-        cursor: pointer;
-        transition: var(--transition);
-        font-size: 0.8rem;
-        background: var(--gray-50);
-        border: 1px solid transparent;
-    }
-
-    .field-check:hover {
-        background: #E0E7FF;
-        border-color: #C7D2FE;
-    }
-
-    .field-check input[type="checkbox"] {
-        width: 16px;
-        height: 16px;
-        accent-color: var(--primary);
-        cursor: pointer;
-        flex-shrink: 0;
-    }
-
-    .field-key {
-        font-size: 0.55rem;
-        font-family: 'JetBrains Mono', monospace;
-        background: var(--gray-200);
-        padding: 0.05rem 0.35rem;
-        border-radius: 3px;
-        color: var(--gray-500);
-        margin-right: auto;
-        direction: ltr;
-    }
-
-    .btn-group-print {
-        display: flex;
-        gap: 0.3rem;
-        background: var(--gray-100);
-        padding: 0.2rem;
-        border-radius: var(--radius-sm);
-        flex-wrap: wrap;
-    }
-
-    .btn-opt {
-        padding: 0.3rem 0.7rem;
-        border: none;
-        background: transparent;
-        border-radius: var(--radius-sm);
-        font-size: 0.75rem;
-        cursor: pointer;
-        font-family: 'Tajawal', sans-serif;
-        color: var(--gray-600);
-        font-weight: 600;
-        transition: var(--transition);
-        text-align: center;
-        min-width: 48px;
-    }
-
-    .btn-opt:hover {
-        background: rgba(255, 255, 255, 0.5);
-    }
-
-    .btn-opt.active {
-        background: white;
-        color: var(--gray-900);
-        box-shadow: var(--shadow-sm);
-    }
-
-    .toggle-row {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        padding: 0.4rem 0;
-        border-bottom: 1px solid var(--gray-100);
-    }
-
-    .toggle-row:last-child {
-        border-bottom: none;
-    }
-
-    .toggle-row label {
-        font-size: 0.8rem;
-        color: var(--gray-700);
-        cursor: pointer;
-        margin: 0;
-    }
-
-    .toggle-switch {
-        position: relative;
-        width: 44px;
-        height: 24px;
-        cursor: pointer;
-        flex-shrink: 0;
-    }
-
-    .toggle-switch input {
-        display: none;
-    }
-
-    .toggle-slider {
-        position: absolute;
-        inset: 0;
-        background: var(--gray-300);
-        border-radius: 12px;
-        transition: var(--transition);
-    }
-
-    .toggle-slider::before {
-        content: '';
-        position: absolute;
-        width: 18px;
-        height: 18px;
-        background: white;
-        border-radius: 50%;
-        top: 3px;
-        left: 3px;
-        transition: var(--transition);
-        box-shadow: 0 1px 4px rgba(0, 0, 0, 0.15);
-    }
-
-    .toggle-switch input:checked+.toggle-slider {
-        background: var(--primary);
-    }
-
-    .toggle-switch input:checked+.toggle-slider::before {
-        left: 23px;
-    }
-
-    .header-footer-inputs {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 0.75rem;
-    }
-
-    .hf-input-group label {
-        display: block;
-        font-size: 0.75rem;
-        font-weight: 600;
-        color: var(--gray-700);
-        margin-bottom: 0.2rem;
-    }
-
-    .hf-input-group input,
-    .hf-input-group textarea {
-        width: 100%;
-        padding: 0.4rem 0.6rem;
-        border: 1px solid var(--gray-200);
-        border-radius: var(--radius-sm);
-        font-size: 0.8rem;
-        font-family: 'Tajawal', sans-serif;
-        transition: var(--transition);
-        background: white;
-        color: var(--gray-800);
-    }
-
-    .hf-input-group input:focus,
-    .hf-input-group textarea:focus {
-        border-color: var(--primary);
-        box-shadow: 0 0 0 3px rgba(91, 106, 191, 0.15);
-        outline: none;
-    }
-
-    .hf-input-group input:read-only,
-    .hf-input-group textarea:read-only {
-        background: var(--gray-50);
-        cursor: default;
-    }
-
-    .hf-preview-box {
-        background: var(--gray-50);
-        border: 2px dashed var(--gray-300);
-        border-radius: var(--radius-sm);
-        padding: 0.5rem;
-        text-align: center;
-        min-height: 70px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-    }
-
-    .hf-preview-box img {
-        border-radius: var(--radius-sm);
-        object-fit: contain;
-        max-height: 60px;
-        max-width: 100%;
-    }
-
-    .hf-preview-box span {
-        font-size: 0.75rem;
-        color: var(--gray-400);
-    }
-
-    .btn {
-        padding: 0.4rem 1rem;
-        border-radius: var(--radius-sm);
-        font-size: 0.8rem;
-        font-weight: 600;
-        border: none;
-        cursor: pointer;
-        transition: var(--transition);
-        font-family: 'Tajawal', sans-serif;
-        display: inline-flex;
-        align-items: center;
-        gap: 0.4rem;
-        text-decoration: none;
-        white-space: nowrap;
-    }
-
-    .btn-primary {
-        background: linear-gradient(135deg, var(--gradient-start), var(--gradient-end));
-        color: white;
-        box-shadow: 0 2px 12px rgba(102, 126, 234, 0.3);
-    }
-
-    .btn-primary:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 4px 20px rgba(102, 126, 234, 0.4);
-        color: white;
-    }
-
-    .btn-secondary {
-        background: var(--gray-200);
-        color: var(--gray-700);
-    }
-
-    .btn-secondary:hover {
-        background: var(--gray-300);
-        transform: translateY(-2px);
-    }
-
-    .btn-group-actions {
-        display: flex;
-        gap: 0.35rem;
-        flex-wrap: wrap;
-    }
-
-    /* ===== توست ===== */
-    .toast-container {
-        position: fixed;
-        bottom: 2rem;
-        left: 50%;
-        transform: translateX(-50%);
-        z-index: 100000;
-        pointer-events: none;
-    }
-
-    .toast {
-        background: var(--gray-900);
-        color: white;
-        padding: 0.75rem 1.5rem;
-        border-radius: 50px;
-        font-size: 0.85rem;
-        font-weight: 600;
-        box-shadow: var(--shadow-lg);
-        pointer-events: auto;
-        opacity: 0;
-        transform: translateY(20px) scale(0.95);
-        transition: all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
-        display: none;
-        font-family: 'Tajawal', sans-serif;
-        direction: rtl;
-        text-align: center;
-    }
-
-    .toast.show {
-        display: block;
-        opacity: 1;
-        transform: translateY(0) scale(1);
-    }
-
-    .toast-success {
-        background: linear-gradient(135deg, #059669, #047857);
-    }
-
-    .toast-error {
-        background: linear-gradient(135deg, #DC2626, #B91C1C);
-    }
-
-    .toast-info {
-        background: linear-gradient(135deg, #2563EB, #1D4ED8);
-    }
-
-    /* ===== مكونات الطباعة ===== */
-    .print-header-area {
-        display: none;
-        padding: 4pt 10mm;
-        border-bottom: 1.5pt solid #333;
-        background: white;
-        text-align: center;
-    }
-
-    .print-logo-small .ph-logo { max-height: 20pt !important; max-width: 35pt !important; }
-    .print-logo-medium .ph-logo { max-height: 35pt !important; max-width: 60pt !important; }
-    .print-logo-large .ph-logo { max-height: 45pt !important; max-width: 70pt !important; }
-
-    .print-header-area .ph-logo {
-        vertical-align: middle;
-        object-fit: contain;
-    }
-
-    .print-header-area .ph-company {
-        font-size: 12pt;
-        font-weight: 700;
-        color: #000;
-    }
-
-    .print-header-area .ph-details {
-        font-size: 8pt;
-        color: #444;
-    }
-
-    .print-footer-area {
-        display: none;
-        padding: 4pt 10mm;
-        background: white;
-        text-align: center;
-        border-top: 1pt solid #ddd;
-    }
+/* ============================================================
+   1) متغيرات النظام المرجعي (لا ألوان أخرى)
+   ============================================================ */
+:root {
+    --primary-1: #e0f7fa; --primary-2: #b2ebf2; --primary-3: #4dd0e1; --primary-4: #0097a7;
+    --primary-dark: #006064; --text-dark: #006064; --text-light: #ffffff;
+    --shadow-sm: 0 2px 8px rgba(0,150,167,.08);
+    --shadow-md: 0 4px 12px rgba(0,150,167,.12);
+    --shadow-lg: 0 8px 30px rgba(0,150,167,.20);
+    --radius: 8px; --radius-sm: 4px; --radius-lg: 12px;
+    --ease: cubic-bezier(.4,0,.2,1); --print-margin: 10mm; --transition-speed: .3s;
+}
+
+/* ============================================================
+   2) أنماط أساسية عامة
+   ============================================================ */
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+    font-family: 'Tajawal', sans-serif;
+    background: linear-gradient(135deg, #f8fafc 0%, var(--primary-1) 100%);
+    min-height: 100vh; padding: 1rem; font-size: .9rem; color: #1a1a2e;
+}
+body, .invoice-print-area { font-family: 'Tajawal', sans-serif !important; direction: rtl; unicode-bidi: plaintext; }
+
+/* ============================================================
+   3) حاوية الصفحة + هيدر الصفحة (بألوان النظام)
+   ============================================================ */
+.dashboard-wrapper { max-width: 1440px; margin: 0 auto; padding: .5rem; position: relative; z-index: 1; }
+
+.dashboard-header {
+    background: linear-gradient(135deg, var(--primary-4), var(--primary-dark));
+    border-radius: var(--radius-lg);
+    padding: 1.5rem 2rem; margin-bottom: 1.5rem;
+    box-shadow: var(--shadow-md); color: white;
+}
+.header-content { display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:1rem; }
+.header-text h1 { color:#fff; font-size:1.5rem; font-weight:800; margin:0; display:flex; align-items:center; gap:.6rem; }
+.header-text h1 i { font-size:1.7rem; }
+.header-text p { color:rgba(255,255,255,.9); font-size:.9rem; margin:.3rem 0 0; }
+.header-badge {
+    display:inline-flex; align-items:center; gap:.5rem;
+    background: rgba(255,255,255,.18); padding:.4rem 1rem;
+    border-radius:50px; border:1px solid rgba(255,255,255,.25);
+}
+.header-badge span { color:#fff; font-size:.8rem; font-weight:600; }
+.header-badge .dot { width:8px; height:8px; border-radius:50%; background:#34D399; animation:pulse 2s infinite; }
+@keyframes pulse { 0%,100%{opacity:1;transform:scale(1);} 50%{opacity:.5;transform:scale(.8);} }
+
+/* ============================================================
+   4) بطاقات الإحصائيات (بألوان النظام)
+   ============================================================ */
+.stats-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:1rem; margin-bottom:1.5rem; }
+.stat-card {
+    background:#fff; border-radius:var(--radius); padding:1.25rem;
+    display:flex; align-items:center; gap:1rem;
+    box-shadow:var(--shadow-sm); border:1px solid var(--primary-1);
+}
+.stat-card .stat-icon-wrapper {
+    width:52px; height:52px; border-radius:var(--radius);
+    display:flex; align-items:center; justify-content:center;
+    font-size:1.4rem; color:#fff; flex-shrink:0;
+    background: linear-gradient(135deg, var(--primary-3), var(--primary-4));
+}
+.stat-card:nth-child(2) .stat-icon-wrapper { background: linear-gradient(135deg, #F59E0B, #FBBF24); }
+.stat-card:nth-child(3) .stat-icon-wrapper { background: linear-gradient(135deg, #EF4444, #F87171); }
+.stat-number { font-size:1.6rem; font-weight:800; color:var(--text-dark); line-height:1.2; }
+.stat-label { font-size:.75rem; color:var(--primary-4); font-weight:600; margin:.2rem 0 0; }
+
+/* ============================================================
+   5) بطاقات البيانات والجداول (بألوان النظام)
+   ============================================================ */
+.card, .data-card {
+    background:#fff; border-radius:var(--radius); padding:20px 24px;
+    box-shadow:var(--shadow-sm); border:1px solid rgba(0,0,0,.04);
+    margin-bottom:16px;
+}
+.data-card-header {
+    padding:0 0 12px; margin-bottom:12px;
+    border-bottom:2px solid var(--primary-1);
+    display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:.5rem;
+}
+.card-title { font-size:.95rem; font-weight:700; color:var(--text-dark); margin:0; display:flex; align-items:center; gap:8px; }
+.card-title i { color:var(--primary-4); }
+.card-badge {
+    padding:.25rem .9rem; border-radius:50px; font-size:.7rem; font-weight:700;
+    background:var(--primary-1); color:var(--primary-dark); display:inline-flex; align-items:center; gap:.3rem;
+}
+.card-badge.active-badge { background:#D1FAE5; color:#065F46; }
+.card-badge.warning-badge { background:#FEF3C7; color:#92400E; }
+.card-badge.danger-badge { background:#FEE2E2; color:#991B1B; }
+
+.table-responsive {
+    overflow-x:auto; -webkit-overflow-scrolling:touch;
+    scrollbar-width:none; -ms-overflow-style:none;
+}
+.table-responsive::-webkit-scrollbar { display:none; height:0; width:0; }
+
+.table, .table-order { width:100%; border-collapse:collapse; font-size:.82rem; }
+.table thead th, .table-order thead th {
+    background: linear-gradient(135deg, var(--primary-3), var(--primary-4));
+    color:#fff; padding:8px 10px; text-align:right; font-weight:700;
+    border-bottom:2px solid var(--primary-4); font-size:.72rem; white-space:nowrap;
+}
+.table tbody td, .table-order tbody td {
+    padding:8px 10px; border-bottom:1px solid var(--primary-1); vertical-align:middle;
+}
+.table tbody tr:last-child td, .table-order tbody tr:last-child td { border-bottom:none; }
+.table tbody tr:hover { background:var(--primary-1); }
+
+.customer-info { display:flex; flex-direction:column; }
+.customer-info .name { font-weight:600; color:var(--text-dark); }
+.customer-info .email { font-size:.72rem; color:var(--primary-4); }
+.db-name {
+    font-family:'JetBrains Mono',monospace; font-size:.75rem;
+    background:var(--primary-1); padding:.15rem .5rem; border-radius:4px;
+    color:var(--primary-dark); direction:ltr; display:inline-block;
+}
+.db-name.danger { background:#FEE2E2; color:#DC2626; }
+
+/* شارات */
+.badge {
+    padding:.2rem .7rem; border-radius:50px; font-size:.68rem; font-weight:600;
+    display:inline-flex; align-items:center; gap:.25rem;
+}
+.badge-info { background:#DBEAFE; color:#1E40AF; }
+.badge-danger { background:#FEE2E2; color:#991B1B; }
+.badge-secondary { background:var(--primary-1); color:var(--primary-dark); }
+
+/* أزرار الإجراءات */
+.action-group { display:flex; gap:.35rem; flex-wrap:wrap; justify-content:center; }
+.btn-action {
+    padding:.28rem .65rem; border-radius:var(--radius-sm); font-size:.68rem; font-weight:600;
+    border:none; cursor:pointer; transition:all .2s var(--ease); font-family:'Tajawal',sans-serif;
+    display:inline-flex; align-items:center; gap:.25rem; text-decoration:none; white-space:nowrap;
+}
+.btn-action:hover { transform:translateY(-1px); box-shadow:var(--shadow-sm); }
+.btn-stop { background:#FEF3C7; color:#92400E; }
+.btn-stop:hover { background:#FDE68A; }
+.btn-resume { background:#DBEAFE; color:#1E40AF; }
+.btn-resume:hover { background:#BFDBFE; }
+.btn-reset { background:var(--primary-1); color:var(--primary-dark); }
+.btn-reset:hover { background:var(--primary-2); }
+.btn-extend { background:linear-gradient(135deg,#10B981,#059669); color:#fff; }
+.btn-extend:hover { background:linear-gradient(135deg,#059669,#047857); }
+.btn-delete { background:#FEE2E2; color:#991B1B; }
+.btn-delete:hover { background:#FECACA; }
+.btn-disabled { background:var(--primary-1); color:var(--primary-4); cursor:not-allowed; opacity:.55; }
+.btn-disabled:hover { transform:none; box-shadow:none; }
+
+.empty-state { text-align:center; padding:2.5rem 1rem; }
+.empty-state .empty-icon { font-size:3rem; color:var(--primary-2); margin-bottom:.5rem; }
+.empty-state h4 { color:var(--text-dark); font-size:.95rem; margin:0 0 .25rem; }
+.empty-state p { color:var(--primary-4); font-size:.8rem; margin:0; }
+
+/* ============================================================
+   6) زر الطباعة العائم (من النظام المرجعي)
+   ============================================================ */
+.print-fab {
+    position:fixed; bottom:1.5rem; left:1.5rem; z-index:1050; padding:.6rem 1.2rem;
+    border-radius:50px; box-shadow:0 4px 15px rgba(0,150,167,.35); font-size:.85rem;
+    font-weight:600; background:linear-gradient(135deg,var(--primary-4) 0%,var(--primary-dark) 100%);
+    color:#fff; border:none; cursor:pointer; transition:all var(--transition-speed) var(--ease);
+    display:inline-flex; align-items:center; gap:.5rem; font-family:'Tajawal',sans-serif;
+}
+.print-fab:hover { transform:scale(1.05) translateY(-2px); box-shadow:0 6px 25px rgba(0,150,167,.5); }
+.print-fab:active { transform:scale(.95); }
+.print-fab i { font-size:1rem; }
+
+/* ============================================================
+   7) المودال (من النظام المرجعي)
+   ============================================================ */
+.modal-overlay {
+    display:none; position:fixed; inset:0; background:rgba(0,0,0,.5);
+    z-index:9999; justify-content:center; align-items:center;
+    backdrop-filter:blur(3px); animation:modalOverlayIn .3s var(--ease);
+}
+.modal-overlay.active { display:flex; }
+@keyframes modalOverlayIn { from{opacity:0;} to{opacity:1;} }
+
+.modal-box {
+    background:#fff; border-radius:var(--radius-lg); width:720px; max-width:95vw;
+    max-height:90vh; overflow-y:auto; box-shadow:0 20px 60px rgba(0,0,0,.25);
+    animation:modalBoxIn .3s var(--ease);
+}
+@keyframes modalBoxIn { from{transform:translateY(30px) scale(.95);opacity:0;} to{transform:translateY(0) scale(1);opacity:1;} }
+.modal-close {
+    width:32px; height:32px; border:none; background:var(--primary-1); border-radius:50%;
+    cursor:pointer; font-size:1.2rem; color:var(--text-dark);
+    display:flex; align-items:center; justify-content:center; transition:all .2s var(--ease);
+}
+.modal-close:hover { background:var(--primary-2); transform:rotate(90deg); }
+
+.modal-header-custom {
+    display:flex; justify-content:space-between; align-items:center;
+    padding:14px 20px; background:linear-gradient(135deg,var(--primary-4),var(--primary-dark));
+    color:#fff; border-radius:var(--radius-lg) var(--radius-lg) 0 0;
+}
+.modal-header-custom h3 { font-size:1rem; font-weight:700; margin:0; display:flex; align-items:center; gap:.5rem; }
+.modal-header-custom .modal-close { background:rgba(255,255,255,.2); color:#fff; }
+.modal-header-custom .modal-close:hover { background:rgba(255,255,255,.3); }
+
+.modal-body-custom { padding:18px 22px; }
+.modal-footer-custom {
+    display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap;
+    gap:.5rem; padding:10px 18px; background:var(--primary-1);
+    border-radius:0 0 var(--radius-lg) var(--radius-lg); border-top:1px solid var(--primary-2);
+}
+.section-title {
+    font-size:.75rem; font-weight:700; color:var(--text-dark); text-transform:uppercase;
+    letter-spacing:.5px; margin:1.2rem 0 .6rem; padding-bottom:.3rem;
+    border-bottom:2px solid var(--primary-2);
+}
+.section-title:first-child { margin-top:0; }
+
+.company-info-box {
+    margin:10px 0; padding:10px 14px; background:#e8f5e9;
+    border-radius:var(--radius-sm); border-right:3px solid #4caf50;
+    font-size:.8rem; color:#1b5e20;
+}
+.company-info-box i { color:#2e7d32; }
+
+.field-grid { display:grid; grid-template-columns:1fr 1fr; gap:.25rem; }
+.field-check {
+    display:flex; align-items:center; gap:.4rem; padding:.3rem .5rem;
+    border-radius:var(--radius-sm); cursor:pointer; transition:background .15s var(--ease);
+    font-size:.8rem;
+}
+.field-check:hover { background:var(--primary-1); }
+.field-check input[type="checkbox"] { width:16px; height:16px; accent-color:var(--primary-4); cursor:pointer; flex-shrink:0; }
+.field-key {
+    color:var(--primary-4); font-size:.6rem; font-family:monospace;
+    background:var(--primary-1); padding:.05rem .3rem; border-radius:3px; margin-right:auto;
+}
+
+.btn-group-print { display:flex; gap:.25rem; background:var(--primary-1); padding:.2rem; border-radius:var(--radius-sm); flex-wrap:wrap; }
+.btn-opt {
+    flex:1; padding:.3rem .5rem; border:none; background:transparent; border-radius:var(--radius-sm);
+    font-size:.78rem; cursor:pointer; font-family:'Tajawal',sans-serif; color:var(--primary-4);
+    font-weight:600; transition:all .2s var(--ease); text-align:center; min-width:55px;
+}
+.btn-opt:hover { background:rgba(255,255,255,.5); }
+.btn-opt.active { background:#fff; color:var(--text-dark); box-shadow:0 1px 4px rgba(0,0,0,.1); }
+
+.toggle-row { display:flex; align-items:center; justify-content:space-between; padding:.4rem 0; }
+.toggle-row label { font-size:.8rem; margin:0; cursor:pointer; }
+.toggle-switch { position:relative; width:40px; height:22px; cursor:pointer; flex-shrink:0; }
+.toggle-switch input { display:none; }
+.toggle-slider { position:absolute; inset:0; background:var(--primary-2); border-radius:11px; transition:.25s var(--ease); }
+.toggle-slider::before {
+    content:''; position:absolute; width:16px; height:16px; background:#fff; border-radius:50%;
+    top:3px; left:3px; transition:.25s var(--ease); box-shadow:0 1px 3px rgba(0,0,0,.15);
+}
+.toggle-switch input:checked + .toggle-slider { background:var(--primary-4); }
+.toggle-switch input:checked + .toggle-slider::before { left:21px; }
+
+.header-footer-inputs { display:grid; grid-template-columns:1fr 1fr; gap:.75rem; }
+.hf-input-group label { display:block; font-size:.75rem; font-weight:600; color:var(--text-dark); margin-bottom:.2rem; }
+.hf-input-group input, .hf-input-group textarea {
+    width:100%; border:1px solid var(--primary-2); border-radius:var(--radius-sm);
+    padding:.35rem .5rem; font-size:.8rem; font-family:'Tajawal',sans-serif;
+    transition:all .2s var(--ease); background:#fff;
+}
+.hf-input-group input:focus, .hf-input-group textarea:focus { border-color:var(--primary-3); box-shadow:0 0 0 3px rgba(77,208,225,.2); outline:none; }
+.hf-input-group input:read-only, .hf-input-group textarea:read-only { background:#f5f5f5; cursor:default; }
+.hf-preview-box {
+    background:var(--primary-1); border:2px dashed var(--primary-2); border-radius:var(--radius-sm);
+    padding:.5rem; text-align:center; margin-top:.3rem; cursor:default; min-height:80px;
+    display:flex; align-items:center; justify-content:center;
+}
+.hf-preview-box img { border-radius:var(--radius-sm); object-fit:contain; transition:max-height .3s ease; }
+
+.btn {
+    padding:.4rem .9rem; border-radius:var(--radius-sm); font-size:.8rem; font-weight:600;
+    border:none; cursor:pointer; transition:all .25s var(--ease); font-family:'Tajawal',sans-serif;
+    display:inline-flex; align-items:center; gap:.4rem; text-decoration:none;
+}
+.btn-primary-print { background:linear-gradient(135deg,var(--primary-4),var(--primary-dark)); color:#fff; box-shadow:0 3px 12px rgba(0,150,167,.3); }
+.btn-primary-print:hover { transform:translateY(-2px); box-shadow:0 6px 20px rgba(0,150,167,.4); color:#fff; }
+.btn-secondary-print { background:linear-gradient(135deg,#78909c,#546e7a); color:#fff; }
+.btn-secondary-print:hover { transform:translateY(-2px); box-shadow:0 4px 15px rgba(120,144,156,.3); color:#fff; }
+
+/* ============================================================
+   8) الهيدر والفوتر والعلامة المائية (من النظام المرجعي)
+   ============================================================ */
+.print-header-area { display:none; padding:6pt 10mm; border-bottom:1.5pt solid #333; background:#fff; text-align:center; }
+.print-logo-small .ph-logo { max-height:20pt !important; max-width:35pt !important; }
+.print-logo-medium .ph-logo { max-height:35pt !important; max-width:60pt !important; }
+.print-logo-large .ph-logo { max-height:45pt !important; max-width:70pt !important; }
+.print-header-area .ph-logo { vertical-align:middle; object-fit:contain; }
+.print-header-area .ph-company { font-size:12pt; font-weight:700; color:#000; }
+.print-header-area .ph-details { font-size:8pt; color:#444; }
+.print-footer-area { display:none; padding:4pt 10mm; background:#fff; text-align:center; }
+.print-last-page-notes { display:none; }
+.print-watermark { display:none; }
+
+/* ============================================================
+   9) التوست (من النظام المرجعي)
+   ============================================================ */
+.toast {
+    position:fixed; bottom:2rem; left:50%; transform:translateX(-50%) translateY(80px);
+    background:linear-gradient(135deg,#1a252f,#2c3e50); color:#fff; padding:.8rem 1.8rem;
+    border-radius:50px; font-size:.9rem; z-index:100000; opacity:0;
+    transition:all .4s cubic-bezier(.68,-.55,.265,1.55); pointer-events:none;
+    box-shadow:0 8px 30px rgba(0,0,0,.2); font-weight:600; letter-spacing:.3px;
+    white-space:nowrap; direction:rtl; font-family:'Tajawal',sans-serif; display:none;
+}
+.toast.show { display:block; transform:translateX(-50%) translateY(0); opacity:1; }
+.toast-success { background:linear-gradient(135deg,#059669,#047857); }
+.toast-error { background:linear-gradient(135deg,#dc2626,#b91c1c); }
+.toast-info { background:linear-gradient(135deg,#2563eb,#1d4ed8); }
+
+/* ============================================================
+   10) CSS الطباعة (من النظام المرجعي — حرفياً)
+   ============================================================ */
+@page { margin: var(--print-margin, 10mm); }
+
+@media (max-width:768px) {
+    .field-grid, .header-footer-inputs { grid-template-columns:1fr; }
+    .modal-box { width:98vw; max-height:95vh; }
+    .modal-footer-custom { flex-direction:column; align-items:stretch; }
+    .print-fab { padding:.5rem 1rem; font-size:.75rem; bottom:1rem; left:1rem; }
+}
+
+@media print {
+    * { -webkit-print-color-adjust:exact !important; print-color-adjust:exact !important; }
+    body { background:#fff !important; font-size:10pt !important; color:#000 !important; padding:0 !important; margin:0 !important; font-family:'Tajawal',sans-serif !important; }
+
+    .modal-overlay, .modal-backdrop, .print-fab, .no-print { display:none !important; visibility:hidden !important; opacity:0 !important; pointer-events:none !important; }
+    .whatsapp-icon, .wa-icon, .btn-whatsapp, [class*="whatsapp"], [class*="wa-"], .fa-whatsapp, a[href*="whatsapp"], a[href*="wa.me"] { display:none !important; visibility:hidden !important; opacity:0 !important; pointer-events:none !important; width:0 !important; height:0 !important; overflow:hidden !important; position:absolute !important; }
+
+    .print-watermark.show-watermark {
+        display:block !important; position:fixed !important; top:50% !important; left:50% !important;
+        transform:translate(-50%,-50%) rotate(-45deg) !important; opacity:.06 !important;
+        font-size:48pt !important; font-weight:700 !important; color:#000 !important;
+        pointer-events:none !important; z-index:9999 !important; white-space:nowrap !important;
+    }
+
+    .print-header-area { display:block !important; position:fixed !important; top:0 !important; left:0 !important; right:0 !important; z-index:10000 !important; }
+    .print-footer-area { display:none !important; }
 
     .print-last-page-notes {
-        display: none;
+        display:block !important; margin-top:20px !important; padding:8pt 0 !important;
+        border-top:1.5pt solid #333 !important; font-size:9pt !important; color:#333 !important;
+        font-weight:500 !important; white-space:pre-wrap !important; word-wrap:break-word !important; line-height:1.6 !important;
     }
+    .print-last-page-notes .notes-label { display:block; font-weight:700 !important; color:#000 !important; margin-bottom:4px; }
+    .print-last-page-notes .notes-content { display:block; color:#444 !important; }
 
-    .print-watermark {
-        display: none;
-    }
+    .print-logo-large .ph-logo, .ph-logo { max-height:45pt !important; max-width:70pt !important; }
+    .invoice-print-area { padding-top:50pt !important; padding-bottom:10pt !important; }
 
-    /* ===== تنسيقات PDF ===== */
-    .pdf-instructions {
-        text-align: center;
-        padding: 0.5rem 0;
-    }
-
-    .pdf-instructions .pdf-icon {
-        font-size: 3.5rem;
-        color: var(--primary);
-        margin-bottom: 0.75rem;
-    }
-
-    .pdf-instructions h4 {
-        font-size: 1.1rem;
-        color: var(--gray-800);
-        margin: 0 0 0.3rem;
-    }
-
-    .pdf-instructions p {
-        font-size: 0.85rem;
-        color: var(--gray-500);
-        margin: 0 0 1rem;
-        line-height: 1.6;
-    }
-
-    .pdf-steps {
-        text-align: right;
-        background: var(--gray-50);
-        padding: 1rem 1.5rem;
-        border-radius: var(--radius-sm);
-        margin: 0 0 0.5rem;
-        list-style: none;
-    }
-
-    .pdf-steps li {
-        margin-bottom: 0.4rem;
-        font-size: 0.85rem;
-        color: var(--gray-600);
-        padding-right: 0.5rem;
-    }
-
-    .pdf-steps li::before {
-        content: '•';
-        color: var(--primary);
-        font-weight: 700;
-        margin-left: 0.5rem;
-    }
-
-    /* ===== التجاوب ===== */
-    @media (max-width: 1024px) {
-        .dashboard-wrapper {
-            padding: 1rem;
-        }
-        .dashboard-header {
-            padding: 1.5rem;
-        }
-    }
-
-    @media (max-width: 768px) {
-        .dashboard-header {
-            padding: 1.25rem;
-            border-radius: var(--radius);
-        }
-        .header-text h1 {
-            font-size: 1.3rem;
-        }
-        .header-text p {
-            font-size: 0.8rem;
-        }
-        .header-badge {
-            padding: 0.3rem 1rem;
-        }
-        .header-badge span {
-            font-size: 0.75rem;
-        }
-        .stats-grid {
-            grid-template-columns: 1fr 1fr;
-            gap: 0.75rem;
-        }
-        .stat-card {
-            padding: 1rem;
-            flex-direction: column;
-            text-align: center;
-        }
-        .stat-card .stat-icon-wrapper {
-            width: 48px;
-            height: 48px;
-            font-size: 1.2rem;
-        }
-        .stat-info .stat-number {
-            font-size: 1.4rem;
-        }
-        .data-card-header {
-            padding: 0.9rem 1rem;
-        }
-        .data-card-header .card-title {
-            font-size: 0.85rem;
-        }
-        .table {
-            font-size: 0.75rem;
-            min-width: 500px;
-        }
-        .table thead th,
-        .table tbody td {
-            padding: 0.5rem 0.75rem;
-        }
-        .action-group .btn-action {
-            font-size: 0.6rem;
-            padding: 0.2rem 0.5rem;
-        }
-        .action-group .btn-action i {
-            font-size: 0.6rem;
-        }
-        .modal-box {
-            width: 98vw;
-            max-height: 95vh;
-        }
-        .modal-body {
-            padding: 1rem;
-        }
-        .modal-footer {
-            flex-direction: column;
-            align-items: stretch;
-        }
-        .modal-footer .btn-group-actions {
-            justify-content: center;
-        }
-        .field-grid {
-            grid-template-columns: 1fr 1fr;
-        }
-        .header-footer-inputs {
-            grid-template-columns: 1fr;
-        }
-        .print-fab {
-            bottom: 1rem;
-            left: 1rem;
-            padding: 0.6rem 1.2rem;
-            font-size: 0.8rem;
-        }
-        .print-fab i {
-            font-size: 0.9rem;
-        }
-        .toast {
-            font-size: 0.75rem;
-            padding: 0.5rem 1rem;
-            max-width: 90%;
-        }
-        .section-title {
-            font-size: 0.6rem;
-        }
-        .btn-opt {
-            font-size: 0.65rem;
-            padding: 0.2rem 0.4rem;
-            min-width: 40px;
-        }
-        .toggle-row label {
-            font-size: 0.7rem;
-        }
-        .toggle-switch {
-            width: 38px;
-            height: 20px;
-        }
-        .toggle-slider::before {
-            width: 14px;
-            height: 14px;
-            top: 3px;
-            left: 3px;
-        }
-        .toggle-switch input:checked+.toggle-slider::before {
-            left: 21px;
-        }
-        .hf-preview-box {
-            min-height: 55px;
-        }
-        .hf-preview-box img {
-            max-height: 45px;
-        }
-    }
-
-    @media (max-width: 480px) {
-        .dashboard-wrapper {
-            padding: 0.75rem;
-        }
-        .dashboard-header {
-            padding: 1rem;
-        }
-        .header-text h1 {
-            font-size: 1.1rem;
-        }
-        .header-text h1 i {
-            font-size: 1.3rem;
-        }
-        .header-text p {
-            font-size: 0.7rem;
-        }
-        .stats-grid {
-            grid-template-columns: 1fr 1fr;
-            gap: 0.5rem;
-        }
-        .stat-card {
-            padding: 0.75rem;
-        }
-        .stat-card .stat-icon-wrapper {
-            width: 40px;
-            height: 40px;
-            font-size: 1rem;
-        }
-        .stat-info .stat-number {
-            font-size: 1.1rem;
-        }
-        .stat-info .stat-label {
-            font-size: 0.65rem;
-        }
-        .data-card-header {
-            padding: 0.6rem 0.75rem;
-        }
-        .data-card-header .card-title {
-            font-size: 0.75rem;
-        }
-        .data-card-header .card-badge {
-            font-size: 0.6rem;
-            padding: 0.15rem 0.6rem;
-        }
-        .table {
-            font-size: 0.65rem;
-            min-width: 380px;
-        }
-        .table thead th,
-        .table tbody td {
-            padding: 0.3rem 0.5rem;
-        }
-        .table .db-name {
-            font-size: 0.65rem;
-        }
-        .badge {
-            font-size: 0.55rem;
-            padding: 0.15rem 0.4rem;
-        }
-        .action-group {
-            gap: 0.2rem;
-        }
-        .action-group .btn-action {
-            font-size: 0.5rem;
-            padding: 0.15rem 0.35rem;
-        }
-        .action-group .btn-action i {
-            font-size: 0.5rem;
-        }
-        .field-grid {
-            grid-template-columns: 1fr;
-        }
-        .modal-header h3 {
-            font-size: 0.9rem;
-        }
-        .modal-footer .btn {
-            font-size: 0.7rem;
-            padding: 0.3rem 0.6rem;
-        }
-        .print-fab {
-            bottom: 0.75rem;
-            left: 0.75rem;
-            padding: 0.4rem 0.9rem;
-            font-size: 0.7rem;
-        }
-        .print-fab i {
-            font-size: 0.75rem;
-        }
-        .empty-state .empty-icon {
-            font-size: 2.5rem;
-        }
-        .empty-state h4 {
-            font-size: 0.85rem;
-        }
-        .empty-state p {
-            font-size: 0.75rem;
-        }
-    }
-
-    /* ===== أنماط الطباعة ===== */
-    @media print {
-        * {
-            -webkit-print-color-adjust: exact !important;
-            print-color-adjust: exact !important;
-        }
-        body {
-            background: white !important;
-            font-size: 10pt !important;
-            color: #000 !important;
-            padding: 0 !important;
-            margin: 0 !important;
-            font-family: 'Tajawal', sans-serif !important;
-        }
-        .bg-pattern {
-            display: none !important;
-        }
-        .modal-overlay,
-        .print-fab,
-        .no-print,
-        .toast-container {
-            display: none !important;
-            visibility: hidden !important;
-            opacity: 0 !important;
-            pointer-events: none !important;
-        }
-        .print-watermark.show-watermark {
-            display: block !important;
-            position: fixed !important;
-            top: 50% !important;
-            left: 50% !important;
-            transform: translate(-50%, -50%) rotate(-45deg) !important;
-            opacity: 0.06 !important;
-            font-size: 48pt !important;
-            font-weight: 700 !important;
-            color: #000 !important;
-            pointer-events: none !important;
-            z-index: 9999 !important;
-            white-space: nowrap !important;
-        }
-        .print-header-area {
-            display: block !important;
-            position: fixed !important;
-            top: 0 !important;
-            left: 0 !important;
-            right: 0 !important;
-            z-index: 10000 !important;
-        }
-        .print-footer-area {
-            display: none !important;
-        }
-        .print-last-page-notes {
-            display: block !important;
-            margin-top: 16pt !important;
-            padding: 6pt 0 !important;
-            border-top: 1.5pt solid #333 !important;
-            font-size: 9pt !important;
-            color: #333 !important;
-            font-weight: 500 !important;
-            white-space: pre-wrap !important;
-            word-wrap: break-word !important;
-            line-height: 1.6 !important;
-        }
-        .print-last-page-notes .notes-label {
-            display: block;
-            font-weight: 700 !important;
-            color: #000 !important;
-            margin-bottom: 2pt;
-        }
-        .print-last-page-notes .notes-content {
-            display: block;
-            color: #444 !important;
-        }
-        .invoice-print-area {
-            padding-top: 50pt !important;
-            padding-bottom: 10pt !important;
-        }
-        [data-print-hidden="true"] {
-            display: none !important;
-        }
-        .print-grayscale * {
-            filter: grayscale(100%) !important;
-        }
-        .print-no-lines .table td,
-        .print-no-lines .table th {
-            border: none !important;
-        }
-        .print-compact .table td,
-        .print-compact .table th {
-            padding: 2pt 4pt !important;
-            font-size: 8pt !important;
-        }
-        .print-detailed .table td,
-        .print-detailed .table th {
-            padding: 8pt 12pt !important;
-            font-size: 11pt !important;
-        }
-        .data-card {
-            box-shadow: none !important;
-            border: 1px solid #ddd !important;
-            border-radius: 0 !important;
-            margin-bottom: 12pt !important;
-        }
-        .data-card-header {
-            background: #f0f0f0 !important;
-            border-bottom: 1px solid #ccc !important;
-        }
-        .stat-card {
-            box-shadow: none !important;
-            border: 1px solid #ddd !important;
-        }
-        .dashboard-header {
-            background: #5B6ABF !important;
-            -webkit-print-color-adjust: exact !important;
-            print-color-adjust: exact !important;
-        }
-        .table thead th {
-            background: #e8e8e8 !important;
-            border-bottom: 1px solid #999 !important;
-        }
-        .table tbody tr:hover {
-            background: transparent !important;
-        }
-        .badge {
-            border: 1px solid #999 !important;
-        }
-        .table-responsive {
-            overflow: visible !important;
-        }
-        .table {
-            min-width: 100% !important;
-        }
-        .stats-grid {
-            page-break-inside: avoid;
-        }
-        .data-card {
-            page-break-inside: avoid;
-        }
-        .print-fab {
-            display: none !important;
-        }
-        .header-badge {
-            display: none !important;
-        }
-        .action-group .btn-action {
-            display: none !important;
-        }
-        .btn-disabled {
-            display: none !important;
-        }
-        .btn-group {
-            display: none !important;
-        }
-    }
+    [data-print-hidden="true"] { display:none !important; }
+    .print-grayscale * { filter:grayscale(100%) !important; }
+    .print-no-lines .table td, .print-no-lines .table th,
+    .print-no-lines .table-order td, .print-no-lines .table-order th { border:none !important; }
+    .print-compact .table td, .print-compact .table th { padding:2pt 4pt !important; font-size:8pt !important; }
+    .print-detailed .table td, .print-detailed .table th { padding:8pt 12pt !important; font-size:11pt !important; }
+    .toast { display:none !important; }
+    .card, .data-card { box-shadow:none !important; border:1px solid #ddd !important; border-radius:0 !important; }
+    .pagination { display:none !important; }
+    .btn-group .btn { display:none !important; }
+    .dashboard-header { background:var(--primary-4) !important; }
+}
 </style>
 {% endblock %}
 
 {% block content %}
-<!-- خلفية متحركة -->
-<div class="bg-pattern"></div>
+<!-- بيانات الشركة (يقرأها JS) -->
+<script id="companyData" type="application/json" nonce="{{ csp_nonce }}">
+{
+    "name": "{{ company_settings.company_name|default:'شركة تجريبية'|escapejs }}",
+    "logo_url": "{% if company_settings.company_logo %}{{ company_settings.company_logo.url }}{% else %}{% endif %}",
+    "phone": "{{ company_settings.contact_phone|default:'0591234567'|escapejs }}",
+    "address": "{{ company_settings.contact_address|default:'دمشق - سوريا'|escapejs }}",
+    "footer_text": "{{ company_settings.footer_copyright_text|default:'شكراً لتعاملكم معنا'|escapejs }}"
+}
+</script>
 
 <div class="dashboard-wrapper">
-    <!-- ===== الهيدر ===== -->
+    <!-- هيدر الصفحة (ألوان النظام السماوية) -->
     <div class="dashboard-header">
         <div class="header-content">
             <div class="header-text">
-                <h1>
-                    <i class="fas fa-rocket"></i>
-                    إدارة الفترات التجريبية
-                </h1>
-                <p>لوحة تحكم لمراقبة وإدارة العملاء التجريبيين  </p>
+                <h1><i class="fas fa-rocket"></i> إدارة الفترات التجريبية</h1>
+                <p>لوحة تحكم لمراقبة وإدارة العملاء التجريبيين</p>
             </div>
             <div class="header-badge">
                 <span class="dot"></span>
@@ -1577,349 +402,253 @@
     <!-- ===== منطقة الطباعة ===== -->
     <div id="printableArea" class="invoice-print-area">
 
-        <!-- ===== بطاقات الإحصائيات ===== -->
+        <!-- بطاقات الإحصائيات -->
         <div class="stats-grid">
             <div class="stat-card">
-                <div class="stat-icon-wrapper">
-                    <i class="fas fa-users"></i>
-                </div>
-                <div class="stat-info">
+                <div class="stat-icon-wrapper"><i class="fas fa-users"></i></div>
+                <div>
                     <div class="stat-number">{{ active_trials.count }}</div>
-                    <p class="stat-label">
-                        تجارب نشطة
-                        <span class="stat-change positive">✓ نشطة</span>
-                    </p>
+                    <p class="stat-label">تجارب نشطة ✓</p>
                 </div>
             </div>
             <div class="stat-card">
-                <div class="stat-icon-wrapper">
-                    <i class="fas fa-hourglass-end"></i>
-                </div>
-                <div class="stat-info">
+                <div class="stat-icon-wrapper"><i class="fas fa-hourglass-end"></i></div>
+                <div>
                     <div class="stat-number">{{ expired_trials.count }}</div>
-                    <p class="stat-label">
-                        تجارب منتهية
-                        <span class="stat-change negative">✗ منتهية</span>
-                    </p>
+                    <p class="stat-label">تجارب منتهية ✗</p>
                 </div>
             </div>
             <div class="stat-card">
-                <div class="stat-icon-wrapper">
-                    <i class="fas fa-ban"></i>
-                </div>
-                <div class="stat-info">
+                <div class="stat-icon-wrapper"><i class="fas fa-ban"></i></div>
+                <div>
                     <div class="stat-number">{{ stopped_trials.count }}</div>
-                    <p class="stat-label">
-                        تجارب متوقفة
-                        <span class="stat-change negative">⏸ متوقفة</span>
-                    </p>
+                    <p class="stat-label">تجارب متوقفة ⏸</p>
                 </div>
             </div>
         </div>
 
-        <!-- ===== التجارب النشطة ===== -->
+        <!-- التجارب النشطة -->
         <div class="data-card">
             <div class="data-card-header">
-                <div class="card-title">
-                    <i class="fas fa-play-circle"></i>
-                    التجارب النشطة
-                </div>
-                <span class="card-badge active-badge">
-                    <i class="fas fa-circle" style="font-size:0.5rem;"></i>
-                    {{ active_trials.count }}
-                </span>
+                <div class="card-title"><i class="fas fa-play-circle"></i> التجارب النشطة</div>
+                <span class="card-badge active-badge"><i class="fas fa-circle" style="font-size:.5rem;"></i> {{ active_trials.count }}</span>
             </div>
-            <div class="data-card-body">
-                <div class="table-responsive">
-                    <table class="table">
-                        <thead>
-                            <tr>
-                                <th data-print-field="col-customer">العميل</th>
-                                <th data-print-field="col-db">قاعدة البيانات</th>
-                                <th data-print-field="col-remaining">المتبقي</th>
-                                <th class="no-print" style="text-align:center;">الإجراءات</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for trial in active_trials %}
-                            <tr>
-                                <td data-print-field="col-customer">
-                                    <div class="customer-info">
-                                        <span class="name">{{ trial.full_name }}</span>
-                                        <span class="email">{{ trial.email }}</span>
-                                    </div>
-                                </td>
-                                <td data-print-field="col-db">
-                                    <span class="db-name">{{ trial.db_name }}</span>
-                                </td>
-                                <td data-print-field="col-remaining">
-                                    <span class="badge badge-info">
-                                        <i class="fas fa-clock"></i>
-                                        {{ trial.expiry_date|timeuntil }}
-                                    </span>
-                                </td>
-                                <td class="no-print" style="text-align:center;">
-                                    <div class="action-group">
-                                        <form method="post" action="{% url 'trials:stop_trial' trial.id %}" style="display:inline;">
-                                            {% csrf_token %}
-                                            <button type="submit" class="btn-action btn-stop" title="إيقاف يدوي">
-                                                <i class="fas fa-stop"></i> إيقاف
-                                            </button>
-                                        </form>
-                                        <button class="btn-action btn-disabled" title="لا يمكن الحذف حتى تنتهي الفترة">
-                                            <i class="fas fa-trash"></i> حذف
-                                        </button>
-                                    </div>
-                                </td>
-                            </tr>
-                            {% empty %}
-                            <tr>
-                                <td colspan="4">
-                                    <div class="empty-state">
-                                        <div class="empty-icon"><i class="fas fa-inbox"></i></div>
-                                        <h4>لا يوجد تجارب نشطة</h4>
-                                        <p>جميع التجارب منتهية أو متوقفة حالياً</p>
-                                    </div>
-                                </td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
+            <div class="table-responsive">
+                <table class="table-order">
+                    <thead>
+                        <tr>
+                            <th data-print-field="col-customer">العميل</th>
+                            <th data-print-field="col-db">قاعدة البيانات</th>
+                            <th data-print-field="col-remaining">المتبقي</th>
+                            <th class="no-print" style="text-align:center;">الإجراءات</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for trial in active_trials %}
+                        <tr>
+                            <td data-print-field="col-customer">
+                                <div class="customer-info">
+                                    <span class="name">{{ trial.full_name }}</span>
+                                    <span class="email">{{ trial.email }}</span>
+                                </div>
+                            </td>
+                            <td data-print-field="col-db"><span class="db-name">{{ trial.db_name }}</span></td>
+                            <td data-print-field="col-remaining">
+                                <span class="badge badge-info"><i class="fas fa-clock"></i> {{ trial.expiry_date|timeuntil }}</span>
+                            </td>
+                            <td class="no-print" style="text-align:center;">
+                                <div class="action-group">
+                                    <form method="post" action="{% url 'trials:extend_trial' trial.id %}" style="display:inline;" onsubmit="return confirm('تمديد {{ trial.full_name|escapejs }} لمدة 10 أيام إضافية؟');">
+                                        {% csrf_token %}
+                                        <button type="submit" class="btn-action btn-extend" title="تمديد 10 أيام"><i class="fas fa-calendar-plus"></i> تمديد</button>
+                                    </form>
+                                    <form method="post" action="{% url 'trials:stop_trial' trial.id %}" style="display:inline;">
+                                        {% csrf_token %}
+                                        <button type="submit" class="btn-action btn-stop"><i class="fas fa-stop"></i> إيقاف</button>
+                                    </form>
+                                    <button class="btn-action btn-disabled"><i class="fas fa-trash"></i> حذف</button>
+                                </div>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr><td colspan="4"><div class="empty-state"><div class="empty-icon"><i class="fas fa-inbox"></i></div><h4>لا يوجد تجارب نشطة</h4><p>جميع التجارب منتهية أو متوقفة</p></div></td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
             </div>
         </div>
 
-        <!-- ===== التجارب المتوقفة ===== -->
+        <!-- التجارب المتوقفة -->
         {% if stopped_trials %}
         <div class="data-card">
             <div class="data-card-header">
-                <div class="card-title">
-                    <i class="fas fa-pause-circle"></i>
-                    تجارب متوقفة يدوياً
-                </div>
-                <span class="card-badge warning-badge">
-                    <i class="fas fa-pause"></i>
-                    {{ stopped_trials.count }}
-                </span>
+                <div class="card-title"><i class="fas fa-pause-circle"></i> تجارب متوقفة يدوياً</div>
+                <span class="card-badge warning-badge"><i class="fas fa-pause"></i> {{ stopped_trials.count }}</span>
             </div>
-            <div class="data-card-body">
-                <div class="table-responsive">
-                    <table class="table">
-                        <thead>
-                            <tr>
-                                <th data-print-field="col-customer">العميل</th>
-                                <th data-print-field="col-db">قاعدة البيانات</th>
-                                <th data-print-field="col-status">الحالة</th>
-                                <th data-print-field="col-remaining">المتبقي</th>
-                                <th class="no-print" style="text-align:center;">الإجراءات</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for trial in stopped_trials %}
-                            <tr>
-                                <td data-print-field="col-customer">
-                                    <div class="customer-info">
-                                        <span class="name">{{ trial.full_name }}</span>
-                                        <span class="email">{{ trial.email }}</span>
-                                    </div>
-                                </td>
-                                <td data-print-field="col-db">
-                                    <span class="db-name">{{ trial.db_name }}</span>
-                                </td>
-                                <td data-print-field="col-status">
-                                    <span class="badge badge-secondary">
-                                        <i class="fas fa-ban"></i> متوقف
-                                    </span>
-                                </td>
-                                <td data-print-field="col-remaining">
-                                    {% if trial.expiry_date > now %}
-                                        <span class="badge badge-info">
-                                            <i class="fas fa-clock"></i>
-                                            {{ trial.expiry_date|timeuntil }}
-                                        </span>
-                                    {% else %}
-                                        <span class="badge badge-danger">
-                                            <i class="fas fa-exclamation-circle"></i> انتهت
-                                        </span>
-                                    {% endif %}
-                                </td>
-                                <td class="no-print" style="text-align:center;">
-                                    <div class="action-group">
-                                        <form method="post" action="{% url 'trials:resume_trial' trial.id %}" style="display:inline;">
-                                            {% csrf_token %}
-                                            <button type="submit" class="btn-action btn-resume" title="استعادة بنفس الفترة المتبقية">
-                                                <i class="fas fa-play"></i> استعادة
-                                            </button>
-                                        </form>
-                                        <form method="post" action="{% url 'trials:reset_trial' trial.id %}" style="display:inline;" onsubmit="return confirm('سيتم إعادة ضبط الفترة لتبدأ من جديد لمدة 10 أيام. هل أنت متأكد؟');">
-                                            {% csrf_token %}
-                                            <button type="submit" class="btn-action btn-reset" title="إعادة ضبط الفترة (10 أيام جديدة)">
-                                                <i class="fas fa-redo"></i> ضبط
-                                            </button>
-                                        </form>
-                                        <form method="post" action="{% url 'trials:delete_trial' trial.id %}" style="display:inline;" onsubmit="return confirm('هل أنت متأكد من حذف قاعدة البيانات نهائياً؟ لا يمكن التراجع.');">
-                                            {% csrf_token %}
-                                            <button type="submit" class="btn-action btn-delete" title="حذف قاعدة البيانات نهائياً">
-                                                <i class="fas fa-trash"></i> حذف
-                                            </button>
-                                        </form>
-                                    </div>
-                                </td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
+            <div class="table-responsive">
+                <table class="table-order">
+                    <thead>
+                        <tr>
+                            <th data-print-field="col-customer">العميل</th>
+                            <th data-print-field="col-db">قاعدة البيانات</th>
+                            <th data-print-field="col-status">الحالة</th>
+                            <th data-print-field="col-remaining">المتبقي</th>
+                            <th class="no-print" style="text-align:center;">الإجراءات</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for trial in stopped_trials %}
+                        <tr>
+                            <td data-print-field="col-customer"><div class="customer-info"><span class="name">{{ trial.full_name }}</span><span class="email">{{ trial.email }}</span></div></td>
+                            <td data-print-field="col-db"><span class="db-name">{{ trial.db_name }}</span></td>
+                            <td data-print-field="col-status"><span class="badge badge-secondary"><i class="fas fa-ban"></i> متوقف</span></td>
+                            <td data-print-field="col-remaining">
+                                {% if trial.expiry_date > now %}
+                                    <span class="badge badge-info"><i class="fas fa-clock"></i> {{ trial.expiry_date|timeuntil }}</span>
+                                {% else %}
+                                    <span class="badge badge-danger"><i class="fas fa-exclamation-circle"></i> انتهت</span>
+                                {% endif %}
+                            </td>
+                            <td class="no-print" style="text-align:center;">
+                                <div class="action-group">
+                                    <form method="post" action="{% url 'trials:extend_trial' trial.id %}" style="display:inline;" onsubmit="return confirm('تمديد وإعادة تفعيل {{ trial.full_name|escapejs }} لمدة 10 أيام؟');">
+                                        {% csrf_token %}
+                                        <button type="submit" class="btn-action btn-extend"><i class="fas fa-calendar-plus"></i> تمديد</button>
+                                    </form>
+                                    <form method="post" action="{% url 'trials:resume_trial' trial.id %}" style="display:inline;">
+                                        {% csrf_token %}
+                                        <button type="submit" class="btn-action btn-resume"><i class="fas fa-play"></i> استعادة</button>
+                                    </form>
+                                    <form method="post" action="{% url 'trials:reset_trial' trial.id %}" style="display:inline;" onsubmit="return confirm('إعادة ضبط الفترة 10 أيام جديدة؟');">
+                                        {% csrf_token %}
+                                        <button type="submit" class="btn-action btn-reset"><i class="fas fa-redo"></i> ضبط</button>
+                                    </form>
+                                    <form method="post" action="{% url 'trials:delete_trial' trial.id %}" style="display:inline;" onsubmit="return confirm('حذف قاعدة البيانات نهائياً؟');">
+                                        {% csrf_token %}
+                                        <button type="submit" class="btn-action btn-delete"><i class="fas fa-trash"></i> حذف</button>
+                                    </form>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
             </div>
         </div>
         {% endif %}
 
-        <!-- ===== التجارب المنتهية ===== -->
+        <!-- التجارب المنتهية -->
         {% if expired_trials %}
         <div class="data-card">
             <div class="data-card-header">
-                <div class="card-title">
-                    <i class="fas fa-exclamation-triangle"></i>
-                    تجارب منتهية
-                </div>
-                <span class="card-badge danger-badge">
-                    <i class="fas fa-exclamation-circle"></i>
-                    {{ expired_trials.count }}
-                </span>
+                <div class="card-title"><i class="fas fa-exclamation-triangle"></i> تجارب منتهية</div>
+                <span class="card-badge danger-badge"><i class="fas fa-exclamation-circle"></i> {{ expired_trials.count }}</span>
             </div>
-            <div class="data-card-body">
-                <div class="table-responsive">
-                    <table class="table">
-                        <thead>
-                            <tr>
-                                <th data-print-field="col-customer">العميل</th>
-                                <th data-print-field="col-db">قاعدة البيانات</th>
-                                <th data-print-field="col-expired">انتهت في</th>
-                                <th class="no-print" style="text-align:center;">الإجراءات</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for trial in expired_trials %}
-                            <tr>
-                                <td data-print-field="col-customer">
-                                    <div class="customer-info">
-                                        <span class="name">{{ trial.full_name }}</span>
-                                        <span class="email">{{ trial.email }}</span>
-                                    </div>
-                                </td>
-                                <td data-print-field="col-db">
-                                    <span class="db-name danger">{{ trial.db_name }}</span>
-                                </td>
-                                <td data-print-field="col-expired">
-                                    <span class="badge badge-danger">
-                                        <i class="fas fa-calendar-times"></i>
-                                        {{ trial.expiry_date|date:"Y-m-d" }}
-                                    </span>
-                                </td>
-                                <td class="no-print" style="text-align:center;">
-                                    <div class="action-group">
-                                        <form method="post" action="{% url 'trials:delete_trial' trial.id %}" style="display:inline;" onsubmit="return confirm('هل أنت متأكد من حذف قاعدة البيانات نهائياً؟ لا يمكن التراجع عن هذا الإجراء.');">
-                                            {% csrf_token %}
-                                            <button type="submit" class="btn-action btn-delete" title="حذف قاعدة البيانات نهائياً">
-                                                <i class="fas fa-trash"></i> حذف نهائي
-                                            </button>
-                                        </form>
-                                    </div>
-                                </td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
+            <div class="table-responsive">
+                <table class="table-order">
+                    <thead>
+                        <tr>
+                            <th data-print-field="col-customer">العميل</th>
+                            <th data-print-field="col-db">قاعدة البيانات</th>
+                            <th data-print-field="col-expired">انتهت في</th>
+                            <th class="no-print" style="text-align:center;">الإجراءات</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for trial in expired_trials %}
+                        <tr>
+                            <td data-print-field="col-customer"><div class="customer-info"><span class="name">{{ trial.full_name }}</span><span class="email">{{ trial.email }}</span></div></td>
+                            <td data-print-field="col-db"><span class="db-name danger">{{ trial.db_name }}</span></td>
+                            <td data-print-field="col-expired"><span class="badge badge-danger"><i class="fas fa-calendar-times"></i> {{ trial.expiry_date|date:"Y-m-d" }}</span></td>
+                            <td class="no-print" style="text-align:center;">
+                                <div class="action-group">
+                                    <form method="post" action="{% url 'trials:extend_trial' trial.id %}" style="display:inline;" onsubmit="return confirm('تمديد {{ trial.full_name|escapejs }} 10 أيام من الآن وإعادة التفعيل؟');">
+                                        {% csrf_token %}
+                                        <button type="submit" class="btn-action btn-extend"><i class="fas fa-calendar-plus"></i> تمديد +10</button>
+                                    </form>
+                                    <form method="post" action="{% url 'trials:delete_trial' trial.id %}" style="display:inline;" onsubmit="return confirm('حذف قاعدة البيانات نهائياً؟');">
+                                        {% csrf_token %}
+                                        <button type="submit" class="btn-action btn-delete"><i class="fas fa-trash"></i> حذف نهائي</button>
+                                    </form>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
             </div>
         </div>
         {% endif %}
+
+        <!-- هيدر الطباعة (يظهر فقط عند الطباعة) -->
+        <div class="print-header-area no-print" id="printHeaderArea">
+            <table style="width:100%; border-collapse:collapse;">
+                <tr>
+                    <td style="width:80px; text-align:center; vertical-align:middle;">
+                        <img src="" alt="شعار" class="ph-logo" id="phLogoImg" style="display:none;">
+                        <span id="phLogoPlaceholder" style="font-size:8pt; color:#999;">بدون شعار</span>
+                    </td>
+                    <td style="text-align:center; vertical-align:middle;">
+                        <div class="ph-company" id="phCompanyName">شركة تجريبية</div>
+                        <div class="ph-details" id="phCompanyDetails"></div>
+                    </td>
+                    <td style="width:80px;"></td>
+                </tr>
+            </table>
+        </div>
+
+        <!-- فوتر الطباعة -->
+        <div class="print-footer-area no-print" id="printFooterArea">
+            <div class="print-footer-main"><div class="footer-content"><span id="phFooterText"></span></div></div>
+        </div>
+
+        <!-- العلامة المائية -->
+        <div class="print-watermark" id="watermarkText">شركة تجريبية</div>
 
     </div><!-- /printableArea -->
 </div><!-- /dashboard-wrapper -->
 
-<!-- ===== مكونات الطباعة ===== -->
-<script id="companyData" type="application/json" nonce="{{ csp_nonce }}">
-{
-    "name": "{{ company_settings.company_name|default:'شركة تجريبية' }}",
-    "logo_url": "{% if company_settings.company_logo %}{{ company_settings.company_logo.url }}{% else %}{% endif %}",
-    "phone": "{{ company_settings.contact_phone|default:'0591234567' }}",
-    "address": "{{ company_settings.contact_address|default:'دمشق - سوريا' }}",
-    "footer_text": "{{ company_settings.footer_copyright_text|default:'شكراً لتعاملكم معنا' }}"
-}
-</script>
+<!-- زر الطباعة العائم -->
+<button class="print-fab no-print" id="openPrintModalBtn"><i class="fas fa-print"></i> طباعة</button>
 
-<!-- ===== هيدر الطباعة ===== -->
-<div class="print-header-area no-print" id="printHeaderArea">
-    <table style="width:100%; border-collapse:collapse;">
-        <tr>
-            <td style="width:80px; text-align:center; vertical-align:middle;">
-                <img src="" alt="شعار" class="ph-logo" id="phLogoImg" style="display:none;">
-                <span id="phLogoPlaceholder" style="font-size:8pt; color:#999;">بدون شعار</span>
-            </td>
-            <td style="text-align:center; vertical-align:middle;">
-                <div class="ph-company" id="phCompanyName">شركة تجريبية</div>
-                <div class="ph-details" id="phCompanyDetails"></div>
-            </td>
-            <td style="width:80px;"></td>
-        </tr>
-    </table>
-</div>
-
-<!-- ===== فوتر الطباعة ===== -->
-<div class="print-footer-area no-print" id="printFooterArea">
-    <div class="print-footer-main">
-        <div class="footer-content"><span id="phFooterText"></span></div>
-    </div>
-</div>
-
-<!-- ===== علامة مائية ===== -->
-<div class="print-watermark" id="watermarkText">شركة تجريبية</div>
-
-<!-- ===== زر الطباعة العائم ===== -->
-<button class="print-fab no-print" id="openPrintModalBtn">
-    <i class="fas fa-print"></i>
-    طباعة
-</button>
-
-<!-- ===== مودال الطباعة ===== -->
+<!-- ============================================================
+     مودال الطباعة (مطابق للنظام المرجعي حرفياً)
+     ============================================================ -->
 <div class="modal-overlay no-print" id="printModal" style="display:none;">
     <div class="modal-box">
-        <div class="modal-header">
-            <h3><i class="fas fa-print"></i> إعدادات الطباعة</h3>
+        <div class="modal-header-custom">
+            <h3><i class="fas fa-cog"></i> إعدادات الطباعة</h3>
             <button class="modal-close" id="closeModalBtn"><i class="fas fa-times"></i></button>
         </div>
-        <div class="modal-body">
-            <!-- معلومات الشركة -->
-            <div class="section-title"><i class="fas fa-building"></i> الهيدر والفوتر</div>
-            <div class="info-box">
+        <div class="modal-body-custom">
+            <div class="section-title">هيدر وفوتر صفحة الطباعة</div>
+            <div class="company-info-box">
                 <i class="fas fa-info-circle"></i>
-                <span>بيانات الشركة مأخوذة تلقائياً. الملاحظات ستظهر في آخر صفحة فقط.</span>
+                <span><strong>ملاحظة:</strong> بيانات الشركة مأخوذة تلقائياً. الملاحظات ستظهر في آخر صفحة فقط.</span>
             </div>
             <div class="header-footer-inputs">
                 <div class="hf-input-group">
                     <label><i class="fas fa-image"></i> شعار الشركة</label>
                     <div class="hf-preview-box" id="logoPreviewBox">
-                        <img id="logoPreviewImg" src="" alt="شعار" style="display:none;">
-                        <span id="logoPreviewPlaceholder">لا يوجد شعار</span>
+                        <img id="logoPreviewImg" src="" alt="شعار" style="max-height:65px; display:none;">
+                        <span id="logoPreviewPlaceholder" style="font-size:0.8rem; color:#999;">لا يوجد شعار</span>
                     </div>
                 </div>
                 <div class="hf-input-group">
                     <label><i class="fas fa-building"></i> اسم الشركة</label>
                     <input type="text" id="companyNameInput" readonly>
                 </div>
-                <div class="hf-input-group" style="grid-column:1 / -1;">
+                <div class="hf-input-group" style="grid-column: 1 / -1;">
                     <label><i class="fas fa-align-right"></i> بيانات إضافية</label>
                     <input type="text" id="companyDetailsInput" readonly>
                 </div>
-                <div class="hf-input-group" style="grid-column:1 / -1;">
-                    <label><i class="fas fa-pen"></i> ملاحظات إضافية</label>
-                    <textarea id="printNotes" rows="3" placeholder="أضف ملاحظاتك هنا..."></textarea>
+                <div class="hf-input-group" style="grid-column: 1 / -1;">
+                    <label><i class="fas fa-pen"></i> ملاحظات إضافية للطباعة <span style="font-size:0.65rem; color:#999;">( تظهر في آخر صفحة فقط مع دعم الأسطر المتعددة — يمكن استعمال الإيموجي: Windows + . أو Windows + ; )</span></label>
+                    <textarea id="printNotes" rows="4" placeholder="أضف ملاحظاتك هنا..."></textarea>
                 </div>
             </div>
 
-            <!-- حجم الورق والهوامش -->
-            <div class="section-title"><i class="fas fa-arrows-alt"></i> حجم الورق والهوامش</div>
+            <div class="section-title">حجم الورق والهوامش</div>
             <div class="btn-group-print" id="paperSizeGroup">
                 <button class="btn-opt active" data-value="a4">A4</button>
                 <button class="btn-opt" data-value="a5">A5</button>
@@ -1931,8 +660,7 @@
                 <button class="btn-opt" data-value="wide">واسع</button>
             </div>
 
-            <!-- تنسيق المحتوى -->
-            <div class="section-title"><i class="fas fa-edit"></i> تنسيق المحتوى</div>
+            <div class="section-title">تنسيق المحتوى</div>
             <div class="btn-group-print" id="formatGroup">
                 <button class="btn-opt active" data-value="standard">قياسي</button>
                 <button class="btn-opt" data-value="compact">مضغوط</button>
@@ -1944,12 +672,10 @@
                 <button class="btn-opt active" data-value="large">شعار كبير</button>
             </div>
 
-            <!-- أعمدة الجدول -->
-            <div class="section-title"><i class="fas fa-columns"></i> أعمدة الجدول</div>
+            <div class="section-title">أعمدة الجدول</div>
             <div class="field-grid" id="tableColumnsGrid"></div>
 
-            <!-- خيارات إضافية -->
-            <div class="section-title"><i class="fas fa-sliders-h"></i> خيارات إضافية</div>
+            <div class="section-title">خيارات إضافية</div>
             <div class="toggle-row">
                 <label>طباعة بالألوان</label>
                 <label class="toggle-switch"><input type="checkbox" id="printColors" checked><span class="toggle-slider"></span></label>
@@ -1967,94 +693,89 @@
                 <label class="toggle-switch"><input type="checkbox" id="showWatermark" checked><span class="toggle-slider"></span></label>
             </div>
         </div>
-        <div class="modal-footer">
-            <div class="btn-group-actions">
-                <button class="btn btn-secondary" id="selectAllBtn"><i class="fas fa-check-double"></i> تحديد الكل</button>
-                <button class="btn btn-secondary" id="deselectAllBtn"><i class="fas fa-times"></i> إلغاء الكل</button>
-                <button class="btn btn-secondary" id="saveSettingsBtn"><i class="fas fa-save"></i> حفظ</button>
-                <button class="btn btn-secondary" id="resetSettingsBtn"><i class="fas fa-undo"></i> استعادة</button>
+        <div class="modal-footer-custom">
+            <div class="btn-group-actions" style="display:flex; gap:0.35rem; flex-wrap:wrap;">
+                <button class="btn btn-secondary-print" id="selectAllBtn"><i class="fas fa-check-double"></i> تحديد الكل</button>
+                <button class="btn btn-secondary-print" id="deselectAllBtn"><i class="fas fa-times"></i> إلغاء الكل</button>
+                <button class="btn btn-secondary-print" id="saveSettingsBtn"><i class="fas fa-save"></i> حفظ</button>
+                <button class="btn btn-secondary-print" id="resetSettingsBtn"><i class="fas fa-undo"></i> استعادة</button>
             </div>
             <div style="display:flex; gap:0.5rem; flex-wrap:wrap;">
-                <button class="btn btn-secondary" id="exportPdfBtn"><i class="fas fa-file-pdf"></i> PDF</button>
-                <button class="btn btn-primary" id="executePrintBtn"><i class="fas fa-print"></i> طباعة الآن</button>
+                <button class="btn btn-secondary-print" id="exportPdfBtn"><i class="fas fa-file-pdf"></i> PDF</button>
+                <button class="btn btn-primary-print" id="executePrintBtn"><i class="fas fa-print"></i> طباعة الآن</button>
             </div>
         </div>
     </div>
 </div>
 
-<!-- ===== مودال تصدير PDF ===== -->
+<!-- مودال PDF -->
 <div class="modal-overlay no-print" id="pdfExportModal" style="display:none;">
-    <div class="modal-box" style="width:520px;">
-        <div class="modal-header">
-            <h3><i class="fas fa-file-pdf"></i> تصدير PDF</h3>
+    <div class="modal-box" style="width: 500px;">
+        <div class="modal-header-custom">
+            <h3><i class="fas fa-file-pdf"></i> تصدير كملف PDF</h3>
             <button class="modal-close" id="closePdfModalBtn"><i class="fas fa-times"></i></button>
         </div>
-        <div class="modal-body">
-            <div class="pdf-instructions">
-                <div class="pdf-icon"><i class="fas fa-file-arrow-down"></i></div>
-                <h4>جاهز لتصدير المستند</h4>
-                <p>سيتم فتح نافذة الطباعة، اختر <strong>حفظ كـ PDF</strong> من قائمة الطابعات.</p>
-                <ul class="pdf-steps">
-                    <li>افتح نافذة الطباعة</li>
-                    <li>اختر <strong>حفظ كـ PDF (Save as PDF)</strong></li>
-                    <li>اضغط <strong>حفظ (Save)</strong> لتنزيل الملف</li>
+        <div class="modal-body-custom">
+            <div class="pdf-export-instructions" style="text-align: center; padding: 1rem;">
+                <div class="icon" style="font-size: 3rem; color: var(--primary-4); margin-bottom: 1rem;"><i class="fas fa-file-arrow-down"></i></div>
+                <h4 style="font-size: 1.1rem; color: var(--text-dark); margin-bottom: 0.5rem;">جاهز لتصدير المستند</h4>
+                <p style="font-size: 0.85rem; color: #555; margin-bottom: 1.5rem; line-height: 1.6;">لضمان الحفاظ على روابط الأحرف العربية وجودة النصوص، يعتمد النظام على محرك الطباعة المتقدم.</p>
+                <ul class="pdf-steps" style="text-align: right; background: #f8f9fa; padding: 1rem; border-radius: 8px; margin-bottom: 1rem; list-style: none; padding-right: 2rem;">
+                    <li style="margin-bottom: 0.5rem; font-size: 0.85rem; color: #444;">1. سيتم فتح نافذة الطباعة الخاصة بمتصفحك.</li>
+                    <li style="margin-bottom: 0.5rem; font-size: 0.85rem; color: #444;">2. من قائمة "الطابعة" (Printer)، اختر <strong>حفظ كـ PDF (Save as PDF)</strong>.</li>
+                    <li style="margin-bottom: 0.5rem; font-size: 0.85rem; color: #444;">3. اضغط على <strong>حفظ (Save)</strong> لتنزيل الملف.</li>
                 </ul>
             </div>
         </div>
-        <div class="modal-footer" style="justify-content:center;">
-            <button class="btn btn-primary" id="confirmPdfExportBtn" style="padding:0.6rem 2.5rem;">
+        <div class="modal-footer-custom" style="justify-content: center;">
+            <button class="btn btn-primary-print" id="confirmPdfExportBtn" style="padding: 0.6rem 2rem; font-size: 0.9rem;">
                 <i class="fas fa-print"></i> فتح نافذة الحفظ
             </button>
         </div>
     </div>
 </div>
 
-<!-- ===== توست ===== -->
-<div class="toast-container no-print">
-    <div class="toast" id="toast"></div>
-</div>
-
+<div class="toast no-print" id="toast"></div>
 {% endblock %}
 
 {% block extra_js %}
 <script nonce="{{ csp_nonce }}">
 document.addEventListener('DOMContentLoaded', function() {
 
-    // ===== توليد أعمدة الجدول =====
+    // ===== 1) توليد أعمدة الجدول =====
     function generateTableColumns() {
         const grid = document.getElementById('tableColumnsGrid');
         if (!grid) return;
         grid.innerHTML = '';
         const headers = document.querySelectorAll('#printableArea th[data-print-field]');
         if (headers.length === 0) {
-            grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;color:var(--gray-400);font-size:0.75rem;padding:0.5rem;">لا توجد أعمدة</div>';
+            grid.innerHTML = '<div style="grid-column: 1 / -1; text-align: center; color: #999; font-size: 0.8rem; padding: 0.5rem;">لا توجد أعمدة قابلة للطباعة</div>';
             return;
         }
+        // منع التكرار (عمود col-customer مثلاً يظهر في 3 جداول)
+        const seen = new Set();
         headers.forEach(th => {
             const target = th.getAttribute('data-print-field');
+            if (seen.has(target)) return;
+            seen.add(target);
             const clone = th.cloneNode(true);
-            const sortIcon = clone.querySelector('.sort-icon');
-            if (sortIcon) sortIcon.remove();
             const label = clone.textContent.trim();
             const labelEl = document.createElement('label');
             labelEl.className = 'field-check';
             const input = document.createElement('input');
-            input.type = 'checkbox';
-            input.checked = true;
+            input.type = 'checkbox'; input.checked = true;
             input.setAttribute('data-target', target);
             const labelText = document.createTextNode(' ' + label + ' ');
             const keySpan = document.createElement('span');
             keySpan.className = 'field-key';
             keySpan.textContent = target.replace('col-', '');
-            labelEl.appendChild(input);
-            labelEl.appendChild(labelText);
-            labelEl.appendChild(keySpan);
+            labelEl.appendChild(input); labelEl.appendChild(labelText); labelEl.appendChild(keySpan);
             grid.appendChild(labelEl);
         });
     }
     generateTableColumns();
 
-    // ===== قراءة بيانات الشركة =====
+    // ===== 2) قراءة بيانات الشركة =====
     function getCompanySettings() {
         try {
             const scriptTag = document.getElementById('companyData');
@@ -2066,13 +787,11 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
                 return data;
             }
-        } catch (e) {
-            console.warn('❌ خطأ في قراءة بيانات الشركة:', e);
-        }
+        } catch (e) { console.warn('❌ خطأ في قراءة بيانات الشركة:', e); }
         return { name: 'شركة تجريبية', logo_url: '', phone: '0591234567', address: 'دمشق - سوريا', footer_text: 'شكراً لتعاملكم معنا' };
     }
 
-    // ===== تعبئة الهيدر والفوتر =====
+    // ===== 3) تعبئة الهيدر والفوتر + المودال =====
     function populatePrintHeaderFooter() {
         const company = getCompanySettings();
         document.getElementById('phCompanyName').textContent = company.name;
@@ -2090,17 +809,11 @@ document.addEventListener('DOMContentLoaded', function() {
         const hasLogo = company.logo_url && company.logo_url !== '' && company.logo_url !== 'None';
 
         if (hasLogo) {
-            img.src = company.logo_url;
-            img.style.display = 'block';
-            placeholder.style.display = 'none';
-            previewImg.src = company.logo_url;
-            previewImg.style.display = 'block';
-            previewPlaceholder.style.display = 'none';
+            img.src = company.logo_url; img.style.display = 'block'; placeholder.style.display = 'none';
+            previewImg.src = company.logo_url; previewImg.style.display = 'block'; previewPlaceholder.style.display = 'none';
         } else {
-            img.style.display = 'none';
-            placeholder.style.display = 'inline';
-            previewImg.style.display = 'none';
-            previewPlaceholder.style.display = 'inline';
+            img.style.display = 'none'; placeholder.style.display = 'inline';
+            previewImg.style.display = 'none'; previewPlaceholder.style.display = 'inline';
         }
         document.getElementById('companyNameInput').value = company.name;
         let detailsText = [];
@@ -2110,17 +823,10 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     populatePrintHeaderFooter();
 
-    // ===== حالة الطباعة الافتراضية =====
+    // ===== 4) الحالة =====
     var defaultState = {
-        paperSize: 'a4',
-        marginSize: 'normal',
-        format: 'standard',
-        logoSize: 'large',
-        printColors: true,
-        printLines: true,
-        showIndex: true,
-        showWatermark: true,
-        notes: ''
+        paperSize: 'a4', marginSize: 'normal', format: 'standard', logoSize: 'large',
+        printColors: true, printLines: true, showIndex: true, showWatermark: true, notes: ''
     };
     var printState = { ...defaultState };
     var printModal = document.getElementById('printModal');
@@ -2128,47 +834,33 @@ document.addEventListener('DOMContentLoaded', function() {
     var toastEl = document.getElementById('toast');
     var toastTimeout = null;
 
-    // ===== تطبيق حجم الشعار =====
     function applyLogoSize(size) {
         var previewImg = document.getElementById('logoPreviewImg');
         var headerImg = document.getElementById('phLogoImg');
         if (!previewImg) return;
-        if (size === 'small') {
-            previewImg.style.maxHeight = '30px';
-            if (headerImg) headerImg.style.maxHeight = '20px';
-        } else if (size === 'medium') {
-            previewImg.style.maxHeight = '45px';
-            if (headerImg) headerImg.style.maxHeight = '35px';
-        } else if (size === 'large') {
-            previewImg.style.maxHeight = '65px';
-            if (headerImg) headerImg.style.maxHeight = '50px';
-        }
+        if (size === 'small') { previewImg.style.maxHeight = '30px'; if (headerImg) headerImg.style.maxHeight = '20px'; }
+        else if (size === 'medium') { previewImg.style.maxHeight = '45px'; if (headerImg) headerImg.style.maxHeight = '35px'; }
+        else if (size === 'large') { previewImg.style.maxHeight = '65px'; if (headerImg) headerImg.style.maxHeight = '50px'; }
     }
 
-    // ===== عرض التوست =====
     function showToast(msg, type, duration) {
-        duration = duration || 2500;
-        type = type || 'info';
+        duration = duration || 2500; type = type || 'info';
         if (!toastEl) return;
         toastEl.textContent = msg;
         toastEl.className = 'toast toast-' + type + ' show';
+        toastEl.style.display = 'block';
         if (toastTimeout) clearTimeout(toastTimeout);
         toastTimeout = setTimeout(function() {
             toastEl.classList.remove('show');
+            setTimeout(function() { toastEl.style.display = 'none'; }, 500);
         }, duration);
     }
 
-    // ===== حفظ واستعادة الإعدادات =====
     function savePrintSettings() {
         const settings = {
-            paperSize: printState.paperSize,
-            marginSize: printState.marginSize,
-            format: printState.format,
-            logoSize: printState.logoSize,
-            printColors: document.getElementById('printColors').checked,
-            printLines: document.getElementById('printLines').checked,
-            showIndex: document.getElementById('showIndex').checked,
-            showWatermark: document.getElementById('showWatermark').checked,
+            paperSize: printState.paperSize, marginSize: printState.marginSize, format: printState.format, logoSize: printState.logoSize,
+            printColors: document.getElementById('printColors').checked, printLines: document.getElementById('printLines').checked,
+            showIndex: document.getElementById('showIndex').checked, showWatermark: document.getElementById('showWatermark').checked,
             notes: document.getElementById('printNotes').value || ''
         };
         localStorage.setItem('print_settings', JSON.stringify(settings));
@@ -2213,31 +905,24 @@ document.addEventListener('DOMContentLoaded', function() {
                 document.getElementById('printNotes').value = settings.notes || '';
                 applyLogoSize(printState.logoSize);
             } catch (e) { console.error("Error loading settings:", e); }
-        } else {
-            applyLogoSize('large');
-        }
+        } else { applyLogoSize('large'); }
     }
 
-    // ===== تغيير إعدادات الصفحة =====
     function changePrintPage() {
         var existing = document.getElementById('dynamic-page-style');
         if (existing) existing.remove();
         var style = document.createElement('style');
         style.id = 'dynamic-page-style';
-        var margin = '10mm',
-            size = '';
+        var margin = '10mm', size = '';
         if (printState.marginSize === 'minimal') margin = '3mm';
         else if (printState.marginSize === 'normal') margin = '8mm';
         else if (printState.marginSize === 'wide') margin = '15mm';
-        if (printState.paperSize === 'thermal') { margin = '2mm';
-            size = 'size: 80mm auto;'; }
+        if (printState.paperSize === 'thermal') { margin = '2mm'; size = 'size: 80mm auto;'; }
         style.textContent = '@page { margin: ' + margin + '; ' + size + ' }';
         document.head.appendChild(style);
     }
 
-    // ===== إخفاء/إظهار العناصر =====
     var hiddenElements = [];
-
     function hideBaseElements() {
         ['nav', 'aside', '.navbar', '.sidebar', 'footer', '.footer'].forEach(sel => {
             document.querySelectorAll(sel).forEach(el => {
@@ -2247,26 +932,20 @@ document.addEventListener('DOMContentLoaded', function() {
             });
         });
     }
-
     function showBaseElements() {
         hiddenElements.forEach(item => item.el.style.display = item.display);
         hiddenElements = [];
     }
 
-    // ===== إدارة المودال =====
     function closeModal(modalId) {
         var modal = document.getElementById(modalId);
-        if (modal) { modal.classList.remove('active');
-            modal.style.display = 'none'; }
+        if (modal) { modal.classList.remove('active'); modal.style.display = 'none'; }
     }
-
     function openModal(modalId) {
         var modal = document.getElementById(modalId);
-        if (modal) { modal.style.display = 'flex';
-            modal.classList.add('active'); }
+        if (modal) { modal.style.display = 'flex'; modal.classList.add('active'); }
     }
 
-    // ===== تجهيز إعدادات الطباعة =====
     function preparePrintSettings() {
         const company = getCompanySettings();
         document.getElementById('phCompanyName').textContent = company.name;
@@ -2296,14 +975,8 @@ document.addEventListener('DOMContentLoaded', function() {
         const phLogoImg = document.getElementById('phLogoImg');
         const phLogoPlaceholder = document.getElementById('phLogoPlaceholder');
         const hasLogo = company.logo_url && company.logo_url !== '' && company.logo_url !== 'None';
-        if (hasLogo) {
-            phLogoImg.src = company.logo_url;
-            phLogoImg.style.display = 'block';
-            phLogoPlaceholder.style.display = 'none';
-        } else {
-            phLogoImg.style.display = 'none';
-            phLogoPlaceholder.style.display = 'inline';
-        }
+        if (hasLogo) { phLogoImg.src = company.logo_url; phLogoImg.style.display = 'block'; phLogoPlaceholder.style.display = 'none'; }
+        else { phLogoImg.style.display = 'none'; phLogoPlaceholder.style.display = 'inline'; }
 
         document.querySelectorAll('#printModal input[type="checkbox"][data-target]').forEach(cb => {
             printableArea.querySelectorAll('[data-print-field="' + cb.dataset.target + '"]').forEach(el => {
@@ -2325,12 +998,12 @@ document.addEventListener('DOMContentLoaded', function() {
         document.getElementById('printHeaderArea').classList.remove('print-logo-small', 'print-logo-medium', 'print-logo-large');
         document.getElementById('printHeaderArea').classList.add('print-logo-' + printState.logoSize);
 
+        // حسب الشرط 6: نستخدم class لا style.display
         document.getElementById('watermarkText').classList.toggle('show-watermark', document.getElementById('showWatermark').checked);
 
         changePrintPage();
     }
 
-    // ===== تنفيذ الطباعة =====
     function executePrint(direct) {
         var header = document.getElementById('printHeaderArea');
         var footer = document.getElementById('printFooterArea');
@@ -2342,10 +1015,8 @@ document.addEventListener('DOMContentLoaded', function() {
         }
 
         preparePrintSettings();
-        header.style.display = 'block';
-        header.classList.remove('no-print');
-        footer.style.display = 'block';
-        footer.classList.remove('no-print');
+        header.style.display = 'block'; header.classList.remove('no-print');
+        footer.style.display = 'block'; footer.classList.remove('no-print');
         hideBaseElements();
 
         closeModal('printModal');
@@ -2354,10 +1025,8 @@ document.addEventListener('DOMContentLoaded', function() {
         setTimeout(function() {
             window.print();
 
-            header.style.display = 'none';
-            header.classList.add('no-print');
-            footer.style.display = 'none';
-            footer.classList.add('no-print');
+            header.style.display = 'none'; header.classList.add('no-print');
+            footer.style.display = 'none'; footer.classList.add('no-print');
 
             const printableArea = document.getElementById('printableArea');
             printableArea.querySelectorAll('[data-print-field]').forEach(el => el.removeAttribute('data-print-hidden'));
@@ -2368,10 +1037,7 @@ document.addEventListener('DOMContentLoaded', function() {
             document.getElementById('watermarkText').classList.remove('show-watermark');
 
             var lastPageNotes = document.getElementById('lastPageNotes');
-            if (lastPageNotes) {
-                lastPageNotes.innerHTML = '';
-                lastPageNotes.style.display = 'none';
-            }
+            if (lastPageNotes) { lastPageNotes.innerHTML = ''; lastPageNotes.style.display = 'none'; }
 
             showBaseElements();
             var dynStyle = document.getElementById('dynamic-page-style');
@@ -2385,61 +1051,32 @@ document.addEventListener('DOMContentLoaded', function() {
         }, 300);
     }
 
-    // ===== أحداث الأزرار =====
+    function executePrintDirectly() { preparePrintSettings(); executePrint(true); }
+
+    // ===== ربط الأحداث =====
     document.getElementById('openPrintModalBtn').addEventListener('click', function(e) {
-        e.preventDefault();
+        e.preventDefault(); e.stopPropagation();
         openModal('printModal');
         loadPrintSettings();
     });
-    document.getElementById('closeModalBtn').addEventListener('click', function(e) {
-        e.preventDefault();
-        closeModal('printModal');
-    });
-    printModal.addEventListener('click', function(e) {
-        if (e.target === printModal) closeModal('printModal');
-    });
-    document.getElementById('closePdfModalBtn').addEventListener('click', function(e) {
-        e.preventDefault();
-        closeModal('pdfExportModal');
-    });
-    pdfExportModal.addEventListener('click', function(e) {
-        if (e.target === pdfExportModal) closeModal('pdfExportModal');
-    });
-
+    document.getElementById('closeModalBtn').addEventListener('click', function(e) { e.preventDefault(); e.stopPropagation(); closeModal('printModal'); });
+    printModal.addEventListener('click', function(e) { if (e.target === printModal) closeModal('printModal'); });
+    document.getElementById('closePdfModalBtn').addEventListener('click', function(e) { e.preventDefault(); e.stopPropagation(); closeModal('pdfExportModal'); });
+    pdfExportModal.addEventListener('click', function(e) { if (e.target === pdfExportModal) closeModal('pdfExportModal'); });
     document.getElementById('selectAllBtn').addEventListener('click', function(e) {
-        e.preventDefault();
-        document.querySelectorAll('#printModal input[type="checkbox"][data-target]').forEach(cb => cb.checked = true);
-        showToast('✅ تم تحديد جميع الحقول', 'success', 1500);
+        e.preventDefault(); document.querySelectorAll('#printModal input[type="checkbox"][data-target]').forEach(cb => cb.checked = true); showToast('✅ تم تحديد جميع الحقول', 'success', 1500);
     });
     document.getElementById('deselectAllBtn').addEventListener('click', function(e) {
-        e.preventDefault();
-        document.querySelectorAll('#printModal input[type="checkbox"][data-target]').forEach(cb => cb.checked = false);
-        showToast('✅ تم إلغاء تحديد جميع الحقول', 'success', 1500);
+        e.preventDefault(); document.querySelectorAll('#printModal input[type="checkbox"][data-target]').forEach(cb => cb.checked = false); showToast('✅ تم إلغاء تحديد جميع الحقول', 'success', 1500);
     });
-    document.getElementById('saveSettingsBtn').addEventListener('click', function(e) {
-        e.preventDefault();
-        savePrintSettings();
-    });
-    document.getElementById('resetSettingsBtn').addEventListener('click', function(e) {
-        e.preventDefault();
-        resetPrintSettings();
-    });
+    document.getElementById('saveSettingsBtn').addEventListener('click', function(e) { e.preventDefault(); savePrintSettings(); });
+    document.getElementById('resetSettingsBtn').addEventListener('click', function(e) { e.preventDefault(); resetPrintSettings(); });
     document.getElementById('exportPdfBtn').addEventListener('click', function(e) {
-        e.preventDefault();
-        closeModal('printModal');
-        setTimeout(function() { openModal('pdfExportModal'); }, 300);
+        e.preventDefault(); closeModal('printModal'); setTimeout(function() { openModal('pdfExportModal'); }, 300);
     });
     document.getElementById('confirmPdfExportBtn').addEventListener('click', function(e) {
-        e.preventDefault();
-        closeModal('pdfExportModal');
-        setTimeout(function() { executePrint(true); }, 300);
+        e.preventDefault(); closeModal('pdfExportModal'); setTimeout(function() { executePrintDirectly(); }, 300);
     });
-    document.getElementById('executePrintBtn').addEventListener('click', function(e) {
-        e.preventDefault();
-        executePrint(false);
-    });
-
-    // ===== أحداث مجموعات الأزرار =====
     document.querySelectorAll('.btn-group-print').forEach(function(group) {
         group.querySelectorAll('.btn-opt').forEach(function(btn) {
             btn.addEventListener('click', function() {
@@ -2448,15 +1085,10 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (group.id === 'paperSizeGroup') printState.paperSize = this.dataset.value;
                 if (group.id === 'marginGroup') printState.marginSize = this.dataset.value;
                 if (group.id === 'formatGroup') printState.format = this.dataset.value;
-                if (group.id === 'logoSizeGroup') {
-                    printState.logoSize = this.dataset.value;
-                    applyLogoSize(printState.logoSize);
-                }
+                if (group.id === 'logoSizeGroup') { printState.logoSize = this.dataset.value; applyLogoSize(printState.logoSize); }
             });
         });
     });
-
-    // ===== أحداث مفاتيح التبديل =====
     document.querySelectorAll('.toggle-switch').forEach(function(sw) {
         sw.addEventListener('click', function(e) {
             e.stopPropagation();
@@ -2464,7 +1096,9 @@ document.addEventListener('DOMContentLoaded', function() {
             if (input) input.checked = !input.checked;
         });
     });
+    document.getElementById('executePrintBtn').addEventListener('click', function(e) { e.preventDefault(); executePrint(false); });
 
+    console.log('✅ نظام الطباعة الموحد - مطبق على إدارة التجارب');
 });
 </script>
 {% endblock %}

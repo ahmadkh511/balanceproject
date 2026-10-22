@@ -71,6 +71,7 @@ def check_admin_access(request):
         return False
     return request.user.is_staff
 
+
 @login_required
 def manage_trials(request):
     if not check_admin_access(request):
@@ -88,6 +89,7 @@ def manage_trials(request):
         'now': timezone.now(), # نرسل الوقت الحالي للقالب لنعرف المتبقي
     }
     return render(request, 'trials/manage_trials.html', context)
+
 
 @login_required
 def stop_trial(request, trial_id):
@@ -169,4 +171,40 @@ def delete_trial(request, trial_id):
         except Exception as e:
             messages.error(request, f'حدث خطأ أثناء الحذف: {str(e)}')
             
+    return redirect('trials:manage_trials')
+
+
+@login_required
+def extend_trial(request, trial_id):
+    if not check_admin_access(request):
+        return HttpResponseForbidden("ليس لديك صلاحية.")
+    if request.method == 'POST':
+        trial = get_object_or_404(Trial, id=trial_id)
+        
+        # حساب نقطة البداية للتمديد
+        now = timezone.now()
+        if trial.expiry_date and trial.expiry_date > now:
+            # لا يزال نشطاً: نضيف للمتبقي
+            base_date = trial.expiry_date
+        else:
+            # منتهي: نبدأ من الآن (لأن أيامه السابقة مضت)
+            base_date = now
+        
+        extension_days = getattr(settings, 'TRIAL_EXTENSION_DAYS', 10)
+        trial.expiry_date = base_date + timedelta(days=extension_days)
+        trial.is_active = True
+        trial.save()
+        
+        # إعادة تفعيل المستخدم إن كان موقوفاً
+        user = trial.user
+        if not user.is_active:
+            user.is_active = True
+            user.save()
+        
+        messages.success(
+            request,
+            f'تم تمديد فترة التجربة للمستخدم {trial.full_name} '
+            f'لمدة {extension_days} أيام إضافية. '
+            f'تاريخ الانتهاء الجديد: {trial.expiry_date:%Y-%m-%d}'
+        )
     return redirect('trials:manage_trials')

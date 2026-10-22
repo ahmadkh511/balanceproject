@@ -439,3 +439,10 @@ CHAT_ALLOWED_IMAGE_EXTS = {'.jpg', '.jpeg', '.png', '.webp', '.gif'}
 CHAT_ALLOWED_AUDIO_EXTS = {'.mp3', '.wav', '.ogg', '.m4a', '.webm'}
 
 
+
+# ==========================================
+#   من اجل اعادة تمديد التجريبية للعمل بعد انقضتء 10 ايام  
+# ==========================================
+
+TRIAL_DAYS = 10
+TRIAL_EXTENSION_DAYS = 10  # مدة التمديد

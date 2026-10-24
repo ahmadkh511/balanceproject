@@ -2048,6 +2048,7 @@
                     </div>
                     <ul>
                         <!-- فواتير -->
+                        {% if perms.invoice.view_purch or perms.invoice.add_purch or perms.invoice.view_sale or perms.invoice.add_sale or perms.invoice.view_purchreturn or perms.invoice.view_salereturn %}
                         <li class="has-submenu {% if 'purch' in current_url_name or 'sale' in current_url_name %}active{% endif %}">
                             <a href="#"><i class="fas fa-file-invoice nav-icon"></i>الفواتير</a>
                             <ul class="menu-submenu wide-grid">
@@ -2060,16 +2061,21 @@
                                 {% if perms.invoice.add_sale %}
                                 <li class="{% if current_url_name == 'sale_create' %}sub-active{% endif %}"><a href="{% url 'invoice:sale_create' %}"><i class="fas fa-plus-circle"></i>إنشاء فاتورة بيع</a></li>
                                 {% endif %}
+                                {% if perms.invoice.view_sale %}
                                 <li class="{% if current_url_name == 'sale_list' %}sub-active{% endif %}"><a href="{% url 'invoice:sale_list' %}"><i class="fas fa-list"></i>قائمة فواتير المبيعات</a></li>
+                                {% endif %}
                                 {% if perms.invoice.view_purchreturn %}
                                 <li class="{% if current_url_name == 'purchase_return_list' %}sub-active{% endif %}"><a href="{% url 'invoice:purchase_return_list' %}"><i class="fas fa-undo"></i>مرتجعات المشتريات</a></li>
                                 {% endif %}
+                                {% if perms.invoice.view_salereturn %}
                                 <li class="{% if current_url_name == 'sale_return_list' %}sub-active{% endif %}"><a href="{% url 'invoice:sale_return_list' %}"><i class="fas fa-receipt"></i>مرتجعات المبيعات</a></li>
+                                {% endif %}
                                 {% if perms.invoice.add_sale %}
                                 <li class="{% if current_url_name == 'pos_sale_create' %}sub-active{% endif %}"><a href="{% url 'invoice:pos_sale_create' %}" class="pos-quick-link"><i class="fas fa-cash-register"></i>نقطة بيع سريعة (F4)</a></li>
                                 {% endif %}
                             </ul>
                         </li>
+                        {% endif %}
 
                         <!-- منتجات -->
                         {% if perms.invoice.view_product %}
@@ -2089,6 +2095,7 @@
                         {% endif %}
 
                         <!-- متجر إلكتروني -->
+                        {% if perms.invoice.view_order or perms.invoice.change_order or perms.invoice.view_product %}
                         <li class="has-submenu {% if 'orders' in current_url_name or 'store' in current_url_name or 'checkout' in current_url_name or 'notification' in current_url_name %}active{% endif %}">
                             <a href="#"><i class="fas fa-store nav-icon"></i>المتجر الإلكتروني</a>
                             <ul class="menu-submenu wide-grid">
@@ -2107,6 +2114,7 @@
                                 <li><a href="{% url 'invoice:cart_detail' %}"><i class="fas fa-shopping-cart"></i>سلة التسوق {% if cart_count > 0 %}<span style="background:#00897b;color:#fff;border-radius:4px;padding:0 6px;font-size:0.7rem;margin-right:4px;">{{ cart_count }}</span>{% endif %}</a></li>
                             </ul>
                         </li>
+                        {% endif %}
 
                         <!-- صندوق -->
                         {% if perms.invoice.view_cashtransaction %}
@@ -2122,19 +2130,37 @@
                         {% endif %}
 
                         <!-- تقارير -->
-                        {% if request.user.is_superuser %}
+                        {% if perms.invoice.view_profitreport or perms.invoice.view_dailysalessummary or perms.invoice.view_salesbycustomerreport or perms.invoice.view_purchasesbysupplierreport or perms.invoice.view_unpaidinvoicesreport or perms.invoice.view_unpaidsalesreport or perms.invoice.view_deadstockreport or perms.invoice.view_barcodestatement or perms.invoice.view_statementreport %}
                         <li class="has-submenu {% if 'report' in current_url_name %}active{% endif %}">
                             <a href="#"><i class="fas fa-chart-bar nav-icon"></i>التقارير</a>
                             <ul class="menu-submenu wide-grid">
+                                {% if perms.invoice.view_profitreport %}
                                 <li class="{% if current_url_name == 'profit_report' %}sub-active{% endif %}"><a href="{% url 'invoice:profit_report' %}"><i class="fas fa-chart-line"></i>تقرير الأرباح</a></li>
+                                {% endif %}
+                                {% if perms.invoice.view_dailysalessummary %}
                                 <li class="{% if current_url_name == 'daily_sales_summary' %}sub-active{% endif %}"><a href="{% url 'invoice:daily_sales_summary' %}"><i class="fas fa-calendar-day"></i>ملخص المبيعات اليومي</a></li>
+                                {% endif %}
+                                {% if perms.invoice.view_salesbycustomerreport %}
                                 <li class="{% if current_url_name == 'sales_by_customer_report' %}sub-active{% endif %}"><a href="{% url 'invoice:sales_by_customer_report' %}"><i class="fas fa-users"></i>مبيعات العملاء</a></li>
+                                {% endif %}
+                                {% if perms.invoice.view_purchasesbysupplierreport %}
                                 <li class="{% if current_url_name == 'purchases_by_supplier_report' %}sub-active{% endif %}"><a href="{% url 'invoice:purchases_by_supplier_report' %}"><i class="fas fa-truck"></i> المشتريات وأرصدة الموردين</a></li>
+                                {% endif %}
+                                {% if perms.invoice.view_unpaidinvoicesreport %}
                                 <li class="{% if current_url_name == 'unpaid_invoices_report' %}sub-active{% endif %}"><a href="{% url 'invoice:unpaid_invoices_report' %}"><i class="fas fa-file-invoice-dollar"></i>فواتير غير مسددة</a></li>
+                                {% endif %}
+                                {% if perms.invoice.view_unpaidsalesreport %}
                                 <li class="{% if current_url_name == 'unpaid_sales_report' %}sub-active{% endif %}"><a href="{% url 'invoice:unpaid_sales_report' %}"><i class="fas fa-exclamation-triangle"></i>الديون المتراكمة</a></li>
+                                {% endif %}
+                                {% if perms.invoice.view_deadstockreport %}
                                 <li class="{% if current_url_name == 'dead_stock_report' %}sub-active{% endif %}"><a href="{% url 'invoice:dead_stock_report' %}"><i class="fas fa-box-open"></i>منتجات راكدة</a></li>
+                                {% endif %}
+                                {% if perms.invoice.view_barcodestatement %}
                                 <li class="{% if current_url_name == 'barcode_statement' %}sub-active{% endif %}"><a href="{% url 'invoice:barcode_statement' %}"><i class="fas fa-barcode"></i>حركة الباركود</a></li>
+                                {% endif %}
+                                {% if perms.invoice.view_statementreport %}
                                 <li class="{% if current_url_name == 'statement_report' %}sub-active{% endif %}"><a href="{% url 'invoice:statement_report' %}"><i class="fas fa-file-alt"></i>كشف حساب</a></li>
+                                {% endif %}
                             </ul>
                         </li>
                         {% endif %}
@@ -2148,7 +2174,7 @@
                                 {% if perms.auth.add_user %}
                                 <li class="{% if current_url_name == 'register' %}sub-active{% endif %}"><a href="{% url 'accounts:register' %}"><i class="fas fa-user-plus"></i>إضافة مستخدم جديد</a></li>
                                 {% endif %}
-                                {% if request.user.is_superuser %}
+                                {% if perms.auth.change_group or perms.auth.add_group or perms.auth.view_group %}
                                 <li class="{% if current_url_name == 'permissions' %}sub-active{% endif %}"><a href="{% url 'accounts:permissions' %}"><i class="fas fa-user-shield"></i>الصلاحيات والأدوار</a></li>
                                 {% endif %}
                             </ul>
@@ -2156,18 +2182,34 @@
                         {% endif %}
 
                         <!-- إعدادات -->
-                        {% if request.user.is_superuser %}
+                        {% if perms.invoice.view_emailsettings or perms.invoice.view_currency or perms.invoice.view_paymentmethod or perms.invoice.view_shippingcompany or perms.invoice.view_status or perms.invoice.view_pricetype or perms.invoice.view_specification or perms.invoice.view_labelsize %}
                         <li class="has-submenu {% if 'currency' in current_url_name or 'payment_method' in current_url_name or 'shipping_company' in current_url_name or 'status' in current_url_name or 'price_type' in current_url_name or 'email' in current_url_name or 'manage_specs' in current_url_name or 'manage_label_sizes' in current_url_name %}active{% endif %}">
                             <a href="#"><i class="fas fa-cogs nav-icon"></i>الإعدادات</a>
                             <ul class="menu-submenu wide-grid dropdown-left">
+                                {% if perms.invoice.view_emailsettings %}
                                 <li class="{% if current_url_name == 'email_settings' %}sub-active{% endif %}"><a href="{% url 'invoice:email_settings' %}"><i class="fas fa-envelope-open-text"></i>إعدادات البريد</a></li>
+                                {% endif %}
+                                {% if perms.invoice.view_currency %}
                                 <li class="{% if current_url_name == 'currency_list' %}sub-active{% endif %}"><a href="{% url 'invoice:currency_list' %}"><i class="fas fa-dollar-sign"></i>العملات</a></li>
+                                {% endif %}
+                                {% if perms.invoice.view_paymentmethod %}
                                 <li class="{% if current_url_name == 'payment_method_list' %}sub-active{% endif %}"><a href="{% url 'invoice:payment_method_list' %}"><i class="fas fa-credit-card"></i>طرق الدفع</a></li>
+                                {% endif %}
+                                {% if perms.invoice.view_shippingcompany %}
                                 <li class="{% if current_url_name == 'shipping_company_list' %}sub-active{% endif %}"><a href="{% url 'invoice:shipping_company_list' %}"><i class="fas fa-truck"></i>شركات الشحن</a></li>
+                                {% endif %}
+                                {% if perms.invoice.view_status %}
                                 <li class="{% if current_url_name == 'status_list' %}sub-active{% endif %}"><a href="{% url 'invoice:status_list' %}"><i class="fas fa-info-circle"></i>الحالات</a></li>
+                                {% endif %}
+                                {% if perms.invoice.view_pricetype %}
                                 <li class="{% if current_url_name == 'price_type_list' %}sub-active{% endif %}"><a href="{% url 'invoice:price_type_list' %}"><i class="fas fa-tags"></i>أنواع الأسعار</a></li>
+                                {% endif %}
+                                {% if perms.invoice.view_specification %}
                                 <li class="{% if current_url_name == 'manage_specs' %}sub-active{% endif %}"><a href="{% url 'invoice:manage_specs' %}"><i class="fas fa-sliders-h"></i>إدارة المواصفات</a></li>
+                                {% endif %}
+                                {% if perms.invoice.view_labelsize %}
                                 <li class="{% if current_url_name == 'manage_label_sizes' %}sub-active{% endif %}"><a href="{% url 'invoice:manage_label_sizes' %}"><i class="fas fa-ruler-combined"></i> قياس لصاقات الباركود  </a></li>
+                                {% endif %}
                             </ul>
                         </li>
                         {% endif %}
@@ -2245,6 +2287,8 @@
                     <i class="fas fa-home sidebar-icon"></i><span class="sidebar-text">الرئيسية</span>
                 </a>
             </li>
+
+            {% if perms.invoice.view_purch or perms.invoice.add_purch or perms.invoice.view_sale or perms.invoice.add_sale or perms.invoice.view_purchreturn or perms.invoice.view_salereturn %}
             <li class="sidebar-item has-dropdown {% if 'purch' in current_url_name or 'sale' in current_url_name %}active{% endif %}">
                 <a href="#" class="sidebar-link">
                     <i class="fas fa-file-invoice sidebar-icon"></i><span class="sidebar-text">الفواتير</span>
@@ -2260,16 +2304,22 @@
                     {% if perms.invoice.add_sale %}
                     <li class="sidebar-item"><a href="{% url 'invoice:sale_create' %}" class="sidebar-link"><i class="fas fa-plus-circle sidebar-icon"></i><span class="sidebar-text">إنشاء فاتورة بيع</span></a></li>
                     {% endif %}
+                    {% if perms.invoice.view_sale %}
                     <li class="sidebar-item"><a href="{% url 'invoice:sale_list' %}" class="sidebar-link"><i class="fas fa-list sidebar-icon"></i><span class="sidebar-text">قائمة فواتير المبيعات</span></a></li>
+                    {% endif %}
                     {% if perms.invoice.view_purchreturn %}
                     <li class="sidebar-item"><a href="{% url 'invoice:purchase_return_list' %}" class="sidebar-link"><i class="fas fa-undo sidebar-icon"></i><span class="sidebar-text">مرتجعات المشتريات</span></a></li>
                     {% endif %}
+                    {% if perms.invoice.view_salereturn %}
                     <li class="sidebar-item"><a href="{% url 'invoice:sale_return_list' %}" class="sidebar-link"><i class="fas fa-receipt sidebar-icon"></i><span class="sidebar-text">مرتجعات المبيعات</span></a></li>
+                    {% endif %}
                     {% if perms.invoice.add_sale %}
                     <li class="sidebar-item"><a href="{% url 'invoice:pos_sale_create' %}" class="sidebar-link pos-quick-link"><i class="fas fa-cash-register sidebar-icon"></i><span class="sidebar-text">نقطة بيع سريعة (F4)</span></a></li>
                     {% endif %}
                 </ul>
             </li>
+            {% endif %}
+
             {% if perms.invoice.view_product %}
             <li class="sidebar-item has-dropdown {% if 'product' in current_url_name %}active{% endif %}">
                 <a href="#" class="sidebar-link">
@@ -2288,6 +2338,8 @@
                 </ul>
             </li>
             {% endif %}
+
+            {% if perms.invoice.view_order or perms.invoice.change_order or perms.invoice.view_product %}
             <li class="sidebar-item has-dropdown {% if 'orders' in current_url_name or 'store' in current_url_name or 'checkout' in current_url_name or 'notification' in current_url_name %}active{% endif %}">
                 <a href="#" class="sidebar-link">
                     <i class="fas fa-store sidebar-icon"></i><span class="sidebar-text">المتجر الإلكتروني</span>
@@ -2314,6 +2366,8 @@
                     </li>
                 </ul>
             </li>
+            {% endif %}
+
             {% if perms.invoice.view_cashtransaction %}
             <li class="sidebar-item has-dropdown {% if 'cash' in current_url_name %}active{% endif %}">
                 <a href="#" class="sidebar-link">
@@ -2328,25 +2382,45 @@
                 </ul>
             </li>
             {% endif %}
-            {% if request.user.is_superuser %}
+
+            {% if perms.invoice.view_profitreport or perms.invoice.view_dailysalessummary or perms.invoice.view_salesbycustomerreport or perms.invoice.view_purchasesbysupplierreport or perms.invoice.view_unpaidinvoicesreport or perms.invoice.view_unpaidsalesreport or perms.invoice.view_deadstockreport or perms.invoice.view_barcodestatement or perms.invoice.view_statementreport %}
             <li class="sidebar-item has-dropdown {% if 'report' in current_url_name %}active{% endif %}">
                 <a href="#" class="sidebar-link">
                     <i class="fas fa-chart-bar sidebar-icon"></i><span class="sidebar-text">التقارير</span>
                     <i class="fas fa-chevron-left sidebar-arrow"></i>
                 </a>
                 <ul class="sidebar-dropdown">
+                    {% if perms.invoice.view_profitreport %}
                     <li class="sidebar-item"><a href="{% url 'invoice:profit_report' %}" class="sidebar-link"><i class="fas fa-chart-line sidebar-icon"></i><span class="sidebar-text">تقرير الأرباح</span></a></li>
+                    {% endif %}
+                    {% if perms.invoice.view_dailysalessummary %}
                     <li class="sidebar-item"><a href="{% url 'invoice:daily_sales_summary' %}" class="sidebar-link"><i class="fas fa-calendar-day sidebar-icon"></i><span class="sidebar-text">ملخص المبيعات اليومي</span></a></li>
+                    {% endif %}
+                    {% if perms.invoice.view_salesbycustomerreport %}
                     <li class="sidebar-item"><a href="{% url 'invoice:sales_by_customer_report' %}" class="sidebar-link"><i class="fas fa-users sidebar-icon"></i><span class="sidebar-text">مبيعات العملاء</span></a></li>
+                    {% endif %}
+                    {% if perms.invoice.view_purchasesbysupplierreport %}
                     <li class="sidebar-item"><a href="{% url 'invoice:purchases_by_supplier_report' %}" class="sidebar-link"><i class="fas fa-truck sidebar-icon"></i><span class="sidebar-text">مشتريات الموردين</span></a></li>
+                    {% endif %}
+                    {% if perms.invoice.view_unpaidinvoicesreport %}
                     <li class="sidebar-item"><a href="{% url 'invoice:unpaid_invoices_report' %}" class="sidebar-link"><i class="fas fa-file-invoice-dollar sidebar-icon"></i><span class="sidebar-text">فواتير غير مسددة</span></a></li>
+                    {% endif %}
+                    {% if perms.invoice.view_unpaidsalesreport %}
                     <li class="sidebar-item"><a href="{% url 'invoice:unpaid_sales_report' %}" class="sidebar-link"><i class="fas fa-exclamation-triangle sidebar-icon"></i><span class="sidebar-text">الديون المتراكمة</span></a></li>
+                    {% endif %}
+                    {% if perms.invoice.view_deadstockreport %}
                     <li class="sidebar-item"><a href="{% url 'invoice:dead_stock_report' %}" class="sidebar-link"><i class="fas fa-box-open sidebar-icon"></i><span class="sidebar-text">منتجات راكدة</span></a></li>
+                    {% endif %}
+                    {% if perms.invoice.view_barcodestatement %}
                     <li class="sidebar-item"><a href="{% url 'invoice:barcode_statement' %}" class="sidebar-link"><i class="fas fa-barcode sidebar-icon"></i><span class="sidebar-text">حركة الباركود</span></a></li>
+                    {% endif %}
+                    {% if perms.invoice.view_statementreport %}
                     <li class="sidebar-item"><a href="{% url 'invoice:statement_report' %}" class="sidebar-link"><i class="fas fa-file-alt sidebar-icon"></i><span class="sidebar-text">كشف حساب</span></a></li>
+                    {% endif %}
                 </ul>
             </li>
             {% endif %}
+
             {% if perms.auth.view_user %}
             <li class="sidebar-item has-dropdown {% if 'user' in current_url_name or 'register' in current_url_name or 'permissions' in current_url_name %}active{% endif %}">
                 <a href="#" class="sidebar-link">
@@ -2358,29 +2432,49 @@
                     {% if perms.auth.add_user %}
                     <li class="sidebar-item"><a href="{% url 'accounts:register' %}" class="sidebar-link"><i class="fas fa-user-plus sidebar-icon"></i><span class="sidebar-text">إضافة مستخدم جديد</span></a></li>
                     {% endif %}
-                    {% if request.user.is_superuser %}
+                    {% if perms.auth.change_group or perms.auth.add_group or perms.auth.view_group %}
                     <li class="sidebar-item"><a href="{% url 'accounts:permissions' %}" class="sidebar-link"><i class="fas fa-user-shield sidebar-icon"></i><span class="sidebar-text">الصلاحيات والأدوار</span></a></li>
                     {% endif %}
                 </ul>
             </li>
             {% endif %}
-            {% if request.user.is_superuser %}
+
+            {% if perms.invoice.view_emailsettings or perms.invoice.view_currency or perms.invoice.view_paymentmethod or perms.invoice.view_shippingcompany or perms.invoice.view_status or perms.invoice.view_pricetype or perms.invoice.view_specification or perms.invoice.view_labelsize %}
             <li class="sidebar-item has-dropdown {% if 'currency' in current_url_name or 'payment_method' in current_url_name or 'shipping_company' in current_url_name or 'status' in current_url_name or 'price_type' in current_url_name or 'email' in current_url_name or 'manage_specs' in current_url_name or 'manage_label_sizes' in current_url_name %}active{% endif %}">
                 <a href="#" class="sidebar-link">
                     <i class="fas fa-cogs sidebar-icon"></i><span class="sidebar-text">الإعدادات</span>
                     <i class="fas fa-chevron-left sidebar-arrow"></i>
                 </a>
                 <ul class="sidebar-dropdown">
+                    {% if perms.invoice.view_emailsettings %}
                     <li class="sidebar-item"><a href="{% url 'invoice:email_settings' %}" class="sidebar-link"><i class="fas fa-envelope-open-text sidebar-icon"></i><span class="sidebar-text">إعدادات البريد</span></a></li>
+                    {% endif %}
+                    {% if perms.invoice.view_currency %}
                     <li class="sidebar-item"><a href="{% url 'invoice:currency_list' %}" class="sidebar-link"><i class="fas fa-dollar-sign sidebar-icon"></i><span class="sidebar-text">العملات</span></a></li>
+                    {% endif %}
+                    {% if perms.invoice.view_paymentmethod %}
                     <li class="sidebar-item"><a href="{% url 'invoice:payment_method_list' %}" class="sidebar-link"><i class="fas fa-credit-card sidebar-icon"></i><span class="sidebar-text">طرق الدفع</span></a></li>
+                    {% endif %}
+                    {% if perms.invoice.view_shippingcompany %}
                     <li class="sidebar-item"><a href="{% url 'invoice:shipping_company_list' %}" class="sidebar-link"><i class="fas fa-truck sidebar-icon"></i><span class="sidebar-text">شركات الشحن</span></a></li>
+                    {% endif %}
+                    {% if perms.invoice.view_status %}
                     <li class="sidebar-item"><a href="{% url 'invoice:status_list' %}" class="sidebar-link"><i class="fas fa-info-circle sidebar-icon"></i><span class="sidebar-text">الحالات</span></a></li>
+                    {% endif %}
+                    {% if perms.invoice.view_pricetype %}
                     <li class="sidebar-item"><a href="{% url 'invoice:price_type_list' %}" class="sidebar-link"><i class="fas fa-tags sidebar-icon"></i><span class="sidebar-text">أنواع الأسعار</span></a></li>
+                    {% endif %}
+                    {% if perms.invoice.view_specification %}
                     <li class="sidebar-item"><a href="{% url 'invoice:manage_specs' %}" class="sidebar-link"><i class="fas fa-sliders-h sidebar-icon"></i><span class="sidebar-text">إدارة المواصفات</span></a></li>
+                    {% endif %}
+                    {% if perms.invoice.view_labelsize %}
                     <li class="sidebar-item"><a href="{% url 'invoice:manage_label_sizes' %}" class="sidebar-link"><i class="fas fa-ruler-combined sidebar-icon"></i><span class="sidebar-text">مقاسات الملصقات</span></a></li>
+                    {% endif %}
                 </ul>
             </li>
+            {% endif %}
+
+            {% if user.is_superuser %}
             <li class="sidebar-item">
                 <a href="{% url 'accounts:system_logs' %}" class="sidebar-link {% if current_url_name == 'system_logs' %}active{% endif %}">
                     <i class="fas fa-file-alt sidebar-icon"></i><span class="sidebar-text">سجلات النظام</span>
@@ -2968,4 +3062,4 @@
     {% endif %}
 
 </body>
-</html>}
+</html>

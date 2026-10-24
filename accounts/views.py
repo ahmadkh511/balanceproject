@@ -54,6 +54,8 @@ from .forms import (
     TrialRequestForm, UserProfileUpdateForm, UserUpdateForm
 )
 
+from django.contrib.auth.decorators import login_required, permission_required, user_passes_test
+
 
 from django.contrib.auth.views import PasswordChangeView
 from django.urls import reverse_lazy
@@ -756,11 +758,8 @@ def is_admin_or_support(user):
     return user.is_superuser or user.is_staff
 
 
-
-
-
 @login_required
-@user_passes_test(is_admin_or_support, login_url='accounts:login')
+@user_passes_test(lambda u: u.is_superuser, login_url='accounts:login')
 def system_logs_view(request):
     """عرض سجلات النظام مع إمكانية التصفية والبحث والحذف"""
     
@@ -879,8 +878,9 @@ def is_staff_user(user):
 
 
 
+
 @login_required
-@user_passes_test(is_staff_user)
+@permission_required('auth.view_user', raise_exception=True)
 def user_list_view(request):
     """عرض قائمة بجميع المستخدمين في النظام"""
     users = User.objects.all().order_by('-date_joined')
@@ -894,8 +894,9 @@ def user_list_view(request):
 
 from trials.middleware import get_current_trial_db # أضف هذا الاستيراد في أعلى الملف إذا لم يكن موجوداً
 
+
 @login_required
-@user_passes_test(is_staff_user)
+@permission_required('auth.change_user', raise_exception=True)
 def user_edit_view(request, pk):
     """تحرير بيانات مستخدم معين"""
     user = get_object_or_404(User, pk=pk)
@@ -975,7 +976,7 @@ def user_edit_view(request, pk):
 
 
 @login_required
-@user_passes_test(is_staff_user)
+@permission_required('auth.view_group', raise_exception=True)
 def group_permissions_api(request, group_id):
     """عرض صلاحيات مجموعة معينة (JSON) — يُستخدم عبر AJAX"""
     try:
@@ -990,12 +991,16 @@ def group_permissions_api(request, group_id):
         return JsonResponse({'error': 'المجموعة غير موجودة'}, status=404)
 
 
+
+
+
 # ============================================
 # إدارة الصلاحيات (permissions)
 # ============================================
 
+
 @login_required
-@user_passes_test(is_staff_user)
+@user_passes_test(lambda u: u.is_superuser)
 def permissions_view(request):
     """
     صفحة لإدارة الصلاحيات والأدوار (المجموعات)
@@ -1050,7 +1055,6 @@ def permissions_view(request):
         'permissions_by_model': permissions_by_model,
     }
     return render(request, 'accounts/permissions.html', context)
-
 
 
 

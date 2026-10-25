@@ -1,109 +1,461 @@
 <!DOCTYPE html>
-<html lang="ar" dir="rtl">
+<html dir="rtl" lang="ar">
 <head>
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>رسالة جماعية</title>
+
+<!-- Bootstrap 5 RTL -->
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.rtl.min.css" rel="stylesheet">
+<!-- Font Awesome 6 -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<!-- Google Fonts - Tajawal -->
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
 <style nonce="{{ csp_nonce }}">
-  * { box-sizing: border-box; }
-  body { font-family: sans-serif; background: #f7f7f7; padding: 20px; margin: 0; }
-  .container { max-width: 700px; margin: auto; background: #fff; padding: 30px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,.08); }
-  h2 { margin-top: 0; color: #333; }
-  .back { display: inline-block; margin-bottom: 20px; color: #007bff; text-decoration: none; font-size: 14px; }
-  .back:hover { text-decoration: underline; }
-  .alert { padding: 12px 16px; border-radius: 6px; font-size: 14px; margin-bottom: 15px; }
-  .alert-error, .alert-danger { background: #ffebee; color: #b71c1c; border: 1px solid #ffcdd2; }
-  .alert-success { background: #e8f5e9; color: #1b5e20; border: 1px solid #c8e6c9; }
-  .alert-warning { background: #fff8e1; color: #7a5f00; border: 1px solid #ffe082; }
-  .alert-info { background: #e3f2fd; color: #0d47a1; border: 1px solid #bbdefb; }
-  .form-group { margin-bottom: 20px; }
-  label.main-label { display: block; font-weight: 600; margin-bottom: 10px; color: #333; font-size: 15px; }
-  .radio-group { display: flex; gap: 10px; flex-wrap: wrap; }
-  .radio-item {
-    display: flex; align-items: center; gap: 8px;
-    padding: 10px 16px; border: 2px solid #e0e0e0;
-    border-radius: 8px; cursor: pointer; transition: all 0.2s;
-    font-size: 14px; background: #fafafa;
-  }
-  .radio-item:hover { border-color: #007bff; background: #f0f7ff; }
-  .radio-item input { cursor: pointer; }
-  .radio-item.active { border-color: #007bff; background: #f0f7ff; }
-  textarea {
-    width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 6px;
-    resize: vertical; font-family: inherit; font-size: 14px; min-height: 120px;
-  }
-  textarea:focus { outline: none; border-color: #007bff; }
-  .help-text { font-size: 12px; color: #888; margin-top: 5px; }
-  .btn {
-    padding: 10px 24px; border: none; border-radius: 6px;
-    font-family: inherit; font-size: 15px; font-weight: 600;
-    cursor: pointer; transition: all 0.2s;
-  }
-  .btn-primary { background: #007bff; color: #fff; }
-  .btn-primary:hover { background: #0069d9; }
-  .btn-secondary { background: #6c757d; color: #fff; text-decoration: none; display: inline-block; }
-  .btn-secondary:hover { background: #5a6268; }
-  .actions { display: flex; gap: 10px; justify-content: flex-start; margin-top: 20px; }
+    :root {
+        --primary-1: #e0f7fa;
+        --primary-2: #b2ebf2;
+        --primary-3: #4dd0e1;
+        --primary-4: #0097a7;
+        --primary-dark: #006064;
+        --text-dark: #006064;
+        --text-light: #ffffff;
+        --shadow-sm: 0 2px 8px rgba(0, 150, 167, 0.08);
+        --shadow-md: 0 4px 12px rgba(0, 150, 167, 0.12);
+        --shadow-lg: 0 8px 30px rgba(0, 150, 167, 0.2);
+        --radius: 8px;
+        --radius-sm: 4px;
+        --radius-lg: 12px;
+        --ease: cubic-bezier(0.4, 0, 0.2, 1);
+        --transition-speed: 0.3s;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+        font-family: 'Tajawal', sans-serif;
+        background: linear-gradient(135deg, #f8fafc 0%, var(--primary-1) 100%);
+        min-height: 100vh;
+        padding: 1rem;
+        font-size: 0.9rem;
+        color: #1a1a2e;
+    }
+
+    /* ===== Toast ===== */
+    .toast { position: fixed; bottom: 2rem; left: 50%; transform: translateX(-50%) translateY(80px); background: linear-gradient(135deg, #1a252f, #2c3e50); color: white; padding: 0.8rem 1.8rem; border-radius: 50px; font-size: 0.9rem; z-index: 100000; opacity: 0; transition: all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55); pointer-events: none; box-shadow: 0 8px 30px rgba(0, 0, 0, 0.2); font-weight: 600; letter-spacing: 0.3px; white-space: nowrap; direction: rtl; font-family: 'Tajawal', sans-serif; display: none; }
+    .toast.show { display: block; transform: translateX(-50%) translateY(0); opacity: 1; }
+    .toast-success { background: linear-gradient(135deg, #059669, #047857); }
+    .toast-error { background: linear-gradient(135deg, #dc2626, #b91c1c); }
+    .toast-info { background: linear-gradient(135deg, #2563eb, #1d4ed8); }
+    .toast-warning { background: linear-gradient(135deg, #d97706, #b45309); }
+
+    /* ===== Container ===== */
+    .container-main {
+        max-width: 720px;
+        margin: 0 auto;
+    }
+
+    /* ===== Page header card ===== */
+    .page-header-card {
+        background: white; border-radius: var(--radius-lg); padding: 18px 24px;
+        box-shadow: var(--shadow-sm); border: 1px solid rgba(0,0,0,0.04);
+        margin-bottom: 18px; display: flex; justify-content: space-between;
+        align-items: center; gap: 12px; flex-wrap: wrap;
+        background: linear-gradient(135deg, white, #f0fdfa);
+    }
+    .page-header-card h1 {
+        margin: 0; font-size: 1.15rem; color: var(--text-dark);
+        display: flex; align-items: center; gap: 0.5rem; font-weight: 800;
+    }
+    .page-header-card h1 i { color: var(--primary-4); }
+
+    .header-btn {
+        display: inline-flex; align-items: center; justify-content: center; gap: 0.4rem;
+        padding: 0.5rem 1rem; border-radius: var(--radius);
+        font-size: 0.82rem; font-weight: 600; text-decoration: none; border: none;
+        cursor: pointer; font-family: 'Tajawal', sans-serif; transition: all 0.25s var(--ease);
+    }
+    .header-btn-secondary {
+        background: white; color: var(--primary-dark);
+        border: 1.5px solid var(--primary-2);
+    }
+    .header-btn-secondary:hover { background: var(--primary-1); border-color: var(--primary-3); transform: translateY(-2px); color: var(--primary-dark); }
+
+    /* ===== Card ===== */
+    .card { background: white; border-radius: var(--radius); padding: 24px 28px; box-shadow: var(--shadow-sm); border: 1px solid rgba(0, 0, 0, 0.04); margin-bottom: 16px; transition: box-shadow 0.3s var(--ease); }
+    .card:hover { box-shadow: var(--shadow-md); }
+    .card-title {
+        font-size: 0.95rem; font-weight: 700; color: var(--text-dark);
+        margin: 0 0 18px; padding-bottom: 10px;
+        border-bottom: 2px solid var(--primary-1);
+        display: flex; align-items: center; gap: 8px;
+    }
+    .card-title i { color: var(--primary-4); }
+
+    /* ===== Alerts ===== */
+    .alert-custom {
+        padding: 12px 16px;
+        border-radius: var(--radius-sm);
+        font-size: 0.85rem;
+        margin-bottom: 15px;
+        display: flex;
+        align-items: flex-start;
+        gap: 10px;
+        line-height: 1.6;
+        border: 1px solid;
+    }
+    .alert-custom i { font-size: 1rem; flex-shrink: 0; margin-top: 2px; }
+    .alert-error, .alert-danger { background: #fee2e2; color: #991b1b; border-color: #fecaca; }
+    .alert-success { background: #d1fae5; color: #065f46; border-color: #a7f3d0; }
+    .alert-warning { background: #fef3c7; color: #92400e; border-color: #fde68a; }
+    .alert-info { background: var(--primary-1); color: var(--primary-dark); border-color: var(--primary-2); }
+
+    /* ===== Form ===== */
+    .form-group { margin-bottom: 22px; }
+    .main-label {
+        display: flex;
+        align-items: center;
+        gap: 0.4rem;
+        font-weight: 700;
+        margin-bottom: 10px;
+        color: var(--text-dark);
+        font-size: 0.88rem;
+    }
+    .main-label i { color: var(--primary-4); font-size: 0.85rem; }
+
+    .help-text {
+        font-size: 0.75rem;
+        color: var(--primary-4);
+        margin-top: 8px;
+        line-height: 1.7;
+        padding-right: 4px;
+    }
+    .help-text i { margin-left: 0.3rem; }
+
+    /* ===== Radio group ===== */
+    .radio-group {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+        gap: 10px;
+    }
+    .radio-item {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 12px 16px;
+        border: 2px solid var(--primary-2);
+        border-radius: var(--radius);
+        cursor: pointer;
+        transition: all 0.2s var(--ease);
+        font-size: 0.85rem;
+        font-weight: 600;
+        background: #fafbfc;
+        color: var(--primary-dark);
+        user-select: none;
+    }
+    .radio-item:hover {
+        border-color: var(--primary-4);
+        background: var(--primary-1);
+        transform: translateY(-1px);
+        box-shadow: var(--shadow-sm);
+    }
+    .radio-item input {
+        cursor: pointer;
+        accent-color: var(--primary-4);
+        width: 16px;
+        height: 16px;
+        flex-shrink: 0;
+    }
+    .radio-item.active {
+        border-color: var(--primary-4);
+        background: linear-gradient(135deg, var(--primary-1), #f0fdfa);
+        color: var(--primary-dark);
+        box-shadow: 0 2px 8px rgba(0, 150, 167, 0.2);
+    }
+    .radio-item.active i.radio-icon { color: var(--primary-4); }
+    .radio-item .radio-icon {
+        color: var(--primary-2);
+        transition: color 0.2s var(--ease);
+        font-size: 0.85rem;
+    }
+
+    /* ===== Textarea ===== */
+    textarea {
+        width: 100%;
+        padding: 12px 14px;
+        border: 2px solid var(--primary-2);
+        border-radius: var(--radius-sm);
+        resize: vertical;
+        font-family: 'Tajawal', sans-serif;
+        font-size: 0.85rem;
+        min-height: 140px;
+        transition: all 0.2s var(--ease);
+        background: #fafbfc;
+        color: #1a1a2e;
+        line-height: 1.7;
+    }
+    textarea:focus {
+        outline: none;
+        border-color: var(--primary-4);
+        background: white;
+        box-shadow: 0 0 0 3px rgba(0, 151, 167, 0.15);
+    }
+    textarea::placeholder { color: #90a4ae; }
+
+    /* ===== Char counter ===== */
+    .textarea-meta {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-top: 6px;
+        font-size: 0.72rem;
+        color: var(--primary-4);
+    }
+    .char-counter {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        padding: 2px 8px;
+        background: var(--primary-1);
+        border-radius: 50px;
+        font-weight: 600;
+        transition: all 0.2s var(--ease);
+    }
+    .char-counter i { font-size: 0.65rem; }
+
+    /* ===== Buttons ===== */
+    .btn {
+        padding: 0.6rem 1.4rem;
+        border-radius: var(--radius-sm);
+        font-family: 'Tajawal', sans-serif;
+        font-size: 0.85rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.25s var(--ease);
+        border: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.4rem;
+        text-decoration: none;
+    }
+    .btn i { font-size: 0.85rem; }
+
+    .btn-primary-print {
+        background: linear-gradient(135deg, var(--primary-4), var(--primary-dark));
+        color: white;
+        box-shadow: 0 3px 12px rgba(0, 150, 167, 0.3);
+    }
+    .btn-primary-print:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(0, 150, 167, 0.4);
+        color: white;
+    }
+    .btn-primary-print:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+        transform: none !important;
+    }
+
+    .btn-secondary-print {
+        background: linear-gradient(135deg, #78909c, #546e7a);
+        color: white;
+    }
+    .btn-secondary-print:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 15px rgba(120, 144, 156, 0.3);
+        color: white;
+    }
+
+    .actions {
+        display: flex;
+        gap: 10px;
+        justify-content: flex-start;
+        margin-top: 24px;
+        padding-top: 18px;
+        border-top: 1px solid var(--primary-1);
+        flex-wrap: wrap;
+    }
+
+    /* ===== Mobile ===== */
+    @media (max-width: 600px) {
+        body { padding: 0.75rem; }
+        .card { padding: 18px 20px; }
+        .page-header-card { flex-direction: column; align-items: stretch; }
+        .header-btn { width: 100%; justify-content: center; }
+        .radio-group { grid-template-columns: 1fr; }
+        .actions { flex-direction: column; }
+        .actions .btn { width: 100%; justify-content: center; }
+    }
 </style>
 </head>
 <body>
-<div class="container">
 
-  <a href="{% url 'staff_inbox' %}" class="back">← العودة للصندوق</a>
+<div class="container-main">
 
-  <h2>📢 إرسال رسالة جماعية</h2>
+    <!-- ===== Header ===== -->
+    <div class="page-header-card">
+        <h1><i class="fas fa-bullhorn"></i> إرسال رسالة جماعية</h1>
+        <a href="{% url 'staff_inbox' %}" class="header-btn header-btn-secondary">
+            <i class="fas fa-arrow-right"></i> العودة للصندوق
+        </a>
+    </div>
 
-  {% if messages %}
-    {% for message in messages %}
-      <div class="alert alert-{{ message.tags }}">{{ message }}</div>
-    {% endfor %}
-  {% endif %}
-
-  <form method="post">
-    {% csrf_token %}
-
-    <div class="form-group">
-      <label class="main-label">المستلمون</label>
-      <div class="radio-group">
-        {% for value, label in target_choices %}
-        <label class="radio-item {% if selected_target == value %}active{% endif %}">
-          <input type="radio" name="target" value="{{ value }}"
-                 {% if selected_target == value %}checked{% endif %}>
-          {{ label }}
-        </label>
+    <!-- ===== Alerts (Django messages) ===== -->
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert-custom alert-{{ message.tags }}">
+                {% if message.tags == 'success' %}
+                    <i class="fas fa-check-circle"></i>
+                {% elif message.tags == 'error' or message.tags == 'danger' %}
+                    <i class="fas fa-exclamation-circle"></i>
+                {% elif message.tags == 'warning' %}
+                    <i class="fas fa-exclamation-triangle"></i>
+                {% else %}
+                    <i class="fas fa-info-circle"></i>
+                {% endif %}
+                <span>{{ message }}</span>
+            </div>
         {% endfor %}
-      </div>
-      <p class="help-text">
-        سيتم إرسال الرسالة لكل مستخدم نشط. من لديه محادثة مسبقة معك، ستُضاف الرسالة إلى محادثته الحالية.
-      </p>
-    </div>
+    {% endif %}
 
-    <div class="form-group">
-      <label class="main-label" for="content">نص الرسالة</label>
-      <textarea id="content" name="content" placeholder="اكتب نص الرسالة هنا..." required>{{ content }}</textarea>
-    </div>
+    <!-- ===== Form card ===== -->
+    <div class="card">
+        <div class="card-title">
+            <i class="fas fa-paper-plane"></i> تفاصيل الرسالة
+        </div>
 
-    <div class="actions">
-      <button type="submit" class="btn btn-primary">إرسال الرسالة</button>
-      <a href="{% url 'staff_inbox' %}" class="btn btn-secondary">إلغاء</a>
+        <form method="post" id="broadcast-form">
+            {% csrf_token %}
+
+            <!-- Recipients -->
+            <div class="form-group">
+                <label class="main-label">
+                    <i class="fas fa-users"></i> المستلمون
+                </label>
+                <div class="radio-group">
+                    {% for value, label in target_choices %}
+                    <label class="radio-item {% if selected_target == value %}active{% endif %}">
+                        <input type="radio" name="target" value="{{ value }}"
+                               {% if selected_target == value %}checked{% endif %}>
+                        <i class="fas fa-user-check radio-icon"></i>
+                        <span>{{ label }}</span>
+                    </label>
+                    {% endfor %}
+                </div>
+                <p class="help-text">
+                    <i class="fas fa-info-circle"></i>
+                    سيتم إرسال الرسالة لكل مستخدم نشط. من لديه محادثة مسبقة معك، ستُضاف الرسالة إلى محادثته الحالية.
+                </p>
+            </div>
+
+            <!-- Message content -->
+            <div class="form-group">
+                <label class="main-label" for="content">
+                    <i class="fas fa-comment-dots"></i> نص الرسالة
+                </label>
+                <textarea id="content" name="content" placeholder="اكتب نص الرسالة هنا..." required>{{ content }}</textarea>
+                <div class="textarea-meta">
+                    <span class="char-counter" id="char-counter">
+                        <i class="fas fa-keyboard"></i> <span id="char-count">0</span> حرف
+                    </span>
+                </div>
+            </div>
+
+            <!-- Actions -->
+            <div class="actions">
+                <button type="submit" class="btn btn-primary-print" id="submit-btn">
+                    <i class="fas fa-paper-plane"></i> إرسال الرسالة
+                </button>
+                <a href="{% url 'staff_inbox' %}" class="btn btn-secondary-print">
+                    <i class="fas fa-times"></i> إلغاء
+                </a>
+            </div>
+        </form>
     </div>
-  </form>
 
 </div>
 
+<div class="toast" id="toast"></div>
+
 <script nonce="{{ csp_nonce }}">
 (function () {
-  'use strict';
-  var radios = document.querySelectorAll('input[name="target"]');
-  radios.forEach(function (radio) {
-    radio.addEventListener('change', function () {
-      document.querySelectorAll('.radio-item').forEach(function (item) {
-        item.classList.remove('active');
-      });
-      if (radio.checked) {
-        radio.closest('.radio-item').classList.add('active');
-      }
+    'use strict';
+
+    // ===== Toast =====
+    var toastEl = document.getElementById('toast');
+    var toastTimeout = null;
+    function showToast(msg, type, duration) {
+        duration = duration || 2500; type = type || 'info';
+        if (!toastEl) return;
+        toastEl.textContent = msg;
+        toastEl.className = 'toast toast-' + type + ' show';
+        if (toastTimeout) clearTimeout(toastTimeout);
+        toastTimeout = setTimeout(function() { toastEl.classList.remove('show'); }, duration);
+    }
+
+    // ===== Radio active state =====
+    var radios = document.querySelectorAll('input[name="target"]');
+    radios.forEach(function (radio) {
+        radio.addEventListener('change', function () {
+            document.querySelectorAll('.radio-item').forEach(function (item) {
+                item.classList.remove('active');
+            });
+            if (radio.checked) {
+                radio.closest('.radio-item').classList.add('active');
+            }
+        });
     });
-  });
+
+    // ===== Char counter =====
+    var textarea = document.getElementById('content');
+    var charCount = document.getElementById('char-count');
+    var charCounter = document.getElementById('char-counter');
+
+    function updateCounter() {
+        if (!textarea || !charCount) return;
+        var len = textarea.value.length;
+        charCount.textContent = len;
+        if (len > 0) {
+            charCounter.style.background = 'linear-gradient(135deg, var(--primary-4), var(--primary-dark))';
+            charCounter.style.color = 'white';
+        } else {
+            charCounter.style.background = '';
+            charCounter.style.color = '';
+        }
+    }
+    if (textarea) {
+        textarea.addEventListener('input', updateCounter);
+        updateCounter();
+    }
+
+    // ===== Form submit guard =====
+    var form = document.getElementById('broadcast-form');
+    var submitBtn = document.getElementById('submit-btn');
+
+    if (form && submitBtn) {
+        form.addEventListener('submit', function (e) {
+            // Validate
+            if (!textarea.value.trim()) {
+                e.preventDefault();
+                showToast('⚠️ الرجاء كتابة نص الرسالة أولاً', 'warning', 2200);
+                textarea.focus();
+                return;
+            }
+
+            var selectedRadio = document.querySelector('input[name="target"]:checked');
+            if (!selectedRadio) {
+                e.preventDefault();
+                showToast('⚠️ الرجاء اختيار المستلمين', 'warning', 2200);
+                return;
+            }
+
+            // Disable submit button to prevent double-submit
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري الإرسال...';
+            showToast('📤 جاري إرسال الرسالة...', 'info', 2000);
+        });
+    }
 })();
 </script>
 </body>

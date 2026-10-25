@@ -1,298 +1,911 @@
 <!DOCTYPE html>
-<html lang="ar" dir="rtl">
+<html dir="rtl" lang="ar">
 <head>
 <meta charset="UTF-8">
-<title>صندوق المحادثات</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>صندوق المحادثات - نظام موحد</title>
+
+<!-- Bootstrap 5 RTL -->
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.rtl.min.css" rel="stylesheet">
+<!-- Font Awesome 6 -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<!-- Google Fonts - Tajawal -->
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
 <style nonce="{{ csp_nonce }}">
-  * { box-sizing: border-box; }
-  body { font-family: sans-serif; background: #f7f7f7; padding: 20px; margin: 0; }
-  .container { max-width: 900px; margin: auto; background: #fff; padding: 20px; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,.08); }
+    :root {
+        --primary-1: #e0f7fa;
+        --primary-2: #b2ebf2;
+        --primary-3: #4dd0e1;
+        --primary-4: #0097a7;
+        --primary-dark: #006064;
+        --text-dark: #006064;
+        --text-light: #ffffff;
+        --shadow-sm: 0 2px 8px rgba(0, 150, 167, 0.08);
+        --shadow-md: 0 4px 12px rgba(0, 150, 167, 0.12);
+        --shadow-lg: 0 8px 30px rgba(0, 150, 167, 0.2);
+        --radius: 8px;
+        --radius-sm: 4px;
+        --radius-lg: 12px;
+        --ease: cubic-bezier(0.4, 0, 0.2, 1);
+        --print-margin: 10mm;
+        --transition-speed: 0.3s;
+    }
 
-  /* ===== رأس الصفحة مع زر QR ===== */
-  .page-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 25px;
-    padding-bottom: 15px;
-    border-bottom: 2px solid #eee;
-    gap: 10px;
-    flex-wrap: wrap;
-  }
-  .page-header h2 { margin: 0; font-size: 20px; color: #333; }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
 
-  .qr-btn {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
-    padding: 9px 18px;
-    background: linear-gradient(135deg, #007bff, #0056b3);
-    color: #fff;
-    border-radius: 8px;
-    text-decoration: none;
-    font-size: 14px;
-    font-weight: 600;
-    box-shadow: 0 2px 6px rgba(0,123,255,.3);
-    transition: all 0.2s ease;
-  }
-  .qr-btn:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(0,123,255,.4);
-    background: linear-gradient(135deg, #0069d9, #004494);
-  }
-  .qr-btn svg {
-    width: 18px;
-    height: 18px;
-    flex-shrink: 0;
-  }
+    body {
+        font-family: 'Tajawal', sans-serif;
+        background: linear-gradient(135deg, #f8fafc 0%, var(--primary-1) 100%);
+        min-height: 100vh;
+        padding: 1rem;
+        font-size: 0.9rem;
+        color: #1a1a2e;
+    }
 
-  /* ===== العناوين ===== */
-  h3 {
-    margin-top: 25px;
-    padding-bottom: 6px;
-    border-bottom: 2px solid #eee;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    font-size: 16px;
-  }
+    /* ===== Modal ===== */
+    .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0, 0, 0, 0.5); z-index: 9999; justify-content: center; align-items: center; backdrop-filter: blur(3px); animation: modalOverlayIn 0.3s var(--ease); }
+    .modal-overlay.active { display: flex; }
+    @keyframes modalOverlayIn { from { opacity: 0; } to { opacity: 1; } }
 
-  /* ===== الجداول ===== */
-  table { width: 100%; border-collapse: collapse; margin-bottom: 10px; }
-  th, td { padding: 10px; border-bottom: 1px solid #eee; text-align: right; }
-  th { background: #f1f1f1; font-weight: 600; font-size: 14px; }
-  td { font-size: 14px; }
-  a { color: #007bff; text-decoration: none; }
-  a:hover { text-decoration: underline; }
-  button.del {
-    background: #dc3545;
-    color: #fff;
-    border: none;
-    padding: 5px 10px;
-    border-radius: 5px;
-    cursor: pointer;
-    font-size: 14px;
-  }
-  button.del:hover { background: #c82333; }
-  form.inline { display: inline; }
+    .modal-box { background: white; border-radius: var(--radius-lg); width: 720px; max-width: 95vw; max-height: 90vh; overflow-y: auto; box-shadow: 0 20px 60px rgba(0, 0, 0, 0.25); animation: modalBoxIn 0.3s var(--ease); }
+    @keyframes modalBoxIn { from { transform: translateY(30px) scale(0.95); opacity: 0; } to { transform: translateY(0) scale(1); opacity: 1; } }
 
-  .empty-row { text-align: center; color: #888; padding: 15px; }
+    .modal-close { width: 32px; height: 32px; border: none; background: var(--primary-1); border-radius: 50%; cursor: pointer; font-size: 1.2rem; color: var(--text-dark); display: flex; align-items: center; justify-content: center; transition: all 0.2s var(--ease); }
+    .modal-close:hover { background: var(--primary-2); transform: rotate(90deg); }
 
-  .badge {
-    display: inline-block;
-    padding: 3px 8px;
-    border-radius: 4px;
-    font-size: 12px;
-    font-weight: 600;
-  }
-  .badge-customer { background: #e3f2fd; color: #1565c0; }
-  .badge-internal { background: #f3e5f5; color: #6a1b9a; }
+    .modal-header-custom { display: flex; justify-content: space-between; align-items: center; padding: 14px 20px; background: linear-gradient(135deg, var(--primary-4), var(--primary-dark)); color: white; border-radius: var(--radius-lg) var(--radius-lg) 0 0; }
+    .modal-header-custom h3 { font-size: 1rem; font-weight: 700; margin: 0; display: flex; align-items: center; gap: 0.5rem; }
+    .modal-header-custom .modal-close { background: rgba(255, 255, 255, 0.2); color: white; }
+    .modal-header-custom .modal-close:hover { background: rgba(255, 255, 255, 0.3); }
 
-  /* ===== مؤشر "جديد" (دائرة زرقاء) ===== */
-  .unread-dot {
-    display: inline-block;
-    width: 10px;
-    height: 10px;
-    border-radius: 50%;
-    background: #007bff;
-    box-shadow: 0 0 0 3px rgba(0,123,255,.2);
-    animation: pulse 1.5s infinite;
-    vertical-align: middle;
-  }
-  @keyframes pulse {
-    0%, 100% { box-shadow: 0 0 0 3px rgba(0,123,255,.2); }
-    50% { box-shadow: 0 0 0 5px rgba(0,123,255,.35); }
-  }
-  .unread-label {
-    color: #007bff;
-    font-weight: 700;
-    font-size: 13px;
-  }
-  tr.has-unread td {
-    background: #f0f7ff;
-  }
-  tr.has-unread td:first-child {
-    font-weight: 700;
-  }
+    .modal-body-custom { padding: 18px 22px; }
+    .modal-footer-custom { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem; padding: 10px 18px; background: var(--primary-1); border-radius: 0 0 var(--radius-lg) var(--radius-lg); border-top: 1px solid var(--primary-2); }
 
-  hr {
-    border: none;
-    border-top: 1px solid #eee;
-    margin: 30px 0;
-  }
+    /* ===== Print header/footer ===== */
+    .print-header-area { display: none; padding: 6pt 10mm; border-bottom: 1.5pt solid #333; background: white; text-align: center; }
+    .print-logo-small .ph-logo { max-height: 20pt !important; max-width: 35pt !important; }
+    .print-logo-medium .ph-logo { max-height: 30pt !important; max-width: 50pt !important; }
+    .print-logo-large .ph-logo { max-height: 45pt !important; max-width: 70pt !important; }
+    .print-header-area .ph-logo { vertical-align: middle; object-fit: contain; }
+    .print-header-area .ph-company { font-size: 12pt; font-weight: 700; color: #000; }
+    .print-header-area .ph-details { font-size: 8pt; color: #444; }
 
-  /* ===== استجابة الجوال ===== */
-  @media (max-width: 600px) {
-    body { padding: 10px; }
-    .container { padding: 15px; }
-    .page-header { flex-direction: column; align-items: stretch; }
-    .page-header h2 { text-align: center; }
-    .qr-btn { width: 100%; justify-content: center; }
-    table { font-size: 12px; }
-    th, td { padding: 7px 5px; }
-  }
+    .print-footer-area { display: none; padding: 4pt 10mm; border-top: 1pt solid #999; background: white; text-align: center; font-size: 7pt; color: #666; }
+    .print-footer-area .footer-content { display: flex; justify-content: center; align-items: center; flex-wrap: wrap; gap: 5px; }
+
+    /* ===== Toast ===== */
+    .toast { position: fixed; bottom: 2rem; left: 50%; transform: translateX(-50%) translateY(80px); background: linear-gradient(135deg, #1a252f, #2c3e50); color: white; padding: 0.8rem 1.8rem; border-radius: 50px; font-size: 0.9rem; z-index: 100000; opacity: 0; transition: all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55); pointer-events: none; box-shadow: 0 8px 30px rgba(0, 0, 0, 0.2); font-weight: 600; letter-spacing: 0.3px; white-space: nowrap; direction: rtl; font-family: 'Tajawal', sans-serif; display: none; }
+    .toast.show { display: block; transform: translateX(-50%) translateY(0); opacity: 1; }
+    .toast-success { background: linear-gradient(135deg, #059669, #047857); }
+    .toast-error { background: linear-gradient(135deg, #dc2626, #b91c1c); }
+    .toast-info { background: linear-gradient(135deg, #2563eb, #1d4ed8); }
+    .toast-warning { background: linear-gradient(135deg, #d97706, #b45309); }
+
+    /* ===== Sections ===== */
+    .section-title { font-size: 0.75rem; font-weight: 700; color: var(--text-dark); text-transform: uppercase; letter-spacing: 0.5px; margin: 1.2rem 0 0.6rem; padding-bottom: 0.3rem; border-bottom: 2px solid var(--primary-2); }
+    .section-title:first-child { margin-top: 0; }
+
+    .field-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.25rem; }
+    .field-check { display: flex; align-items: center; gap: 0.4rem; padding: 0.3rem 0.5rem; border-radius: var(--radius-sm); cursor: pointer; transition: background 0.15s var(--ease); font-size: 0.8rem; }
+    .field-check:hover { background: var(--primary-1); }
+    .field-check input[type="checkbox"] { width: 16px; height: 16px; accent-color: var(--primary-4); cursor: pointer; flex-shrink: 0; }
+
+    .btn-group-print { display: flex; gap: 0.25rem; background: var(--primary-1); padding: 0.2rem; border-radius: var(--radius-sm); flex-wrap: wrap; }
+    .btn-opt { flex: 1; padding: 0.3rem 0.5rem; border: none; background: transparent; border-radius: var(--radius-sm); font-size: 0.78rem; cursor: pointer; font-family: 'Tajawal', sans-serif; color: var(--primary-4); font-weight: 600; transition: all 0.2s var(--ease); text-align: center; min-width: 55px; }
+    .btn-opt:hover { background: rgba(255, 255, 255, 0.5); }
+    .btn-opt.active { background: white; color: var(--text-dark); box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1); }
+
+    .toggle-row { display: flex; align-items: center; justify-content: space-between; padding: 0.4rem 0; }
+    .toggle-row label { font-size: 0.8rem; margin: 0; cursor: pointer; }
+    .toggle-switch { position: relative; width: 40px; height: 22px; cursor: pointer; flex-shrink: 0; }
+    .toggle-switch input { display: none; }
+    .toggle-slider { position: absolute; inset: 0; background: var(--primary-2); border-radius: 11px; transition: 0.25s var(--ease); }
+    .toggle-slider::before { content: ''; position: absolute; width: 16px; height: 16px; background: white; border-radius: 50%; top: 3px; left: 3px; transition: 0.25s var(--ease); box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15); }
+    .toggle-switch input:checked + .toggle-slider { background: var(--primary-4); }
+    .toggle-switch input:checked + .toggle-slider::before { left: 21px; }
+
+    .header-footer-inputs { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; }
+    .hf-input-group label { display: block; font-size: 0.75rem; font-weight: 600; color: var(--text-dark); margin-bottom: 0.2rem; }
+    .hf-input-group input, .hf-input-group textarea { width: 100%; border: 1px solid var(--primary-2); border-radius: var(--radius-sm); padding: 0.35rem 0.5rem; font-size: 0.8rem; font-family: 'Tajawal', sans-serif; transition: all 0.2s var(--ease); background: white; }
+    .hf-input-group input:focus, .hf-input-group textarea:focus { border-color: var(--primary-3); box-shadow: 0 0 0 3px rgba(77, 208, 225, 0.2); outline: none; }
+    .hf-input-group input::placeholder, .hf-input-group textarea::placeholder { color: #b0bec5; }
+
+    .hf-preview-box { background: var(--primary-1); border: 2px dashed var(--primary-2); border-radius: var(--radius-sm); padding: 0.5rem; text-align: center; margin-top: 0.3rem; cursor: default; transition: all 0.2s var(--ease); min-height: 80px; display: flex; align-items: center; justify-content: center; }
+    .hf-preview-box:hover { border-color: var(--primary-4); background: #f0fdfa; }
+    .hf-preview-box img { border-radius: var(--radius-sm); object-fit: contain; transition: max-height 0.3s ease; }
+    .hf-preview-box .placeholder-text { font-size: 0.75rem; color: var(--primary-4); }
+
+    .btn { padding: 0.4rem 0.9rem; border-radius: var(--radius-sm); font-size: 0.8rem; font-weight: 600; border: none; cursor: pointer; transition: all 0.25s var(--ease); font-family: 'Tajawal', sans-serif; display: inline-flex; align-items: center; gap: 0.4rem; text-decoration: none; }
+    .btn-primary-print { background: linear-gradient(135deg, var(--primary-4), var(--primary-dark)); color: white; box-shadow: 0 3px 12px rgba(0, 150, 167, 0.3); }
+    .btn-primary-print:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(0, 150, 167, 0.4); color: white; }
+    .btn-secondary-print { background: linear-gradient(135deg, #78909c, #546e7a); color: white; }
+    .btn-secondary-print:hover { transform: translateY(-2px); box-shadow: 0 4px 15px rgba(120, 144, 156, 0.3); color: white; }
+    .btn:disabled { opacity: 0.6; cursor: not-allowed; transform: none !important; }
+    .btn i { font-size: 0.85rem; }
+
+    .invoice-print-area { padding: 0; }
+
+    /* ===== Page container ===== */
+    .container-main { max-width: 1100px; margin: auto; }
+
+    /* ===== Page header card ===== */
+    .page-header-card {
+        background: white; border-radius: var(--radius-lg); padding: 18px 24px;
+        box-shadow: var(--shadow-sm); border: 1px solid rgba(0,0,0,0.04);
+        margin-bottom: 18px; display: flex; justify-content: space-between;
+        align-items: center; gap: 12px; flex-wrap: wrap;
+        background: linear-gradient(135deg, white, #f0fdfa);
+    }
+    .page-header-card h1 {
+        margin: 0; font-size: 1.2rem; color: var(--text-dark);
+        display: flex; align-items: center; gap: 0.5rem; font-weight: 800;
+    }
+    .page-header-card h1 i { color: var(--primary-4); }
+    .header-actions { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+
+    .header-btn {
+        display: inline-flex; align-items: center; justify-content: center; gap: 0.4rem;
+        padding: 0.5rem 1rem; border-radius: var(--radius);
+        font-size: 0.82rem; font-weight: 600; text-decoration: none; border: none;
+        cursor: pointer; font-family: 'Tajawal', sans-serif; transition: all 0.25s var(--ease);
+    }
+    .header-btn-qr {
+        background: linear-gradient(135deg, var(--primary-4), var(--primary-dark));
+        color: white; box-shadow: 0 2px 8px rgba(0,150,167,.3);
+    }
+    .header-btn-qr:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,150,167,.45); color: white; }
+    .header-btn-broadcast {
+        background: linear-gradient(135deg, var(--primary-3), var(--primary-4));
+        color: white; box-shadow: 0 2px 8px rgba(77,208,225,.35);
+    }
+    .header-btn-broadcast:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(77,208,225,.5); color: white; }
+    .header-btn-print {
+        background: white; color: var(--primary-dark);
+        border: 1.5px solid var(--primary-2);
+    }
+    .header-btn-print:hover { background: var(--primary-1); border-color: var(--primary-3); transform: translateY(-2px); }
+
+    /* ===== Card ===== */
+    .card { background: white; border-radius: var(--radius); padding: 20px 24px; box-shadow: var(--shadow-sm); border: 1px solid rgba(0, 0, 0, 0.04); margin-bottom: 16px; transition: box-shadow 0.3s var(--ease); }
+    .card:hover { box-shadow: var(--shadow-md); }
+    .card-title { font-size: 0.95rem; font-weight: 700; color: var(--text-dark); margin: 0 0 14px; padding-bottom: 10px; border-bottom: 2px solid var(--primary-1); display: flex; align-items: center; gap: 8px; }
+    .card-title i { color: var(--primary-4); }
+
+    .table-wrap { overflow-x: auto; }
+    .table-order { width: 100%; border-collapse: collapse; font-size: 0.82rem; }
+    .table-order thead th { background: linear-gradient(135deg, var(--primary-3), var(--primary-4)); color: white; padding: 8px 10px; text-align: right; font-weight: 700; border-bottom: 2px solid var(--primary-4); }
+    .table-order tbody td { padding: 8px 10px; border-bottom: 1px solid var(--primary-1); vertical-align: middle; }
+    .table-order tbody tr:last-child td { border-bottom: none; }
+    .table-order tbody tr:hover { background: #f0fdfa; }
+    .table-order .text-muted { color: var(--primary-4); font-size: 0.75rem; }
+
+    /* ===== Badges ===== */
+    .badge-custom { display: inline-block; padding: 3px 10px; border-radius: 6px; font-size: 0.7rem; font-weight: 700; }
+    .badge-customer { background: #e3f2fd; color: #1565c0; }
+    .badge-internal { background: #f3e5f5; color: #6a1b9a; }
+    .badge-staff { background: #f3e5f5; color: #6a1b9a; }
+
+    /* ===== Unread indicator (new design) ===== */
+    .unread-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        padding: 3px 10px 3px 8px;
+        background: linear-gradient(135deg, #0097a7, #006064);
+        color: #fff;
+        font-size: 0.68rem;
+        font-weight: 700;
+        border-radius: 50px;
+        box-shadow: 0 2px 8px rgba(0, 151, 167, 0.35);
+        animation: unreadPulse 2s ease-in-out infinite;
+        white-space: nowrap;
+    }
+    .unread-pill i {
+        font-size: 0.6rem;
+        animation: unreadBlink 1.2s ease-in-out infinite;
+    }
+    @keyframes unreadPulse {
+        0%, 100% { box-shadow: 0 2px 8px rgba(0, 151, 167, 0.35); }
+        50% { box-shadow: 0 2px 14px rgba(0, 151, 167, 0.65); }
+    }
+    @keyframes unreadBlink {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.4; }
+    }
+    tr.has-unread td { background: linear-gradient(90deg, #f0fdfa 0%, #ffffff 100%); }
+    tr.has-unread td:first-child { position: relative; }
+    tr.has-unread td:first-child::before {
+        content: '';
+        position: absolute;
+        right: 0; top: 0; bottom: 0;
+        width: 3px;
+        background: linear-gradient(180deg, var(--primary-3), var(--primary-4));
+        border-radius: 0 3px 3px 0;
+    }
+    tr.has-unread { animation: rowFadeIn 0.5s var(--ease); }
+    @keyframes rowFadeIn {
+        from { opacity: 0; transform: translateX(6px); }
+        to { opacity: 1; transform: translateX(0); }
+    }
+
+    /* ===== Action buttons ===== */
+    .action-open { display: inline-flex; align-items: center; gap: 0.25rem; padding: 0.28rem 0.7rem; background: var(--primary-1); color: var(--primary-dark); border-radius: var(--radius-sm); font-size: 0.75rem; font-weight: 600; text-decoration: none; transition: all 0.2s var(--ease); }
+    .action-open:hover { background: var(--primary-4); color: white; }
+    button.del { background: #fee2e2; color: #dc2626; border: none; padding: 0.28rem 0.6rem; border-radius: var(--radius-sm); cursor: pointer; font-size: 0.78rem; transition: all 0.2s var(--ease); }
+    button.del:hover { background: #dc2626; color: white; }
+    form.inline { display: inline; }
+
+    .empty-row { text-align: center; color: var(--primary-4); padding: 18px; font-size: 0.85rem; }
+    .empty-row i { margin-left: 0.35rem; opacity: 0.7; }
+
+    hr { border: none; border-top: 1px solid var(--primary-1); margin: 24px 0; }
+
+    .print-watermark { display: none; }
+    @media print {
+        .print-watermark { display: block; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%) rotate(-45deg); opacity: 0.06; font-size: 48pt; font-weight: 700; color: #000; pointer-events: none; z-index: 9999; white-space: nowrap; }
+    }
+
+    @media print {
+        * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+        body { background: white !important; font-size: 10pt !important; color: #000 !important; padding: 0 !important; margin: 0 !important; font-family: 'Tajawal', sans-serif !important; }
+        .no-print { display: none !important; }
+        .print-header-area { display: block !important; position: fixed !important; top: 0 !important; left: 0 !important; right: 0 !important; z-index: 10000 !important; }
+        .print-footer-area { display: block !important; position: fixed !important; bottom: 0 !important; left: 0 !important; right: 0 !important; z-index: 10000 !important; }
+        .invoice-print-area { padding-top: 40pt !important; padding-bottom: 45pt !important; }
+        [data-print-hidden="true"] { display: none !important; }
+        .print-grayscale * { filter: grayscale(100%) !important; }
+        .print-no-lines .table-order td, .print-no-lines .table-order th { border: none !important; }
+        .print-compact .table-order td, .print-compact .table-order th { padding: 2pt 4pt !important; font-size: 8pt !important; }
+        .print-detailed .table-order td, .print-detailed .table-order th { padding: 8pt 12pt !important; font-size: 11pt !important; }
+        .toast { display: none !important; }
+        .card { box-shadow: none !important; border: 1px solid #ddd !important; border-radius: 0 !important; margin-bottom: 8pt !important; padding: 8pt !important; page-break-inside: avoid; }
+        .card-title { font-size: 10pt !important; margin-bottom: 6pt !important; padding-bottom: 4pt !important; }
+        .page-header-card { display: none !important; }
+        a { color: #000 !important; text-decoration: none !important; }
+        .action-open, button.del { display: none !important; }
+        .table-order thead th { background: #f1f1f1 !important; color: #000 !important; border-bottom: 1pt solid #333 !important; }
+        .unread-pill { display: none !important; }
+        tr.has-unread td { background: #fff !important; }
+    }
+
+    @page { margin: var(--print-margin, 10mm); }
+
+    @media (max-width: 768px) {
+        .field-grid { grid-template-columns: 1fr; }
+        .header-footer-inputs { grid-template-columns: 1fr; }
+        .modal-box { width: 98vw; max-height: 95vh; }
+        .modal-body-custom { padding: 12px 14px; }
+        .toast { font-size: 0.8rem; padding: 0.6rem 1.2rem; white-space: normal; max-width: 90%; }
+        .modal-footer-custom { flex-direction: column; align-items: stretch; }
+        .page-header-card { flex-direction: column; align-items: stretch; }
+        .header-actions { justify-content: stretch; }
+        .header-actions .header-btn { flex: 1; justify-content: center; }
+        .table-order { font-size: 0.72rem; }
+        .table-order td, .table-order th { padding: 6px 4px; }
+    }
 </style>
 </head>
 <body>
-<div class="container">
 
-  <!-- ============ رأس الصفحة ============ -->
-  <div class="page-header">
-    <h2>📬 صندوق المحادثات</h2>
-    <a href="{% url 'share_qr' %}" class="qr-btn" title="عرض/طباعة رمز QR لمشاركة رابط المحادثة">
-      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-        <path d="M3 3h6v6H3V3zm2 2v2h2V5H5zm10-2h6v6h-6V3zm2 2v2h2V5h-2zM3 13h6v6H3v-6zm2 2v2h2v-2H5zm10-2h2v2h-2v-2zm-4 0h2v2h-2v-2zm4 4h2v2h-2v-2zm4-4h2v2h-2v-2zm0 4h2v2h-2v-2zm-4 0h2v2h-2v-2zM9 9h2v2H9V9zm4 0h2v2h-2V9zm-4 4h2v2H9v-2zm8 4h2v2h-2v-2z"/>
-      </svg>
-      <span>رمز QR للمشاركة</span>
-    </a>
-  </div>
+<div class="container-main invoice-print-area" id="printableArea">
 
-  <!-- ============ محادثات العملاء ============ -->
-  <h3>
-    <span class="badge badge-customer">عملاء</span>
-    محادثات العملاء
-  </h3>
-  <table>
-    <thead>
-      <tr>
-        <th></th>
-        <th>العميل</th>
-        <th>آخر رسالة</th>
-        <th>عدد الرسائل</th>
-        <th>فتح</th>
-        {% if request.user.is_superuser %}<th>حذف</th>{% endif %}
-      </tr>
-    </thead>
-    <tbody>
-      {% for c in customer_convs %}
-      <tr class="{% if c.has_unread %}has-unread{% endif %}">
-        <td style="text-align:center; width:24px;">
-          {% if c.has_unread %}<span class="unread-dot" title="رسائل غير مقروءة"></span>{% endif %}
-        </td>
-        <td>
-          {{ c.customer.username }}
-          {% if c.has_unread %}<span class="unread-label">جديد</span>{% endif %}
-        </td>
-        <td>{{ c.messages.last.created_at|date:"Y-m-d H:i"|default:"—" }}</td>
-        <td>{{ c.messages.count }}</td>
-        <td><a href="{% url 'staff_chat' c.id %}">فتح ←</a></td>
-        {% if request.user.is_superuser %}
-        <td>
-          <form method="post" action="{% url 'delete_conversation' c.id %}"
-                class="inline delete-form"
-                data-confirm="حذف المحادثة نهائياً مع كل رسائلها؟">
-            {% csrf_token %}
-            <button type="submit" class="del">🗑️</button>
-          </form>
-        </td>
+    <!-- ===== Print header (hidden on screen) ===== -->
+    <div class="print-header-area no-print" id="printHeaderArea">
+        <table style="width:100%; border-collapse:collapse;">
+            <tr>
+                <td style="width:80px; vertical-align:middle; text-align:center;">
+                    <img src="" alt="شعار" class="ph-logo" id="phLogoImg" style="display:none;">
+                    <span id="phLogoPlaceholder" style="font-size:8pt; color:#999;">بدون شعار</span>
+                </td>
+                <td style="vertical-align:middle; text-align:center;">
+                    <div class="ph-company" id="phCompanyName">اسم الشركة</div>
+                    <div class="ph-details" id="phCompanyDetails">صندوق المحادثات</div>
+                </td>
+                <td style="width:80px;"></td>
+            </tr>
+        </table>
+    </div>
+
+    <!-- ===== Print footer ===== -->
+    <div class="print-footer-area no-print" id="printFooterArea">
+        <div class="footer-content"><span id="phFooterText">شكراً لتعاملكم معنا</span></div>
+    </div>
+
+    <!-- ===== Page header ===== -->
+    <div class="page-header-card no-print">
+        <h1><i class="fas fa-inbox"></i> صندوق المحادثات</h1>
+        <div class="header-actions">
+            <a href="https://balanceiqsoft.com/chat/broadcast/" class="header-btn header-btn-broadcast" title="إرسال رسالة بث جماعي">
+                <i class="fas fa-bullhorn"></i> بث جماعي
+            </a>
+            <a href="{% url 'share_qr' %}" class="header-btn header-btn-qr" title="عرض/طباعة رمز QR">
+                <i class="fas fa-qrcode"></i> رمز QR
+            </a>
+            <button class="header-btn header-btn-print" id="openPrintModalBtn" type="button">
+                <i class="fas fa-print"></i> طباعة
+            </button>
+        </div>
+    </div>
+
+    <!-- ===== Customer conversations ===== -->
+    <div class="card" data-print-field="customer-convs">
+        <div class="card-title">
+            <i class="fas fa-users"></i>
+            <span class="badge-custom badge-customer">عملاء</span>
+            محادثات العملاء
+        </div>
+        <div class="table-wrap">
+            <table class="table-order">
+                <thead>
+                    <tr>
+                        <th>العميل</th>
+                        <th>آخر رسالة</th>
+                        <th>عدد الرسائل</th>
+                        <th class="no-print">فتح</th>
+                        {% if request.user.is_superuser %}<th class="no-print">حذف</th>{% endif %}
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for c in customer_convs %}
+                    <tr class="{% if c.has_unread %}has-unread{% endif %}">
+                        <td>
+                            <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+                                <span>{{ c.customer.username }}</span>
+                                {% if c.has_unread %}
+                                <span class="unread-pill"><i class="fas fa-circle"></i> جديد</span>
+                                {% endif %}
+                            </div>
+                        </td>
+                        <td class="text-muted">{{ c.messages.last.created_at|date:"Y-m-d H:i"|default:"—" }}</td>
+                        <td>{{ c.messages.count }}</td>
+                        <td class="no-print">
+                            <a href="{% url 'staff_chat' c.id %}" class="action-open"><i class="fas fa-arrow-left"></i> فتح</a>
+                        </td>
+                        {% if request.user.is_superuser %}
+                        <td class="no-print">
+                            <form method="post" action="{% url 'delete_conversation' c.id %}"
+                                  class="inline delete-form"
+                                  data-confirm="حذف المحادثة نهائياً مع كل رسائلها؟">
+                                {% csrf_token %}
+                                <button type="submit" class="del"><i class="fas fa-trash"></i></button>
+                            </form>
+                        </td>
+                        {% endif %}
+                    </tr>
+                    {% empty %}
+                    <tr><td colspan="{% if request.user.is_superuser %}5{% else %}4{% endif %}" class="empty-row"><i class="fas fa-inbox"></i> لا توجد محادثات عملاء بعد</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- ===== Internal conversations ===== -->
+    <div class="card" data-print-field="internal-convs">
+        <div class="card-title">
+            <i class="fas fa-comments"></i>
+            <span class="badge-custom badge-internal">داخلي</span>
+            محادثاتي الداخلية
+        </div>
+        <div class="table-wrap">
+            <table class="table-order">
+                <thead>
+                    <tr>
+                        <th>الطرف الآخر</th>
+                        <th>بدأها</th>
+                        <th>آخر رسالة</th>
+                        <th>عدد الرسائل</th>
+                        <th class="no-print">فتح</th>
+                        {% if request.user.is_superuser %}<th class="no-print">حذف</th>{% endif %}
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for c in internal_convs %}
+                    <tr class="{% if c.has_unread %}has-unread{% endif %}">
+                        <td>
+                            <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+                                <span>
+                                {% if c.customer == request.user %}
+                                    {{ c.initiator.username }}
+                                {% else %}
+                                    {{ c.customer.username }}
+                                {% endif %}
+                                </span>
+                                {% if c.has_unread %}
+                                <span class="unread-pill"><i class="fas fa-circle"></i> جديد</span>
+                                {% endif %}
+                            </div>
+                        </td>
+                        <td class="text-muted">{{ c.initiator.username|default:"—" }}</td>
+                        <td class="text-muted">{{ c.messages.last.created_at|date:"Y-m-d H:i"|default:"—" }}</td>
+                        <td>{{ c.messages.count }}</td>
+                        <td class="no-print">
+                            <a href="{% url 'staff_chat' c.id %}" class="action-open"><i class="fas fa-arrow-left"></i> فتح</a>
+                        </td>
+                        {% if request.user.is_superuser %}
+                        <td class="no-print">
+                            <form method="post" action="{% url 'delete_conversation' c.id %}"
+                                  class="inline delete-form"
+                                  data-confirm="حذف المحادثة الداخلية نهائياً؟">
+                                {% csrf_token %}
+                                <button type="submit" class="del"><i class="fas fa-trash"></i></button>
+                            </form>
+                        </td>
+                        {% endif %}
+                    </tr>
+                    {% empty %}
+                    <tr><td colspan="{% if request.user.is_superuser %}6{% else %}5{% endif %}" class="empty-row"><i class="fas fa-comments"></i> لا توجد محادثات داخلية بعد</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- ===== New internal conversation ===== -->
+    <div class="card no-print" data-print-field="available-users">
+        <div class="card-title">
+            <i class="fas fa-user-plus"></i>
+            بدء محادثة داخلية جديدة
+        </div>
+        {% if available_users %}
+        <div class="table-wrap">
+            <table class="table-order">
+                <thead>
+                    <tr>
+                        <th>المستخدم</th>
+                        <th>البريد</th>
+                        <th>الحالة</th>
+                        <th>بدء</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for u in available_users %}
+                    <tr>
+                        <td>{{ u.username }}</td>
+                        <td class="text-muted">{{ u.email|default:"—" }}</td>
+                        <td>
+                            {% if u.is_staff %}
+                                <span class="badge-custom badge-staff">موظف</span>
+                            {% else %}
+                                <span class="badge-custom badge-customer">عميل</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <a href="{% url 'start_internal_conversation' u.id %}" class="action-open"><i class="fas fa-arrow-left"></i> بدء</a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <p class="empty-row"><i class="fas fa-user-slash"></i> لا يوجد مستخدمون آخرون نشطون.</p>
         {% endif %}
-      </tr>
-      {% empty %}
-      <tr><td colspan="{% if request.user.is_superuser %}6{% else %}5{% endif %}" class="empty-row">لا توجد محادثات عملاء بعد</td></tr>
-      {% endfor %}
-    </tbody>
-  </table>
-
-  <!-- ============ المحادثات الداخلية ============ -->
-  <h3>
-    <span class="badge badge-internal">داخلي</span>
-    محادثاتي الداخلية
-  </h3>
-  <table>
-    <thead>
-      <tr>
-        <th></th>
-        <th>الطرف الآخر</th>
-        <th>بدأها</th>
-        <th>آخر رسالة</th>
-        <th>عدد الرسائل</th>
-        <th>فتح</th>
-        {% if request.user.is_superuser %}<th>حذف</th>{% endif %}
-      </tr>
-    </thead>
-    <tbody>
-      {% for c in internal_convs %}
-      <tr class="{% if c.has_unread %}has-unread{% endif %}">
-        <td style="text-align:center; width:24px;">
-          {% if c.has_unread %}<span class="unread-dot" title="رسائل غير مقروءة"></span>{% endif %}
-        </td>
-        <td>
-          {% if c.customer == request.user %}
-            {{ c.initiator.username }}
-          {% else %}
-            {{ c.customer.username }}
-          {% endif %}
-          {% if c.has_unread %}<span class="unread-label">جديد</span>{% endif %}
-        </td>
-        <td>{{ c.initiator.username|default:"—" }}</td>
-        <td>{{ c.messages.last.created_at|date:"Y-m-d H:i"|default:"—" }}</td>
-        <td>{{ c.messages.count }}</td>
-        <td><a href="{% url 'staff_chat' c.id %}">فتح ←</a></td>
-        {% if request.user.is_superuser %}
-        <td>
-          <form method="post" action="{% url 'delete_conversation' c.id %}"
-                class="inline delete-form"
-                data-confirm="حذف المحادثة الداخلية نهائياً؟">
-            {% csrf_token %}
-            <button type="submit" class="del">🗑️</button>
-          </form>
-        </td>
-        {% endif %}
-      </tr>
-      {% empty %}
-      <tr><td colspan="{% if request.user.is_superuser %}7{% else %}6{% endif %}" class="empty-row">لا توجد محادثات داخلية بعد</td></tr>
-      {% endfor %}
-    </tbody>
-  </table>
-
-  <hr>
-
-  <!-- ============ بدء محادثة داخلية جديدة ============ -->
-  <h3>بدء محادثة داخلية جديدة</h3>
-  {% if available_users %}
-  <table>
-    <thead>
-      <tr>
-        <th>المستخدم</th>
-        <th>البريد</th>
-        <th>الحالة</th>
-        <th>بدء</th>
-      </tr>
-    </thead>
-    <tbody>
-      {% for u in available_users %}
-      <tr>
-        <td>{{ u.username }}</td>
-        <td>{{ u.email|default:"—" }}</td>
-        <td>
-          {% if u.is_staff %}
-            <span class="badge badge-internal">موظف</span>
-          {% else %}
-            <span class="badge badge-customer">عميل</span>
-          {% endif %}
-        </td>
-        <td><a href="{% url 'start_internal_conversation' u.id %}">بدء ←</a></td>
-      </tr>
-      {% endfor %}
-    </tbody>
-  </table>
-  {% else %}
-  <p class="empty-row">لا يوجد مستخدمون آخرون نشطون.</p>
-  {% endif %}
+    </div>
 
 </div>
 
+<!-- ===== Print settings modal ===== -->
+<div class="modal-overlay" id="printModal">
+    <div class="modal-box">
+        <div class="modal-header-custom">
+            <h3><i class="fas fa-cog"></i> إعدادات الطباعة</h3>
+            <button class="modal-close" id="closeModalBtn" aria-label="إغلاق"><i class="fas fa-times"></i></button>
+        </div>
+        <div class="modal-body-custom">
+            <div class="section-title">هيدر وفوتر صفحة الطباعة</div>
+            <div class="header-footer-inputs">
+                <div class="hf-input-group">
+                    <label><i class="fas fa-image"></i> شعار الشركة</label>
+                    <input type="file" id="logoInput" accept="image/*" style="display:none;">
+                    <div class="hf-preview-box" id="logoPreviewBox">
+                        <span class="placeholder-text" id="logoPlaceholderText"><i class="fas fa-upload"></i> اضغط لرفع الشعار</span>
+                        <img id="logoPreviewImg" src="" alt="" style="display:none;">
+                    </div>
+                </div>
+                <div class="hf-input-group">
+                    <label><i class="fas fa-building"></i> اسم الشركة</label>
+                    <input type="text" id="companyNameInput" placeholder="مثال: مؤسسة التوريدات" value="اسم الشركة">
+                </div>
+                <div class="hf-input-group" style="grid-column: 1 / -1;">
+                    <label><i class="fas fa-shoe-prints"></i> نص الفوتر المتكرر</label>
+                    <input type="text" id="footerTextInput" placeholder="شكراً لتعاملكم معنا" value="شكراً لتعاملكم معنا">
+                </div>
+                <div class="hf-input-group" style="grid-column: 1 / -1;">
+                    <label><i class="fas fa-pen"></i> ملاحظات إضافية للطباعة</label>
+                    <textarea id="printNotes" rows="2" placeholder="أضف ملاحظات تظهر في أسفل كل صفحة..."></textarea>
+                </div>
+            </div>
+
+            <div class="section-title">حجم الورق والهوامش</div>
+            <div class="btn-group-print" id="paperSizeGroup">
+                <button class="btn-opt active" data-value="a4" type="button">A4</button>
+                <button class="btn-opt" data-value="a5" type="button">A5</button>
+                <button class="btn-opt" data-value="thermal" type="button">حراري 80mm</button>
+                <button class="btn-opt" data-value="half-a4" type="button">نصف A4</button>
+            </div>
+            <div class="btn-group-print" id="marginGroup" style="margin-top: 0.5rem;">
+                <button class="btn-opt" data-value="minimal" type="button">أقل</button>
+                <button class="btn-opt active" data-value="normal" type="button">عادي</button>
+                <button class="btn-opt" data-value="wide" type="button">واسع</button>
+            </div>
+
+            <div class="section-title">تنسيق المحتوى</div>
+            <div class="btn-group-print" id="formatGroup">
+                <button class="btn-opt active" data-value="standard" type="button">قياسي</button>
+                <button class="btn-opt" data-value="compact" type="button">مضغوط</button>
+                <button class="btn-opt" data-value="detailed" type="button">مفصل</button>
+            </div>
+            <div class="btn-group-print" id="logoSizeGroup" style="margin-top: 0.5rem;">
+                <button class="btn-opt" data-value="small" type="button">شعار صغير</button>
+                <button class="btn-opt active" data-value="medium" type="button">شعار متوسط</button>
+                <button class="btn-opt" data-value="large" type="button">شعار كبير</button>
+            </div>
+
+            <div class="section-title">خيارات إضافية</div>
+            <div class="toggle-row">
+                <label for="printColors">طباعة بالألوان</label>
+                <label class="toggle-switch"><input type="checkbox" id="printColors" checked><span class="toggle-slider"></span></label>
+            </div>
+            <div class="toggle-row">
+                <label for="printLines">إظهار خطوط فاصلة</label>
+                <label class="toggle-switch"><input type="checkbox" id="printLines" checked><span class="toggle-slider"></span></label>
+            </div>
+            <div class="toggle-row">
+                <label for="showWatermark">إظهار علامة مائية</label>
+                <label class="toggle-switch"><input type="checkbox" id="showWatermark" checked><span class="toggle-slider"></span></label>
+            </div>
+        </div>
+        <div class="modal-footer-custom">
+            <div style="display:flex; gap:0.35rem; flex-wrap:wrap;">
+                <button class="btn btn-secondary-print" id="saveSettingsBtn" type="button"><i class="fas fa-save"></i> حفظ الإعدادات</button>
+                <button class="btn btn-secondary-print" id="resetSettingsBtn" type="button"><i class="fas fa-undo"></i> استعادة الافتراضي</button>
+            </div>
+            <div style="display:flex; gap:0.5rem; flex-wrap:wrap;">
+                <button class="btn btn-secondary-print" id="exportPdfBtn" type="button"><i class="fas fa-file-pdf"></i> حفظ كـ PDF</button>
+                <button class="btn btn-primary-print" id="executePrintBtn" type="button"><i class="fas fa-print"></i> طباعة الآن</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ===== PDF export modal ===== -->
+<div class="modal-overlay" id="pdfExportModal">
+    <div class="modal-box" style="width: 500px;">
+        <div class="modal-header-custom">
+            <h3><i class="fas fa-file-pdf"></i> تصدير كملف PDF</h3>
+            <button class="modal-close" id="closePdfModalBtn" type="button"><i class="fas fa-times"></i></button>
+        </div>
+        <div class="modal-body-custom">
+            <div style="text-align:center; padding: 1rem;">
+                <div style="font-size:3rem; color:var(--primary-4); margin-bottom:1rem;"><i class="fas fa-file-arrow-down"></i></div>
+                <h4 style="font-size:1.1rem; color:var(--text-dark); margin-bottom:0.5rem;">جاهز لتصدير المستند</h4>
+                <p style="font-size:0.85rem; color:#555; margin-bottom:1.5rem; line-height:1.6;">لضمان الحفاظ على روابط الأحرف العربية وجودة النصوص القابلة للنسخ، يعتمد النظام على محرك الطباعة المتقدم.</p>
+                <ul style="text-align:right; background:#f8f9fa; padding:1rem; border-radius:8px; margin-bottom:1rem; list-style:none; padding-right:2rem;">
+                    <li style="margin-bottom:0.5rem; font-size:0.85rem; color:#444;">1. سيتم فتح نافذة الطباعة الخاصة بمتصفحك.</li>
+                    <li style="margin-bottom:0.5rem; font-size:0.85rem; color:#444;">2. من قائمة "الطابعة"، اختر <strong>حفظ كـ PDF (Save as PDF)</strong>.</li>
+                    <li style="margin-bottom:0.5rem; font-size:0.85rem; color:#444;">3. اضغط على <strong>حفظ (Save)</strong> لتنزيل الملف.</li>
+                </ul>
+            </div>
+        </div>
+        <div class="modal-footer-custom" style="justify-content: center;">
+            <button class="btn btn-primary-print" id="confirmPdfExportBtn" type="button" style="padding: 0.6rem 2rem; font-size: 0.9rem;">
+                <i class="fas fa-print"></i> فتح نافذة الحفظ
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- ===== Confirm delete modal ===== -->
+<div class="modal-overlay" id="confirmModal">
+    <div class="modal-box" style="width: 440px;">
+        <div class="modal-header-custom" style="background: linear-gradient(135deg, #dc2626, #b91c1c);">
+            <h3><i class="fas fa-exclamation-triangle"></i> تأكيد الحذف</h3>
+            <button class="modal-close" id="closeConfirmBtn" type="button"><i class="fas fa-times"></i></button>
+        </div>
+        <div class="modal-body-custom" style="text-align:center; padding: 1.8rem;">
+            <div style="font-size:3rem; color:#dc2626; margin-bottom:1rem;"><i class="fas fa-trash-alt"></i></div>
+            <p id="confirmMessage" style="font-size:0.95rem; color:#333; margin:0; line-height:1.6;"></p>
+        </div>
+        <div class="modal-footer-custom" style="justify-content: center; gap: 0.75rem;">
+            <button class="btn btn-secondary-print" id="cancelConfirmBtn" type="button" style="padding: 0.5rem 1.5rem;"><i class="fas fa-times"></i> إلغاء</button>
+            <button class="btn" id="okConfirmBtn" type="button" style="padding: 0.5rem 1.5rem; background: linear-gradient(135deg, #dc2626, #b91c1c); color: white;"><i class="fas fa-trash"></i> نعم، احذف</button>
+        </div>
+    </div>
+</div>
+
+<div class="toast" id="toast"></div>
+<div class="print-watermark" id="watermarkText" style="display:none;">محادثات</div>
+
 <script nonce="{{ csp_nonce }}">
-(function () {
-  'use strict';
-  document.querySelectorAll('.delete-form').forEach(function (form) {
-    form.addEventListener('submit', function (e) {
-      if (!confirm(form.dataset.confirm)) {
-        e.preventDefault();
-      }
+(function() {
+    'use strict';
+
+    // ===== Toast =====
+    var toastEl = document.getElementById('toast');
+    var toastTimeout = null;
+    function showToast(msg, type, duration) {
+        duration = duration || 2500; type = type || 'info';
+        if (!toastEl) return;
+        toastEl.textContent = msg;
+        toastEl.className = 'toast toast-' + type + ' show';
+        if (toastTimeout) clearTimeout(toastTimeout);
+        toastTimeout = setTimeout(function() { toastEl.classList.remove('show'); }, duration);
+    }
+
+    // ===== Confirm delete modal =====
+    var confirmModal = document.getElementById('confirmModal');
+    var confirmMessage = document.getElementById('confirmMessage');
+    var pendingForm = null;
+
+    function openConfirm(form) {
+        pendingForm = form;
+        confirmMessage.textContent = form.dataset.confirm || 'هل أنت متأكد من هذا الإجراء؟';
+        confirmModal.classList.add('active');
+    }
+    function closeConfirm() {
+        confirmModal.classList.remove('active');
+        pendingForm = null;
+    }
+    document.getElementById('closeConfirmBtn').addEventListener('click', closeConfirm);
+    document.getElementById('cancelConfirmBtn').addEventListener('click', closeConfirm);
+    confirmModal.addEventListener('click', function(e) { if (e.target === confirmModal) closeConfirm(); });
+    document.getElementById('okConfirmBtn').addEventListener('click', function() {
+        if (pendingForm) {
+            pendingForm.dataset.confirmed = 'true';
+            pendingForm.submit();
+        }
+        closeConfirm();
     });
-  });
+
+    document.querySelectorAll('.delete-form').forEach(function(form) {
+        form.addEventListener('submit', function(e) {
+            if (form.dataset.confirmed === 'true') return;
+            e.preventDefault();
+            openConfirm(form);
+        });
+    });
+
+    // ===== PRINT SYSTEM =====
+    var defaultState = {
+        paperSize: 'a4',
+        marginSize: 'normal',
+        format: 'standard',
+        logoSize: 'medium',
+        logoDataUrl: '',
+        printColors: true,
+        printLines: true,
+        showWatermark: true,
+        companyName: 'اسم الشركة',
+        footerText: 'شكراً لتعاملكم معنا'
+    };
+
+    var printState = Object.assign({}, defaultState);
+    var printModal = document.getElementById('printModal');
+    var pdfExportModal = document.getElementById('pdfExportModal');
+    var printableArea = document.getElementById('printableArea');
+
+    function applyLogoSize(size) {
+        var previewImg = document.getElementById('logoPreviewImg');
+        if (!previewImg) return;
+        if (size === 'small') previewImg.style.maxHeight = '30px';
+        else if (size === 'medium') previewImg.style.maxHeight = '45px';
+        else if (size === 'large') previewImg.style.maxHeight = '65px';
+    }
+
+    function savePrintSettings() {
+        var settings = {
+            paperSize: printState.paperSize,
+            marginSize: printState.marginSize,
+            format: printState.format,
+            logoSize: printState.logoSize,
+            printColors: document.getElementById('printColors').checked,
+            printLines: document.getElementById('printLines').checked,
+            showWatermark: document.getElementById('showWatermark').checked,
+            companyName: document.getElementById('companyNameInput').value,
+            footerText: document.getElementById('footerTextInput').value,
+            notes: document.getElementById('printNotes').value || ''
+        };
+        try { localStorage.setItem('unified_print_settings', JSON.stringify(settings)); } catch(e) {}
+        showToast('✅ تم حفظ الإعدادات بنجاح', 'success', 1500);
+        printModal.classList.remove('active');
+    }
+
+    function resetPrintSettings() {
+        try { localStorage.removeItem('unified_print_settings'); } catch(e) {}
+        printState = Object.assign({}, defaultState);
+
+        document.querySelectorAll('#paperSizeGroup .btn-opt').forEach(function(btn) { btn.classList.toggle('active', btn.dataset.value === 'a4'); });
+        document.querySelectorAll('#marginGroup .btn-opt').forEach(function(btn) { btn.classList.toggle('active', btn.dataset.value === 'normal'); });
+        document.querySelectorAll('#formatGroup .btn-opt').forEach(function(btn) { btn.classList.toggle('active', btn.dataset.value === 'standard'); });
+        document.querySelectorAll('#logoSizeGroup .btn-opt').forEach(function(btn) { btn.classList.toggle('active', btn.dataset.value === 'medium'); });
+
+        document.getElementById('printColors').checked = true;
+        document.getElementById('printLines').checked = true;
+        document.getElementById('showWatermark').checked = true;
+        document.getElementById('companyNameInput').value = defaultState.companyName;
+        document.getElementById('footerTextInput').value = defaultState.footerText;
+        document.getElementById('printNotes').value = '';
+
+        applyLogoSize('medium');
+        showToast('🔄 تم استعادة الإعدادات الافتراضية', 'info', 1500);
+    }
+
+    function loadPrintSettings() {
+        var saved = null;
+        try { saved = localStorage.getItem('unified_print_settings'); } catch(e) {}
+        if (saved) {
+            try {
+                var settings = JSON.parse(saved);
+                printState.paperSize = settings.paperSize || 'a4';
+                printState.marginSize = settings.marginSize || 'normal';
+                printState.format = settings.format || 'standard';
+                printState.logoSize = settings.logoSize || 'medium';
+
+                document.querySelectorAll('#paperSizeGroup .btn-opt').forEach(function(btn) { btn.classList.toggle('active', btn.dataset.value === printState.paperSize); });
+                document.querySelectorAll('#marginGroup .btn-opt').forEach(function(btn) { btn.classList.toggle('active', btn.dataset.value === printState.marginSize); });
+                document.querySelectorAll('#formatGroup .btn-opt').forEach(function(btn) { btn.classList.toggle('active', btn.dataset.value === printState.format); });
+                document.querySelectorAll('#logoSizeGroup .btn-opt').forEach(function(btn) { btn.classList.toggle('active', btn.dataset.value === printState.logoSize); });
+
+                document.getElementById('printColors').checked = settings.printColors !== undefined ? settings.printColors : true;
+                document.getElementById('printLines').checked = settings.printLines !== undefined ? settings.printLines : true;
+                document.getElementById('showWatermark').checked = settings.showWatermark !== undefined ? settings.showWatermark : true;
+                document.getElementById('companyNameInput').value = settings.companyName || 'اسم الشركة';
+                document.getElementById('footerTextInput').value = settings.footerText || 'شكراً لتعاملكم معنا';
+                document.getElementById('printNotes').value = settings.notes || '';
+
+                applyLogoSize(printState.logoSize);
+            } catch (e) { console.error('Error loading settings:', e); }
+        }
+    }
+
+    document.getElementById('openPrintModalBtn').addEventListener('click', function() { printModal.classList.add('active'); });
+    document.getElementById('closeModalBtn').addEventListener('click', function() { printModal.classList.remove('active'); });
+    printModal.addEventListener('click', function(e) { if (e.target === printModal) printModal.classList.remove('active'); });
+
+    document.getElementById('closePdfModalBtn').addEventListener('click', function() { pdfExportModal.classList.remove('active'); });
+    pdfExportModal.addEventListener('click', function(e) { if (e.target === pdfExportModal) pdfExportModal.classList.remove('active'); });
+
+    document.getElementById('exportPdfBtn').addEventListener('click', function() {
+        printModal.classList.remove('active');
+        pdfExportModal.classList.add('active');
+    });
+
+    document.getElementById('confirmPdfExportBtn').addEventListener('click', function() {
+        pdfExportModal.classList.remove('active');
+        executePrint();
+    });
+
+    document.querySelectorAll('.btn-group-print').forEach(function(group) {
+        group.querySelectorAll('.btn-opt').forEach(function(btn) {
+            btn.addEventListener('click', function() {
+                group.querySelectorAll('.btn-opt').forEach(function(b) { b.classList.remove('active'); });
+                this.classList.add('active');
+                if (group.id === 'paperSizeGroup') printState.paperSize = this.dataset.value;
+                if (group.id === 'marginGroup') printState.marginSize = this.dataset.value;
+                if (group.id === 'formatGroup') printState.format = this.dataset.value;
+                if (group.id === 'logoSizeGroup') {
+                    printState.logoSize = this.dataset.value;
+                    applyLogoSize(printState.logoSize);
+                }
+            });
+        });
+    });
+
+    document.getElementById('saveSettingsBtn').addEventListener('click', savePrintSettings);
+    document.getElementById('resetSettingsBtn').addEventListener('click', resetPrintSettings);
+
+    var logoInput = document.getElementById('logoInput');
+    var logoPreviewImg = document.getElementById('logoPreviewImg');
+    var logoPlaceholderText = document.getElementById('logoPlaceholderText');
+    var logoPreviewBox = document.getElementById('logoPreviewBox');
+
+    logoPreviewBox.addEventListener('click', function() { logoInput.click(); });
+    logoInput.addEventListener('change', function() {
+        if (this.files && this.files[0]) {
+            var reader = new FileReader();
+            reader.onload = function(e) {
+                printState.logoDataUrl = e.target.result;
+                logoPreviewImg.src = e.target.result;
+                logoPreviewImg.style.display = 'block';
+                logoPlaceholderText.style.display = 'none';
+                applyLogoSize(printState.logoSize);
+                showToast('✅ تم رفع الشعار بنجاح', 'success', 1500);
+            };
+            reader.readAsDataURL(this.files[0]);
+        }
+    });
+
+    function preparePrintSettings() {
+        document.getElementById('phCompanyName').textContent = document.getElementById('companyNameInput').value || 'اسم الشركة';
+
+        var notes = document.getElementById('printNotes').value;
+        var baseFooter = document.getElementById('footerTextInput').value || 'شكراً لتعاملكم معنا';
+        document.getElementById('phFooterText').textContent = notes ? (baseFooter + ' | ' + notes) : baseFooter;
+
+        var phLogoImg = document.getElementById('phLogoImg');
+        var phLogoPlaceholder = document.getElementById('phLogoPlaceholder');
+        if (printState.logoDataUrl) {
+            phLogoImg.src = printState.logoDataUrl;
+            phLogoImg.style.display = 'block';
+            phLogoPlaceholder.style.display = 'none';
+        } else {
+            phLogoImg.style.display = 'none';
+            phLogoPlaceholder.style.display = 'inline';
+        }
+
+        var headerArea = document.getElementById('printHeaderArea');
+        var footerArea = document.getElementById('printFooterArea');
+        headerArea.style.display = 'block'; headerArea.classList.remove('no-print');
+        footerArea.style.display = 'block'; footerArea.classList.remove('no-print');
+
+        if (!document.getElementById('printColors').checked) printableArea.classList.add('print-grayscale');
+        else printableArea.classList.remove('print-grayscale');
+
+        if (!document.getElementById('printLines').checked) printableArea.classList.add('print-no-lines');
+        else printableArea.classList.remove('print-no-lines');
+
+        printableArea.classList.remove('print-compact', 'print-detailed');
+        if (printState.format === 'compact') printableArea.classList.add('print-compact');
+        else if (printState.format === 'detailed') printableArea.classList.add('print-detailed');
+
+        headerArea.classList.remove('print-logo-small', 'print-logo-medium', 'print-logo-large');
+        headerArea.classList.add('print-logo-' + printState.logoSize);
+
+        var wm = document.getElementById('watermarkText');
+        if (wm) wm.style.display = document.getElementById('showWatermark').checked ? 'block' : 'none';
+
+        var existingStyle = document.getElementById('dynamic-page-style');
+        if (existingStyle) existingStyle.remove();
+        var style = document.createElement('style');
+        style.id = 'dynamic-page-style';
+        var marginValue = '10mm'; var sizeValue = '';
+        if (printState.marginSize === 'minimal') marginValue = '3mm';
+        else if (printState.marginSize === 'normal') marginValue = '8mm';
+        else if (printState.marginSize === 'wide') marginValue = '15mm';
+        if (printState.paperSize === 'thermal') { marginValue = '2mm'; sizeValue = 'size: 80mm auto;'; }
+        else if (printState.paperSize === 'half-a4') { marginValue = '8mm'; sizeValue = 'size: A4 landscape;'; }
+        style.textContent = '@page { margin: ' + marginValue + '; ' + sizeValue + ' }';
+        document.head.appendChild(style);
+    }
+
+    function restorePrintSettings() {
+        var headerArea = document.getElementById('printHeaderArea');
+        var footerArea = document.getElementById('printFooterArea');
+        headerArea.style.display = 'none'; headerArea.classList.add('no-print');
+        footerArea.style.display = 'none'; footerArea.classList.add('no-print');
+
+        printableArea.classList.remove('print-grayscale', 'print-no-lines', 'print-compact', 'print-detailed');
+        headerArea.classList.remove('print-logo-small', 'print-logo-medium', 'print-logo-large');
+
+        var dynStyle = document.getElementById('dynamic-page-style');
+        if (dynStyle) dynStyle.remove();
+    }
+
+    function executePrint() {
+        var printBtn = document.getElementById('executePrintBtn');
+        printBtn.disabled = true;
+        printBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري التجهيز...';
+
+        preparePrintSettings();
+        printModal.classList.remove('active');
+
+        setTimeout(function() {
+            window.print();
+            setTimeout(function() {
+                restorePrintSettings();
+                printBtn.disabled = false;
+                printBtn.innerHTML = '<i class="fas fa-print"></i> طباعة الآن';
+                showToast('✅ تم تجهيز الملف بنجاح', 'success', 2500);
+            }, 500);
+        }, 600);
+    }
+
+    document.getElementById('executePrintBtn').addEventListener('click', executePrint);
+
+    loadPrintSettings();
+    console.log('✅ نظام إدارة المحادثات الموحد - جاهز');
 })();
 </script>
 </body>

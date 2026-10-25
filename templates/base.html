@@ -761,7 +761,7 @@
                 </a>
                 <button type="button"
                         id="notificationBtn"
-                        class="nav-action-btn tw-hidden sm:tw-inline-flex"
+                        class="nav-action-btn"
                         title="المحادثات"
                         data-unread-url="{% url 'unread_count_api' %}"
                         data-chat-url="{% if request.user.is_staff %}{% url 'staff_inbox' %}{% else %}{% url 'chat_room' %}{% endif %}"

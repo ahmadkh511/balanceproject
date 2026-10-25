@@ -9,7 +9,7 @@ from django.shortcuts import render, get_object_or_404, redirect
 from django.views.decorators.http import require_POST
 from PIL import Image
 
-
+from django.contrib.auth.decorators import login_required, user_passes_test
 from .models import Conversation, Message, MessageRead
 
 
@@ -155,14 +155,21 @@ def staff_inbox(request):
     })
 
 
+
 @login_required
+@user_passes_test(lambda u: u.is_staff)
 def staff_chat(request, conv_id):
     """فتح محادثة معينة (من الموظف)"""
-    if not request.user.is_staff:
-        messages.error(request, 'هذه الصفحة مخصصة للموظفين فقط.')
-        return redirect('chat_room')
-
     conversation = get_object_or_404(Conversation, id=conv_id)
+
+    # حماية: superuser يرى الكل، staff عادي يرى محادثاته فقط
+    if not request.user.is_superuser:
+        is_initiator = conversation.initiator_id == request.user.id
+        is_customer  = conversation.customer_id == request.user.id
+        if not (is_initiator or is_customer):
+            messages.error(request, 'غير مصرح لك بالوصول إلى هذه المحادثة.')
+            return redirect('staff_inbox')
+
     return render(request, 'chat/room.html', {
         'conversation': conversation,
         'max_size': settings.CHAT_MAX_FILE_SIZE,
@@ -203,7 +210,7 @@ def start_internal_conversation(request, user_id):
                 initiator=request.user,
             )
     else:
-        # موظف → عميل → محادثة customer (نفس نوع ما ينشئه العميل)
+        # موظف → عميل → محادثة customer
         conversation = Conversation.objects.filter(
             kind='customer',
             customer=peer,
@@ -213,9 +220,11 @@ def start_internal_conversation(request, user_id):
             conversation = Conversation.objects.create(
                 kind='customer',
                 customer=peer,
+                initiator=request.user,   # ← السطر المضاف
             )
 
     return redirect('staff_chat', conv_id=conversation.id)
+
 
 
 # ==================== API ====================

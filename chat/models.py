@@ -116,3 +116,6 @@ class BroadcastLog(models.Model):
             self.sender.username,
             self.content[:30],
         )
+
+
+    

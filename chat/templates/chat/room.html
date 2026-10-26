@@ -4,7 +4,9 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>
-  {% if request.user.is_staff %}
+  {% if peer %}
+    محادثة جديدة مع {{ peer.username }}
+  {% elif request.user.is_staff %}
     محادثة{% if conversation.kind == 'internal' and conversation.customer == request.user %} مع {{ conversation.initiator.username|default:"—" }}{% else %} مع {{ conversation.customer.username }}{% endif %}
   {% else %}
     محادثتك مع الإدارة
@@ -118,7 +120,6 @@
     overflow: hidden;
   }
 
-  /* رأس المحادثة */
   .chat-header {
     background: linear-gradient(135deg, var(--aqua-4), var(--aqua-5));
     color: var(--text-light);
@@ -189,6 +190,7 @@
   }
   .msg.mine { justify-content: flex-start; }
   .msg.other { justify-content: flex-end; }
+  .msg.sys { justify-content: center; }
 
   .bubble {
     padding: 9px 14px;
@@ -206,6 +208,15 @@
     background: #ffffff;
     border: 1px solid var(--aqua-2);
     border-bottom-left-radius: 4px;
+  }
+  .bubble.sys {
+    background: #fff8e1;
+    border: 1px dashed var(--aqua-3);
+    color: #7a5f00;
+    font-size: 12.5px;
+    padding: 7px 14px;
+    max-width: 90%;
+    text-align: center;
   }
   .bubble .sender {
     font-weight: 700;
@@ -444,7 +455,8 @@
 <div class="chat-wrapper">
   <div class="chat-container"
        id="chat-page"
-       data-conv-id="{{ conversation.id }}"
+       data-conv-id="{% if conversation %}{{ conversation.id }}{% endif %}"
+       data-peer-id="{% if peer %}{{ peer.id }}{% endif %}"
        data-user-id="{{ request.user.id }}"
        data-max-size="{{ max_size }}"
        data-csrf="{{ csrf_token }}">
@@ -453,7 +465,9 @@
     <div class="chat-header">
       <div class="title">
         <i class="fas fa-comments"></i>
-        {% if request.user.is_staff %}
+        {% if peer %}
+          محادثة جديدة مع: {{ peer.username }}
+        {% elif request.user.is_staff %}
           {% if conversation.kind == 'internal' and conversation.customer == request.user %}
             محادثة مع: {{ conversation.initiator.username|default:"—" }}
           {% else %}
@@ -507,10 +521,16 @@
   'use strict';
 
   const page = document.getElementById('chat-page');
-  const convId = parseInt(page.dataset.convId, 10);
   const myUserId = parseInt(page.dataset.userId, 10);
   const MAX_SIZE = parseInt(page.dataset.maxSize, 10);
   const csrfToken = page.dataset.csrf;
+
+  let convId = parseInt(page.dataset.convId, 10) || 0;
+  const peerId = parseInt(page.dataset.peerId, 10) || 0;
+
+  // وضع المسودة: لا توجد محادثة في قاعدة البيانات بعد.
+  // ستُنشأ فعليًا عند إرسال أول رسالة (send_first_message).
+  let isDraft = (convId === 0 && peerId > 0);
 
   const log = document.getElementById('chat-log');
   const fileInput = document.getElementById('file-input');
@@ -520,6 +540,7 @@
 
   let lastMaxId = 0;
   let selectedFile = null;
+  let pollTimer = null;
 
   function fmtSize(b) {
     if (b < 1024) return b + ' B';
@@ -570,7 +591,18 @@
     log.scrollTop = log.scrollHeight;
   }
 
+  function showDraftNotice() {
+    const wrap = document.createElement('div');
+    wrap.className = 'msg sys';
+    const bubble = document.createElement('div');
+    bubble.className = 'bubble sys';
+    bubble.textContent = 'محادثة جديدة — لن يتم إنشاء أي شيء في الأرشيف حتى ترسل أول رسالة.';
+    wrap.appendChild(bubble);
+    log.appendChild(wrap);
+  }
+
   function loadMessages() {
+    if (!convId) return;
     fetch('/chat/' + convId + '/messages/', { credentials: 'same-origin' })
       .then(function (r) { return r.json(); })
       .then(function (data) {
@@ -583,6 +615,12 @@
         });
       })
       .catch(function () {});
+  }
+
+  function startPolling() {
+    if (pollTimer) return;
+    loadMessages();
+    pollTimer = setInterval(loadMessages, 3000);
   }
 
   document.getElementById('attach-btn').addEventListener('click', function () {
@@ -609,6 +647,11 @@
     preview.classList.remove('show');
   });
 
+  function sendUrl() {
+    if (isDraft) return '/chat/new/' + peerId + '/send/';
+    return '/chat/' + convId + '/send/';
+  }
+
   function sendMessage() {
     const content = msgInput.value.trim();
     if (!content && !selectedFile) return;
@@ -618,7 +661,7 @@
     if (selectedFile) fd.append('attachment', selectedFile);
     fd.append('csrfmiddlewaretoken', csrfToken);
 
-    fetch('/chat/' + convId + '/send/', {
+    fetch(sendUrl(), {
       method: 'POST',
       body: fd,
       credentials: 'same-origin'
@@ -626,6 +669,15 @@
       .then(function (r) { return r.json(); })
       .then(function (m) {
         if (m.error) { alert(m.error); return; }
+
+        // أول رسالة في وضع المسودة: المحادثة أُنشئت الآن — نتحول للوضع العادي
+        if (isDraft && m.conv_id) {
+          convId = m.conv_id;
+          page.dataset.convId = String(convId);
+          isDraft = false;
+          startPolling();
+        }
+
         renderMessage(m);
         lastMaxId = Math.max(lastMaxId, m.id);
         msgInput.value = '';
@@ -651,8 +703,11 @@
     this.style.height = Math.min(this.scrollHeight, 120) + 'px';
   });
 
-  loadMessages();
-  setInterval(loadMessages, 3000);
+  if (isDraft) {
+    showDraftNotice();
+  } else {
+    startPolling();
+  }
 })();
 </script>
 

@@ -93,8 +93,6 @@ def _find_conversation_with(staff_user, peer):
 
 
 # ==================== صفحات العميل ====================
-
-
 def chat_room(request):
     """محادثة العميل — إذا لم يسجل دخول، صفحة مخصصة، وإذا لا توجد محادثة، صفحة أخرى"""
 
@@ -108,15 +106,16 @@ def chat_room(request):
         kind='customer',
     ).first()
 
-    if not conversation:
+    # ✅ حماية دائمة: المحادثة الفارغة لا تُعتبر محادثة.
+    # الكود الجديد لا ينشئ محادثة إلا مع أول رسالة،
+    # فأي محادثة فارغة = بقايا من النظام القديم يجب تجاهلها.
+    if not conversation or not conversation.messages.exists():
         return render(request, 'chat/room_empty.html')
 
     return render(request, 'chat/room.html', {
         'conversation': conversation,
         'max_size': settings.CHAT_MAX_FILE_SIZE,
     })
-
-
 # ==================== صفحات الموظف/المدير ====================
 
 

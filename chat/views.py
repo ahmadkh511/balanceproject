@@ -17,7 +17,16 @@ from .models import Conversation, Message, MessageRead, BroadcastLog
 from django.db.models import Count
 from django.shortcuts import render
 from .models import Conversation, MessageRead
+from django.contrib.auth import get_user_model
+from django.db import transaction
+from django.db.models import Count, Q
+from django.http import JsonResponse
+from django.shortcuts import get_object_or_404, redirect, render
+from django.views.decorators.http import require_POST
 
+from .models import Conversation, Message, MessageRead
+
+User = get_user_model()
 
 
 #===============من اجل الحماية  ctx  ==================
@@ -88,25 +97,27 @@ def _serialize_message(msg):
     }
 
 
-def _find_conversation_with(staff_user, peer):
+
+def _find_conversation_with(view_user, peer):
     """
-    يبحث عن محادثة قائمة بين موظف ومستخدم آخر — بدون إنشاء أي شيء.
-    - موظف ↔ موظف → internal
-    - موظف ↔ عميل → customer (محادثة العميل الوحيدة)
-    يرجع المحادثة أو None.
+    بحث فقط — لا تنشئ شيئاً أبداً.
+    - زميل موظف: محادثة داخلية يكون فيها الطرفان.
+    - عميل:
+        * المالك يجد محادثته هو مع هذا العميل.
+        * السوبر يوزر يصل لأي محادثة قائمة للعميل (إشراف).
+        * غيرهما لا يجد شيئاً (وستمنعه الخطوات التالية بوضوح).
     """
     if peer.is_staff:
-        return Conversation.objects.filter(
-            kind='internal',
-        ).filter(
-            models.Q(customer=staff_user, initiator=peer) |
-            models.Q(customer=peer, initiator=staff_user)
-        ).first()
-    return Conversation.objects.filter(
-        kind='customer',
-        customer=peer,
-    ).first()
+        return (Conversation.objects
+                .filter(kind='internal')
+                .filter(Q(initiator=view_user, customer=peer) |
+                        Q(initiator=peer, customer=view_user))
+                .first())
 
+    qs = Conversation.objects.filter(kind='customer', customer=peer)
+    if view_user.is_superuser:
+        return qs.first()
+    return qs.filter(initiator=view_user).first()
 
 
 # ==================== صفحات العميل ====================
@@ -162,103 +173,85 @@ def chat_room(request, conv_id=None):
 # ==================== صفحات الموظف/المدير ====================
 
 
-
-@login_required
 def staff_inbox(request):
-    """صندوق الموظف: تبويبان — عملاء / داخلي (بدون المحادثات الفارغة)"""
-    if not request.user.is_staff:
-        messages.error(request, 'هذه الصفحة مخصصة للموظفين فقط.')
-        return redirect('chat_room')
+    """
+    صندوق الموظفين — نموذج مالك القناة:
+    - محادثات العملاء: الموظف يرى محادثاته هو فقط، والسوبر يوزر يرى الكل.
+    - المحادثات الداخلية: التي يكون طرفاً فيها.
+    - جدول "بدء محادثة": جميع المستخدمين النشطين (كما هو).
+    """
+    user = request.user
 
-    if request.user.is_superuser:
-        customer_convs = Conversation.objects.filter(
-            kind='customer',
-        ).annotate(
-            msg_count=models.Count('messages'),
-        ).filter(
-            msg_count__gt=0,   # إخفاء المحادثات الفارغة (قشور قديمة)
-        ).select_related('customer')
+    # ─── بوابة الموظفين ───
+    if not user.is_authenticated or not user.is_staff:
+        return render(request, 'chat/room_empty.html', _ctx(request))
 
-        internal_convs = Conversation.objects.filter(
-            kind='internal',
-        ).annotate(
-            msg_count=models.Count('messages'),
-        ).filter(
-            msg_count__gt=0,
-        ).select_related('customer', 'initiator')
-    else:
-        customer_convs = Conversation.objects.filter(
-            kind='customer',
-            initiator=request.user,
-        ).annotate(
-            msg_count=models.Count('messages'),
-        ).filter(
-            msg_count__gt=0,
-        ).select_related('customer')
+    # ─── محادثات العملاء (المالك فقط / السوبر يوزر الكل) ───
+    customer_convs = (Conversation.objects
+                      .filter(kind='customer')
+                      .annotate(msg_count=Count('messages'))
+                      .filter(msg_count__gt=0)
+                      .select_related('customer', 'initiator')
+                      .order_by('-id'))
+    if not user.is_superuser:
+        customer_convs = customer_convs.filter(initiator=user)
 
-        internal_convs = Conversation.objects.filter(
-            kind='internal',
-        ).filter(
-            models.Q(customer=request.user) | models.Q(initiator=request.user)
-        ).annotate(
-            msg_count=models.Count('messages'),
-        ).filter(
-            msg_count__gt=0,
-        ).select_related('customer', 'initiator')
+    # ─── المحادثات الداخلية (الطرفان فقط) ───
+    internal_convs = (Conversation.objects
+                      .filter(kind='internal')
+                      .filter(Q(initiator=user) | Q(customer=user))
+                      .annotate(msg_count=Count('messages'))
+                      .filter(msg_count__gt=0)
+                      .select_related('customer', 'initiator')
+                      .order_by('-id'))
 
-    customer_convs_list = []
-    for c in customer_convs:
-        c.has_unread = c.messages.exclude(
-            sender=request.user
-        ).exclude(
-            read_by__user=request.user
-        ).exists()
-        customer_convs_list.append(c)
+    # ─── المستخدمون المتاحون لبدء محادثة جديدة ───
+    available_users = (User.objects
+                       .filter(is_active=True)
+                       .exclude(id=user.id)
+                       .order_by('username'))
 
-    internal_convs_list = []
-    for c in internal_convs:
-        c.has_unread = c.messages.exclude(
-            sender=request.user
-        ).exclude(
-            read_by__user=request.user
-        ).exists()
-        internal_convs_list.append(c)
+    return render(request, 'chat/staff_inbox.html', _ctx(
+        request,
+        customer_convs=customer_convs,
+        internal_convs=internal_convs,
+        available_users=available_users,
+    ))
 
-    available_users = User.objects.filter(
-        is_active=True
-    ).exclude(
-        id=request.user.id
-    ).order_by('username')
-
-    return render(request, 'chat/staff_inbox.html', {
-        'customer_convs': customer_convs_list,
-        'internal_convs': internal_convs_list,
-        'available_users': available_users,
-    })
 
 
 
 def staff_chat(request, conv_id):
+    """
+    غرفة المحادثة للموظفين — نموذج مالك القناة:
+    - دردشة داخلية: للطرفين فقط.
+    - محادثة عميل: لصاحبها فقط، والسوبر يوزر يرى الكل.
+    - كل حالة أمنية تستجيب مباشرة بصفحة room_empty.html (بلا نقل).
+    """
     user = request.user
 
-    # ─── 1) بوابة الموظفين: الزوار والعملاء لا يرون شيئاً ───
+    # ─── 1) بوابة الموظفين ───
     if not user.is_authenticated or not user.is_staff:
         return render(request, 'chat/room_empty.html', _ctx(request))
 
     # ─── 2) جلب المحادثة (بدون كشف وجودها أو عدمه) ───
     conversation = Conversation.objects.filter(id=conv_id).first()
 
-    # ─── 3) الحماية الدائمة: محادثة بلا رسائل لا تُفتح إطلاقاً ───
+    # ─── 3) الحماية الدائمة: محادثة بلا رسائل لا تُفتح ───
     if conversation is None or not conversation.messages.exists():
         return render(request, 'chat/room_empty.html', _ctx(request))
 
-    # ─── 4) الصلاحيات (استجابة مباشرة، لا نقل) ───
+    # ─── 4) الصلاحيات (نموذج مالك القناة) ───
     if not user.is_superuser:
         if conversation.kind == 'internal':
+            # الدردشة الداخلية: للطرفين حصرياً
             party_ids = {conversation.initiator_id, conversation.customer_id}
             if user.id not in party_ids:
                 return render(request, 'chat/room_empty.html', _ctx(request))
-        # kind == 'customer' → متاحة لجميع الموظفين
+        else:
+            # محادثة العميل: لصاحبها فقط — السوبر يوزر يرى الكل
+            if conversation.initiator_id != user.id:
+                return render(request, 'chat/room_empty.html', _ctx(request))
 
     # ─── 5) تحديد الطرف الآخر ───
     if conversation.kind == 'internal':
@@ -289,129 +282,114 @@ def staff_chat(request, conv_id):
 
 
 
-
-
-@login_required
 def start_internal_conversation(request, user_id):
     """
-    نقطة زر "بدء" — لا تنشئ أي شيء في قاعدة البيانات.
-    - توجد محادثة قائمة → فتحها مباشرة
-    - لا توجد → غرفة مسودة (staff_new_chat)
-      والمحادثة لن تُنشأ إلا عند إرسال أول رسالة فعلية.
+    زر "بدء" — لا ينشئ أي محادثة أبداً:
+    - محادثة قائمة ومسموح له بها → ينتقل إليها.
+    - عميل قناته يملكها موظف آخر → صفحة آمنة (منع بلا نقل مشفر).
+    - غير ذلك → غرفة مسودة (لا يُنشأ شيء إلا مع أول رسالة).
     """
-    if not request.user.is_staff:
-        messages.error(request, 'هذه الصفحة مخصصة للموظفين فقط.')
-        return redirect('chat_room')
+    user = request.user
+    if not user.is_authenticated or not user.is_staff:
+        return render(request, 'chat/room_empty.html', _ctx(request))
 
     peer = get_object_or_404(User, id=user_id, is_active=True)
 
-    if peer.id == request.user.id:
-        messages.warning(request, 'لا يمكنك بدء محادثة مع نفسك.')
-        return redirect('staff_inbox')
+    if not peer.is_staff:
+        existing = (Conversation.objects
+                    .filter(kind='customer', customer=peer)
+                    .first())
+        if existing:
+            if user.is_superuser or existing.initiator_id == user.id:
+                return redirect('chat:staff_chat', conv_id=existing.id)
+            return render(request, 'chat/room_empty.html', _ctx(request))
 
-    conversation = _find_conversation_with(request.user, peer)
+    conversation = _find_conversation_with(user, peer)
     if conversation:
-        return redirect('staff_chat', conv_id=conversation.id)
+        return redirect('chat:staff_chat', conv_id=conversation.id)
+    return redirect('chat:staff_new_chat', user_id=peer.id)
 
-    return redirect('staff_new_chat', user_id=peer.id)
 
 
-@login_required
-@user_passes_test(lambda u: u.is_staff)
 def staff_new_chat(request, user_id):
     """
-    غرفة "مسودة" لمحادثة جديدة — لا يوجد سجل محادثة في قاعدة البيانات بعد.
-    إذا أُرسلت أول رسالة ثم حدّث المستخدم الصفحة، سيُحوَّل للمحادثة الحقيقية.
+    غرفة المسودة — لا محادثة بعد، ولا يُنشأ شيء حتى أول رسالة.
     """
+    user = request.user
+    if not user.is_authenticated or not user.is_staff:
+        return render(request, 'chat/room_empty.html', _ctx(request))
+
     peer = get_object_or_404(User, id=user_id, is_active=True)
 
-    if peer.id == request.user.id:
-        messages.warning(request, 'لا يمكنك بدء محادثة مع نفسك.')
-        return redirect('staff_inbox')
+    if not peer.is_staff:
+        existing = (Conversation.objects
+                    .filter(kind='customer', customer=peer)
+                    .first())
+        if existing:
+            if user.is_superuser or existing.initiator_id == user.id:
+                return redirect('chat:staff_chat', conv_id=existing.id)
+            return render(request, 'chat/room_empty.html', _ctx(request))
 
-    conversation = _find_conversation_with(request.user, peer)
-    if conversation:
-        return redirect('staff_chat', conv_id=conversation.id)
+    return render(request, 'chat/room.html', _ctx(request, peer=peer))
 
-    return render(request, 'chat/room.html', {
-        'peer': peer,
-        'max_size': settings.CHAT_MAX_FILE_SIZE,
-    })
 
 
 # ==================== API ====================
 
 
+
 @require_POST
-@login_required
-@user_passes_test(lambda u: u.is_staff)
 def send_first_message(request, user_id):
     """
-    إرسال أول رسالة في محادثة جديدة:
-    هنا — وفقط هنا — تُنشأ المحادثة في قاعدة البيانات.
-    يرجع الرسالة + conv_id ليتحول JS من وضع المسودة للمحادثة العادية.
+    الإرسال من غرفة المسودة — المكان الوحيد لإنشاء المحادثة.
+    ذرّية + قفل صف الطرف الآخر لمنع أي تكرار تحت التزامن.
     """
+    user = request.user
+    if not user.is_authenticated or not user.is_staff:
+        return JsonResponse({'error': 'غير مصرح'}, status=403)
+
     peer = get_object_or_404(User, id=user_id, is_active=True)
-
-    if peer.id == request.user.id:
-        return JsonResponse({'error': 'لا يمكنك مراسلة نفسك.'}, status=400)
-
-    content = request.POST.get('content', '').strip()
-    file = request.FILES.get('attachment')
-
-    if not content and not file:
+    content = (request.POST.get('content') or '').strip()
+    if not content:
         return JsonResponse({'error': 'الرسالة فارغة'}, status=400)
 
-    att_type = ''
-    if file:
-        att_type, err = _validate_attachment(file)
-        if err:
-            return JsonResponse({'error': err}, status=400)
+    kind = 'internal' if peer.is_staff else 'customer'
 
-    try:
-        with transaction.atomic():
-            # قفل صف المستلم لمنع إنشاء محادثتين عند إرسال متزامن
-            User.objects.select_for_update().get(id=peer.id)
+    with transaction.atomic():
+        # قفل صف الطرف الآخر: يمنع إنشاء محادثتين لنفس الزوج/العميل
+        User.objects.select_for_update().get(id=peer.id)
 
-            if peer.is_staff:
-                conversation = Conversation.objects.filter(
-                    kind='internal',
-                ).filter(
-                    models.Q(customer=request.user, initiator=peer) |
-                    models.Q(customer=peer, initiator=request.user)
-                ).first()
-                if not conversation:
-                    conversation = Conversation.objects.create(
-                        kind='internal',
-                        customer=peer,
-                        initiator=request.user,
-                    )
-            else:
-                conversation = Conversation.objects.filter(
-                    kind='customer',
-                    customer=peer,
-                ).first()
-                if not conversation:
-                    conversation = Conversation.objects.create(
-                        kind='customer',
-                        customer=peer,
-                        initiator=request.user,
-                    )
+        existing = None
+        if kind == 'customer':
+            existing = (Conversation.objects
+                        .filter(kind='customer', customer=peer)
+                        .first())
+            if existing and not (existing.initiator_id == user.id
+                                 or user.is_superuser):
+                return JsonResponse(
+                    {'error': 'هذا العميل له قناة مفتوحة يتابعها موظف آخر'},
+                    status=403)
+        else:
+            existing = (Conversation.objects
+                        .filter(kind='internal')
+                        .filter(Q(initiator=user, customer=peer) |
+                                Q(initiator=peer, customer=user))
+                        .first())
 
+        if existing:
             msg = Message.objects.create(
-                conversation=conversation,
-                sender=request.user,
-                content=content,
-                attachment=file if file else None,
-                attachment_type=att_type,
-                attachment_size=file.size if file else 0,
-            )
-    except Exception:
-        return JsonResponse({'error': 'تعذر إنشاء المحادثة، حاول مجددًا.'}, status=500)
+                conversation=existing, sender=user, content=content)
+            return JsonResponse({'ok': True, 'conv_id': existing.id,
+                                 'message_id': msg.id})
 
-    data = _serialize_message(msg)
-    data['conv_id'] = conversation.id
-    return JsonResponse(data)
+        conversation = Conversation.objects.create(
+            kind=kind, customer=peer, initiator=user)
+        msg = Message.objects.create(
+            conversation=conversation, sender=user, content=content)
+
+    return JsonResponse({'ok': True, 'conv_id': conversation.id,
+                         'message_id': msg.id})
+
 
 
 @login_required

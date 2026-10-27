@@ -4,45 +4,27 @@ from PIL import Image
 
 from django.conf import settings
 from django.contrib import messages
-from django.contrib.auth.decorators import login_required, user_passes_test
-from django.contrib.auth.models import User
+from django.contrib.auth import get_user_model
+from django.contrib.auth.decorators import login_required
 from django.db import models, transaction
+from django.db.models import Count, Q
 from django.http import JsonResponse
 from django.shortcuts import render, redirect, get_object_or_404
-from django.urls import reverse
 from django.views.decorators.http import require_POST
 
 from .models import Conversation, Message, MessageRead, BroadcastLog
 
-from django.db.models import Count
-from django.shortcuts import render
-from .models import Conversation, MessageRead
-from django.contrib.auth import get_user_model
-from django.db import transaction
-from django.db.models import Count, Q
-from django.http import JsonResponse
-from django.shortcuts import get_object_or_404, redirect, render
-from django.views.decorators.http import require_POST
-
-from .models import Conversation, Message, MessageRead
-
 User = get_user_model()
 
 
-
-from django.contrib.auth import get_user_model
-from django.db import transaction
-from django.db.models import Count, Q
-from django.http import JsonResponse
-from django.shortcuts import get_object_or_404, redirect, render
-from django.views.decorators.http import require_POST
-
-from .models import Conversation, Message, MessageRead
-
-User = get_user_model()
-
-#===============من اجل الحماية  ctx  ==================
-#===============================
+# ============================================================
+# مساعد السياق: يضمن وصول csp_nonce لكل قالب دون إخلال
+# ============================================================
+def _ctx(request, **data):
+    nonce = getattr(request, 'csp_nonce', None)
+    if nonce:
+        data['csp_nonce'] = nonce
+    return data
 
 
 # ==================== أدوات مساعدة ====================
@@ -75,17 +57,25 @@ def _validate_attachment(file):
 
 def _can_access(conversation, user):
     """
-    - الموظف/المدير: يصل لكل المحادثات
-    - العميل: يصل لمحادثات customer التي هو طرفها
-    - أي مستخدم: يصل لمحادثات internal التي هو طرف فيها
+    صلاحيات الوصول — نموذج مالك القناة (Model B):
+    - السوبر يوزر: يصل إلى كل المحادثات (إشراف).
+    - العميل: يصل لمحادثته فقط (قناة customer التي هو طرفها).
+    - الموظف: يصل لقنوات العملاء التي يملكها فقط،
+      وللمحادثات الداخلية التي يكون طرفاً فيها.
     """
-    if user.is_staff:
+    if user.is_superuser:
         return True
-    if conversation.customer_id == user.id:
-        return True
-    if conversation.kind == 'internal' and conversation.initiator_id == user.id:
-        return True
-    return False
+
+    if conversation.kind == 'customer':
+        if conversation.customer_id == user.id:
+            return True
+        if user.is_staff and conversation.initiator_id == user.id:
+            return True
+        return False
+
+    # محادثة داخلية: للطرفين فقط
+    return (conversation.initiator_id == user.id
+            or conversation.customer_id == user.id)
 
 
 def _serialize_message(msg):
@@ -102,9 +92,7 @@ def _serialize_message(msg):
     }
 
 
-
 # ==================== صفحات العميل ====================
-
 
 
 def chat_room(request, conv_id=None):
@@ -152,25 +140,12 @@ def chat_room(request, conv_id=None):
         messages=messages,
     ))
 
-    
-# ==================== صفحات الموظف/المدير ====================
 
-# ============================================================
-# مساعد السياق: يضمن وصول csp_nonce لكل قالب دون إخلال
-# ============================================================
-
-# ============================================================
-# مساعد السياق: يضمن وصول csp_nonce لكل قالب دون إخلال
-# ============================================================
-def _ctx(request, **data):
-    nonce = getattr(request, 'csp_nonce', None)
-    if nonce:
-        data['csp_nonce'] = nonce
-    return data
+# ==================== صفحات الموظف/المدير — نموذج B ====================
 
 
 # ============================================================
-# البحث عن محادثة قائمة بين موظف ومستخدم آخر حسب نموذج B
+# البحث عن محادثة قائمة بين موظف ومستخدم آخر — بحث فقط، لا ينشئ شيئاً
 # ============================================================
 def _find_conversation_with(view_user, peer):
     if peer.is_staff:
@@ -289,7 +264,7 @@ def staff_chat(request, conv_id):
 
 # ============================================================
 # زر "بدء": توجيه ذكي حسب نموذج B
-# أسماء الروابط مجردة مطابقة لملف المسارات لديك (بدون بادئة chat:)
+# أسماء الروابط مجردة مطابقة لملف المسارات (بدون بادئة chat:)
 # ============================================================
 def start_internal_conversation(request, user_id):
     user = request.user
@@ -361,6 +336,7 @@ def send_first_message(request, user_id):
     kind = 'internal' if peer.is_staff else 'customer'
 
     with transaction.atomic():
+        # قفل صف الطرف الآخر: يمنع إنشاء محادثتين لنفس الزوج/العميل
         User.objects.select_for_update().get(id=peer.id)
 
         if kind == 'customer':
@@ -391,7 +367,7 @@ def send_first_message(request, user_id):
                          'message_id': message.id})
 
 
-
+# ==================== واجهات AJAX ====================
 
 
 @login_required

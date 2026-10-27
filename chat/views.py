@@ -14,6 +14,22 @@ from django.views.decorators.http import require_POST
 
 from .models import Conversation, Message, MessageRead, BroadcastLog
 
+from django.db.models import Count
+from django.shortcuts import render
+from .models import Conversation, MessageRead
+
+
+
+#===============من اجل الحماية  ctx  ==================
+
+def _ctx(request, **data):
+    nonce = getattr(request, 'csp_nonce', None)
+    if nonce:
+        data['csp_nonce'] = nonce
+    return data
+
+#===============================
+
 
 # ==================== أدوات مساعدة ====================
 
@@ -92,31 +108,59 @@ def _find_conversation_with(staff_user, peer):
     ).first()
 
 
+
 # ==================== صفحات العميل ====================
-def chat_room(request):
-    """محادثة العميل — إذا لم يسجل دخول، صفحة مخصصة، وإذا لا توجد محادثة، صفحة أخرى"""
 
-    if not request.user.is_authenticated:
-        return render(request, 'chat/login_prompt.html', {
-            'login_url': reverse('accounts:login'),
-        })
 
-    conversation = Conversation.objects.filter(
-        customer=request.user,
-        kind='customer',
-    ).first()
 
-    # ✅ حماية دائمة: المحادثة الفارغة لا تُعتبر محادثة.
-    # الكود الجديد لا ينشئ محادثة إلا مع أول رسالة،
-    # فأي محادثة فارغة = بقايا من النظام القديم يجب تجاهلها.
-    if not conversation or not conversation.messages.exists():
-        return render(request, 'chat/room_empty.html')
+def chat_room(request, conv_id=None):
+    user = request.user
 
-    return render(request, 'chat/room.html', {
-        'conversation': conversation,
-        'max_size': settings.CHAT_MAX_FILE_SIZE,
-    })
+    # ─── 1) غير المسجل أو الموظف ليس له عمل في قناة العميل ───
+    if not user.is_authenticated or user.is_staff:
+        return render(request, 'chat/room_empty.html', _ctx(request))
+
+    # ─── 2) العميل يصل إلى محادثته هو حصراً ───
+    if conv_id is not None:
+        conversation = Conversation.objects.filter(
+            kind='customer', id=conv_id, customer=user,
+        ).first()
+    else:
+        conversation = (Conversation.objects
+                        .filter(kind='customer', customer=user)
+                        .annotate(msg_count=Count('messages'))
+                        .filter(msg_count__gt=0)
+                        .order_by('-id')
+                        .first())
+
+    # ─── 3) الحماية الدائمة ───
+    if conversation is None or not conversation.messages.exists():
+        return render(request, 'chat/room_empty.html', _ctx(request))
+
+    # ─── 4) تسجيل قراءة رسائل الإدارة ───
+    MessageRead.objects.bulk_create(
+        [MessageRead(user=user, message=m)
+         for m in conversation.messages.exclude(sender=user)],
+        ignore_conflicts=True,
+    )
+
+    # ─── 5) الطرف الآخر = جهة الإدارة ───
+    peer = conversation.initiator
+
+    messages = (conversation.messages
+                .select_related('sender')
+                .order_by('created_at', 'id'))
+
+    return render(request, 'chat/room.html', _ctx(
+        request,
+        conversation=conversation,
+        peer=peer,
+        messages=messages,
+    ))
+
+    
 # ==================== صفحات الموظف/المدير ====================
+
 
 
 @login_required
@@ -193,29 +237,58 @@ def staff_inbox(request):
     })
 
 
-@login_required
-@user_passes_test(lambda u: u.is_staff)
+
 def staff_chat(request, conv_id):
-    """فتح محادثة معينة (من الموظف)"""
-    conversation = get_object_or_404(Conversation, id=conv_id)
+    user = request.user
 
-    if not request.user.is_superuser:
+    # ─── 1) بوابة الموظفين: الزوار والعملاء لا يرون شيئاً ───
+    if not user.is_authenticated or not user.is_staff:
+        return render(request, 'chat/room_empty.html', _ctx(request))
+
+    # ─── 2) جلب المحادثة (بدون كشف وجودها أو عدمه) ───
+    conversation = Conversation.objects.filter(id=conv_id).first()
+
+    # ─── 3) الحماية الدائمة: محادثة بلا رسائل لا تُفتح إطلاقاً ───
+    if conversation is None or not conversation.messages.exists():
+        return render(request, 'chat/room_empty.html', _ctx(request))
+
+    # ─── 4) الصلاحيات (استجابة مباشرة، لا نقل) ───
+    if not user.is_superuser:
         if conversation.kind == 'internal':
-            # المحادثات الداخلية: الطرفان فقط
-            is_party = (
-                conversation.customer_id == request.user.id or
-                conversation.initiator_id == request.user.id
-            )
-            if not is_party:
-                messages.error(request, 'غير مصرح لك بالوصول إلى هذه المحادثة.')
-                return redirect('staff_inbox')
-        # محادثات العملاء مشتركة: متاحة لكل الموظفين
-        # (هذا يحل مشكلة "غير مصرح" عندما تكون محادثة العميل بدأها موظف آخر)
+            party_ids = {conversation.initiator_id, conversation.customer_id}
+            if user.id not in party_ids:
+                return render(request, 'chat/room_empty.html', _ctx(request))
+        # kind == 'customer' → متاحة لجميع الموظفين
 
-    return render(request, 'chat/room.html', {
-        'conversation': conversation,
-        'max_size': settings.CHAT_MAX_FILE_SIZE,
-    })
+    # ─── 5) تحديد الطرف الآخر ───
+    if conversation.kind == 'internal':
+        peer = (conversation.customer
+                if conversation.initiator_id == user.id
+                else conversation.initiator)
+    else:
+        peer = conversation.customer
+
+    # ─── 6) تسجيل قراءة الرسائل الواردة ───
+    MessageRead.objects.bulk_create(
+        [MessageRead(user=user, message=m)
+         for m in conversation.messages.exclude(sender=user)],
+        ignore_conflicts=True,
+    )
+
+    # ─── 7) جلب الرسائل ───
+    messages = (conversation.messages
+                .select_related('sender')
+                .order_by('created_at', 'id'))
+
+    return render(request, 'chat/room.html', _ctx(
+        request,
+        conversation=conversation,
+        peer=peer,
+        messages=messages,
+    ))
+
+
+
 
 
 @login_required

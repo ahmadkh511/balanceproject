@@ -7,7 +7,7 @@ from django.contrib import messages
 from django.contrib.auth import get_user_model
 from django.contrib.auth.decorators import login_required
 from django.db import models, transaction
-from django.db.models import Count, Q
+from django.db.models import Count, Exists, OuterRef, Q
 from django.http import JsonResponse
 from django.shortcuts import render, redirect, get_object_or_404
 from django.views.decorators.http import require_POST
@@ -127,17 +127,14 @@ def chat_room(request, conv_id=None):
     )
 
     # ─── 5) الطرف الآخر = جهة الإدارة ───
+    # لا نمرر متغير messages إلى القالب: القالب يجلب الرسائل عبر AJAX،
+    # وتمرير هذا الاسم كان يحجب رسائل التنبيهات ويطبع بطاقات غريبة أعلى الصفحة
     peer = conversation.initiator
-
-    messages = (conversation.messages
-                .select_related('sender')
-                .order_by('created_at', 'id'))
 
     return render(request, 'chat/room.html', _ctx(
         request,
         conversation=conversation,
         peer=peer,
-        messages=messages,
     ))
 
 
@@ -173,12 +170,20 @@ def staff_inbox(request):
     if not user.is_authenticated or not user.is_staff:
         return render(request, 'chat/room_empty.html', _ctx(request))
 
+    # مؤشر "جديد": هل توجد رسالة لم يقرأها هذا المستخدم بعد؟
+    # (يقرأه قالب الأرشيف عبر c.has_unread لعرض شارة الرسالة الجديدة)
+    unread_marker = (Message.objects
+                     .filter(conversation=OuterRef('pk'))
+                     .exclude(sender=user)
+                     .exclude(read_by__user=user))
+
     # المحادثات الداخلية: يراها الطرفان فقط
     internal_convs = (Conversation.objects
                       .filter(kind='internal')
                       .filter(Q(initiator=user) | Q(customer=user))
                       .annotate(msg_count=Count('messages'))
                       .filter(msg_count__gt=0)
+                      .annotate(has_unread=Exists(unread_marker))
                       .select_related('initiator', 'customer')
                       .order_by('-id'))
 
@@ -188,6 +193,7 @@ def staff_inbox(request):
                           .filter(kind='customer')
                           .annotate(msg_count=Count('messages'))
                           .filter(msg_count__gt=0)
+                          .annotate(has_unread=Exists(unread_marker))
                           .select_related('initiator', 'customer')
                           .order_by('-id'))
     else:
@@ -195,6 +201,7 @@ def staff_inbox(request):
                           .filter(kind='customer', initiator=user)
                           .annotate(msg_count=Count('messages'))
                           .filter(msg_count__gt=0)
+                          .annotate(has_unread=Exists(unread_marker))
                           .select_related('initiator', 'customer')
                           .order_by('-id'))
 
@@ -250,15 +257,12 @@ def staff_chat(request, conv_id):
             ignore_conflicts=True,
         )
 
-    messages = (conversation.messages
-                .select_related('sender')
-                .order_by('created_at', 'id'))
-
+    # لا نمرر متغير messages إلى القالب: القالب يجلب الرسائل عبر AJAX،
+    # وتمرير هذا الاسم كان يحجب رسائل التنبيهات ويطبع بطاقات غريبة أعلى الصفحة
     return render(request, 'chat/room.html', _ctx(
         request,
         conversation=conversation,
         peer=peer,
-        messages=messages,
     ))
 
 

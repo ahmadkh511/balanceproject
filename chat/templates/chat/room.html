@@ -3,6 +3,17 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#0097a7">
+
+<!-- ===== PWA + Web Push (المرحلة 2) ===== -->
+<link rel="manifest" href="{% url 'manifest' %}">
+<link rel="icon" type="image/svg+xml" href="{% url 'icon_svg' %}">
+<link rel="apple-touch-icon" href="{% url 'icon_png' 180 %}">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="BalanceIQ">
+
 <title>
   {% if peer %}
     محادثة جديدة مع {{ peer.username }}
@@ -415,6 +426,47 @@
     border: 1px solid #ffe082;
   }
 
+  /* ============ زر التنبيهات + لافتة iOS (المرحلة 2) ============ */
+  .push-btn.on {
+    background: rgba(255, 255, 255, 0.32);
+    font-weight: 700;
+  }
+  .push-btn i { margin-left: 2px; }
+  #ios-banner {
+    position: fixed;
+    bottom: 76px;
+    right: 50%;
+    transform: translateX(50%);
+    width: max-content;
+    max-width: 92%;
+    background: #006064;
+    color: #ffffff;
+    border-radius: 12px;
+    padding: 12px 16px;
+    font-size: 13px;
+    line-height: 1.8;
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.25);
+    z-index: 1200;
+    display: none;
+    align-items: flex-start;
+    gap: 10px;
+  }
+  #ios-banner strong { color: #b2ebf2; }
+  #ios-banner .ios-close {
+    background: rgba(255, 255, 255, 0.15);
+    border: none;
+    color: #ffffff;
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    cursor: pointer;
+    flex-shrink: 0;
+    font-size: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
   /* ============ استجابة للجوال ============ */
   @media (max-width: 600px) {
     .chat-wrapper { padding: 0; }
@@ -444,6 +496,10 @@
       الأرشيف
     </a>
     {% endif %}
+    <button type="button" id="push-btn" class="push-btn" style="display:none;">
+      <i class="fas fa-bell"></i>
+      <span id="push-btn-label">تفعيل التنبيهات</span>
+    </button>
   </div>
   <div class="top-bar-right">
     <span class="username">
@@ -733,6 +789,236 @@
     showDraftNotice();
   } else {
     startPolling();
+  }
+})();
+</script>
+
+<!-- ============ تفعيل التنبيهات الفورية Web Push (المرحلة 2) ============ -->
+<div id="ios-banner">
+  <div>
+    <strong>لتفعيل التنبيهات على الآيفون:</strong>
+    اضغط أيقونة المشاركة <i class="fas fa-share-square"></i> بالأسفل
+    ثم اختر «إضافة إلى الشاشة الرئيسية»، وافتح التطبيق من أيقونته الجديدة،
+    ثم اضغط زر «تفعيل التنبيهات» من الداخل.
+  </div>
+  <button type="button" class="ios-close" id="ios-banner-close" aria-label="إغلاق">
+    <i class="fas fa-times"></i>
+  </button>
+</div>
+
+<script type="application/json" id="push-config" nonce="{{ csp_nonce }}">{
+  "vapidKey": "{{ vapid_public_key }}",
+  "subUrl": "{% url 'push_subscribe' %}",
+  "unsubUrl": "{% url 'push_unsubscribe' %}",
+  "swUrl": "{% url 'service_worker' %}"
+}</script>
+
+<script nonce="{{ csp_nonce }}">
+(function () {
+  'use strict';
+
+  var btn = document.getElementById('push-btn');
+  var label = document.getElementById('push-btn-label');
+  var iosBanner = document.getElementById('ios-banner');
+  var page = document.getElementById('chat-page');
+  var CSRF = page ? (page.dataset.csrf || '') : '';
+
+  var cfgEl = document.getElementById('push-config');
+  var cfg = {};
+  try { cfg = JSON.parse(cfgEl ? cfgEl.textContent : '{}'); } catch (e) { cfg = {}; }
+  var VAPID_KEY = cfg.vapidKey || '';
+  var SUB_URL = cfg.subUrl || '';
+  var UNSUB_URL = cfg.unsubUrl || '';
+  var SW_URL = cfg.swUrl || '';
+
+  function isIOS() {
+    return /iphone|ipad|ipod/i.test(navigator.userAgent);
+  }
+
+  function isStandalone() {
+    return (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches) ||
+           window.navigator.standalone === true;
+  }
+
+  function pushSupported() {
+    return ('serviceWorker' in navigator) && ('PushManager' in window) && ('Notification' in window);
+  }
+
+  function showToast(text, cssClass) {
+    var wrap = document.querySelector('.messages-container');
+    if (!wrap) {
+      wrap = document.createElement('div');
+      wrap.className = 'messages-container';
+      document.body.appendChild(wrap);
+    }
+    var el = document.createElement('div');
+    el.className = 'alert ' + (cssClass || 'alert-info');
+    el.textContent = text;
+    wrap.appendChild(el);
+    setTimeout(function () {
+      el.classList.add('toast-hide');
+      setTimeout(function () { el.remove(); }, 450);
+    }, 4000);
+  }
+
+  function postJSON(url, body) {
+    return fetch(url, {
+      method: 'POST',
+      credentials: 'same-origin',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRFToken': CSRF
+      },
+      body: JSON.stringify(body || {})
+    }).then(function (r) { return r.json(); });
+  }
+
+  function b64ToU8(b64) {
+    var pad = '='.repeat((4 - (b64.length % 4)) % 4);
+    var raw = atob((b64 + pad).replace(/-/g, '+').replace(/_/g, '/'));
+    var arr = new Uint8Array(raw.length);
+    for (var i = 0; i < raw.length; i++) { arr[i] = raw.charCodeAt(i); }
+    return arr;
+  }
+
+  function registerSW() {
+    return navigator.serviceWorker.register(SW_URL, { scope: '/' });
+  }
+
+  function syncToServer(sub, enable) {
+    if (enable) {
+      return postJSON(SUB_URL, { subscription: sub.toJSON() });
+    }
+    return postJSON(UNSUB_URL, { endpoint: sub.endpoint });
+  }
+
+  function subscribeExisting(reg) {
+    return reg.pushManager.subscribe({
+      userVisibleOnly: true,
+      applicationServerKey: b64ToU8(VAPID_KEY)
+    }).then(function (sub) {
+      return syncToServer(sub, true).then(function () {
+        setBtnState(true);
+        showToast('تم تفعيل التنبيهات على هذا الجهاز', 'alert-success');
+      });
+    });
+  }
+
+  function setBtnState(on) {
+    if (!btn) return;
+    btn.style.display = '';
+    if (on) {
+      btn.classList.add('on');
+      label.textContent = 'التنبيهات مفعّلة';
+    } else {
+      btn.classList.remove('on');
+      label.textContent = 'تفعيل التنبيهات';
+    }
+  }
+
+  function hideBtn() { if (btn) { btn.style.display = 'none'; } }
+
+  function showIosBanner(show) {
+    if (iosBanner) { iosBanner.style.display = show ? 'flex' : 'none'; }
+  }
+
+  function checkIosBanner() {
+    var dismissed = false;
+    try { dismissed = localStorage.getItem('bq_ios_banner_dismissed') === '1'; } catch (e) {}
+    if (isIOS() && !isStandalone() && !dismissed) {
+      setTimeout(function () { showIosBanner(true); }, 1200);
+    }
+  }
+
+  function enablePush() {
+    if (!pushSupported()) {
+      showToast('متصفحك لا يدعم التنبيهات الفورية', 'alert-warning');
+      return;
+    }
+    if (isIOS() && !isStandalone()) {
+      showIosBanner(true);
+      showToast('على الآيفون: أضف التطبيق للشاشة الرئيسية أولاً', 'alert-warning');
+      return;
+    }
+    // نطلب الإذن أولاً مباشرة داخل نقرة المستخدم (شرط iOS)
+    Notification.requestPermission().then(function (perm) {
+      if (perm !== 'granted') {
+        showToast('لم يتم السماح بالتنبيهات — فعّلها من إعدادات المتصفح', 'alert-warning');
+        return;
+      }
+      registerSW().then(function (reg) {
+        return navigator.serviceWorker.ready.then(function () {
+          return reg.pushManager.getSubscription().then(function (existing) {
+            if (existing) {
+              return syncToServer(existing, true).then(function () {
+                setBtnState(true);
+                showToast('تم تفعيل التنبيهات على هذا الجهاز', 'alert-success');
+              });
+            }
+            return subscribeExisting(reg);
+          });
+        });
+      }).catch(function (err) {
+        showToast('تعذر تفعيل التنبيهات' + (err && err.message ? ': ' + err.message : ''), 'alert-error');
+      });
+    });
+  }
+
+  function disablePush() {
+    registerSW().then(function (reg) {
+      return navigator.serviceWorker.ready.then(function () {
+        return reg.pushManager.getSubscription().then(function (sub) {
+          var un = sub ? sub.unsubscribe() : Promise.resolve();
+          return un.then(function () {
+            var srv = sub ? syncToServer(sub, false) : Promise.resolve();
+            return srv.then(function () {
+              setBtnState(false);
+              showToast('تم تعطيل التنبيهات على هذا الجهاز', 'alert-info');
+            });
+          });
+        });
+      });
+    }).catch(function () {
+      showToast('تعذر تعطيل التنبيهات', 'alert-error');
+    });
+  }
+
+  if (btn) {
+    btn.addEventListener('click', function () {
+      if (btn.classList.contains('on')) { disablePush(); } else { enablePush(); }
+    });
+  }
+
+  var iosClose = document.getElementById('ios-banner-close');
+  if (iosClose) {
+    iosClose.addEventListener('click', function () {
+      showIosBanner(false);
+      try { localStorage.setItem('bq_ios_banner_dismissed', '1'); } catch (e) {}
+    });
+  }
+
+  // الحالة عند التحميل
+  if (!pushSupported() || !VAPID_KEY || (window.Notification && Notification.permission === 'denied')) {
+    hideBtn();
+    checkIosBanner();
+  } else {
+    registerSW().then(function (reg) {
+      return navigator.serviceWorker.ready.then(function () {
+        return reg.pushManager.getSubscription().then(function (sub) {
+          if (sub && Notification.permission === 'granted') {
+            // مزامنة صامتة مع الخادم حتى تبقى قاعدة الاشتراكات محدّثة
+            syncToServer(sub, true).catch(function () {});
+            setBtnState(true);
+          } else if (Notification.permission === 'granted') {
+            // إذن سابق بلا اشتراك — نشترك الآن بصمت
+            return subscribeExisting(reg).catch(function () { setBtnState(false); });
+          } else {
+            setBtnState(false);
+          }
+        });
+      });
+    }).catch(function () { setBtnState(false); });
+    checkIosBanner();
   }
 })();
 </script>

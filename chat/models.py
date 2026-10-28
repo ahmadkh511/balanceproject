@@ -1,6 +1,9 @@
 from django.db import models
 from django.conf import settings
 
+from django.db import models
+from django.conf import settings
+
 
 class Conversation(models.Model):
     KIND_CHOICES = [
@@ -52,7 +55,7 @@ class Message(models.Model):
 
     def __str__(self):
         preview = self.content[:30] if self.content else '(مرفق)'
-        return f"{self.sender.username}: {preview}"  
+        return f"{self.sender.username}: {preview}"
 
 
 class MessageRead(models.Model):
@@ -118,4 +121,23 @@ class BroadcastLog(models.Model):
         )
 
 
-    
+class PushSubscription(models.Model):
+    """
+    اشتراك Web Push لمستخدم على جهاز/متصفح معين.
+    - لكل مستخدم عدة اشتراكات (هاتف + كمبيوتر + آيباد ...)
+    - endpoint فريد لكل متصفح؛ يُحدَّث عند إعادة الاشتراك
+    - تُحذف الاشتراكات الميتة تلقائياً عند فشل الإرسال (404/410)
+    """
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='push_subscriptions',
+    )
+    endpoint = models.URLField(max_length=500, unique=True)
+    p256dh = models.TextField()
+    auth = models.TextField()
+    user_agent = models.CharField(max_length=255, blank=True, default='')
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.user.username} — {self.endpoint[:48]}…"

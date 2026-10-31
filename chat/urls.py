@@ -36,4 +36,6 @@ urlpatterns = [
     path('pwa-start/', views.pwa_start, name='pwa_start'),
     path('icon.svg', views.icon_svg, name='icon_svg'),
     path('icon-<int:size>.png', views.icon_png, name='icon_png'),
+
+    path('inbox/delete-all/', views.delete_all_conversations, name='delete_all_conversations'),
 ]

@@ -412,11 +412,16 @@ def staff_inbox(request):
                        .exclude(id=user.id)
                        .order_by('username'))
 
+    # إجمالي المحادثات في النظام كله — يستخدمه قالب الأرشيف في زر
+    # "حذف الكل" (يظهر للمدير الأعلى فقط) وفي نص نافذة التأكيد
+    total_conversations = Conversation.objects.count() if user.is_superuser else 0
+
     return render(request, 'chat/staff_inbox.html', _ctx(
         request,
         internal_convs=internal_convs,
         customer_convs=customer_convs,
         available_users=available_users,
+        total_conversations=total_conversations,
     ))
 
 
@@ -662,6 +667,46 @@ def delete_conversation(request, conv_id):
 
     conversation.delete()
     messages.success(request, 'تم حذف المحادثة بنجاح.')
+    return redirect('staff_inbox')
+
+
+@require_POST
+@login_required
+def delete_all_conversations(request):
+    """
+    حذف جميع المحادثات دفعة واحدة — للمدير الأعلى فقط.
+    يحذف كل محادثات العملاء والداخلية في النظام كله مع رسائلها
+    ومرفقاتها وسجلات قراءتها، ثم يعود إلى الأرشيف برسالة تأكيد.
+    (سجل الإرسال الجماعي BroadcastLog يبقى كما هو — سجل تدقيق مستقل)
+    """
+    if not request.user.is_superuser:
+        messages.error(request, 'حذف المحادثات متاح للمدير فقط.')
+        return redirect('staff_inbox')
+
+    with transaction.atomic():
+        conv_count = Conversation.objects.count()
+
+        if conv_count == 0:
+            messages.info(request, 'لا توجد محادثات لحذفها.')
+            return redirect('staff_inbox')
+
+        # 1) حذف ملفات المرفقات من التخزين أولاً — قبل حذف السجلات،
+        #    وأي ملف ناقص أو محذوف يدوياً لا يوقف العملية
+        for msg in Message.objects.exclude(attachment=''):
+            if msg.attachment:
+                try:
+                    msg.attachment.delete(save=False)
+                except Exception:
+                    pass
+
+        # 2) حذف كل المحادثات — الرسائل وسجلات القراءة
+        #    تُحذف تلقائياً عبر CASCADE
+        Conversation.objects.all().delete()
+
+    messages.success(
+        request,
+        'تم حذف جميع المحادثات ({}) مع رسائلها ومرفقاتها بنجاح.'.format(
+            conv_count))
     return redirect('staff_inbox')
 
 

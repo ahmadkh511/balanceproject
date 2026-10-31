@@ -165,6 +165,17 @@
         border: 1.5px solid var(--primary-2);
     }
     .header-btn-print:hover { background: var(--primary-1); border-color: var(--primary-3); transform: translateY(-2px); }
+    .header-btn-danger {
+        background: linear-gradient(135deg, #ef4444, #b91c1c);
+        color: white; box-shadow: 0 2px 8px rgba(220, 38, 38, .35);
+    }
+    .header-btn-danger:hover { background: linear-gradient(135deg, #dc2626, #991b1b); transform: translateY(-2px); box-shadow: 0 4px 12px rgba(220, 38, 38, .5); color: white; }
+    .header-actions form.inline { display: inline-flex; }
+    .header-btn-home {
+        background: linear-gradient(135deg, var(--primary-dark), #013840);
+        color: white; box-shadow: 0 2px 8px rgba(0, 96, 100, .35);
+    }
+    .header-btn-home:hover { background: linear-gradient(135deg, #00525c, #012a30); transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0, 96, 100, .5); color: white; }
 
     /* ===== Card ===== */
     .card { background: white; border-radius: var(--radius); padding: 20px 24px; box-shadow: var(--shadow-sm); border: 1px solid rgba(0, 0, 0, 0.04); margin-bottom: 16px; transition: box-shadow 0.3s var(--ease); }
@@ -281,6 +292,8 @@
         .page-header-card { flex-direction: column; align-items: stretch; }
         .header-actions { justify-content: stretch; }
         .header-actions .header-btn { flex: 1; justify-content: center; }
+        .header-actions form.inline { flex: 1; }
+        .header-actions form.inline .header-btn { width: 100%; justify-content: center; }
         .table-order { font-size: 0.72rem; }
         .table-order td, .table-order th { padding: 6px 4px; }
     }
@@ -316,6 +329,9 @@
     <div class="page-header-card no-print">
         <h1><i class="fas fa-inbox"></i> أرشيف المحادثات</h1>
         <div class="header-actions">
+            <a href="/" class="header-btn header-btn-home" title="العودة إلى الصفحة الرئيسية">
+                <i class="fas fa-house"></i> الرئيسية
+            </a>
             <a href="https://balanceiqsoft.com/chat/broadcast/" class="header-btn header-btn-broadcast" title="إرسال رسالة جماعي">
                 <i class="fas fa-bullhorn"></i> إرسال جماعي
             </a>
@@ -325,6 +341,17 @@
             <button class="header-btn header-btn-print" id="openPrintModalBtn" type="button">
                 <i class="fas fa-print"></i> طباعة
             </button>
+            {% if request.user.is_superuser and total_conversations %}
+            <form method="post" action="{% url 'delete_all_conversations' %}"
+                  class="inline delete-form"
+                  data-confirm="تحذير: سيتم حذف جميع المحادثات في النظام نهائياً ({{ total_conversations }} محادثة — عملاء وداخلية) مع كل الرسائل والمرفقات، ولا يمكن التراجع عن هذا الإجراء. هل أنت متأكد؟">
+                {% csrf_token %}
+                <button type="submit" class="header-btn header-btn-danger"
+                        title="حذف جميع المحادثات نهائياً">
+                    <i class="fas fa-trash"></i> حذف الكل
+                </button>
+            </form>
+            {% endif %}
         </div>
     </div>
 

@@ -121,6 +121,7 @@ class BroadcastLog(models.Model):
         )
 
 
+
 class PushSubscription(models.Model):
     """
     اشتراك Web Push لمستخدم على جهاز/متصفح معين.
@@ -133,11 +134,24 @@ class PushSubscription(models.Model):
         on_delete=models.CASCADE,
         related_name='push_subscriptions',
     )
-    endpoint = models.URLField(max_length=500, unique=True)
+    # ✅ أُزيل unique=True (كان يسبب mysql.W003) — التفرد مضمون عبر UniqueConstraint أدناه
+    endpoint = models.URLField(max_length=500, db_index=True)
     p256dh = models.TextField()
     auth = models.TextField()
     user_agent = models.CharField(max_length=255, blank=True, default='')
     created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        # ✅ التفرد على (user + endpoint) بدل endpoint وحده:
+        # - يمنع تكرار نفس الاشتراك لنفس المستخدم (وهو ما يهمنا فعلاً)
+        # - يسمح نظرياً لمستخدمين مختلفين بمشاركة نفس endpoint (نادر لكن لا يضر)
+        # - يحل تحذير mysql.W003 لأن مجموع أطوال الفهرس يبقى ضمن الحد
+        constraints = [
+            models.UniqueConstraint(
+                fields=['user', 'endpoint'],
+                name='unique_user_endpoint',
+            )
+        ]
 
     def __str__(self):
         return f"{self.user.username} — {self.endpoint[:48]}…"

@@ -1004,15 +1004,17 @@ def push_subscribe(request):
     if not (endpoint and p256dh and auth):
         return JsonResponse({'ok': False, 'error': 'incomplete'}, status=400)
 
+
     PushSubscription.objects.update_or_create(
+        user=request.user,
         endpoint=endpoint[:500],
         defaults={
-            'user': request.user,
             'p256dh': p256dh,
             'auth': auth,
             'user_agent': (request.META.get('HTTP_USER_AGENT') or '')[:255],
         },
     )
+
     return JsonResponse({'ok': True})
 
 

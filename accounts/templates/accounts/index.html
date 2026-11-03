@@ -11,6 +11,7 @@
     <meta name="description" content="نظام BalanceIQ المتكامل لإدارة المبيعات والمحاسبة عبر الإنترنت مع متجر إلكتروني مدمج. جرّب نسخة تجريبية مجانية الآن." />
     <meta name="keywords" content="برنامج محاسبة, محاسبة اون لاين, متجر إلكتروني, إدارة المبيعات, فواتير إلكترونية, نظام ERP, BalanceIQ" />
     <meta name="author" content="BalanceIQ" />
+    <meta name="theme-color" content="#0097a7" />
     
     <!-- وسوم Open Graph لتحسين المظهر عند مشاركة الرابط على واتساب وفيسبوك -->
     <meta property="og:title" content="BalanceIQ | برنامج محاسبة ومتجر إلكتروني" />
@@ -18,8 +19,29 @@
     <meta property="og:type" content="website" />
     <meta property="og:url" content="https://balanceiqsoft.com/" />
     
+    <!-- ✅ إصلاح: إضافة og:image — يجب أن يكون رابط الصورة مطلقاً (كاملاً) وليس نسبياً حتى تظهر في معاينة واتساب وفيسبوك -->
+    <!-- ملاحظة: للحصول على أفضل معاينة استخدم صورة مخصصة بأبعاد 1200×630 بصيغة JPG/PNG وحجم أقل من 300KB
+         ضعها في static/accounts/images/ ثم غيّر الرابطين أدناه إلى og-image.jpg مثلاً -->
+    <meta property="og:image" content="https://balanceiqsoft.com{% static 'accounts/images/slides/slaid1.webp' %}" />
+    <meta property="og:image:alt" content="نظام BalanceIQ لإدارة الأعمال والمحاسبة" />
+    <meta property="og:site_name" content="BalanceIQ" />
+    <meta property="og:locale" content="ar_AR" />
+    
+    <!-- ✅ إضافة: وسوم Twitter/X لمعاينة أفضل عند المشاركة -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="BalanceIQ | برنامج محاسبة ومتجر إلكتروني" />
+    <meta name="twitter:description" content="نظام BalanceIQ المتكامل لإدارة المبيعات والمحاسبة عبر الإنترنت مع متجر إلكتروني مدمج." />
+    <meta name="twitter:image" content="https://balanceiqsoft.com{% static 'accounts/images/slides/slaid1.webp' %}" />
+
     <!-- توحيد الرابط (Canonical URL) لتجنب تكرار المحتوى لمحركات البحث -->
     <link rel="canonical" href="https://balanceiqsoft.com/" />
+
+    <!-- ✅ إضافة: أيقونة الموقع (Favicon) — أيقونة SVG مدمجة تعمل فوراً بدون أي ملفات إضافية -->
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%230097a7'/%3E%3Cstop offset='1' stop-color='%23006064'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='64' height='64' rx='14' fill='url(%23g)'/%3E%3Ctext x='32' y='45' font-family='Arial, sans-serif' font-size='36' font-weight='bold' fill='%23ffffff' text-anchor='middle'%3EB%3C/text%3E%3C/svg%3E" />
+    <!-- عند توفر ملفات أيقونات رسمية ضعها في static/accounts/images/ وأزل التعليق عن السطرين التاليين:
+    <link rel="icon" href="{% static 'accounts/images/favicon.ico' %}" sizes="any" />
+    <link rel="apple-touch-icon" href="{% static 'accounts/images/apple-touch-icon.png' %}" />
+    -->
 
     <!-- Preconnect لخطوط جوجل لتسريع الأداء -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -84,6 +106,8 @@
         .landing-btn-primary:hover { transform: translateY(-2px); box-shadow: 0 6px 18px rgba(0, 151, 167, 0.6); color: white; }
         .landing-btn-ghost { background: transparent; color: rgba(255, 255, 255, 0.9) !important; border: 1px solid rgba(255, 255, 255, 0.4); }
         .landing-btn-ghost:hover { background: rgba(255, 255, 255, 0.1); color: white !important; border-color: white; }
+        .landing-btn-ghost-dark { background: transparent; color: var(--aqua-4) !important; border: 1px solid var(--aqua-3); }
+        .landing-btn-ghost-dark:hover { background: var(--aqua-4); color: white !important; border-color: var(--aqua-4); }
         .landing-btn-trial-anim { background: linear-gradient(135deg, #ffb300 0%, #ff8f00 100%); color: white; border: none; box-shadow: 0 4px 12px rgba(255, 179, 0, 0.4); }
         .landing-btn-trial-anim:hover { transform: translateY(-2px); box-shadow: 0 6px 18px rgba(255, 179, 0, 0.6); color: white; }
 
@@ -167,7 +191,7 @@
             font-size: 2rem; color: var(--aqua-4); transition: all 0.4s ease;
         }
         .feature-card:hover .feature-icon { background: var(--aqua-4); color: white; }
-        .feature-card h2 { color: var(--text-dark); font-weight: 700; margin-bottom: 1rem; }
+        .feature-card h3 { color: var(--text-dark); font-weight: 700; margin-bottom: 1rem; }
         .feature-card p { color: #546e7a; font-size: 0.95rem; line-height: 1.8; margin: 0; }
 
         .testimonials-section { padding: 6rem 0; background: var(--aqua-1); }
@@ -179,6 +203,49 @@
         .author-avatar { width: 50px; height: 50px; border-radius: 50%; background: var(--aqua-3); color: white; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 1.2rem; }
         .author-info h3 { margin: 0; color: var(--text-dark); font-weight: 700; font-size: 1rem; }
         .author-info small { color: #78909c; }
+
+        /* ✅ إضافة: قسم الأسعار */
+        .pricing-section { padding: 6rem 0; background: white; }
+        .pricing-card {
+            background: white; border-radius: 16px; padding: 2rem 1.75rem;
+            box-shadow: var(--shadow-sm); border: 1px solid var(--aqua-1);
+            height: 100%; display: flex; flex-direction: column; text-align: center;
+            transition: all 0.4s ease; position: relative; margin-top: 10px;
+        }
+        .pricing-card:hover { transform: translateY(-10px); box-shadow: var(--shadow-md); border-color: var(--aqua-2); }
+        .pricing-card.featured {
+            border: 2px solid var(--aqua-4); box-shadow: var(--shadow-md);
+            transform: scale(1.03);
+        }
+        .pricing-card.featured:hover { transform: scale(1.03) translateY(-10px); }
+        .pricing-badge {
+            position: absolute; top: -15px; right: 50%; transform: translateX(50%);
+            background: linear-gradient(135deg, var(--aqua-4) 0%, #006064 100%);
+            color: white; padding: 4px 18px; border-radius: 50px;
+            font-size: 0.8rem; font-weight: 700; white-space: nowrap;
+            box-shadow: 0 4px 12px rgba(0, 151, 167, 0.4);
+        }
+        .pricing-header h3 { color: var(--text-dark); font-weight: 700; font-size: 1.25rem; margin-bottom: 0.25rem; }
+        .pricing-header p { color: #78909c; font-size: 0.85rem; margin-bottom: 0; }
+        .pricing-price {
+            margin: 1.5rem 0; display: flex; justify-content: center; align-items: baseline; gap: 6px;
+            color: var(--text-dark);
+        }
+        .pricing-price .amount { font-size: 3rem; font-weight: 800; line-height: 1; }
+        .pricing-price .period { font-size: 0.9rem; color: #78909c; font-weight: 500; }
+        .pricing-features { list-style: none; padding: 0; margin: 0 0 2rem; text-align: right; flex-grow: 1; }
+        .pricing-features li {
+            padding: 0.55rem 0; color: #455a64; font-size: 0.95rem;
+            display: flex; align-items: center; gap: 10px;
+            border-bottom: 1px dashed var(--aqua-1);
+        }
+        .pricing-features li:last-child { border-bottom: none; }
+        .pricing-features li i { color: var(--aqua-4); font-size: 0.9rem; flex-shrink: 0; }
+        .pricing-features li.disabled { color: #b0bec5; }
+        .pricing-features li.disabled i { color: #cfd8dc; }
+        .pricing-btn { justify-content: center; width: 100%; }
+        .pricing-note { text-align: center; margin-top: 3rem; color: #546e7a; font-size: 0.95rem; }
+        .pricing-note i { color: var(--aqua-4); }
 
         .final-cta-section { padding: 5rem 0; background: linear-gradient(135deg, var(--aqua-4) 0%, #006064 100%); text-align: center; color: white; position: relative; overflow: hidden; }
         .final-cta-section::before { content: ''; position: absolute; top: -50%; left: -50%; width: 200%; height: 200%; background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 60%); animation: pulse-bg 6s infinite linear; }
@@ -225,6 +292,12 @@
                 font-weight: 700;
             }
             .landing-btn-trial-anim .btn-text-full { display: inline !important; }
+
+            /* ✅ إضافة: تجاوب قسم الأسعار */
+            .pricing-card.featured { transform: none; }
+            .pricing-card.featured:hover { transform: translateY(-6px); }
+            .pricing-price .amount { font-size: 2.4rem; }
+            .pricing-section { padding: 4rem 0; }
         }
 
         @media (max-width: 360px) {
@@ -263,6 +336,7 @@
                 <div class="slide-content">
                     <div class="glass-card">
                         <span class="slide-subtitle">مرحباً بكم في</span>
+                        <!-- ✅ إصلاح: الوسم h1 الوحيد في الصفحة (لتحسين السيو) -->
                         <h1 class="slide-title">إدارة أعمال بذكاء وكفاءة</h1>
                         <p class="slide-desc">نظام BalanceIQ المتكامل لإدارة المبيعات والمخزون والفواتير بتصميم عصري وسهل الاستخدام.</p>
                     </div>
@@ -274,7 +348,8 @@
                 <div class="slide-content">
                     <div class="glass-card">
                         <span class="slide-subtitle">تقارير دقيقة</span>
-                        <h1 class="slide-title">لوحة تحكم تفاعلية لاتخاذ القرار</h1>
+                        <!-- ✅ إصلاح: تحويل h1 إلى h2 حتى لا يتكرر الوسم h1 في الصفحة -->
+                        <h2 class="slide-title">لوحة تحكم تفاعلية لاتخاذ القرار</h2>
                         <p class="slide-desc">تابع إيراداتك ومصروفاتك لحظة بلحظة من خلال رسوم بيائية واضحة ومحدثة تلقائياً.</p>
                     </div>
                 </div>
@@ -285,7 +360,8 @@
                 <div class="slide-content">
                     <div class="glass-card">
                         <span class="slide-subtitle">مرونة تامة</span>
-                        <h1 class="slide-title">إدارة فواتير ومعاملات بدون تعقيد</h1>
+                        <!-- ✅ إصلاح: تحويل h1 إلى h2 حتى لا يتكرر الوسم h1 في الصفحة -->
+                        <h2 class="slide-title">إدارة فواتير ومعاملات بدون تعقيد</h2>
                         <p class="slide-desc">إنشاء الفواتير، إدارة الباركودات، وتتبع الشحنات بكل سهولة وسرعة فائقة.</p>
                     </div>
                 </div>
@@ -312,42 +388,43 @@
                     <div class="col-lg-4 col-md-6 fade-up">
                         <div class="feature-card">
                             <div class="feature-icon"><i class="fas fa-bolt"></i></div>
-                            <h2 class="h5">سرعة في الأداء</h2>
+                            <!-- ✅ إصلاح: h3 بدلاً من h2 للتصحيح الهرمي (h1 ثم h2 للأقسام ثم h3 للبطاقات) -->
+                            <h3 class="h5">سرعة في الأداء</h3>
                             <p>واجهة عمل خفيفة وسريعة جداً لا تحتاج إلى أجهزة حديثة، مما يوفر الوقت والجهد للموظفين.</p>
                         </div>
                     </div>
                     <div class="col-lg-4 col-md-6 fade-up">
                         <div class="feature-card">
                             <div class="feature-icon"><i class="fas fa-shield-halved"></i></div>
-                            <h2 class="h5">حماية وأمان عالي</h2>
+                            <h3 class="h5">حماية وأمان عالي</h3>
                             <p>نظام حماية متقدم لبياناتك مع إمكانية عمل نسخ احتياطية تلقائية لحظية لضمان عدم فقدان أي معلومة.</p>
                         </div>
                     </div>
                     <div class="col-lg-4 col-md-6 fade-up">
                         <div class="feature-card">
                             <div class="feature-icon"><i class="fas fa-barcode"></i></div>
-                            <h2 class="h5">إدارة باركود ذكية</h2>
+                            <h3 class="h5">إدارة باركود ذكية</h3>
                             <p>ربط مباشر مع أجهزة قراءة الباركود لتسجيل المبيعات وإدارة المخزون بدقة متناهية وبدون أخطاء.</p>
                         </div>
                     </div>
                     <div class="col-lg-4 col-md-6 fade-up">
                         <div class="feature-card">
                             <div class="feature-icon"><i class="fas fa-chart-pie"></i></div>
-                            <h2 class="h5">تقارير تفصيلية</h2>
+                            <h3 class="h5">تقارير تفصيلية</h3>
                             <p>لوحة تحكم متكاملة تعرض لك الأرباح، الخسائر، والحركة التشغيلية بشكل رسوم بيائية واضحة.</p>
                         </div>
                     </div>
                     <div class="col-lg-4 col-md-6 fade-up">
                         <div class="feature-card">
                             <div class="feature-icon"><i class="fas fa-users-gear"></i></div>
-                            <h2 class="h5">صلاحيات متعددة</h2>
+                            <h3 class="h5">صلاحيات متعددة</h3>
                             <p>تحكم كامل في صلاحيات المستخدمين (محاسب، مدير، بائع)، لضمان تنظيم العمل داخل شركتك.</p>
                         </div>
                     </div>
                     <div class="col-lg-4 col-md-6 fade-up">
                         <div class="feature-card">
                             <div class="feature-icon"><i class="fas fa-headset"></i></div>
-                            <h2 class="h5">دعم فني متواصل</h2>
+                            <h3 class="h5">دعم فني متواصل</h3>
                             <p>فريق دعم فني متخصص جاهز لمساعدتك على مدار الساعة لحل أي استفسار أو مشكلة تقنية فوراً.</p>
                         </div>
                     </div>
@@ -394,11 +471,89 @@
             </div>
         </section>
 
+        <!-- ✅ إضافة: قسم الأسعار -->
+        <section class="pricing-section" id="pricing">
+            <div class="container">
+                <h2 class="section-title fade-up">باقات أسعار مرنة لكل مرحلة من عملك</h2>
+                <!-- ⚠️ ملاحظة: الأسعار والمزايا أدناه أمثلة توضيحية — عدّلها حسب خطتك الفعلية -->
+                <div class="row g-4 justify-content-center">
+                    <!-- الباقة الأساسية -->
+                    <div class="col-lg-4 col-md-6 fade-up">
+                        <div class="pricing-card">
+                            <div class="pricing-header">
+                                <h3>الباقة الأساسية</h3>
+                                <p>مثالية للمشاريع الناشئة والمتاجر الصغيرة</p>
+                            </div>
+                            <div class="pricing-price">
+                                <span class="amount" dir="ltr">$15</span>
+                                <span class="period">/ شهرياً</span>
+                            </div>
+                            <ul class="pricing-features">
+                                <li><i class="fas fa-check"></i> حتى 500 فاتورة شهرياً</li>
+                                <li><i class="fas fa-check"></i> إدارة المبيعات والمخزون</li>
+                                <li><i class="fas fa-check"></i> مستخدم واحد</li>
+                                <li><i class="fas fa-check"></i> تقارير أساسية</li>
+                                <li class="disabled"><i class="fas fa-xmark"></i> متجر إلكتروني مدمج</li>
+                                <li class="disabled"><i class="fas fa-xmark"></i> دعم فني ذو أولوية</li>
+                            </ul>
+                            <a href="{% url 'trials:request_trial' %}" class="landing-btn landing-btn-ghost-dark pricing-btn">ابدأ الآن</a>
+                        </div>
+                    </div>
+                    <!-- الباقة الاحترافية (الأكثر اختياراً) -->
+                    <div class="col-lg-4 col-md-6 fade-up">
+                        <div class="pricing-card featured">
+                            <div class="pricing-badge">الأكثر اختياراً</div>
+                            <div class="pricing-header">
+                                <h3>الباقة الاحترافية</h3>
+                                <p>الأنسب للشركات والمتاجر النامية</p>
+                            </div>
+                            <div class="pricing-price">
+                                <span class="amount" dir="ltr">$35</span>
+                                <span class="period">/ شهرياً</span>
+                            </div>
+                            <ul class="pricing-features">
+                                <li><i class="fas fa-check"></i> فواتير غير محدودة</li>
+                                <li><i class="fas fa-check"></i> متجر إلكتروني مدمج</li>
+                                <li><i class="fas fa-check"></i> حتى 5 مستخدمين بصلاحيات متعددة</li>
+                                <li><i class="fas fa-check"></i> تقارير ورسوم بيانية تفصيلية</li>
+                                <li><i class="fas fa-check"></i> إدارة باركود وتتبع شحنات</li>
+                                <li><i class="fas fa-check"></i> دعم فني على مدار الساعة</li>
+                            </ul>
+                            <a href="{% url 'trials:request_trial' %}" class="landing-btn landing-btn-primary pricing-btn">ابدأ الآن</a>
+                        </div>
+                    </div>
+                    <!-- الباقة المؤسسية -->
+                    <div class="col-lg-4 col-md-6 fade-up">
+                        <div class="pricing-card">
+                            <div class="pricing-header">
+                                <h3>الباقة المؤسسية</h3>
+                                <p>حلول متقدمة للشركات متعددة الفروع</p>
+                            </div>
+                            <div class="pricing-price">
+                                <span class="amount" dir="ltr">$70</span>
+                                <span class="period">/ شهرياً</span>
+                            </div>
+                            <ul class="pricing-features">
+                                <li><i class="fas fa-check"></i> كل مزايا الباقة الاحترافية</li>
+                                <li><i class="fas fa-check"></i> مستخدمون وفروع غير محدودة</li>
+                                <li><i class="fas fa-check"></i> نسخ احتياطي لحظي للبيانات</li>
+                                <li><i class="fas fa-check"></i> مدير حساب مخصص</li>
+                                <li><i class="fas fa-check"></i> تدريب مجاني لفريق العمل</li>
+                            </ul>
+                            <a href="{% url 'trials:request_trial' %}" class="landing-btn landing-btn-ghost-dark pricing-btn">ابدأ الآن</a>
+                        </div>
+                    </div>
+                </div>
+                <p class="pricing-note fade-up"><i class="fas fa-shield-halved"></i> جميع الباقات تشمل نسخة تجريبية مجانية — بدون الحاجة لبطاقة ائتمانية.</p>
+            </div>
+        </section>
+
         <!-- قسم دعوة للعمل -->
         <section class="final-cta-section">
             <div class="container">
                 <h2 class="fade-up">جاهز لتطوير أعمالك؟</h2>
                 <p class="fade-up">انضم لمئات الشركات التي وثقت بنظام BalanceIQ وابدأ رحلتك الآن مجاناً.</p>
+                <!-- ⚠️ تنبيه: هذا الزر يشير إلى accounts:trial_request بينما زر النافبار يشير إلى trials:request_trial — يُنصح بتوحيد المسارين -->
                 <a href="{% url 'accounts:trial_request' %}" class="landing-btn landing-btn-trial-anim btn-final fade-up">
                     <i class="fas fa-rocket"></i> ابدأ تجربتك المجانية الآن
                 </a>
@@ -409,7 +564,8 @@
     <!-- الفوتر -->
     <footer class="site-footer">
         <div class="container">
-            <p>جميع الحقوق محفوظة &copy; 2024 BalanceIQ | تصميم وتطوير بـ <i class="fas fa-heart" style="color:var(--aqua-3);"></i></p>
+            <!-- ✅ إصلاح: السنة ديناميكية تلقائياً عبر وسم Django بدلاً من 2024 الثابتة -->
+            <p>جميع الحقوق محفوظة &copy; {% now "Y" %} BalanceIQ | تصميم وتطوير بـ <i class="fas fa-heart" style="color:var(--aqua-3);"></i></p>
         </div>
     </footer>
 
@@ -450,7 +606,7 @@
         const progressBar = document.getElementById('progressBar');
         const slider = document.getElementById('heroSlider');
         
-        let currentIndex = 0, slideInterval, progressInterval, progressWidth = 0;
+        let currentIndex = 0, slideInterval = null, progressInterval = null, progressWidth = 0;
         const autoPlayDelay = 6000;
 
         slides.forEach(function(_, index) {
@@ -468,6 +624,9 @@
             currentIndex = index;
             slides[currentIndex].classList.add('active'); 
             dots[currentIndex].classList.add('active');
+            // ✅ إصلاح: إعادة ضبط مؤقت التشغيل التلقائي أيضاً وليس شريط التقدم فقط،
+            // حتى لا تنتقل الشريحة قبل موعدها بعد النقر اليدوي (أسهم/نقاط/لمس/لوحة مفاتيح)
+            resetAutoPlay();
             resetProgress();
         }
 
@@ -483,17 +642,19 @@
                 goToSlide((currentIndex === slides.length - 1) ? 0 : currentIndex + 1); 
             }, autoPlayDelay); 
         }
-        
-        function resetAutoPlay() { clearInterval(slideInterval); startAutoPlay(); }
 
-        slider.addEventListener('mouseenter', function() { 
-            clearInterval(slideInterval); 
-            clearInterval(progressInterval); 
-        });
-        slider.addEventListener('mouseleave', function() { 
-            resetAutoPlay(); 
-            startProgress(); 
-        });
+        function stopAutoPlay() {
+            clearInterval(slideInterval);
+            clearInterval(progressInterval);
+        }
+
+        // ✅ إصلاح: إعادة ضبط التشغيل التلقائي مع احترام حالة التحويم
+        // (إذا كانت الفأرة فوق السلايدر يبقى متوقفاً كما في سلوك التحويم الأصلي)
+        function resetAutoPlay() { 
+            stopAutoPlay();
+            if (slider.matches(':hover')) return;
+            startAutoPlay(); 
+        }
 
         function startProgress() {
             progressWidth = 0; 
@@ -513,6 +674,13 @@
             if (slider.matches(':hover')) return; 
             startProgress(); 
         }
+
+        // إيقاف مؤقت عند التحويم بالفأرة
+        slider.addEventListener('mouseenter', stopAutoPlay);
+        slider.addEventListener('mouseleave', function() { 
+            resetAutoPlay(); 
+            startProgress(); 
+        });
 
         // دعم لوحة المفاتيح
         document.addEventListener('keydown', function(e) { 

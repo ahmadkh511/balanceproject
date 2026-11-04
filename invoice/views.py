@@ -57,7 +57,8 @@ from django.views.generic import CreateView, DeleteView, DetailView, ListView, U
 from accounts.models import Profile
 from accounts.views import is_staff_user
 from invoice.models import PricingSetting, Product, PricingTier, ProductPriceTier, Sale, Purch, SaleReturn, PurchaseReturn, CashTransaction
-from invoice.utils import get_active_email_connection
+
+from invoice.utils import get_active_email_connection, superuser_required
 
 # ==================== النماذج المحلية (Models) ====================
 from .models import (
@@ -7822,6 +7823,7 @@ def save_pricing_password(request):
 
 
 @login_required
+@superuser_required
 def backup_page(request):
     """عرض صفحة النسخ الاحتياطي مع قائمة النسخ المخزنة على السيرفر"""
     server_backups = get_server_backups()
@@ -7834,6 +7836,7 @@ def backup_page(request):
 
 
 @login_required
+@superuser_required
 def download_backup(request):
     """إنشاء نسخة احتياطية جديدة وتحميلها وحفظها على السيرفر"""
     if request.method == 'POST':
@@ -7862,6 +7865,7 @@ def download_backup(request):
 
 
 @login_required
+@superuser_required
 def download_server_backup(request, filename):
     """تحميل نسخة احتياطية مخزنة على السيرفر (سواء عادية أو نسخة أمان)"""
     try:
@@ -7889,6 +7893,7 @@ def download_server_backup(request, filename):
 
 
 @login_required
+@superuser_required
 def delete_server_backup_view(request):
     """حذف نسخة احتياطية من السيرفر (يُستدعى عبر AJAX)"""
     if request.method == 'POST':
@@ -7916,6 +7921,7 @@ def delete_server_backup_view(request):
 
 
 @login_required
+@superuser_required
 def upload_restore(request):
     """استرجاع نسخة احتياطية من ملف مرفوع"""
     if request.method == 'POST':
@@ -8091,6 +8097,7 @@ def upload_restore(request):
 
 
 @login_required
+@superuser_required
 def factory_reset_system(request):
     """تصفير المصنع - مسح جميع البيانات وإعادة النظام لوضعه الأولي"""
     if not request.user.is_superuser:

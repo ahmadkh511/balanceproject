@@ -243,8 +243,8 @@ urlpatterns = [
     
     path('save-pricing-password/', views.save_pricing_password, name='save_pricing_password'),
 
-    path('test-backup/', views.download_backup, name='download_backup'),
-    path('test-restore/', views.upload_restore, name='upload_restore'),
+    #path('test-backup/', views.download_backup, name='download_backup'),
+    #path('test-restore/', views.upload_restore, name='upload_restore'),
 
 
 

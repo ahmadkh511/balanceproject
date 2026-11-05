@@ -228,6 +228,8 @@ def purch_list(request):
     })
 
 
+
+
 @login_required
 @permission_required('invoice.add_purch', raise_exception=True)
 def purch_create(request):
@@ -288,6 +290,12 @@ def purch_create(request):
                     
                     for i, instance in enumerate(instances):
                         instance.purch = purchase
+
+                        # ★★★ سعر الصرف التاريخي: يُخزَّن في كل بند لحظة التحرير ★★★
+                        if purchase.purch_currency and not purchase.purch_currency.is_default:
+                            instance.exchange_rate_at_purchase = purchase.purch_currency.exchange_rate or Decimal('1.00')
+                        else:
+                            instance.exchange_rate_at_purchase = Decimal('1.00')
 
                         product_id_from_form = request.POST.get(f'items-{i}-product')
                         product_search_value = request.POST.get(f'items-{i}-product_search', '')
@@ -562,6 +570,8 @@ def purch_detail(request, slug):
     return render(request, 'invoice/purchase/purch_detail.html', context)
 
 
+
+
 @login_required
 @permission_required('invoice.change_purch', raise_exception=True)
 def purch_edit(request, slug):
@@ -595,6 +605,10 @@ def purch_edit(request, slug):
     if request.method == 'POST':
         post_data = request.POST.copy()
         files_data = request.FILES
+
+        # ★★★ سعر الصرف التاريخي: يُقرأ من الفاتورة قبل أي تعديل أو حفظ ★★★
+        original_currency_id = purchase.purch_currency_id
+        original_rate = purchase.get_historical_exchange_rate()
 
         # معالجة حقل المورد إذا جاء من حقل البحث
         supplier_search_value = post_data.get('supplier-search-input', '')
@@ -655,6 +669,18 @@ def purch_edit(request, slug):
                     saved_purchase = form.save()
                     saved_items = formset.save(commit=False)
 
+                    # ★★★ تحديد سعر الصرف الفعّال لهذه جلسة التعديل ★★★
+                    currency_changed = (original_currency_id != saved_purchase.purch_currency_id)
+                    if not saved_purchase.purch_currency or saved_purchase.purch_currency.is_default:
+                        # العملة الأساسية → لا تحويل إطلاقاً
+                        effective_rate = Decimal('1.00')
+                    elif currency_changed:
+                        # غيّر المستخدم عملة الفاتورة كلياً → سعر اليوم للعملة الجديدة
+                        effective_rate = saved_purchase.purch_currency.exchange_rate or Decimal('1.00')
+                    else:
+                        # نفس العملة → السعر التاريخي المخزَّن، لا يتأثر بسعر اليوم أبداً
+                        effective_rate = original_rate
+
                     for i, item_form in enumerate(formset):
                         item = item_form.instance
                         original_item = None
@@ -672,6 +698,19 @@ def purch_edit(request, slug):
                                 pass
 
                         item.purch = saved_purchase
+
+                        # ★★★ ضبط سعر الصرف للبند: الجديد يأخذ سعر الفاتورة، والقديم تاريخه يُحترم ★★★
+                        if item.pk:
+                            if currency_changed:
+                                # تغيّرت عملة الفاتورة كلياً → كل البنود بسعر العملة الجديدة
+                                item.exchange_rate_at_purchase = effective_rate
+                            elif effective_rate != Decimal('1.00') and (not item.exchange_rate_at_purchase or item.exchange_rate_at_purchase == Decimal('1.00')):
+                                # فاتورة قديمة بنودها لم تُحوَّل من قبل → توحيد بسعر الفاتورة عند أول تعديل
+                                item.exchange_rate_at_purchase = effective_rate
+                            # غير ذلك: سعر البند المخزَّن يبقى كما هو (التاريخي لا يُمسّ)
+                        else:
+                            # بند جديد يُضاف لفاتورة قائمة → سعر الفاتورة التاريخي (وليس سعر اليوم)
+                            item.exchange_rate_at_purchase = effective_rate
 
                         # رفع الصور
                         if f'items-{i}-product_image_upload' in files_data:
@@ -857,6 +896,10 @@ def purch_edit(request, slug):
             original_purchase=purchase, returned_items_data=effective_quantities
         )
 
+        # ★ شفافية: إخبار المستخدم بسعر الصرف المسجَّل قبل أن يعدّل
+        if purchase.purch_currency and not purchase.purch_currency.is_default:
+            messages.info(request, f"سعر الصرف المسجَّل في هذه الفاتورة: {purchase.get_historical_exchange_rate()} — أي تعديل سيُحسب بهذا السعر وليس بسعر اليوم.")
+
     # ★ تمرير الكميات الفعالة كـ JSON للقالب
     effective_quantities_json = json.dumps({
         str(k): str(v) for k, v in effective_quantities.items()
@@ -867,7 +910,6 @@ def purch_edit(request, slug):
         'title': f'تعديل فاتورة الشراء {purchase.uniqueId}',
         'effective_quantities_json': effective_quantities_json,
     })
-
 
 
 
@@ -980,6 +1022,7 @@ def purch_delete(request, slug):
 #================================================
 #                 مرتجع المشتريات              #
 # ===============================================
+
 
 @login_required
 @permission_required('invoice.add_purchasereturn', raise_exception=True)
@@ -1167,13 +1210,17 @@ def purch_return_create_view(request, slug):
                     # ==================== تسجيل حركة الصندوق ====================
                     if is_cash_payment and paid_amount > 0:
                         try:
+                            # ★★★ المبلغ المستلم يُحوَّل إلى العملة الأساسية بسعر فاتورة الشراء الأصلية (تاريخي) ★★★
+                            _return_rate = original_purchase.get_historical_exchange_rate()
+                            _converted_in = (paid_amount * _return_rate).quantize(Decimal('0.01'))
+
                             # تسجيل حركة الصندوق التفصيلية (CashTransaction)
                             CashTransaction.objects.create(
                                 transaction_date=timezone.now(), 
-                                amount_in=paid_amount,
+                                amount_in=_converted_in,
                                 amount_out=Decimal('0.00'),
                                 transaction_type='purchase_return',
-                                notes=f"استلام {paid_amount} مقابل مرتجع فاتورة {original_purchase.uniqueId}",
+                                notes=f"استلام {paid_amount} بسعر صرف {_return_rate} مقابل مرتجع فاتورة {original_purchase.uniqueId}",
                                 created_by=request.user, 
                                 purchase_invoice=original_purchase,
                                 purchase_return=purchase_return,
@@ -1308,6 +1355,8 @@ def purch_return_create_view(request, slug):
         'expected_return_total': expected_return_total,
     }
     return render(request, 'invoice/purchase/purch_return_form.html', context)
+
+
 
 
 @login_required

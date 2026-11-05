@@ -3,6 +3,18 @@
 
 {% block title %}تفاصيل حركة الصندوق{% endblock %}
 
+{% block extra_css %}
+    <style nonce="{{ csp_nonce }}">
+    /* ==========================================
+       مربع اختيار إظهار/إخفاء عبارة سعر الصرف في الملاحظات
+       (نفس آلية صفحة كشف الصندوق — الوضع الافتراضي هنا: مخفي)
+       ========================================== */
+    .rate-toggle { cursor: pointer; user-select: none; font-size: 0.85rem; color: #6c757d; margin-bottom: 0; }
+    .rate-toggle input { accent-color: #0097a7; margin-inline-end: 0.3rem; }
+    #notesText.hide-rate .rate-part { display: none; }
+    </style>
+{% endblock %}
+
 {% block content %}
 <div class="container-fluid py-4">
     <div class="row justify-content-center">
@@ -44,8 +56,14 @@
                     </div>
                     <div class="row mb-3">
                         <div class="col-12">
-                            <strong>الملاحظات:</strong><br>
-                            {{ transaction.notes|default:"-" }}
+                            <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-1">
+                                <strong>الملاحظات:</strong>
+                                <label class="rate-toggle" title="إظهار أو إخفاء عبارة سعر الصرف في الملاحظات (الاختيار محفوظ لهذا الجهاز)">
+                                    <input type="checkbox" id="showRateToggle">
+                                    <span>إظهار سعر الصرف</span>
+                                </label>
+                            </div>
+                            <span id="notesText">{{ transaction.notes|default:"-" }}</span>
                         </div>
                     </div>
                     {% if transaction.purchase_invoice %}
@@ -71,4 +89,62 @@
         </div>
     </div>
 </div>
+
+<script nonce="{{ csp_nonce }}">
+document.addEventListener('DOMContentLoaded', function () {
+
+    /* ==========================================
+       إظهار/إخفاء عبارة سعر الصرف في الملاحظات
+       - نفس آلية صفحة كشف الصندوق: نلفّ العبارة في وسم .rate-part
+         ثم نتحكم بها من مربع الاختيار
+       - الفرق الوحيد: الوضع الافتراضي هنا "مخفي" ويظهر العبارة
+         فقط عند تحديد مربع الاختيار
+       - الاختيار يُحفظ في هذا المتصفح (localStorage) بنفس مفتاح
+         كشف الصندوق cash_tx_show_rate ليتطابق سلوك الصفحتين
+       - الملاحظة الأصلية محفوظة كاملة ولا يتم تعديلها أبداً
+       ========================================== */
+    var RATE_KEY = 'cash_tx_show_rate';
+    var notesEl = document.getElementById('notesText');
+    var rateToggle = document.getElementById('showRateToggle');
+
+    function wrapRateParts() {
+        if (!notesEl || notesEl.getAttribute('data-rate-done')) return;
+        notesEl.setAttribute('data-rate-done', '1');
+        var text = notesEl.textContent || '';
+        var esc = text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+        var pieces = esc.split(/(\(سعر الصرف:[^)]*\)|بسعر صرف\s*[0-9][0-9.,]*)/g);
+        var hasRate = false;
+        var html = pieces.map(function (p) {
+            if (p.indexOf('(سعر الصرف:') === 0 || p.indexOf('بسعر صرف') === 0) {
+                hasRate = true;
+                return '<span class="rate-part">' + p + '</span>';
+            }
+            return p;
+        }).join('');
+        if (hasRate) {
+            notesEl.innerHTML = html;
+        } else {
+            // لا توجد عبارة سعر صرف في هذه الملاحظات — إخفاء مربع الاختيار نهائياً
+            if (rateToggle) rateToggle.closest('.rate-toggle').style.display = 'none';
+        }
+    }
+
+    function applyRateVisibility() {
+        if (!notesEl || !rateToggle) return;
+        notesEl.classList.toggle('hide-rate', !rateToggle.checked);
+        try { localStorage.setItem(RATE_KEY, rateToggle.checked ? '1' : '0'); } catch (e) {}
+    }
+
+    if (notesEl && rateToggle) {
+        // الوضع الافتراضي: مخفي — تظهر العبارة فقط إذا كان الاختيار
+        // المحفوظ على هذا الجهاز "إظهار"
+        var savedRate = null;
+        try { savedRate = localStorage.getItem(RATE_KEY); } catch (e) {}
+        rateToggle.checked = (savedRate === '1');
+        wrapRateParts();
+        applyRateVisibility();
+        rateToggle.addEventListener('change', applyRateVisibility);
+    }
+});
+</script>
 {% endblock %}

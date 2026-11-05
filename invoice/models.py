@@ -337,6 +337,8 @@ class PriceType(models.Model):
 # ===============================================
 
 
+
+
 class Purch(models.Model):
     uniqueId = models.CharField(max_length=100, unique=True, blank=True, null=True, verbose_name=_("الرقم المسلسل"))
     slug = models.SlugField(max_length=225, unique=True, blank=True, null=True)
@@ -451,6 +453,24 @@ class Purch(models.Model):
         self.purch_addition, self.paid_amount = Decimal(str(addition)), Decimal(str(paid_amount))
         self.calculate_and_save_totals()
     
+    # ★★★ سعر الصرف الفعّال (التاريخي) لهذه الفاتورة ★★★
+    def get_historical_exchange_rate(self):
+        """
+        قواعد السعر المتفق عليها:
+        - عملة أساسية أو بلا عملة → 1.00 (لا تحويل إطلاقاً)
+        - فاتورة مخزَّن في بنودها سعر صرف حقيقي (غير 1.00) → يُعاد هذا السعر المخزَّن
+          حتى لو تغيّر سعر الصرف في صفحة العملات (التاريخي لا يتغير أبداً)
+        - فاتورة قديمة بنودها كلها 1.00 → سعر الصرف الحالي للعملة من جدول العملات
+        """
+        currency = self.purch_currency
+        if not currency or currency.is_default:
+            return Decimal('1.00')
+        for item in self.purchitem_set.all():
+            stored = item.exchange_rate_at_purchase
+            if stored and stored != Decimal('1.00') and stored > 0:
+                return stored
+        return currency.exchange_rate if currency.exchange_rate else Decimal('1.00')
+
     # ★★★ الدالة الوحيدة المعدلة في هذا الكلاس ★★★
     def create_cash_transaction(self):
         """
@@ -462,6 +482,9 @@ class Purch(models.Model):
         
         ملاحظة تاريخية: الكود القديم كان عند التحويل إلى آجل يحدّث الحركة بمبلغ صفر،
         فترفضها clean() في CashTransaction (داخل=صفر وخارج=صفر) ويفشل الحفظ كلياً.
+
+        ★ المبلغ المدفوع (بعملة الفاتورة) يُحوَّل إلى العملة الأساسية بسعر الصرف المخزَّن
+        للفاتورة (get_historical_exchange_rate). الفاتورة بالعملة الأساسية → السعر 1 → لا تغيير.
         """
         existing_transaction = CashTransaction.objects.filter(
             purchase_invoice=self, transaction_type='purchase_payment'
@@ -471,18 +494,22 @@ class Purch(models.Model):
         should_have_transaction = is_cash and self.paid_amount > 0
 
         if should_have_transaction:
+            # ★★★ التحويل إلى العملة الأساسية بسعر الصرف المخزَّن للفاتورة ★★★
+            _rate = self.get_historical_exchange_rate()
+            _converted_out = (self.paid_amount * _rate).quantize(Decimal('0.01'))
+
             if not existing_transaction:
                 CashTransaction.objects.create(
                     transaction_date=timezone.now(),
-                    amount_out=self.paid_amount,
+                    amount_out=_converted_out,
                     transaction_type='purchase_payment',
                     payment_method=self.purch_payment_method,
                     purchase_invoice=self,
-                    notes=f"دفعة مقابل فاتورة شراء {self.uniqueId}",
+                    notes=f"دفعة مقابل فاتورة شراء {self.uniqueId} (سعر الصرف: {_rate})",
                     created_by=self.created_by
                 )
-            elif existing_transaction.amount_out != self.paid_amount:
-                existing_transaction.amount_out = self.paid_amount
+            elif existing_transaction.amount_out != _converted_out:
+                existing_transaction.amount_out = _converted_out
                 existing_transaction.save()
         elif existing_transaction:
             # تحولت الفاتورة إلى آجل أو أصبح المدفوع صفراً → حذف الحركة
@@ -499,6 +526,10 @@ class Purch(models.Model):
     @property
     def has_return(self):
         return self.purchase_returns.exists()
+
+
+
+
 
 
 class PurchItem(models.Model):
@@ -529,7 +560,10 @@ class PurchItem(models.Model):
         if not self.item_name: self.item_name = self.product.product_name if self.product else "مادة غير محددة"
         if self.purchased_quantity and self.unit_price:
             self.purch_total = (self.purchased_quantity * self.unit_price).quantize(Decimal('0.01'))
-        self.unit_price_base_currency = self.unit_price
+        # ★★★ سعر الوحدة بالعملة الأساسية = السعر × سعر الصرف المخزَّن لهذا البند ★★★
+        # (السعر يُضبط من مسار الفاتورة عند الإنشاء/التعديل ويبقى ثابتاً تاريخياً)
+        _rate = self.exchange_rate_at_purchase if self.exchange_rate_at_purchase else Decimal('1.00')
+        self.unit_price_base_currency = (self.unit_price * _rate).quantize(Decimal('0.01'))
         super().save(*args, **kwargs)
     
     def update_product_stock(self, old_quantity=None, old_product=None):
@@ -588,6 +622,8 @@ class PurchItem(models.Model):
         except Exception as e:
             logger.error(f"❌ خطأ في حذف البند: {e}")
             raise
+
+
 
 
 class PurchItemBarcode(models.Model):

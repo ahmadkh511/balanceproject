@@ -840,6 +840,7 @@ class PurchaseReturnItemBarcode(models.Model):
 #             المبيعات 
 # ========================================
 
+
 class Sale(models.Model):
     uniqueId = models.CharField(max_length=100, unique=True, blank=True, null=True, verbose_name=_("الرقم المسلسل"))
     slug = models.SlugField(max_length=225, unique=True, blank=True, null=True)
@@ -921,6 +922,29 @@ class Sale(models.Model):
             return {'singular': 'ليرة سورية', 'dual': 'ليرتان سوريتان', 'plural': 'ليرات سورية', 'fraction': 'قرش', 'fraction_dual': 'قرشان', 'fraction_plural': 'قروش', 'decimals': 2}
         return {'singular': self.sale_currency.singular_ar, 'dual': self.sale_currency.dual_ar, 'plural': self.sale_currency.plural_ar, 'fraction': self.sale_currency.fraction_name_ar, 'fraction_dual': self.sale_currency.fraction_dual_ar, 'fraction_plural': self.sale_currency.fraction_plural_ar, 'decimals': self.sale_currency.decimals}
     
+    # ==========================================================
+    # ✅✅✅ السعر التاريخي — سعر صرف فاتورة البيع وقت تحريرها
+    # ==========================================================
+    def get_historical_exchange_rate(self):
+        """
+        سعر الصرف التاريخي لهذه الفاتورة (قراءة فقط — لا يعدّل قاعدة البيانات).
+        - العملة الأساسية أو بلا عملة → 1.00 دائماً.
+        - يقرأ أولاً من exchange_rate_at_sale المخزَّن في بنود الفاتورة (أول سعر مخزَّن حقيقي).
+        - احتياطاً للفواتير القديمة المخزَّنة قبل تفعيل السعر التاريخي → سعر الصرف الحالي من جدول العملات.
+        """
+        if not self.sale_currency or self.sale_currency.is_default:
+            return Decimal('1.00')
+        if self.pk:
+            stored_rate = (
+                self.saleitem_set
+                .exclude(exchange_rate_at_sale=Decimal('1.00'))
+                .values_list('exchange_rate_at_sale', flat=True)
+                .first()
+            )
+            if stored_rate:
+                return Decimal(str(stored_rate))
+        return self.sale_currency.exchange_rate or Decimal('1.00')
+    
     def calculate_and_save_totals(self):
         try:
             self.sale_subtotal = self.saleitem_set.aggregate(total_sum=Sum('sale_total'))['total_sum'] or Decimal('0.00')
@@ -937,7 +961,7 @@ class Sale(models.Model):
         self.sale_tax_percentage, self.sale_discount = Decimal(str(tax_percentage)), Decimal(str(discount))
         self.sale_addition, self.paid_amount = Decimal(str(addition)), Decimal(str(paid_amount))
         self.calculate_and_save_totals()
-    
+
     # ==========================================================
     # ✅✅✅ تسوية حركات الصندوق — حركة واحدة فقط تعكس paid_amount
     # ==========================================================
@@ -995,6 +1019,8 @@ class Sale(models.Model):
     def has_return(self): return self.sale_returns.exists()
 
 
+
+
 class SaleItem(models.Model):
     sale = models.ForeignKey('Sale', on_delete=models.CASCADE, verbose_name=_("فاتورة البيع"))
     product = models.ForeignKey('Product', on_delete=models.SET_NULL, null=True, blank=True, related_name='sale_items', verbose_name=_("المنتج المرتبط"))
@@ -1027,7 +1053,19 @@ class SaleItem(models.Model):
         if total_q > 0: self.sold_quantity = total_q
         if self.sold_quantity and self.unit_price:
             self.sale_total = (self.sold_quantity * self.unit_price).quantize(Decimal('0.01'))
-        self.unit_price_base_currency = self.unit_price
+        # ==================================================
+        # ✅✅✅ السعر التاريخي — تحويل سعر الوحدة إلى العملة الأساسية
+        # عملة غير أساسية → unit_price × exchange_rate_at_sale
+        # عملة أساسية أو بلا عملة → كما هو، والسعر التاريخي 1.00 دائماً
+        # السعر المخزَّن الحقيقي (غير الافتراضي) لا يتغير هنا أبداً (قاعدة القفل)
+        # ==================================================
+        if self.sale_currency and not self.sale_currency.is_default:
+            if not self.exchange_rate_at_sale or self.exchange_rate_at_sale <= 0:
+                self.exchange_rate_at_sale = self.sale_currency.exchange_rate or Decimal('1.00')
+            self.unit_price_base_currency = (self.unit_price * self.exchange_rate_at_sale).quantize(Decimal('0.01'))
+        else:
+            self.exchange_rate_at_sale = Decimal('1.00')
+            self.unit_price_base_currency = self.unit_price
         super().save(*args, **kwargs)
 
     def update_product_stock(self, old_quantity=None, old_product=None):
@@ -1068,6 +1106,8 @@ class SaleItem(models.Model):
             raise
 
 
+
+
 class SaleItemBarcode(models.Model):
     sale_item = models.ForeignKey('SaleItem', on_delete=models.CASCADE, related_name='item_barcodes', verbose_name=_("بند البيع"))
     barcode = models.ForeignKey('Barcode', on_delete=models.CASCADE, related_name='sale_items', verbose_name=_("الباركود"))
@@ -1105,7 +1145,7 @@ class SaleItemBarcode(models.Model):
 
 
 #================================================
-#        المبيعات  
+#       مرتجع المبيعات 
 # ===============================================
 
 

@@ -1532,6 +1532,13 @@ def purchase_return_delete_view(request, slug):
 
 
 
+
+#================================================
+#                المبيعات            #
+# ===============================================#
+
+
+
 @login_required
 @permission_required('invoice.add_sale', raise_exception=True)
 def sale_create(request):
@@ -1656,6 +1663,18 @@ def sale_create(request):
                             if errors:
                                 raise ValidationError(f"خطأ في بند '{product.product_name}': " + " | ".join(errors))
                         
+                        # ==================================================
+                        # ✅✅✅ السعر التاريخي: تثبيت عملة الفاتورة وسعرها لحظة الحفظ
+                        # كل بنود الفاتورة الجديدة تأخذ سعر صرف العملة من جدول العملات
+                        # لحظة الإنشاء، ويُخزَّن ولا يتغير لاحقاً (قاعدة القفل).
+                        # ==================================================
+                        if sale.sale_currency and not sale.sale_currency.is_default:
+                            instance.sale_currency = sale.sale_currency
+                            instance.exchange_rate_at_sale = sale.sale_currency.exchange_rate or Decimal('1.00')
+                        else:
+                            instance.sale_currency = None
+                            instance.exchange_rate_at_sale = Decimal('1.00')
+                        
                         instance.save()
                         
                         if instance.product:
@@ -1720,6 +1739,7 @@ def sale_create(request):
 
 
 
+
 def handle_sale_cash_transaction(sale):
     """
     تسوية حركات الصندوق مع paid_amount النهائي.
@@ -1773,6 +1793,7 @@ def handle_sale_cash_transaction(sale):
                 to_remove = Decimal('0.00')
     # diff == 0 → لا شيء ✓
 
+
 @login_required
 @permission_required('invoice.view_sale', raise_exception=True)
 def sale_detail(request, slug):
@@ -1796,6 +1817,7 @@ def sale_detail(request, slug):
     
     context = {'sale': sale, 'items_with_barcodes': items_with_barcodes, 'total_items': total_items, 'total_quantity': total_quantity, 'title': f'تفاصيل فاتورة البيع {sale.uniqueId}'}
     return render(request, 'invoice/sale/sale_detail.html', context)
+
 
 
 
@@ -1837,6 +1859,9 @@ def sale_edit(request, slug):
         if form.is_valid() and formset.is_valid():
             try:
                 with transaction.atomic():
+                    # ✅✅✅ السعر التاريخي: حفظ عملة الفاتورة قبل التعديل لكشف تغيير العملة
+                    old_currency_id = sale.sale_currency_id
+                    
                     # حفظ الفاتورة الأساسية
                     updated_sale = form.save(commit=False)
                     
@@ -1997,6 +2022,23 @@ def sale_edit(request, slug):
                                 raise ValidationError(
                                     f"خطأ في بند '{product.product_name}': " + " | ".join(errors)
                                 )
+                        
+                        # ==================================================
+                        # ✅✅✅ السعر التاريخي: عملة الفاتورة وسعرها التاريخي للبند
+                        # - تغيّر عملة الفاتورة → إعادة تثبيت سعر جديد لكل البنود
+                        # - بند قائم بسعر مخزَّن حقيقي → يبقى كما هو (قاعدة القفل)
+                        # - بند جديد أو بند قديم بلا سعر مخزَّن → سعر الفاتورة التاريخي
+                        #   (من بنود الفاتورة أولاً، وجدول العملات احتياطاً)
+                        # ==================================================
+                        if updated_sale.sale_currency and not updated_sale.sale_currency.is_default:
+                            instance.sale_currency = updated_sale.sale_currency
+                            if old_currency_id != updated_sale.sale_currency_id:
+                                instance.exchange_rate_at_sale = updated_sale.sale_currency.exchange_rate or Decimal('1.00')
+                            elif not instance.exchange_rate_at_sale or instance.exchange_rate_at_sale == Decimal('1.00'):
+                                instance.exchange_rate_at_sale = updated_sale.get_historical_exchange_rate()
+                        else:
+                            instance.sale_currency = None
+                            instance.exchange_rate_at_sale = Decimal('1.00')
                         
                         # حفظ البند
                         instance.save()
@@ -2638,6 +2680,18 @@ def pos_sale_create(request):
                             
                             if errors:
                                 raise ValidationError(f"خطأ في بند '{product.product_name}': " + " | ".join(errors))
+                        
+                        # ==================================================
+                        # ✅✅✅ السعر التاريخي: تثبيت عملة الفاتورة وسعرها لحظة الحفظ
+                        # كل بنود نقطة البيع الجديدة تأخذ سعر صرف العملة من جدول
+                        # العملات لحظة الإنشاء، ويُخزَّن ولا يتغير لاحقاً (قاعدة القفل).
+                        # ==================================================
+                        if sale.sale_currency and not sale.sale_currency.is_default:
+                            instance.sale_currency = sale.sale_currency
+                            instance.exchange_rate_at_sale = sale.sale_currency.exchange_rate or Decimal('1.00')
+                        else:
+                            instance.sale_currency = None
+                            instance.exchange_rate_at_sale = Decimal('1.00')
                         
                         instance.save()
                         

@@ -153,7 +153,7 @@ body { background-color: #f1f8f9; font-family: 'Tajawal', sans-serif; }
 
         <div class="hidden-system-fields">
             {{ form.sale_customer_phone }} {{ form.sale_address }} {{ form.sale_date }}
-            {{ form.sale_status }} {{ form.sale_currency }} {{ form.sale_shipping_company }}
+            {{ form.sale_status }} {{ form.sale_shipping_company }}
             {{ form.sale_shipping_num }} {{ form.sale_notes }} {{ form.sale_addition }}
             {{ form.sale_image }} {{ form.sale_tax_percentage }}
         </div>
@@ -176,6 +176,11 @@ body { background-color: #f1f8f9; font-family: 'Tajawal', sans-serif; }
                 <div class="pos-info-col" style="flex: 0.6;">
                     <label class="pos-info-label"><i class="fas fa-credit-card"></i> طريقة الدفع</label>
                     {{ form.sale_payment_method }}
+                </div>
+                <!-- اختيار العملة: الحقل نفسه موجود في الفورم والموديل والفيو، كان مخفياً فقط -->
+                <div class="pos-info-col" style="flex: 0.6;">
+                    <label class="pos-info-label"><i class="fas fa-coins"></i> العملة</label>
+                    {{ form.sale_currency }}
                 </div>
             </div>
 
@@ -318,6 +323,7 @@ function triggerThermalPrint() {
                 <p>التاريخ: ${data.date}</p>
                 <p>العميل: ${data.customer}</p>
                 <p>طريقة الدفع: ${data.payment}</p>
+                <p>العملة: ${data.currency}</p>
             </div>
             <table>
                 <thead><tr><th>الصنف</th><th>الكمية</th><th>السعر</th><th>الإجمالي</th></tr></thead>
@@ -351,6 +357,8 @@ function resetPosForm() {
     document.querySelector('input[name="items-TOTAL_FORMS"]').value = 0;
     document.getElementById('customer-search').value = '';
     document.getElementById('id_sale_customer').value = '';
+    const currencySelect = document.getElementById('id_sale_currency');
+    if (currencySelect) currencySelect.value = '';
     window.usedProductIds.clear();
     updatePosCalculations();
     document.getElementById('pos-main-scanner').focus();
@@ -395,12 +403,14 @@ function parkCurrentInvoice() {
         return;
     }
 
+    const currencySelectForPark = document.getElementById('id_sale_currency');
     const parkedData = {
         id: Date.now(), 
         timestamp: new Date().toLocaleString('ar-EG'),
         customerName: document.getElementById('customer-search').value || 'عميل نقدي',
         customerId: document.getElementById('id_sale_customer').value,
         paymentMethod: document.getElementById('id_sale_payment_method').value,
+        currencyId: currencySelectForPark ? currencySelectForPark.value : '',
         discount: document.getElementById('invoice-discount').value,
         items: items
     };
@@ -481,6 +491,8 @@ function retrieveParkedInvoice(id) {
     document.getElementById('id_sale_customer').value = inv.customerId;
     document.getElementById('id_sale_payment_method').value = inv.paymentMethod;
     document.getElementById('id_sale_payment_method').dispatchEvent(new Event('change'));
+    const currencySelectForRestore = document.getElementById('id_sale_currency');
+    if (currencySelectForRestore) currencySelectForRestore.value = inv.currencyId || '';
     document.getElementById('invoice-discount').value = inv.discount;
 
     inv.items.forEach(item => {
@@ -638,10 +650,13 @@ function setupPosFormSubmit() {
                 const paid = document.getElementById('paid-amount').value || '0';
                 const balance = (parseFloat(grandTotal) - parseFloat(paid)).toFixed(2);
                 
+                const currencySelectForReceipt = document.getElementById('id_sale_currency');
+                const currencyName = (currencySelectForReceipt && currencySelectForReceipt.value && currencySelectForReceipt.selectedIndex >= 0) ? currencySelectForReceipt.options[currencySelectForReceipt.selectedIndex].text : 'العملة الأساسية';
                 window.lastInvoiceData = {
                     uid: data.invoice_uid, date: data.sale_date,
                     customer: document.getElementById('customer-search').value || 'عميل نقدي',
                     payment: document.getElementById('id_sale_payment_method').options[document.getElementById('id_sale_payment_method').selectedIndex].text,
+                    currency: currencyName,
                     items: items, subtotal: document.getElementById('subtotal-amount').textContent,
                     discount: document.getElementById('invoice-discount').value, grandTotal: grandTotal, paid: paid, balance: balance
                 };

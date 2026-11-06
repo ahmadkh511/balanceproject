@@ -847,7 +847,7 @@ class Sale(models.Model):
     date_created = models.DateTimeField(auto_now_add=True, verbose_name=_("تاريخ الإنشاء"))
     last_updated = models.DateTimeField(auto_now=True, verbose_name=_("آخر تحديث"))
     _last_invoice_number = models.IntegerField(default=0, editable=False)
-    
+
     created_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='sales_created', verbose_name=_("تم الإنشاء بواسطة"))
     sale_customer = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='customer_sales', verbose_name=_("العميل"))
     sale_date = models.DateField(blank=True, null=True, verbose_name=_("تاريخ فاتورة البيع"))
@@ -865,22 +865,22 @@ class Sale(models.Model):
     sale_tax_percentage = models.DecimalField(max_digits=5, decimal_places=2, default=Decimal('0.00'), verbose_name=_("نسبة الضريبة (%)"))
     sale_discount = models.DecimalField(max_digits=12, decimal_places=2, default=Decimal('0.00'), verbose_name=_("قيمة الخصم"))
     sale_addition = models.DecimalField(max_digits=12, decimal_places=2, default=Decimal('0.00'), verbose_name=_("قيمة الإضافة"))
-    
+
     sale_subtotal = models.DecimalField(max_digits=12, decimal_places=2, default=Decimal('0.00'), verbose_name=_("إجمالي البنود"))
     sale_tax_amount = models.DecimalField(max_digits=12, decimal_places=2, default=Decimal('0.00'), verbose_name=_("قيمة الضريبة"))
     sale_final_total = models.DecimalField(max_digits=12, decimal_places=2, default=Decimal('0.00'), verbose_name=_("الإجمالي النهائي"))
     balance_due = models.DecimalField(max_digits=12, decimal_places=2, default=Decimal('0.00'), verbose_name=_("المبلغ المتبقي"))
     paid_amount = models.DecimalField(max_digits=12, decimal_places=2, default=Decimal('0.00'), verbose_name=_("المبلغ المدفوع"))
     is_paid = models.BooleanField(default=False, verbose_name=_("تم الدفع بالكامل"))
-    
+
     class Meta:
         verbose_name = _("فاتورة بيع")
         verbose_name_plural = _("فواتير البيع")
         ordering = ["-date_created"]
-    
+
     def __str__(self):
         return f"فاتورة بيع {self.uniqueId}"
-    
+
     def save(self, *args, **kwargs):
         if not self.sale_date: self.sale_date = timezone.now().date()
         if not self.uniqueId:
@@ -896,10 +896,10 @@ class Sale(models.Model):
         amount = float(self.sale_final_total)
         decimals = self.get_currency_info().get('decimals', 2)
         return int(amount), int(round((amount - int(amount)) * (10 ** decimals)))
-    
+
     @property
     def total_in_words(self): return self.get_total_in_words()
-    
+
     def get_total_in_words(self):
         if not self.sale_final_total: return ""
         try:
@@ -916,12 +916,12 @@ class Sale(models.Model):
         except Exception as e:
             logger.error(f"خطأ في تحويل المبلغ: {e}")
             return f"{self.sale_final_total} ليرة سورية فقط لا غير"
-    
+
     def get_currency_info(self):
         if not self.sale_currency:
             return {'singular': 'ليرة سورية', 'dual': 'ليرتان سوريتان', 'plural': 'ليرات سورية', 'fraction': 'قرش', 'fraction_dual': 'قرشان', 'fraction_plural': 'قروش', 'decimals': 2}
         return {'singular': self.sale_currency.singular_ar, 'dual': self.sale_currency.dual_ar, 'plural': self.sale_currency.plural_ar, 'fraction': self.sale_currency.fraction_name_ar, 'fraction_dual': self.sale_currency.fraction_dual_ar, 'fraction_plural': self.sale_currency.fraction_plural_ar, 'decimals': self.sale_currency.decimals}
-    
+
     # ==========================================================
     # ✅✅✅ السعر التاريخي — سعر صرف فاتورة البيع وقت تحريرها
     # ==========================================================
@@ -944,7 +944,7 @@ class Sale(models.Model):
             if stored_rate:
                 return Decimal(str(stored_rate))
         return self.sale_currency.exchange_rate or Decimal('1.00')
-    
+
     def calculate_and_save_totals(self):
         try:
             self.sale_subtotal = self.saleitem_set.aggregate(total_sum=Sum('sale_total'))['total_sum'] or Decimal('0.00')
@@ -956,22 +956,26 @@ class Sale(models.Model):
         except Exception as e:
             logger.error(f"خطأ في حساب الإجماليات: {e}")
             raise
-    
+
     def update_financial_fields(self, tax_percentage, discount, addition, paid_amount):
         self.sale_tax_percentage, self.sale_discount = Decimal(str(tax_percentage)), Decimal(str(discount))
         self.sale_addition, self.paid_amount = Decimal(str(addition)), Decimal(str(paid_amount))
         self.calculate_and_save_totals()
 
     # ==========================================================
-    # ✅✅✅ تسوية حركات الصندوق — حركة واحدة فقط تعكس paid_amount
+    # ✅✅✅ الوحدة 2 — تسوية حركات الصندوق بالعملة الأساسية
     # ==========================================================
     def reconcile_cash_transactions(self):
         """
-        ضمان وجود حركة صندوق واحدة فقط لهذه الفاتورة تعكس paid_amount بدقة.
-        - نقدية + مدفوع > 0 → حركة واحدة بمبلغ paid_amount (تُنشأ أو تُحدَّث)
+        ضمان وجود حركة صندوق واحدة فقط لهذه الفاتورة تعكس المبلغ المدفوع محوَّلاً إلى العملة الأساسية.
+        - المبلغ بالأساسية = paid_amount × السعر التاريخي المجمد للفاتورة (قاعدة القفل نفسها)
+        - الفاتورة بالأساسية أو بلا عملة → السعر 1.00 والمبلغ كما هو دون تغيير
+        - الملاحظة تحمل سعر الصرف بنمط المشتريات: (سعر الصرف: X) حتى بالأساسية (سعر الصرف: 1.00)
+        - حقل paid_amount في الفاتورة لا يُمسّ إطلاقاً — يبقى بعملة الفاتورة
+        - نقدية + مدفوع > 0 → حركة واحدة (تُنشأ أو تُحدَّث)
         - غير ذلك (غير نقدية أو صفر) → حذف كل حركات الفاتورة من الصندوق
         - إن وُجدت عدة حركات (بيانات قديمة) → تُوحَّد في واحدة ويحذف الباقي
-        تفحص is_cash داخلياً — آمنة للاستدعاء من أي مكان.
+        تفحص is_cash داخلياً — آمنة للاستدعاء من أي مكان (الإنشاء والتعديل و POS).
         """
         is_cash = self.sale_payment_method and self.sale_payment_method.is_cash
         new_paid = self.paid_amount or Decimal('0.00')
@@ -985,25 +989,32 @@ class Sale(models.Model):
             tx_qs.delete()
             return
 
+        # ✅ الوحدة 2: المبلغ بالعملة الأساسية + ملاحظة سعر الصرف (بنمط المشتريات)
+        # rate = السعر التاريخي المجمد للفاتورة — لا يُقرأ من جدول اليوم إطلاقاً
+        rate = self.get_historical_exchange_rate()
+        base_amount = (new_paid * rate).quantize(Decimal('0.01'))
+        notes = f"تحصيل مقابل فاتورة بيع {self.uniqueId} (سعر الصرف: {rate})"
+
         txs = list(tx_qs)
 
         if not txs:
-            # لا توجد حركة → إنشاء واحدة كاملة
+            # لا توجد حركة → إنشاء واحدة كاملة بالمبلغ الأساسي
             CashTransaction.objects.create(
                 transaction_date=timezone.now(),
-                amount_in=new_paid,
+                amount_in=base_amount,
                 transaction_type='sale_receipt',
                 payment_method=self.sale_payment_method,
                 sale_invoice=self,
-                notes=f"تحصيل مقابل فاتورة بيع {self.uniqueId}",
+                notes=notes,
                 created_by=self.created_by,
             )
         else:
-            # توجد حركة أو أكثر → توحيدها: الأقدم تحمل المبلغ الكامل، والبقية تُحذف
+            # توجد حركة أو أكثر → توحيدها: الأقدم تحمل المبلغ الكامل بالأساسية، والبقية تُحذف
             first = txs[0]
-            first.amount_in = new_paid
+            first.amount_in = base_amount
             first.payment_method = self.sale_payment_method
-            first.save(update_fields=['amount_in', 'payment_method'])
+            first.notes = notes
+            first.save(update_fields=['amount_in', 'payment_method', 'notes'])
             for extra in txs[1:]:
                 extra.delete()
 
@@ -1017,6 +1028,7 @@ class Sale(models.Model):
     def total_quantity_sold(self): return self.saleitem_set.aggregate(total_qty=Sum('sold_quantity'))['total_qty'] or Decimal('0.00') if self.pk else Decimal('0.00')
     @property
     def has_return(self): return self.sale_returns.exists()
+
 
 
 

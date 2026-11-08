@@ -1034,6 +1034,8 @@ class SaleReturnForm(forms.ModelForm):
         self.fields['paid_amount'].required = False
 
 
+
+
 class SaleReturnItemForm(forms.ModelForm):
     class Meta:
         model = SaleReturnItem
@@ -1046,14 +1048,33 @@ class SaleReturnItemForm(forms.ModelForm):
             'original_sale_item': forms.HiddenInput(),
             'product': forms.HiddenInput(),
             'item_name': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'اسم المادة'}),
-            # تم إضافة كلاسات مميزة ليسهل التعامل معها في الجافاسكربت
+            # كلاسات مميزة ليسهل التعامل معها في الجافاسكربت
             'returned_quantity': forms.NumberInput(attrs={'class': 'form-control returned-qty-input', 'step': '0.01', 'min': '0.01'}),
             'quantity_with_barcode': forms.HiddenInput(),
             'quantity_without_barcode': forms.HiddenInput(),
-            'unit_price': forms.NumberInput(attrs={'class': 'form-control unit-price-input', 'step': '0.01', 'min': '0', 'readonly': 'readonly'}),
+            # ✅✅✅ الوحدة 3-ب: أُزيل 'readonly': 'readonly' — سعر الإرجاع قابل للتغيير الآن
+            # الكلاس unit-price-input بقى كما هو لأن الجافاسكربت يعتمد عليه في حساب الإجماليات
+            'unit_price': forms.NumberInput(attrs={'class': 'form-control unit-price-input', 'step': '0.01', 'min': '0'}),
             'notes': forms.TextInput(attrs={'class': 'form-control'}),
             'return_item_image': forms.FileInput(attrs={'class': 'd-none'}),
         }
+
+    # ✅✅✅ الوحدة 3-ب: حارس السيرفر — السعر المرتجع لا يمكن أن يكون سالباً
+    # (خاصية min='0' في الواجهة ليست حماية كافية، يمكن تجاوزها من المتصفح)
+    def clean_unit_price(self):
+        unit_price = self.cleaned_data.get('unit_price')
+        if unit_price is not None and unit_price < Decimal('0.00'):
+            raise forms.ValidationError(_('سعر الإرجاع لا يمكن أن يكون سالباً'))
+        return unit_price
+
+    # ✅✅✅ الوحدة 3-ب: حارس السيرفر — الكمية المرتجعة لا يمكن أن تكون سالبة
+    def clean_returned_quantity(self):
+        returned_quantity = self.cleaned_data.get('returned_quantity')
+        if returned_quantity is not None and returned_quantity < Decimal('0.00'):
+            raise forms.ValidationError(_('الكمية المرتجعة لا يمكن أن تكون سالبة'))
+        return returned_quantity
+
+
 
 
 class SaleReturnItemBarcodeForm(forms.ModelForm):

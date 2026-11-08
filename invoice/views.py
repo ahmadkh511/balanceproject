@@ -2248,6 +2248,8 @@ def sale_list(request):
 
 #--seale return---
 
+
+
 @login_required
 @permission_required('invoice.add_salereturn', raise_exception=True)
 def sale_return_create(request, sale_slug):
@@ -2295,6 +2297,14 @@ def sale_return_create(request, sale_slug):
                             logger.error(f"خطأ حرج: تعذر تعيين أو إنشاء طريقة الدفع النقدية الافتراضية في مرتجع البيع: {e}")
                     sale_return.save()
                     
+                    # ✅ الوحدة 3: توريث عملة الفاتورة + تجميد سعر يوم الإرجاع
+                    # rate = سعر جدول العملات لحظة الحفظ (يوم الإرجاع) — يُجمَّد ولا يتغير بعدها
+                    # للعملة الأساسية أو بلا عملة → 1.00
+                    ret_currency = sale_return.return_currency
+                    ret_rate = Decimal('1.00')
+                    if ret_currency and not ret_currency.is_default:
+                        ret_rate = ret_currency.exchange_rate or Decimal('1.00')
+                    
                     saved_items_count = 0
                     for item_form in formset:
                         if item_form.cleaned_data.get('DELETE') or not item_form.cleaned_data.get('original_sale_item'):
@@ -2309,9 +2319,18 @@ def sale_return_create(request, sale_slug):
                         if item_instance.returned_quantity > available:
                             raise ValueError(f"الكمية المرتجعة لـ {original_item.item_name} تتجاوز المتاح ({available}).")
                         
+                        # ✅✅✅ الوحدة 3-ب: الصفوف ذات كمية 0 تُتخطى — لا بنود وهمية بكمية صفر
+                        if item_instance.returned_quantity is None or item_instance.returned_quantity <= 0:
+                            continue
+                        
                         item_instance.product = original_item.product
                         item_instance.item_name = original_item.item_name
-                        item_instance.unit_price = original_item.unit_price
+                        # ✅✅✅ الوحدة 3-ب: السعر المرتجع من الفورم (قابل للتغيير)
+                        # كان سابقاً: item_instance.unit_price = original_item.unit_price (فرض السعر الأصلي)
+                        # القيمة الابتدائية بالفورم تظل سعر البيع الأصلي، والتغيير اليدوي مسموح
+                        # والسقف الحقيقي هو سقف الصرف النقدي أدناه (لا صرف أكثر من المدفوع)
+                        item_instance.return_currency = ret_currency
+                        item_instance.exchange_rate_at_return = ret_rate
                         item_instance.save()
                         saved_items_count += 1
                         
@@ -2343,30 +2362,17 @@ def sale_return_create(request, sale_slug):
                     if sale_return.paid_amount > sale_return.return_final_total:
                          raise ValueError(f"المبلغ المصروف ({sale_return.paid_amount}) أكبر من إجمالي المرتجع ({sale_return.return_final_total})")
                     
+                    # ✅ الوحدة 3: سقف الصرف النقدي (قرار معتمد)
+                    # لا يمكن صرف أكثر مما دفعه العميل فعلاً: مدفوع الفاتورة ناقص ما استُرد سابقاً
+                    already_refunded = SaleReturn.objects.filter(original_sale=original_sale).exclude(pk=sale_return.pk).aggregate(total=Sum('paid_amount'))['total'] or Decimal('0.00')
+                    max_refundable = (original_sale.paid_amount or Decimal('0.00')) - already_refunded
+                    if sale_return.paid_amount > max_refundable:
+                        raise ValueError(f"المبلغ المصروف ({sale_return.paid_amount}) أكبر من ما دفعه العميل نقداً على الفاتورة ({max_refundable}) — لا يمكن صرف أكثر من المبلغ المدفوع")
+                    
                     sale_return.save()
                     
-                    is_cash_method = False
-                    if sale_return.return_payment_method:
-                        method_name = sale_return.return_payment_method.name.strip()
-                        if method_name in ['نقداً', 'نقدا', 'Cash']:
-                            is_cash_method = True
-                    
-                    if sale_return.paid_amount > 0 and is_cash_method:
-                        CashTransaction.objects.update_or_create(
-                            sale_return=sale_return, 
-                            defaults={
-                                'transaction_date': timezone.now(), 
-                                'transaction_type': 'sale_return', 
-                                'amount_out': sale_return.paid_amount, 
-                                'amount_in': Decimal('0.00'), 
-                                'payment_method': sale_return.return_payment_method, 
-                                'notes': f"صرف نقدي للعميل - مرتجع رقم {sale_return.uniqueId}", 
-                                'created_by': request.user, 
-                                'sale_invoice': sale_return.original_sale
-                            }
-                        )
-                    else:
-                        CashTransaction.objects.filter(sale_return=sale_return).delete()
+                    # ✅ الوحدة 3: تسوية حركة الصندوق بالعملة الأساسية (نمط الوحدة 2)
+                    sale_return.reconcile_cash_transactions()
                     
                     messages.success(request, f'تم إنشاء مرتجع البيع {sale_return.uniqueId} بنجاح')
                     return redirect('invoice:sale_detail', slug=original_sale.slug)
@@ -2384,15 +2390,14 @@ def sale_return_create(request, sale_slug):
             initial_data.append({'original_sale_item': item, 'product': item.product, 'item_name': item.item_name, 'unit_price': item.unit_price, 'returned_quantity': 0})
         formset = SaleReturnItemFormSet(prefix='items', initial=initial_data)
 
-    # ============ بناء بيانات JSON للقالب ============
+    # ============ بناء بيانات JSON للقالب (كما في الإنشاء) ============
     items_json = []
     for sale_item in original_sale.saleitem_set.all().select_related('product'):
         data = returned_items_data.get(sale_item.id, {'returned': 0, 'sold': 0})
         available = data['sold'] - data['returned']
         
         barcodes_list = []
-        # الطريقة الأدق: جلب الباركودات المرتبطة بالبند والتي حالتها sold فقط في جدول الباركودات
-        # وبذلك نستبعد تلقائياً أي باركود تم إرجاعه (حالته أصبحت active) أو لم يباع
+        # الباركودات المرتبطة بالبند والتي حالتها sold فقط — نستبعد تلقائياً أي باركود أُرجع سابقاً
         item_barcodes = sale_item.item_barcodes.filter(
             barcode__status='sold'
         ).select_related('barcode')
@@ -2400,7 +2405,6 @@ def sale_return_create(request, sale_slug):
         for ib in item_barcodes:
             barcodes_list.append({'id': ib.barcode.id, 'barcode_in': ib.barcode.barcode_in})
         
-        # تحديد رابط الصورة
         image_url = None
         if sale_item.sale_item_image:
             image_url = sale_item.sale_item_image.url
@@ -2424,35 +2428,20 @@ def sale_return_create(request, sale_slug):
         'formset': formset, 
         'original_sale': original_sale, 
         'title': f'إنشاء مرتجع لفاتورة بيع {original_sale.uniqueId}', 
-        'items_json': items_json,  # تم إزالة json.dumps كما اتفقنا سابقاً
+        'items_json': items_json,
         'is_cash_payment': is_cash_payment, 
         'payment_method_name': payment_method_name
     }
     return render(request, 'invoice/sale/sale_return_form.html', context)
 
 
-@login_required
-@permission_required('invoice.view_salereturn', raise_exception=True)
-def sale_return_detail(request, slug):
-    """عرض تفاصيل مرتجع المبيعات"""
-    try:
-        sale_return = SaleReturn.objects.prefetch_related('salereturnitem_set__product', 'salereturnitem_set__return_item_barcodes__barcode').select_related('original_sale__sale_customer', 'created_by').get(slug=slug)
-    except SaleReturn.DoesNotExist:
-        messages.error(request, 'مرتجع المبيعات غير موجود')
-        return redirect('invoice:sale_return_list')
-    
-    user = request.user
-    is_allowed = (user.is_superuser or sale_return.created_by == user or (sale_return.original_sale and sale_return.original_sale.sale_customer == user))
-    if not is_allowed:
-        raise PermissionDenied(_("ليس لديك صلاحية لعرض هذا المرتجع"))
-    
-    return render(request, 'invoice/sale_return/sale_return_detail.html', {'sale_return': sale_return, 'original_sale': sale_return.original_sale})
+
 
 
 @login_required
 @permission_required('invoice.change_salereturn', raise_exception=True)
 def sale_return_update(request, slug):
-    """تعديل مرتجع المبيعات"""
+    """تعديل مرتجع المبيعات — نسخة الوحدة 3-ج (إصلاح ثغرة المخزون)"""
     try:
         sale_return = SaleReturn.objects.get(slug=slug)
     except SaleReturn.DoesNotExist:
@@ -2462,6 +2451,17 @@ def sale_return_update(request, slug):
     if sale_return.created_by and sale_return.created_by != request.user and not request.user.is_superuser:
         raise PermissionDenied(_("ليس لديك صلاحية لتعديل هذا المرتجع"))
     
+    original_sale = sale_return.original_sale
+    
+    # ============ بيانات الكميات المرجعية للفاتورة الأصلية (للفحص وللقالب) ============
+    returned_items_data = {}
+    for item in original_sale.saleitem_set.all():
+        returned_qty = SaleReturnItem.objects.filter(
+            original_sale_item=item,
+            sale_return__isnull=False
+        ).exclude(sale_return=sale_return).aggregate(total=Sum('returned_quantity'))['total'] or Decimal('0.00')
+        returned_items_data[item.id] = {'returned': returned_qty, 'sold': item.sold_quantity}
+    
     if request.method == 'POST':
         form = SaleReturnForm(request.POST, request.FILES, instance=sale_return)
         formset = SaleReturnItemFormSet(request.POST, request.FILES, prefix='items', instance=sale_return)
@@ -2469,11 +2469,102 @@ def sale_return_update(request, slug):
         if form.is_valid() and formset.is_valid():
             try:
                 with transaction.atomic():
+                    # ✅✅✅ الوحدة 3-ج (إصلاح ثغرة المخزون): لقطة الكميات القديمة قبل أي حفظ
+                    # {pk: (product_id, returned_quantity)} — تُستخدم في التسوية الموحدة أدناه
+                    old_items_snapshot = {
+                        row['id']: (row['product_id'], row['returned_quantity'])
+                        for row in SaleReturnItem.objects.filter(sale_return=sale_return).values('id', 'product_id', 'returned_quantity')
+                    }
+                    
                     sale_return = form.save()
+                    
+                    # ✅✅✅ الوحدة 3-ب: إعادة توريث العملة إن ضاعت من الفورم
+                    # (كانت return_currency تُمسح عند التعديل لأن القالب لم يكن يرسلها
+                    #  → السعر المجمد يتحول 1.00 → حركة الصندوق تُحسب خاطئة)
+                    if not sale_return.return_currency:
+                        sale_return.return_currency = getattr(original_sale, 'sale_currency', None)
+                    
+                    # ✅ الوحدة 3: السعر المجمد للمرتجع — البنود الجديدة تأخذه لا سعر اليوم (نمط ش4/ب4)
+                    frozen_rate = sale_return.get_historical_exchange_rate()
+                    
+                    for item_form in formset:
+                        inst = item_form.instance
+                        
+                        # ✅✅✅ الوحدة 3-ب: حذف صف من بنود المرتجع داخل التعديل يعمل فعلاً
+                        # إعادة حالة الباركودات إلى sold — قبل أن يحذفها formset.save()
+                        # ✅✅✅ الوحدة 3-ج: خصم المخزون أُزيل من هنا (كان يخصم هنا ثم التسوية
+                        #  الموحدة تحسب فرق البند المحذوف مرة أخرى → نقص مزدوج).
+                        #  التسوية الموحدة بعد formset.save() تعالج البند المحذوف تلقائياً:
+                        #  (قديم X ← جديد 0 → delta = -X)
+                        if item_form.cleaned_data.get('DELETE') and inst.pk:
+                            for barcode_item in inst.return_item_barcodes.all():
+                                barcode_item.barcode.status = 'sold'
+                                barcode_item.barcode.save()
+                            continue
+                        
+                        if inst.pk is None:
+                            # بند جديد (احتياطياً إن أُضيف للفورمسِت لاحقاً): السعر المجمد + عملة المرتجع
+                            # ✅ الوحدة 3-ج: زيادة مخزونه تعالجها التسوية الموحدة تلقائياً (+كميته)
+                            inst.return_currency = sale_return.return_currency
+                            inst.exchange_rate_at_return = frozen_rate
+                        
+                        # ✅✅✅ الوحدة 3-ب: فحص الكمية المتاحة عند تعديل الكميات (كان غائباً)
+                        original_item = item_form.cleaned_data.get('original_sale_item')
+                        if original_item and inst.returned_quantity and inst.returned_quantity > 0:
+                            data = returned_items_data.get(original_item.id, {'returned': 0, 'sold': 0})
+                            available = data['sold'] - data['returned']
+                            if inst.returned_quantity > available:
+                                raise ValueError(f"الكمية المرتجعة لـ {original_item.item_name} تتجاوز المتاح ({available}).")
+                    
                     formset.save()
+                    
+                    # ==========================================================
+                    # ✅✅✅ الوحدة 3-ج: التسوية الموحدة للمخزون (جوهر إصلاح الثغرة)
+                    # المخزون يجب أن يعكس دائماً مجموع كميات بنود المرتجع:
+                    #   delta لكل منتج = مجموع الكميات الجديدة − مجموع الكميات القديمة (اللقطة)
+                    # يغطي تلقائياً: رفع كمية (+)، إنزال كمية (−)، بند جديد (+)،
+                    # بند محذوف (−)، وتغيير المنتج نفسه في بند.
+                    # إن delta ≠ 0 → F('current_stock_quantity') + delta
+                    # داخل transaction.atomic() — أي فشل لاحق يتراجع عنها مع البقية.
+                    # ==========================================================
+                    new_by_product = {}
+                    for it in sale_return.salereturnitem_set.all():
+                        if it.product_id:
+                            new_by_product[it.product_id] = new_by_product.get(it.product_id, Decimal('0.00')) + (it.returned_quantity or Decimal('0.00'))
+                    old_by_product = {}
+                    for pid, old_qty in old_items_snapshot.values():
+                        if pid:
+                            old_by_product[pid] = old_by_product.get(pid, Decimal('0.00')) + (old_qty or Decimal('0.00'))
+                    for pid in set(list(new_by_product.keys()) + list(old_by_product.keys())):
+                        delta = new_by_product.get(pid, Decimal('0.00')) - old_by_product.get(pid, Decimal('0.00'))
+                        if delta == 0:
+                            continue
+                        p = Product.objects.filter(pk=pid).first()
+                        if p:
+                            p.current_stock_quantity = F('current_stock_quantity') + delta
+                            p.last_operation_type = 'sale_return'
+                            p.save(update_fields=['current_stock_quantity', 'last_operation_type'])
+                            logger.info(f"✅ الوحدة 3-ج: تسوية مخزون المنتج {p.product_name} بمقدار {'+' if delta > 0 else ''}{delta}")
+                    
                     sale_return.calculate_and_save_totals()
+                    
+                    # ✅ الوحدة 3: فحصا السقف
+                    if sale_return.paid_amount > sale_return.return_final_total:
+                        raise ValueError(f"المبلغ المصروف ({sale_return.paid_amount}) أكبر من إجمالي المرتجع ({sale_return.return_final_total})")
+                    already_refunded = SaleReturn.objects.filter(original_sale=original_sale).exclude(pk=sale_return.pk).aggregate(total=Sum('paid_amount'))['total'] or Decimal('0.00')
+                    max_refundable = (original_sale.paid_amount or Decimal('0.00')) - already_refunded
+                    if sale_return.paid_amount > max_refundable:
+                        raise ValueError(f"المبلغ المصروف ({sale_return.paid_amount}) أكبر من الحد المتبقي للصرف ({max_refundable}) = المدفوع على الفاتورة ({original_sale.paid_amount}) - المصروف في مرتجعات أخرى ({already_refunded}) — لا يمكن صرف أكثر من المبلغ المدفوع")
+                    
+                    sale_return.save()
+                    
+                    # ✅ الوحدة 3: تسوية حركة الصندوق
+                    sale_return.reconcile_cash_transactions()
+                    
                     messages.success(request, f'تم تحديث مرتجع المبيعات {sale_return.uniqueId} بنجاح')
                     return redirect('invoice:sale_return_detail', slug=sale_return.slug)
+            except ValueError as e:
+                messages.error(request, str(e))
             except Exception as e:
                 logger.error(f"خطأ في تحديث مرتجع المبيعات: {e}", exc_info=True)
                 messages.error(request, 'حدث خطأ غير متوقع أثناء تحديث المرتجع')
@@ -2483,7 +2574,52 @@ def sale_return_update(request, slug):
         form = SaleReturnForm(instance=sale_return)
         formset = SaleReturnItemFormSet(prefix='items', instance=sale_return)
     
-    return render(request, 'invoice/sale_return/sale_return_form.html', {'form': form, 'formset': formset, 'original_sale': sale_return.original_sale, 'sale_return': sale_return, 'title': f'تعديل مرتجع {sale_return.uniqueId}'})
+    # ============ بناء بيانات JSON للقالب (التعديل يحتاجها أيضاً للشارات والباركودات) ============
+    items_json = []
+    for sale_item in original_sale.saleitem_set.all().select_related('product'):
+        data = returned_items_data.get(sale_item.id, {'returned': 0, 'sold': 0})
+        available = data['sold'] - data['returned']
+        
+        barcodes_list = []
+        item_barcodes = sale_item.item_barcodes.filter(
+            barcode__status='sold'
+        ).select_related('barcode')
+        
+        for ib in item_barcodes:
+            barcodes_list.append({'id': ib.barcode.id, 'barcode_in': ib.barcode.barcode_in})
+        
+        image_url = None
+        if sale_item.sale_item_image:
+            image_url = sale_item.sale_item_image.url
+        elif sale_item.product and hasattr(sale_item.product, 'product_image') and sale_item.product.product_image:
+            image_url = sale_item.product.product_image.url
+            
+        items_json.append({
+            'id': sale_item.id, 
+            'product_id': sale_item.product.id if sale_item.product else None, 
+            'product_name': sale_item.item_name, 
+            'unit_price': float(sale_item.unit_price), 
+            'sold_quantity': float(data['sold']), 
+            'returned_quantity': float(data['returned']), 
+            'available_to_return': float(available), 
+            'item_image': image_url, 
+            'barcodes': barcodes_list
+        })
+
+    # ✅✅✅ الوحدة 3-ب: نفس مسار قالب الإنشاء — المسار القديم invoice/sale_return/ غير موجود أصلاً
+    return render(request, 'invoice/sale/sale_return_form.html', {
+        'form': form, 
+        'formset': formset, 
+        'original_sale': original_sale, 
+        'sale_return': sale_return, 
+        'title': f'تعديل مرتجع {sale_return.uniqueId}',
+        'items_json': items_json
+    })
+
+
+
+
+
 
 
 @login_required
@@ -2502,6 +2638,9 @@ def sale_return_delete(request, slug):
     if request.method == 'POST':
         try:
             with transaction.atomic():
+                # ✅ الوحدة 3: حذف حركة الصندوق المرتبطة بالمرتجع (ثغرة سُدّت)
+                CashTransaction.objects.filter(sale_return=sale_return).delete()
+                
                 for item in sale_return.salereturnitem_set.all():
                     for barcode_item in item.return_item_barcodes.all():
                         barcode = barcode_item.barcode
@@ -2522,8 +2661,31 @@ def sale_return_delete(request, slug):
             
         return redirect('invoice:sale_return_list')
     
-    return render(request, 'invoice/sale_return/sale_return_confirm_delete.html', {'sale_return': sale_return})
+    return render(request, 'invoice/sale/sale_return_confirm_delete.html', {'sale_return': sale_return})
 
+
+
+
+
+
+
+
+@login_required
+@permission_required('invoice.view_salereturn', raise_exception=True)
+def sale_return_detail(request, slug):
+    """عرض تفاصيل مرتجع المبيعات"""
+    try:
+        sale_return = SaleReturn.objects.prefetch_related('salereturnitem_set__product', 'salereturnitem_set__return_item_barcodes__barcode').select_related('original_sale__sale_customer', 'created_by').get(slug=slug)
+    except SaleReturn.DoesNotExist:
+        messages.error(request, 'مرتجع المبيعات غير موجود')
+        return redirect('invoice:sale_return_list')
+    
+    user = request.user
+    is_allowed = (user.is_superuser or sale_return.created_by == user or (sale_return.original_sale and sale_return.original_sale.sale_customer == user))
+    if not is_allowed:
+        raise PermissionDenied(_("ليس لديك صلاحية لعرض هذا المرتجع"))
+    
+    return render(request,'invoice/sale/sale_return_detail.html', {'sale_return': sale_return, 'original_sale': sale_return.original_sale})
 
 
 

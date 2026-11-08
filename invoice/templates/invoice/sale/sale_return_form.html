@@ -75,7 +75,12 @@ body { background-color: var(--aqua-1); font-family: 'Tajawal', sans-serif; font
         
         <div class="card">
             <div class="card-header">
-                <i class="fas fa-undo-alt"></i> إنشاء مرتجع لفاتورة: {{ original_sale.uniqueId }}
+                <i class="fas fa-undo-alt"></i>
+                {% if sale_return %}
+                    تعديل مرتجع: {{ sale_return.uniqueId }} — لفاتورة: {{ original_sale.uniqueId }}
+                {% else %}
+                    إنشاء مرتجع لفاتورة: {{ original_sale.uniqueId }}
+                {% endif %}
                 <div class="ms-auto"></div>
                 <a href="{% url 'invoice:sale_detail' slug=original_sale.slug %}" class="btn btn-sm btn-light">
                     <i class="fas fa-arrow-right"></i> رجوع للفاتورة
@@ -120,7 +125,7 @@ body { background-color: var(--aqua-1); font-family: 'Tajawal', sans-serif; font
                             <th width="3%">#</th>
                             <th width="20%">المادة</th>
                             <th width="10%">الكمية المرتجعة</th>
-                            <th width="10%">السعر</th>
+                            <th width="10%">سعر الإرجاع</th>
                             <th width="10%">الإجمالي</th>
                             <th width="15%">حالة الكمية</th>
                             <th width="5%">صورة</th>
@@ -131,6 +136,7 @@ body { background-color: var(--aqua-1); font-family: 'Tajawal', sans-serif; font
                         {% for form in formset %}
                         <tr class="item-row" data-item-index="{{ forloop.counter0 }}" data-item-id="{{ form.original_sale_item.value|default:'' }}">
                             {% for hidden in form.hidden_fields %}{{ hidden }}{% endfor %}
+                            {{ form.DELETE.as_hidden }}
                             
                             <td class="text-center align-middle fw-bold">{{ forloop.counter }}</td>
                             
@@ -192,7 +198,6 @@ body { background-color: var(--aqua-1); font-family: 'Tajawal', sans-serif; font
                             <span>إجمالي البنود:</span>
                             <span id="subtotal-amount" class="fw-bold">0.00</span>
                         </div>
-                        <!-- تم إضافة id لهذا السطر لإخفائه/إظهاره ديناميكياً -->
                         <div class="financial-row" id="paid-amount-row" style="display: none;">
                             <span>المبلغ المصروف نقداً:</span>
                             {{ form.paid_amount }}
@@ -207,6 +212,9 @@ body { background-color: var(--aqua-1); font-family: 'Tajawal', sans-serif; font
         </div>
 
         {{ form.return_subtotal }} {{ form.return_tax_amount }} {{ form.return_final_total }} {{ form.original_sale }}
+        {# ====== الوحدة 3-ب: حقول يجب أن تُرسل مع التعديل وإلا مُسحت قيمها ====== #}
+        {{ form.return_currency.as_hidden }} {{ form.return_status.as_hidden }}
+        {{ form.return_notes.as_hidden }} {{ form.return_invoice_number.as_hidden }}
 
         <div class="form-actions d-flex justify-content-end gap-2 mt-3">
             <button type="submit" class="btn btn-success btn-lg px-5">
@@ -257,7 +265,7 @@ body { background-color: var(--aqua-1); font-family: 'Tajawal', sans-serif; font
         if (isCash) {
             paidAmountRow.style.display = 'flex'; // إظهار الحقل
             paidInput.removeAttribute('readonly');
-            paidInput.value = paidInput.value || '0.00'; // 
+            paidInput.value = paidInput.value || '0.00';
         } else {
             paidAmountRow.style.display = 'none'; // إخفاء الحقل (آجل)
             paidInput.value = '0.00'; // تصفير المبلغ لأنه آجل
@@ -336,7 +344,8 @@ body { background-color: var(--aqua-1); font-family: 'Tajawal', sans-serif; font
         if (subHidden) subHidden.value = total.toFixed(2);
         if (finalHidden) finalHidden.value = total.toFixed(2);
         
-        // تم إزالة التحديث التلقائي لحقل paid_amount هنا، ليترك للمستخدم إدخاله يدوياً إن كانت نقداً
+        // التحديث التلقائي لحقل paid_amount مُزال عمداً — المستخدم يتحكم به يدوياً
+        // والسقف (لا صرف أكثر من المدفوع) يُفحص في السيرفر
     }
 
     function setupBarcodes(index, barcodes, row) {
@@ -389,12 +398,33 @@ body { background-color: var(--aqua-1); font-family: 'Tajawal', sans-serif; font
             const qtyInput = row.querySelector('.returned-qty-input');
             if(qtyInput) qtyInput.addEventListener('input', calculateTotals);
             
+            // ✅✅✅ الوحدة 3-ب: السماح بتغيير سعر الإرجاع — أي تغيير بالسعر يعيد الحساب فوراً
+            const priceInput = row.querySelector('.unit-price-input');
+            if(priceInput) priceInput.addEventListener('input', calculateTotals);
+            
             const deleteBtn = row.querySelector('.delete-btn');
             if(deleteBtn) {
                 deleteBtn.addEventListener('click', function() {
-                    const delCheck = row.querySelector('[name$="-DELETE"]');
+                    // ✅✅✅ الوحدة 3-ب: ضمان وجود حقل DELETE فعلياً حتى يعمل الحذف للصف
+                    // (سابقاً كان الزر يخفي الصف بصرياً فقط ولا يُرسل DELETE — حذف وهمي)
+                    let delCheck = row.querySelector('[name$="-DELETE"]');
+                    if (!delCheck) {
+                        const anyInput = row.querySelector('input[name^="items-"]');
+                        if (anyInput) {
+                            const parts = anyInput.name.split('-');
+                            if (parts.length >= 2) {
+                                delCheck = document.createElement('input');
+                                delCheck.type = 'hidden';
+                                delCheck.name = parts[0] + '-' + parts[1] + '-DELETE';
+                                delCheck.value = 'on';
+                                row.appendChild(delCheck);
+                            }
+                        }
+                    }
                     if (delCheck) {
+                        // الاثنان معاً: checked لحقل checkbox الحقيقي، value لحقل as_hidden المخفي
                         delCheck.checked = true;
+                        delCheck.value = 'true';
                         row.style.display = 'none';
                         const bRow = document.querySelector('.barcode-row[data-item-index="' + index + '"]');
                         if (bRow) bRow.style.display = 'none';

@@ -1167,7 +1167,7 @@ class SaleReturn(models.Model):
     date_created = models.DateTimeField(auto_now_add=True, verbose_name="تاريخ الإنشاء")
     last_updated = models.DateTimeField(auto_now=True, verbose_name="آخر تحديث")
     _last_return_number = models.IntegerField(default=0, editable=False)
-    
+
     created_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True, related_name='sale_returns_created', verbose_name="تم الإنشاء بواسطة")
     original_sale = models.ForeignKey('Sale', on_delete=models.CASCADE, related_name='sale_returns', verbose_name="الفاتورة الأصلية")
     return_date = models.DateField(blank=True, null=True, verbose_name="تاريخ المرتجع")
@@ -1189,10 +1189,10 @@ class SaleReturn(models.Model):
         verbose_name = "مرتجع مبيعات"
         verbose_name_plural = "مرتجعات المبيعات"
         ordering = ["-date_created"]
-    
+
     def __str__(self):
         return f"مرتجع بيع {self.uniqueId}"
-    
+
     def save(self, *args, **kwargs):
         if not self.return_date: self.return_date = timezone.now().date()
         if not self.uniqueId:
@@ -1214,11 +1214,83 @@ class SaleReturn(models.Model):
         except Exception as e:
             logger.error(f"خطأ في حساب إجماليات مرتجع البيع: {e}")
             raise
-    
+
+    # ==========================================================
+    # ✅✅✅ الوحدة 3 — السعر التاريخي لمرتجع البيع (سعر يوم الإرجاع المجمد)
+    # ==========================================================
+    def get_historical_exchange_rate(self):
+        """
+        سعر الصرف التاريخي لهذا المرتجع (قراءة فقط — لا يعدّل قاعدة البيانات).
+        - العملة الأساسية أو بلا عملة → 1.00 دائماً.
+        - يقرأ أولاً من exchange_rate_at_return المخزَّن في بنود المرتجع (أول سعر مخزَّن حقيقي).
+        - احتياطاً للمرتجعات بلا بنود → سعر الصرف الحالي من جدول العملات.
+        - البند الجديد المضاف لاحقاً يأخذ هذا السعر المجمد لا سعر اليوم (نمط فواتير البيع).
+        """
+        if not self.return_currency or self.return_currency.is_default:
+            return Decimal('1.00')
+        if self.pk:
+            stored_rate = (
+                self.salereturnitem_set
+                .exclude(exchange_rate_at_return=Decimal('1.00'))
+                .values_list('exchange_rate_at_return', flat=True)
+                .first()
+            )
+            if stored_rate:
+                return Decimal(str(stored_rate))
+        return self.return_currency.exchange_rate or Decimal('1.00')
+
+    # ==========================================================
+    # ✅✅✅ الوحدة 3 — تسوية حركة الصندوق بالعملة الأساسية (نمط الوحدة 2)
+    # ==========================================================
+    def reconcile_cash_transactions(self):
+        """
+        ضمان وجود حركة صندوق واحدة فقط لهذا المرتجع تعكس المبلغ المصروف محوَّلاً إلى العملة الأساسية.
+        - المبلغ بالأساسية = paid_amount × السعر التاريخي المجمد للمرتجع (سعر يوم الإرجاع)
+        - المرتجع بالأساسية أو بلا عملة → السعر 1.00 والمبلغ كما هو دون تغيير
+        - الملاحظة بنمط الوحدة 2: صرف نقدي للعميل - مرتجع رقم SR000X (سعر الصرف: X)
+          وبالأساسية (سعر الصرف: 1.00)
+        - حقل paid_amount في المرتجع لا يُمسّ إطلاقاً — يبقى بعملة المرتجع
+        - نقدية + مصروف > 0 → حركة واحدة (تُنشأ أو تُحدَّث عبر update_or_create)
+        - غير ذلك (غير نقدية أو صفر) → حذف حركات المرتجع من الصندوق
+        - الاعتماد على is_cash أو الاسم (نقداً / نقدا / Cash) — نفس معيار كود المرتجع الأصلي + حقل is_cash
+        آمنة للاستدعاء من أي مكان (الإنشاء والتعديل).
+        """
+        pm = self.return_payment_method
+        is_cash = False
+        if pm:
+            name = (pm.name or '').strip()
+            is_cash = bool(getattr(pm, 'is_cash', False)) or name in ['نقداً', 'نقدا', 'Cash']
+        new_paid = self.paid_amount or Decimal('0.00')
+
+        if not is_cash or new_paid <= 0:
+            CashTransaction.objects.filter(sale_return=self).delete()
+            return
+
+        # ✅ الوحدة 3: المبلغ بالعملة الأساسية + ملاحظة سعر الصرف (نمط الوحدة 2)
+        # rate = السعر التاريخي المجمد للمرتجع — لا يُقرأ من جدول اليوم إطلاقاً بعد الحفظ
+        rate = self.get_historical_exchange_rate()
+        base_amount = (new_paid * rate).quantize(Decimal('0.01'))
+        notes = f"صرف نقدي للعميل - مرتجع رقم {self.uniqueId} (سعر الصرف: {rate})"
+
+        CashTransaction.objects.update_or_create(
+            sale_return=self,
+            defaults={
+                'transaction_date': timezone.now(),
+                'transaction_type': 'sale_return',
+                'amount_out': base_amount,
+                'amount_in': Decimal('0.00'),
+                'payment_method': pm,
+                'notes': notes,
+                'created_by': self.created_by,
+                'sale_invoice': self.original_sale,
+            }
+        )
+
     @property
     def total_items_count(self): return self.salereturnitem_set.count() if self.pk else 0
     @property
     def total_quantity_returned(self): return self.salereturnitem_set.aggregate(total_qty=Sum('returned_quantity'))['total_qty'] or Decimal('0.00') if self.pk else Decimal('0.00')
+
 
 
 class SaleReturnItem(models.Model):
@@ -1247,12 +1319,15 @@ class SaleReturnItem(models.Model):
     def __str__(self):
         name = self.product.product_name if self.product else self.item_name
         return f"{name} - {self.returned_quantity} × {self.unit_price} = {self.return_total}"
-    
+
     def save(self, *args, **kwargs):
         if not self.item_name: self.item_name = self.product.product_name if self.product else "مادة غير محددة"
         if self.returned_quantity and self.unit_price:
             self.return_total = (self.returned_quantity * self.unit_price).quantize(Decimal('0.01'))
-        self.unit_price_base_currency = self.unit_price
+        # ✅✅✅ الوحدة 3: السعر التاريخي — التحويل بالعملة الأساسية عبر السعر المجمد المخزَّن في البند
+        # (كان سابقاً: self.unit_price_base_currency = self.unit_price بلا أي تحويل)
+        rate = self.exchange_rate_at_return or Decimal('1.00')
+        self.unit_price_base_currency = (self.unit_price * rate).quantize(Decimal('0.01'))
         super().save(*args, **kwargs)
 
     def restore_product_stock(self):
@@ -1264,6 +1339,7 @@ class SaleReturnItem(models.Model):
         except Exception as e:
             logger.error(f"❌ خطأ في إعادة المخزون: {e}")
             raise
+
 
 
 class SaleReturnItemBarcode(models.Model):

@@ -1292,7 +1292,6 @@ class SaleReturn(models.Model):
     def total_quantity_returned(self): return self.salereturnitem_set.aggregate(total_qty=Sum('returned_quantity'))['total_qty'] or Decimal('0.00') if self.pk else Decimal('0.00')
 
 
-
 class SaleReturnItem(models.Model):
     sale_return = models.ForeignKey('SaleReturn', on_delete=models.CASCADE, verbose_name="مرتجع البيع")
     original_sale_item = models.ForeignKey('SaleItem', on_delete=models.SET_NULL, null=True, blank=True, related_name='return_items', verbose_name="بند البيع الأصلي")
@@ -1321,6 +1320,23 @@ class SaleReturnItem(models.Model):
         return f"{name} - {self.returned_quantity} × {self.unit_price} = {self.return_total}"
 
     def save(self, *args, **kwargs):
+        # ==========================================================
+        # ✅ [حاجز م-ث1] خط الدفاع الأخير — لا بند مرتجع بكمية دون ربط
+        # ببند البيع الأصلي. يعمل أياً كان من استدعى save: الواجهة،
+        # الأدمن، الشل، أو أي كود — بلا استثناء.
+        # القاعدة: كل كمية مرتجعة أكبر من صفر يجب أن تشير إلى بند
+        # البيع الأصلي الذي خرجت منه.
+        # يغلق أيضاً فقدان الربط عند التعديل: أي تحديث يصفّر الربط
+        # والكمية أكبر من صفر يُرفض هنا قبل لمس قاعدة البيانات.
+        # الكمية صفر أو فارغة بلا ربط تبقى مسموحة (صديقة للبيانات القديمة).
+        # ==========================================================
+        qty = self.returned_quantity or Decimal('0.00')
+        if qty > 0 and not self.original_sale_item_id:
+            raise ValidationError(
+                "بند مرتجع بكمية دون ربط ببند البيع الأصلي مرفوض "
+                f"(الكمية: {qty}). اربط البند ببند البيع الأصلي "
+                "(original_sale_item) أولاً."
+            )
         if not self.item_name: self.item_name = self.product.product_name if self.product else "مادة غير محددة"
         if self.returned_quantity and self.unit_price:
             self.return_total = (self.returned_quantity * self.unit_price).quantize(Decimal('0.01'))
@@ -1339,8 +1355,6 @@ class SaleReturnItem(models.Model):
         except Exception as e:
             logger.error(f"❌ خطأ في إعادة المخزون: {e}")
             raise
-
-
 
 class SaleReturnItemBarcode(models.Model):
     sale_return_item = models.ForeignKey('SaleReturnItem', on_delete=models.CASCADE, related_name='return_item_barcodes', verbose_name="بند المرتجع")

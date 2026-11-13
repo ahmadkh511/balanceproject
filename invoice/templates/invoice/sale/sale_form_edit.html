@@ -69,11 +69,18 @@ body { background-color: var(--aqua-1); font-family: 'Tajawal', sans-serif; font
 @media (max-width: 768px) { .barcode-fields-list { grid-template-columns: repeat(3, 1fr); } }
 @media (max-width: 480px) { .barcode-fields-list { grid-template-columns: repeat(2, 1fr); } }
 
-.table-footer-actions { padding: 0.5rem; text-align: left; background: #f8f9fa; border-top: 1px solid var(--aqua-2); }
+/* ✅ [م-UX1] زر «إضافة بند جديد» على اليمين — مطابق لقالب تعديل فاتورة المشتريات */
+.table-footer-actions { padding: 0.5rem; text-align: right; background: #f8f9fa; border-top: 1px solid var(--aqua-2); }
+/* ✅ [م-UX1] رسائل النظام — بنفس أسلوب قالب إنشاء فاتورة البيع */
+.success-message, .error-message-backend { padding: 0.6rem 1rem; border-radius: 4px; margin-bottom: 0.75rem; font-size: 0.85rem; display: none; }
+.success-message { background: linear-gradient(135deg, #00897b 0%, #00695c 100%); color: white; }
+.error-message-backend { background: linear-gradient(135deg, #e53935 0%, #b71c1c 100%); color: white; border-left: 4px solid #ff5252; }
 #add-single-item { background: linear-gradient(135deg, #00897b 0%, #00695c 100%); color: white; border: none; border-radius: 4px; padding: 0.3rem 0.8rem; font-size: 0.8rem; cursor: pointer; }
 
 .product-search-container, .customer-search-container { position: relative; width: 100%; }
-.autocomplete-dropdown { position: absolute; top: 100%; left: 0; right: 0; background: white; border: 1px solid var(--aqua-3); border-radius: 0 0 4px 4px; box-shadow: 0 4px 8px rgba(0,150,167,0.15); max-height: 200px; overflow-y: auto; z-index: 9999; display: none; }
+/* ✅ [م-UX1] القائمة المنسدلة ثابتة فوق كل الإطارات — لم تعد تُخفى خلف إطار الفورم أو الجدول
+   (overflow) مهما كان عمقها؛ الموضع والعرض يضبطهما دالة التموضع لحظة الإظهار */
+.autocomplete-dropdown { position: fixed; top: -9999px; left: 0; background: white; border: 1px solid var(--aqua-3); border-radius: 0 0 4px 4px; box-shadow: 0 4px 8px rgba(0,150,167,0.15); max-height: 200px; overflow-y: auto; z-index: 99999; display: none; }
 .autocomplete-dropdown.show { display: block; }
 .autocomplete-item { padding: 0.4rem 0.5rem; cursor: pointer; border-bottom: 1px solid var(--aqua-1); display: flex; align-items: center; gap: 0.5rem; font-size: 0.75rem; }
 .autocomplete-item:hover { background-color: var(--aqua-1); }
@@ -107,6 +114,8 @@ body { background-color: var(--aqua-1); font-family: 'Tajawal', sans-serif; font
 {% endblock %}
 
 {% block content %}
+<!-- حاوية رسائل النظام (للتأكيدات) — مثل قالب الإنشاء -->
+<div id="system-messages-container"></div>
 <div class="container-fluid py-2">
     <div class="alert alert-info mb-3">
         <i class="fas fa-edit"></i> تعديل فاتورة بيع رقم: <strong>{{ sale.uniqueId }}</strong> - تاريخ الإنشاء: {{ sale.date_created|date:"Y-m-d" }}
@@ -376,6 +385,8 @@ window.isPaymentMethodCash = false;
 window.existingBarcodes = {};
 window.saleFinancialData = {};
 window.saleItemsData = {};
+window.suppliersCache = {};
+window.CACHE_MAX_SIZE = 50;
 
 // ✅ قراءة البيانات من JSON scripts (القاعدة الذهبية)
 (function loadDataFromJsonScripts() {
@@ -390,7 +401,13 @@ window.saleItemsData = {};
 // دوال مساعدة
 // ============================================
 function parseNumber(v) { if (!v) return 0; if (typeof v === 'number') return v; var n = parseFloat(String(v).replace(/,/g, '.')); return isNaN(n) ? 0 : n; }
+function addToCache(cacheObj, key, data) { const keys = Object.keys(cacheObj); if (keys.length >= window.CACHE_MAX_SIZE) { delete cacheObj[keys[0]]; } cacheObj[key] = data; }
+function showSuccessMessage(message) { const old = document.querySelectorAll('.success-message'); old.forEach(m => m.remove()); const div = document.createElement('div'); div.className = 'success-message'; const icon = document.createElement('i'); icon.className = 'fas fa-check-circle me-2'; div.appendChild(icon); div.appendChild(document.createTextNode(message)); div.style.display = 'block'; document.getElementById('system-messages-container').appendChild(div); setTimeout(() => { div.style.opacity = '0'; setTimeout(() => div.remove(), 500); }, 3000); }
 function escapeHtml(s) { if (!s) return ''; var map = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;', '/': '&#x2F;' }; return String(s).replace(/[&<>"'/]/g, function(m) { return map[m]; }); }
+
+// ✅ [م-UX1] تموضع القائمة المنسدلة الثابتة تحت الحقل مباشرة — لا يخفيها أي إطار أو جدول
+function positionDropdown(dd, input) { if (dd.parentNode !== document.body) { document.body.appendChild(dd); } var r = input.getBoundingClientRect(); dd.style.top = (r.bottom + 2) + 'px'; dd.style.left = r.left + 'px'; dd.style.width = r.width + 'px'; }
+function closeAllDropdowns() { document.querySelectorAll('.autocomplete-dropdown.show').forEach(function(dd) { dd.classList.remove('show'); }); }
 
 function fixAllNumberInputs() { document.querySelectorAll('input[type="number"]').forEach(function(input) { var rawVal = input.getAttribute('value'); if (rawVal && rawVal.includes(',')) { input.value = rawVal.replace(/,/g, '.'); } }); }
 function initializeFinancialFields() { var fd = window.saleFinancialData; if (!fd || !Object.keys(fd).length) return; var t = document.getElementById('tax-percentage'), a = document.getElementById('invoice-addition'), d = document.getElementById('invoice-discount'), p = document.getElementById('paid-amount'); if (t && fd.tax_percentage !== undefined) t.value = fd.tax_percentage; if (a && fd.addition !== undefined) a.value = fd.addition; if (d && fd.discount !== undefined) d.value = fd.discount; if (p && fd.paid_amount !== undefined) { p.value = fd.paid_amount; if (fd.paid_amount > 0) window.paidAmountModified = true; } }
@@ -513,11 +530,105 @@ function showAllBarcodes() { document.querySelectorAll('.barcode-row').forEach(f
 // ============================================
 // البحث التلقائي
 // ============================================
-function initializeCustomerAutocomplete() { var searchInput = document.getElementById('customer-search'), resultsDiv = document.getElementById('customer-results'), hiddenInput = document.getElementById('id_sale_customer'), phoneInput = document.getElementById('id_sale_customer_phone'), addressInput = document.getElementById('id_sale_address'), timeoutId; if (!searchInput || !resultsDiv) return; searchInput.addEventListener('input', function() { clearTimeout(timeoutId); var query = this.value.trim(); if (query.length < 2) { resultsDiv.classList.remove('show'); return; } resultsDiv.innerHTML = '<div class="autocomplete-item"><i class="fas fa-spinner fa-spin me-2"></i>جاري البحث...</div>'; resultsDiv.classList.add('show'); timeoutId = setTimeout(function() { fetch('/invoice/search-customers/?q=' + encodeURIComponent(query)).then(function(res) { return res.json(); }).then(function(data) { resultsDiv.innerHTML = ''; data.results.forEach(function(c) { var item = document.createElement('div'); item.className = 'autocomplete-item'; item.innerHTML = '<div><div class="autocomplete-item-title">' + escapeHtml(c.text) + '</div><div class="autocomplete-item-details">' + (c.phone ? '<span>📞 ' + escapeHtml(c.phone) + '</span>' : '') + ' ' + (c.address ? '<span>📍 ' + escapeHtml(c.address) + '</span>' : '') + '</div></div>'; item.addEventListener('click', function() { hiddenInput.value = c.id; searchInput.value = c.text; if (phoneInput) phoneInput.value = c.phone || ''; if (addressInput) addressInput.value = c.address || ''; resultsDiv.classList.remove('show'); }); resultsDiv.appendChild(item); }); }).catch(function() {}); }, 300); }); }
-function initializeProductAutocomplete(searchInput, hiddenInput, priceInput, idx) { var resultsDiv = searchInput.parentNode.querySelector('.product-results'), timeoutId; if (!searchInput || !resultsDiv) return; searchInput.addEventListener('input', function() { clearTimeout(timeoutId); var query = this.value.trim(); if (query.length < 2) { resultsDiv.classList.remove('show'); return; } resultsDiv.innerHTML = '<div class="autocomplete-item"><i class="fas fa-spinner fa-spin me-2"></i>جاري البحث...</div>'; resultsDiv.classList.add('show'); timeoutId = setTimeout(function() { fetch('/invoice/search-products/?q=' + encodeURIComponent(query)).then(function(res) { return res.json(); }).then(function(data) { resultsDiv.innerHTML = ''; data.results.forEach(function(p) { var item = document.createElement('div'); item.className = 'autocomplete-item'; var isUsed = window.usedProductIds.has(parseInt(p.id)); item.innerHTML = (p.image_url ? '<img src="' + escapeHtml(p.image_url) + '" alt="">' : '<div style="width:30px"></div>') + '<div><div class="autocomplete-item-title">' + escapeHtml(p.text) + (isUsed ? ' <span style="color:red">(مستخدم)</span>' : '') + '</div><div class="autocomplete-item-details">' + (p.price ? '<span style="color:#00897b;font-weight:600">💰 ' + escapeHtml(p.price) + '</span>' : '') + '</div></div>'; if (!isUsed || hiddenInput.value == p.id) { item.addEventListener('click', function() { hiddenInput.value = p.id; searchInput.value = p.text; if (priceInput) priceInput.value = parseNumber(p.price || 0); resultsDiv.classList.remove('show'); window.usedProductIds.add(parseInt(p.id)); updateItemCalculations(searchInput.closest('.item-row')); var preview = document.querySelector('.image-preview[data-item-index="' + idx + '"]'); if (preview && p.image_url) preview.innerHTML = '<img src="' + escapeHtml(p.image_url) + '" alt="">'; }); } else { item.style.opacity = '0.5'; } resultsDiv.appendChild(item); }); }).catch(function() {}); }, 300); }); }
+// ✅ [م-UX1] بحث العميل — نفس أسلوب قالب إنشاء فاتورة البيع (JS-05) حرفياً:
+// نقطة /invoice/search-suppliers/ الموجودة فعلاً + الكاش + بناء DOM آمن + رسائل الحالة،
+// مع إبقاء positionDropdown (نقل القائمة إلى body) الذي أثبت بالفحص الرقمي عند المستخدم.
+function initializeCustomerAutocomplete() {
+    const searchInput = document.getElementById('customer-search');
+    const resultsContainer = document.getElementById('customer-results');
+    const customerHidden = document.getElementById('id_sale_customer');
+    const phoneInput = document.getElementById('id_sale_customer_phone');
+    const addressInput = document.getElementById('id_sale_address');
+    if (!searchInput || !resultsContainer || !customerHidden) return;
+    let searchTimeout;
+    let currentQuery = '';
+    searchInput.addEventListener('input', function() {
+        clearTimeout(searchTimeout);
+        const query = this.value.trim();
+        currentQuery = query;
+        if (query.length < 2) {
+            resultsContainer.classList.remove('show');
+            customerHidden.value = '';
+            if (phoneInput) phoneInput.value = '';
+            if (addressInput) addressInput.value = '';
+            return;
+        }
+        resultsContainer.innerHTML = '<div class="autocomplete-item"><i class="fas fa-spinner fa-spin me-2"></i>جاري البحث...</div>';
+        positionDropdown(resultsContainer, searchInput);
+        resultsContainer.classList.add('show');
+        searchTimeout = setTimeout(() => {
+            if (window.suppliersCache[query]) { displayCustomerResults(window.suppliersCache[query], query); return; }
+            fetch(`/invoice/search-suppliers/?q=${encodeURIComponent(query)}`)
+                .then(res => res.json())
+                .then(data => {
+                    addToCache(window.suppliersCache, query, data);
+                    displayCustomerResults(data, query);
+                })
+                .catch(err => {
+                    console.error(err);
+                    resultsContainer.innerHTML = '<div class="autocomplete-item text-danger">خطأ في الاتصال</div>';
+                });
+        }, 400);
+    });
+    function displayCustomerResults(data, query) {
+        if (query !== currentQuery) return;
+        resultsContainer.innerHTML = '';
+        if (!data.results || data.results.length === 0) {
+            resultsContainer.innerHTML = '<div class="autocomplete-item text-muted">لا توجد نتائج</div>';
+            return;
+        }
+        data.results.forEach(cust => {
+            const item = document.createElement('div');
+            item.className = 'autocomplete-item';
+            const contentDiv = document.createElement('div');
+            contentDiv.className = 'autocomplete-item-content';
+            const titleDiv = document.createElement('div');
+            titleDiv.className = 'autocomplete-item-title';
+            titleDiv.textContent = cust.text;
+            const detailsDiv = document.createElement('div');
+            detailsDiv.className = 'autocomplete-item-details';
+            if (cust.phone) {
+                const phoneSpan = document.createElement('span');
+                phoneSpan.innerHTML = '<i class="fas fa-phone me-1"></i>';
+                phoneSpan.appendChild(document.createTextNode(cust.phone));
+                detailsDiv.appendChild(phoneSpan);
+            }
+            if (cust.address) {
+                const addressSpan = document.createElement('span');
+                addressSpan.className = 'ms-2';
+                addressSpan.innerHTML = '<i class="fas fa-map-marker-alt me-1"></i>';
+                addressSpan.appendChild(document.createTextNode(cust.address));
+                detailsDiv.appendChild(addressSpan);
+            }
+            contentDiv.appendChild(titleDiv);
+            contentDiv.appendChild(detailsDiv);
+            item.appendChild(contentDiv);
+            item.addEventListener('click', function() {
+                searchInput.value = cust.text;
+                customerHidden.value = cust.id;
+                if (phoneInput) phoneInput.value = cust.phone || '';
+                if (addressInput) addressInput.value = cust.address || '';
+                resultsContainer.classList.remove('show');
+                showSuccessMessage('تم اختيار العميل');
+            });
+            resultsContainer.appendChild(item);
+        });
+    }
+    document.addEventListener('click', (e) => {
+        if (!searchInput.contains(e.target) && !resultsContainer.contains(e.target)) {
+            resultsContainer.classList.remove('show');
+        }
+    });
+}
+function initializeProductAutocomplete(searchInput, hiddenInput, priceInput, idx) { var resultsDiv = searchInput.parentNode.querySelector('.product-results'), timeoutId; if (!searchInput || !resultsDiv) return; searchInput.addEventListener('input', function() { clearTimeout(timeoutId); var query = this.value.trim(); if (query.length < 2) { resultsDiv.classList.remove('show'); return; } resultsDiv.innerHTML = '<div class="autocomplete-item"><i class="fas fa-spinner fa-spin me-2"></i>جاري البحث...</div>'; positionDropdown(resultsDiv, searchInput); resultsDiv.classList.add('show'); timeoutId = setTimeout(function() { fetch('/invoice/search-products/?q=' + encodeURIComponent(query)).then(function(res) { return res.json(); }).then(function(data) { resultsDiv.innerHTML = ''; data.results.forEach(function(p) { var item = document.createElement('div'); item.className = 'autocomplete-item'; var isUsed = window.usedProductIds.has(parseInt(p.id)); item.innerHTML = (p.image_url ? '<img src="' + escapeHtml(p.image_url) + '" alt="">' : '<div style="width:30px"></div>') + '<div><div class="autocomplete-item-title">' + escapeHtml(p.text) + (isUsed ? ' <span style="color:red">(مستخدم)</span>' : '') + '</div><div class="autocomplete-item-details">' + (p.price ? '<span style="color:#00897b;font-weight:600">💰 ' + escapeHtml(p.price) + '</span>' : '') + '</div></div>'; if (!isUsed || hiddenInput.value == p.id) { item.addEventListener('click', function() { hiddenInput.value = p.id; searchInput.value = p.text; if (priceInput) priceInput.value = parseNumber(p.price || 0); resultsDiv.classList.remove('show'); window.usedProductIds.add(parseInt(p.id)); updateItemCalculations(searchInput.closest('.item-row')); var preview = document.querySelector('.image-preview[data-item-index="' + idx + '"]'); if (preview && p.image_url) preview.innerHTML = '<img src="' + escapeHtml(p.image_url) + '" alt="">'; }); } else { item.style.opacity = '0.5'; } resultsDiv.appendChild(item); }); }).catch(function() {}); }, 300); }); }
 
-// مستمع عام لإغلاق القوائم
-document.addEventListener('click', function(e) { if (!e.target.closest('.product-search-container') && !e.target.closest('.customer-search-container')) { document.querySelectorAll('.autocomplete-dropdown.show').forEach(function(dd) { dd.classList.remove('show'); }); } });
+// مستمع عام لإغلاق القوائم — لا يغلقها عند النقر داخل القائمة نفسها (القائمة المنقولة إلى body)
+document.addEventListener('click', function(e) { if (!e.target.closest('.autocomplete-dropdown') && !e.target.closest('.product-search-container') && !e.target.closest('.customer-search-container')) { document.querySelectorAll('.autocomplete-dropdown.show').forEach(function(dd) { dd.classList.remove('show'); }); } });
+
+// ✅ [م-UX1] إغلاق القوائم عند تمرير الصفحة أو تغيير حجم النافذة —
+// إلا عند تمرير قائمة النتائج نفسها (scroll داخل القائمة لا يغلقها)
+window.addEventListener('scroll', function(e) { if (e.target && e.target.closest && e.target.closest('.autocomplete-dropdown')) return; closeAllDropdowns(); }, true);
+window.addEventListener('resize', closeAllDropdowns);
 
 // ============================================
 // إدارة البنود
@@ -594,7 +705,7 @@ function setupItemEventListeners(item, idx) {
 
 function initializeAllItems() { document.querySelectorAll('.item-row').forEach(function(item, idx) { var i = item.getAttribute('data-item-index') || idx; setupItemEventListeners(item, i); }); }
 
-function updateItemsNumbers() { document.querySelectorAll('.item-row:not(.deleted-item)').forEach(function(item, index) { var numCell = item.querySelector('td:first-child'); if (numCell) numCell.textContent = index + 1; }); var totalForms = document.getElementById('id_items-TOTAL_FORMS'); if (totalForms) totalForms.value = document.querySelectorAll('.item-row:not(.deleted-item)').length; }
+function updateItemsNumbers() { document.querySelectorAll('.item-row:not(.deleted-item)').forEach(function(item, index) { var numCell = item.querySelector('td:first-child'); if (numCell) numCell.textContent = index + 1; }); var totalForms = document.getElementById('id_items-TOTAL_FORMS'); if (totalForms) totalForms.value = document.querySelectorAll('.item-row').length; }
 
 function addNewItem() {
     var tbody = document.getElementById('items-tbody');

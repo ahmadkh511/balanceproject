@@ -1538,7 +1538,6 @@ def purchase_return_delete_view(request, slug):
 # ===============================================#
 
 
-
 @login_required
 @permission_required('invoice.add_sale', raise_exception=True)
 def sale_create(request):
@@ -1566,6 +1565,16 @@ def sale_create(request):
 
                     instances = formset.save(commit=False)
                     
+                    # ✅ [حاجز الفاتورة الفارغة] منع إنشاء
+                    # فاتورة بيع بلا أي بند مملوء. الرفع هنا
+                    # داخل transaction.atomic يلغي حفظ الفاتورة
+                    # نفسها (لا يستهلك رقم تسلسلي).
+                    if not instances:
+                        raise ValidationError(
+                            "لا يمكن حفظ فاتورة بيع بلا بنود — "
+                            "أضيفي بنداً واحداً على الأقل."
+                        )
+
                     for i, instance in enumerate(instances):
                         instance.sale = sale
                         product_id_from_form = request.POST.get(f'items-{i}-product')
@@ -1738,8 +1747,6 @@ def sale_create(request):
 
 
 
-
-
 def handle_sale_cash_transaction(sale):
     """
     تسوية حركات الصندوق مع paid_amount النهائي.
@@ -1820,7 +1827,6 @@ def sale_detail(request, slug):
 
 
 
-
 @login_required
 @permission_required('invoice.change_sale', raise_exception=True)
 def sale_edit(request, slug):
@@ -1858,6 +1864,57 @@ def sale_edit(request, slug):
         
         if form.is_valid() and formset.is_valid():
             try:
+                # ✅ [حاجز الفاتورة الفارغة] منع حفظ فاتورة
+                # بيع بلا بنود فعالة. البند الجديد الفارغ
+                # (بلا تغيير وبلا pk) لا يُحتسب بنداً.
+                surviving_forms = [
+                    f for f in formset
+                    if f not in formset.deleted_forms
+                    and (f.has_changed() or f.instance.pk)
+                ]
+                if not surviving_forms:
+                    raise ValidationError(
+                        "لا يمكن حفظ فاتورة بيع بلا بنود — "
+                        "أضيفي بنداً واحداً على الأقل. "
+                        "ولإلغاء بيع سابق استخدمي مرتجع البيع."
+                    )
+
+                # ✅ [حاجز م1] منع حذف بند عليه مرتجع بيع، أو إنقاص
+                # كمته دون الكمية المرتجعة، أو تغيير مادته.
+                # المرتجع مرتبط بالبند عبر original_sale_item
+                # والكمية المرتجعة = مجموع returned_quantity لكل
+                # بنود المرتجعات المرتبطة (نفس منطق مرتجع البيع).
+                for f in formset:
+                    if not f.instance.pk:
+                        continue  # بند جديد: لا يمكن أن يكون عليه مرتجع
+                    f_deleted = f in formset.deleted_forms
+                    item = f.instance
+                    returned_qty = SaleReturnItem.objects.filter(
+                        original_sale_item=item
+                    ).aggregate(
+                        t=Sum('returned_quantity')
+                    )['t'] or Decimal('0.00')
+                    if returned_qty <= 0:
+                        continue  # بند بلا مرتجع: مسموح بكل شيء
+                    if f_deleted:
+                        raise ValidationError(
+                            "لا يمكن حذف بند عليه مرتجع بيع "
+                            f"(الكمية المرتجعة منه: {returned_qty}). "
+                            "احذفي مرتجع البيع المرتبط أولاً."
+                        )
+                    if 'product' in f.changed_data:
+                        raise ValidationError(
+                            "لا يمكن تغيير مادة بند عليه مرتجع بيع "
+                            f"(الكمية المرتجعة منه: {returned_qty})."
+                        )
+                    new_qty = f.cleaned_data.get('sold_quantity')
+                    if new_qty is not None and new_qty < returned_qty:
+                        raise ValidationError(
+                            "لا يمكن إنقاص بند عليه مرتجع بيع — "
+                            f"الكمية المرتجعة منه: {returned_qty} "
+                            f"والكمية الجديدة: {new_qty}. "
+                            "الحد الأدنى المسموح هو كمية المرتجع."
+                        )
                 with transaction.atomic():
                     # ✅✅✅ السعر التاريخي: حفظ عملة الفاتورة قبل التعديل لكشف تغيير العملة
                     old_currency_id = sale.sale_currency_id
@@ -2205,6 +2262,7 @@ def sale_edit(request, slug):
 
 
 
+
 @login_required
 def get_payment_method(request, payment_method_id):
     """API لجلب بيانات طريقة الدفع"""
@@ -2247,8 +2305,6 @@ def sale_list(request):
 
 
 #--seale return---
-
-
 
 @login_required
 @permission_required('invoice.add_salereturn', raise_exception=True)
@@ -2307,8 +2363,21 @@ def sale_return_create(request, sale_slug):
                     
                     saved_items_count = 0
                     for item_form in formset:
-                        if item_form.cleaned_data.get('DELETE') or not item_form.cleaned_data.get('original_sale_item'):
+                        if item_form.cleaned_data.get('DELETE'):
                             continue
+                        # ✅ [حاجز م-ث1] صف بكمية مرتجعة دون ارتباط ببند
+                        # الفاتورة الأصلية يُرفض صراحة — كان يُتخطى صامتاً
+                        # فتفقد كمية رجّعتها دون أي تنبيه.
+                        row_link = item_form.cleaned_data.get('original_sale_item')
+                        row_qty = item_form.cleaned_data.get('returned_quantity')
+                        if not row_link:
+                            if row_qty:
+                                raise ValueError(
+                                    "بند مرتجع بكمية دون ارتباط ببند الفاتورة "
+                                    f"الأصلية (الكمية المدخلة: {row_qty}) — لا يمكن "
+                                    "حفظه. أعيدي فتح صفحة المرتجع وحاولي من جديد."
+                                )
+                            continue  # صف فارغ عادي: بلا كمية وبلا ربط
                         item_instance = item_form.save(commit=False)
                         item_instance.sale_return = sale_return
                         original_item = item_form.cleaned_data.get('original_sale_item')
@@ -2435,9 +2504,6 @@ def sale_return_create(request, sale_slug):
     return render(request, 'invoice/sale/sale_return_form.html', context)
 
 
-
-
-
 @login_required
 @permission_required('invoice.change_salereturn', raise_exception=True)
 def sale_return_update(request, slug):
@@ -2510,6 +2576,22 @@ def sale_return_update(request, slug):
                         
                         # ✅✅✅ الوحدة 3-ب: فحص الكمية المتاحة عند تعديل الكميات (كان غائباً)
                         original_item = item_form.cleaned_data.get('original_sale_item')
+                        # ✅ [حاجز م-ث1] في التعديل: بند قائم لا يُسمح له أن
+                        # يفقد ارتباطه ببند الفاتورة الأصلية في هذا الحفظ،
+                        # وبند جديد بكمية وبلا ربط يُرفض — كان فحص المتاح
+                        # مشروطاً بوجود الربط فتتجاوزه الصفوف المكسورة كلياً.
+                        if inst.pk and not original_item:
+                            raise ValueError(
+                                f"بند المرتجع «{inst.item_name}» موجود في القاعدة "
+                                "ووصل في هذا الحفظ بلا ارتباط ببند الفاتورة "
+                                "الأصلية — لا يمكن المتابعة حفاظاً على سجلات "
+                                "المرتجعات. أعيدي فتح صفحة التعديل وحاولي من جديد."
+                            )
+                        if inst.pk is None and not original_item and inst.returned_quantity:
+                            raise ValueError(
+                                "بند مرتجع جديد بكمية دون ارتباط ببند الفاتورة "
+                                "الأصلية — لا يمكن حفظه."
+                            )
                         if original_item and inst.returned_quantity and inst.returned_quantity > 0:
                             data = returned_items_data.get(original_item.id, {'returned': 0, 'sold': 0})
                             available = data['sold'] - data['returned']
@@ -2615,11 +2697,6 @@ def sale_return_update(request, slug):
         'title': f'تعديل مرتجع {sale_return.uniqueId}',
         'items_json': items_json
     })
-
-
-
-
-
 
 
 @login_required

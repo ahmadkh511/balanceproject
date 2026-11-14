@@ -134,6 +134,7 @@ urlpatterns = [
     path('sales/create/', views.sale_create, name='sale_create'),
     path('sale/<slug:slug>/', views.sale_detail, name='sale_detail'),
     path('sale/edit/<slug:slug>/', views.sale_edit, name='sale_edit'),
+    path('sale/<slug:slug>/delete/', views.sale_delete, name='sale_delete'),
 
     # ================ مرتجع المبيعات ================
     path('sale-return/list/', views.sale_return_list, name='sale_return_list'),  # ← أولاً

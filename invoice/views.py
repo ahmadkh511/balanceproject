@@ -2261,6 +2261,80 @@ def sale_edit(request, slug):
     return render(request, 'invoice/sale/sale_form_edit.html', context)
 
 
+# ============================================================
+# حذف فاتورة بيع كاملة مع استعادة كل شيء
+# (المخزون يرجع، الباركودات تعود نشطة، حركات الصندوق تذهب)
+# ============================================================
+@login_required
+@permission_required('invoice.delete_sale', raise_exception=True)
+def sale_delete(request, slug):
+    """حذف فاتورة بيع كاملة مع استرجاع الكميات للمخزون وإعادة تنشيط الباركودات وحذف حركات الصندوق"""
+    sale = get_object_or_404(Sale, slug=slug)
+
+    if sale.created_by and sale.created_by != request.user and not request.user.is_superuser:
+        raise PermissionDenied(_("ليس لديك صلاحية للوصول إلى هذه الفاتورة"))
+
+    # حاجز: فاتورة عليها مرتجعات بيع لا تُحذف — احذف المرتجعات أولاً
+    if sale.sale_returns.exists():
+        messages.error(request, f'لا يمكن حذف فاتورة البيع {sale.uniqueId} لأن عليها مرتجعات بيع. احذف المرتجعات أولاً.')
+        return redirect('invoice:sale_detail', slug=sale.slug)
+
+    if request.method == 'POST':
+        try:
+            with transaction.atomic():
+                # 1) حذف حركات الصندوق المرتبطة بالفاتورة
+                cash_transactions_count = CashTransaction.objects.filter(sale_invoice=sale).count()
+                if cash_transactions_count > 0:
+                    CashTransaction.objects.filter(sale_invoice=sale).delete()
+
+                # 2) لكل بند: فك ارتباطات الباركود أولاً (تعيد الباركود نشطاً — م-ب1)
+                #    ثم حذف البند (تستعيد كمية البند كاملة للمخزون)
+                barcode_values = []
+                items_restored = []
+                for sale_item in list(sale.saleitem_set.all().select_related('product')):
+                    product_name = sale_item.product.product_name if sale_item.product else sale_item.item_name
+                    item_qty = sale_item.sold_quantity
+                    for bc_link in list(sale_item.item_barcodes.all()):
+                        barcode_values.append(bc_link.barcode.barcode_in)
+                        bc_link.delete()
+                    sale_item.delete()
+                    items_restored.append({'product': product_name, 'quantity': item_qty})
+
+                # 3) حذف الفاتورة نفسها — كل ذلك داخل معاملة ذرية واحدة
+                sale.delete()
+
+                # عدّ الباركودات التي عادت نشطة فعلاً بعد فك كل الارتباطات
+                reactivated_count = Barcode.objects.filter(
+                    barcode_in__in=barcode_values, status='active'
+                ).count() if barcode_values else 0
+
+                items_summary = ", ".join(
+                    [f"{i['product']} ({i['quantity']})" for i in items_restored[:5]]
+                )
+                if len(items_restored) > 5:
+                    items_summary += f" و {len(items_restored) - 5} منتجات أخرى"
+
+                messages.success(
+                    request,
+                    f'تم حذف فاتورة البيع {sale.uniqueId} بنجاح.\n'
+                    f'تم استرجاع {len(items_restored)} بند للمخزون: {items_summary}\n'
+                    f'تمت إعادة تنشيط {reactivated_count} باركود\n'
+                    f'تم حذف {cash_transactions_count} حركة صندوق'
+                )
+                return redirect('invoice:sale_list')
+
+        except Exception as e:
+            logger.error(f"Error deleting sale {sale.uniqueId}: {str(e)}", exc_info=True)
+            messages.error(request, 'حدث خطأ أثناء حذف فاتورة البيع، يرجى المحاولة مرة أخرى.')
+        return redirect('invoice:sale_detail', slug=sale.slug)
+
+    # طلب عادي (GET): لا يحذف شيء أبداً — يعيد المستخدم لتفاصيل الفاتورة
+    messages.info(request, f'لحذف فاتورة البيع {sale.uniqueId} اضغط زر سلة المهملات بجانب الفاتورة في لائحة فواتير المبيعات.')
+    return redirect('invoice:sale_detail', slug=sale.slug)
+
+
+
+
 
 
 @login_required

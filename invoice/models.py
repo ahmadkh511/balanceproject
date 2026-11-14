@@ -1119,7 +1119,6 @@ class SaleItem(models.Model):
 
 
 
-
 class SaleItemBarcode(models.Model):
     sale_item = models.ForeignKey('SaleItem', on_delete=models.CASCADE, related_name='item_barcodes', verbose_name=_("بند البيع"))
     barcode = models.ForeignKey('Barcode', on_delete=models.CASCADE, related_name='sale_items', verbose_name=_("الباركود"))
@@ -1149,10 +1148,14 @@ class SaleItemBarcode(models.Model):
     def delete(self, *args, **kwargs):
         barcode_to_check = self.barcode
         super().delete(*args, **kwargs)
+        # م-ب1: الشرط الثاني (purch_items) حُذف — كل باركود قادم
+        # من فاتورة شراء له صف شرائي إجباري، فكان الشرط يمنع
+        # إعادة تنشيطه للأبد. الباركود يعود نشطاً بمجرد فك آخر
+        # ارتباط بيع له، بشرط واحد محفوظ: لا ربط بيع آخر قائم.
         if not SaleItemBarcode.objects.filter(barcode=barcode_to_check).exists():
-            if not barcode_to_check.purch_items.exists():
-                barcode_to_check.status = 'active'
-                barcode_to_check.save(update_fields=['status'])
+            barcode_to_check.status = 'active'
+            barcode_to_check.save(update_fields=['status'])
+
 
 
 

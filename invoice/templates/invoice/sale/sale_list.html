@@ -448,11 +448,34 @@
     .action-btn.edit { background: linear-gradient(135deg, var(--warning) 0%, #ff8f00 100%); }
     .action-btn.return { background: linear-gradient(135deg, var(--success) 0%, #00695c 100%); }
     .action-btn.list { background: linear-gradient(135deg, #6c757d 0%, #495057 100%); }
+    .action-btn.delete { background: linear-gradient(135deg, var(--danger) 0%, #b71c1c 100%); }
 
     .action-btn:hover {
         transform: translateY(-2px);
         box-shadow: var(--shadow-sm);
     }
+
+    .action-form { display: inline; }
+    .action-form .action-btn { border: none; cursor: pointer; }
+
+    /* ===== نافذة تأكيد الحذف ===== */
+    .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0, 0, 0, 0.5); z-index: 9999; justify-content: center; align-items: center; backdrop-filter: blur(3px); }
+    .modal-overlay.active { display: flex; }
+    .modal-box { background: white; border-radius: 12px; width: 450px; max-width: 95vw; box-shadow: 0 20px 60px rgba(0, 0, 0, 0.25); }
+    .delete-modal-overlay { z-index: 10001; }
+    .delete-modal-box { width: 450px; text-align: center; border-top: 5px solid var(--danger); }
+    .delete-warning-icon {
+        width: 64px; height: 64px; margin: 1.5rem auto 0.75rem; border-radius: 50%;
+        background: #ffebee; color: var(--danger); display: flex; align-items: center; justify-content: center; font-size: 1.75rem;
+    }
+    .delete-details-box { background: #fff3e0; border: 1px dashed var(--warning); border-radius: 8px; padding: 1rem; margin: 1rem 0; text-align: right; }
+    .delete-detail-row { display: flex; justify-content: space-between; padding: 0.3rem 0; border-bottom: 1px solid rgba(255, 179, 0, 0.2); font-size: 0.85rem; }
+    .delete-detail-row:last-child { border-bottom: none; }
+    .delete-detail-row strong { color: var(--text-dark); }
+    .btn-danger-solid { background: var(--danger); color: white; padding: 0.6rem 1.5rem; border-radius: 8px; font-weight: 700; border: none; cursor: pointer; transition: all 0.2s; font-family: 'Tajawal', sans-serif; }
+    .btn-danger-solid:hover { background: #b71c1c; transform: translateY(-2px); }
+    .btn-cancel-solid { background: #e0e0e0; color: #424242; padding: 0.6rem 1.5rem; border-radius: 8px; font-weight: 700; border: none; cursor: pointer; transition: all 0.2s; font-family: 'Tajawal', sans-serif; }
+    .btn-cancel-solid:hover { background: #d1d1d1; }
 
     .pagination-footer {
         padding: 1rem 1.5rem;
@@ -740,6 +763,16 @@
                                         <i class="fas fa-list-ul"></i>
                                     </a>
                                     {% endif %}
+                                    
+                                    {% if not sale.has_return %}
+                                    <form method="POST" action="{% url 'invoice:sale_delete' sale.slug %}" class="action-form delete-action-form"
+                                          data-invoice-id="{{ sale.uniqueId }}"
+                                          data-customer="{% if sale.sale_customer %}{{ sale.sale_customer.get_full_name|default:sale.sale_customer.username }}{% else %}عميل نقدي{% endif %}"
+                                          data-total="{{ sale.sale_final_total|floatformat:2 }}">
+                                        {% csrf_token %}
+                                        <button type="submit" class="action-btn delete" title="حذف الفاتورة"><i class="fas fa-trash"></i></button>
+                                    </form>
+                                    {% endif %}
                                     {% endif %}
                                 </div>
                             </td>
@@ -805,6 +838,26 @@
     {% include 'includes/print_system.html' %}
 
 </div> <!-- نهاية printableArea -->
+
+{# ===== نافذة تأكيد الحذف ===== #}
+<div class="modal-overlay delete-modal-overlay" id="deleteModal">
+    <div class="modal-box delete-modal-box">
+        <div style="padding: 2rem 1.5rem 1rem;">
+            <div class="delete-warning-icon"><i class="fas fa-exclamation-triangle"></i></div>
+            <h2 style="font-size: 1.2rem; font-weight: 800; color: #b71c1c; margin-bottom: 0.5rem;">تأكيد الحذف النهائي</h2>
+            <p style="font-size: 0.85rem; color: #555;">سيتم استرجاع كميات البنود للمخزون، وإعادة تنشيط الباركودات، وحذف حركات الصندوق المرتبطة. لا يمكن التراجع عن هذا الإجراء.</p>
+            <div class="delete-details-box">
+                <div class="delete-detail-row"><span>رقم الفاتورة:</span><strong id="delInvoiceId">-</strong></div>
+                <div class="delete-detail-row"><span>العميل:</span><strong id="delCustomer">-</strong></div>
+                <div class="delete-detail-row"><span>الإجمالي:</span><strong id="delTotal" style="color: var(--danger);">-</strong></div>
+            </div>
+        </div>
+        <div style="display: flex; gap: 0.75rem; padding: 1rem 1.5rem 1.5rem; justify-content: center;">
+            <button class="btn-cancel-solid" id="cancelDeleteBtn" style="flex: 1;"><i class="fas fa-times"></i> إلغاء</button>
+            <button class="btn-danger-solid" id="confirmDeleteBtn" style="flex: 1;"><i class="fas fa-trash"></i> نعم، احذف نهائياً</button>
+        </div>
+    </div>
+</div>
 {% endblock %}
 
 {% block extra_js %}
@@ -891,6 +944,74 @@
                 var href = this.getAttribute('data-href');
                 if (href) window.location.href = href;
             });
+        });
+
+        // ============================================
+        // 5. نافذة تأكيد الحذف
+        // ============================================
+        var toastEl = document.getElementById('toast');
+        var toastTimer = null;
+
+        function showToast(message, type) {
+            if (!toastEl) return;
+            if (toastTimer) { clearTimeout(toastTimer); toastEl.classList.remove('show'); }
+            toastEl.textContent = message;
+            toastEl.className = 'toast';
+            if (type === 'success') toastEl.classList.add('toast-success');
+            else if (type === 'error') toastEl.classList.add('toast-error');
+            else if (type === 'info') toastEl.classList.add('toast-info');
+            requestAnimationFrame(function() { toastEl.classList.add('show'); });
+            toastTimer = setTimeout(function() {
+                toastEl.classList.remove('show');
+                toastTimer = null;
+            }, 3000);
+        }
+
+        function hideToast() {
+            if (toastTimer) { clearTimeout(toastTimer); toastTimer = null; }
+            if (toastEl) toastEl.classList.remove('show');
+        }
+
+        var deleteModal = document.getElementById('deleteModal');
+        var activeDeleteForm = null;
+
+        document.querySelectorAll('.delete-action-form').forEach(function(form) {
+            form.addEventListener('submit', function(e) {
+                e.preventDefault();
+                activeDeleteForm = this;
+                document.getElementById('delInvoiceId').textContent = this.getAttribute('data-invoice-id') || 'غير محدد';
+                document.getElementById('delCustomer').textContent = this.getAttribute('data-customer') || 'غير محدد';
+                document.getElementById('delTotal').textContent = this.getAttribute('data-total') || '0.00';
+                deleteModal.classList.add('active');
+            });
+        });
+
+        var confirmDeleteBtn = document.getElementById('confirmDeleteBtn');
+        if (confirmDeleteBtn) {
+            confirmDeleteBtn.addEventListener('click', function() {
+                if (activeDeleteForm) {
+                    hideToast();
+                    showToast('جاري حذف الفاتورة...', 'info');
+                    setTimeout(function() { activeDeleteForm.submit(); }, 300);
+                }
+            });
+        }
+
+        var cancelDeleteBtn = document.getElementById('cancelDeleteBtn');
+        if (cancelDeleteBtn) {
+            cancelDeleteBtn.addEventListener('click', function() {
+                deleteModal.classList.remove('active');
+                activeDeleteForm = null;
+                hideToast();
+            });
+        }
+
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape' && deleteModal && deleteModal.classList.contains('active')) {
+                deleteModal.classList.remove('active');
+                activeDeleteForm = null;
+                hideToast();
+            }
         });
 
     })();

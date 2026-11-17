@@ -1027,7 +1027,17 @@ def purch_delete(request, slug):
 @login_required
 @permission_required('invoice.add_purchasereturn', raise_exception=True)
 def purch_return_create_view(request, slug):
-    """إنشاء مرتجع فاتورة مشتريات"""
+    """إنشاء مرتجع فاتورة مشتريات
+
+    ★★★ إصلاح بند 1.1 (الخيار ب) ★★★
+    حُذفت كتلة تعديل paid_amount في فاتورة الشراء الأصلية.
+    السلوك الجديد:
+    - مرتجع الشراء معاملة مالية مستقلة كنظيرته في المبيعات
+    - حركة الصندوق تُسجَّل بصحة (استلام نقداً من المورد)
+    - المخزون يُخصم بصحة (إرجاع للمورد)
+    - paid_amount و balance_due في الفاتورة الأصلية لا يُمسان أبداً
+    - المركز الصافي مع المورد يُحسب عبر purch_detail وجداول المرتجعات
+    """
     original_purchase = get_object_or_404(Purch, slug=slug)
     
     if original_purchase.created_by and original_purchase.created_by != request.user and not request.user.is_superuser:
@@ -1058,18 +1068,14 @@ def purch_return_create_view(request, slug):
             expected_return_total += available_quantity * item.unit_price
     
     if request.method == 'POST':
-        # نسخ البيانات مع تعيين قيمة افتراضية لـ paid_amount
         post_data = request.POST.copy()
         
-        # إذا كان الدفع نقدياً، تأكد من وجود قيمة للحقل
         if is_cash_payment:
             if 'paid_amount' not in post_data or post_data.get('paid_amount', '').strip() == '':
                 post_data['paid_amount'] = str(expected_return_total)
         else:
-            # إذا لم يكن نقدياً، اجعل القيمة صفراً
             post_data['paid_amount'] = '0.00'
         
-        # إنشاء النموذج مع تمرير المعاملات المطلوبة
         form = PurchaseReturnForm(
             post_data,
             is_cash_payment=is_cash_payment,
@@ -1146,7 +1152,6 @@ def purch_return_create_view(request, slug):
                     if hasattr(original_purchase, 'purch_currency'):
                         purchase_return.purch_currency = original_purchase.purch_currency
                     
-                    # التأكد من تعيين المبلغ المستلم بشكل صحيح
                     paid_amount = Decimal('0.00')
                     if is_cash_payment:
                         paid_amount = form.cleaned_data.get('paid_amount', Decimal('0.00'))
@@ -1194,27 +1199,16 @@ def purch_return_create_view(request, slug):
                     purchase_return.update_settlement_status()
                     purchase_return.save(update_fields=['return_subtotal', 'return_final_total', 'remaining_amount', 'settlement_status'])
                     
-                    # ==================== تحديث فاتورة الشراء الأصلية ====================
-                    # تحديث المبلغ المدفوع في فاتورة الشراء الأصلية
-                    if is_cash_payment and paid_amount > 0:
-                        # إضافة المبلغ المستلم إلى paid_amount في فاتورة الشراء الأصلية
-                        original_purchase.paid_amount = F('paid_amount') + paid_amount
-                        original_purchase.save(update_fields=['paid_amount'])
-                        
-                        # تحديث الرصيد المتبقي
-                        original_purchase.refresh_from_db()
-                        original_purchase.balance_due = original_purchase.purch_final_total - original_purchase.paid_amount
-                        original_purchase.is_paid = original_purchase.balance_due <= 0
-                        original_purchase.save(update_fields=['balance_due', 'is_paid'])
+                    # ★★★ بند 1.1 (الخيار ب) — حُذفت كتلة تعديل paid_amount في فاتورة الشراء الأصلية ★★★
+                    # مرتجع الشراء معاملة مستقلة — لا تُمسّ paid_amount ولا balance_due
+                    # المركز الصافي مع المورد يُحسب عبر purch_detail وجداول المرتجعات
                     
                     # ==================== تسجيل حركة الصندوق ====================
                     if is_cash_payment and paid_amount > 0:
                         try:
-                            # ★★★ المبلغ المستلم يُحوَّل إلى العملة الأساسية بسعر فاتورة الشراء الأصلية (تاريخي) ★★★
                             _return_rate = original_purchase.get_historical_exchange_rate()
                             _converted_in = (paid_amount * _return_rate).quantize(Decimal('0.01'))
 
-                            # تسجيل حركة الصندوق التفصيلية (CashTransaction)
                             CashTransaction.objects.create(
                                 transaction_date=timezone.now(), 
                                 amount_in=_converted_in,
@@ -1268,7 +1262,6 @@ def purch_return_create_view(request, slug):
             return render(request, 'invoice/purchase/purch_return_form.html', context)
     
     else:
-        # طلب GET - تهيئة النموذج
         initial_data = {
             'return_date': timezone.now().date(),
             'paid_amount': expected_return_total if is_cash_payment else Decimal('0.00')
@@ -1358,7 +1351,6 @@ def purch_return_create_view(request, slug):
 
 
 
-
 @login_required
 @permission_required('invoice.view_purchasereturn', raise_exception=True)
 def purchase_return_list_view(request):
@@ -1432,10 +1424,20 @@ def purchase_return_detail_view(request, slug):
     return render(request, 'invoice/purchase/purch_return_detail.html', context)
 
 
+
 @login_required
 @permission_required('invoice.delete_purchasereturn', raise_exception=True)
 def purchase_return_delete_view(request, slug):
-    """حذف مرتجع المشتريات مع استرجاع الكميات إلى المخزون ومعاملات الصندوق"""
+    """حذف مرتجع المشتريات مع استرجاع الكميات إلى المخزون ومعاملات الصندوق
+
+    ★★★ إصلاح بند 1.1 (الخيار ب) ★★★
+    حُذفت كتلة خصم paid_amount في فاتورة الشراء الأصلية.
+    السلوك الجديد:
+    - حذف المرتجع يسترجع الكميات إلى المخزون (لأن المرتجع كان خصمها)
+    - حذف المرتجع يحذف حركة الصندوق المرتبطة (لأن المرتجع كان أنشأها)
+    - paid_amount و balance_due في الفاتورة الأصلية لا يُمسان أبداً
+    - متسق مع purch_return_create_view المعدّل ومرتجع المبيعات
+    """
     purchase_return = get_object_or_404(PurchaseReturn, slug=slug)
     
     if purchase_return.created_by and purchase_return.created_by != request.user and not request.user.is_superuser:
@@ -1459,12 +1461,10 @@ def purchase_return_delete_view(request, slug):
                         returned_quantity = return_item.returned_quantity or Decimal('0.00')
                         
                         if returned_quantity > 0:
-                            # إعادة الكمية إلى المخزون (لأن المرتجع كان يقلل المخزون)
                             product.current_stock_quantity = F('current_stock_quantity') + returned_quantity
                             product.save(update_fields=['current_stock_quantity'])
                             product.refresh_from_db()
                             
-                            # إعادة حساب متوسط التكلفة
                             if product.current_stock_quantity > 0:
                                 total_value = product.current_stock_quantity * product.average_purchase_cost
                                 product.average_purchase_cost = (total_value / product.current_stock_quantity).quantize(Decimal('0.01'))
@@ -1487,19 +1487,11 @@ def purchase_return_delete_view(request, slug):
                     ).delete()
                     logger.info(f"✅ تم حذف {cash_transactions_count} معاملة صندوق مرتبطة بالمرتجع {return_uniqueId}")
                 
-                # ★★★ 3. استرجاع المبلغ المدفوع إلى فاتورة الشراء الأصلية ★★★
-                if original_purchase and paid_amount > 0:
-                    original_purchase.paid_amount = F('paid_amount') - paid_amount
-                    original_purchase.save(update_fields=['paid_amount'])
-                    
-                    original_purchase.refresh_from_db()
-                    original_purchase.balance_due = original_purchase.purch_final_total - original_purchase.paid_amount
-                    original_purchase.is_paid = original_purchase.balance_due <= 0
-                    original_purchase.save(update_fields=['balance_due', 'is_paid'])
-                    
-                    logger.info(f"✅ تم استرجاع {paid_amount} من المبلغ المدفوع إلى الفاتورة {original_purchase.uniqueId}")
+                # ★★★ بند 1.1 (الخيار ب) — حُذفت كتلة خصم paid_amount من فاتورة الشراء الأصلية ★★★
+                # حذف المرتجع لا يُمسّ paid_amount ولا balance_due في الفاتورة الأصلية
+                # (متسق مع purch_return_create_view المعدّل الذي لا يضيف للـ paid_amount عند الإنشاء)
                 
-                # ★★★ 4. حذف المرتجع ★★★
+                # ★★★ 3. حذف المرتجع ★★★
                 purchase_return.delete()
                 
                 items_summary = ", ".join([f"{item['product']} ({item['quantity']})" for item in items_restored[:5]])
@@ -1528,8 +1520,6 @@ def purchase_return_delete_view(request, slug):
         'title': f'حذف مرتجع المشتريات {purchase_return.uniqueId}'
     }
     return render(request, 'invoice/purchase/purchase_return_confirm_delete.html', context)
-
-
 
 
 
@@ -5683,6 +5673,10 @@ from decimal import Decimal
 from django.shortcuts import render
 # تأكد من استيراد الموديلات (Sale, SaleReturn, SaleItem, CashTransaction)
 
+
+
+#======================================
+
 @login_required
 @permission_required('invoice.view_report', raise_exception=True)
 def profit_report_view(request):
@@ -5729,7 +5723,24 @@ def profit_report_view(request):
         for item in sold_items:
             cost_price = item.product.average_purchase_cost if item.product and item.product.average_purchase_cost else (item.product.purch_price if item.product else Decimal('0.00'))
             total_cost += (item.sold_quantity * cost_price)
-        
+
+        # ==========================================
+        # 3-ب. تكلفة مرتجعات المبيعات (تُخصم من COGS) — بند 1.4
+        # ==========================================
+        # مرتجع المبيعات يُرجع بضاعة للمخزون، فتكلفته لا تُحتسب ضمن COGS
+        # الفترة: نفس فترة المرتجع (return_date__range)
+        # السيناريو: بيع 10 @ 100 = 1000 + مرتجع 2 = 200 → total_cost = 800
+        # اختبار: فحص_بند_1_4.py → 9/9
+        returns_items = SaleReturnItem.objects.filter(
+            sale_return__in=sales_returns_qs
+        ).select_related('product')
+        returns_cost = Decimal('0.00')
+        for ret_item in returns_items:
+            if ret_item.product:
+                cost_price = ret_item.product.average_purchase_cost if ret_item.product.average_purchase_cost else (ret_item.product.purch_price or Decimal('0.00'))
+                returns_cost += (ret_item.returned_quantity * cost_price)
+        total_cost -= returns_cost
+
         # ==========================================
         # 4. المصاريف التشغيلية والسحوبات (إصلاح مشكلة Timezone)
         # ==========================================
@@ -5776,6 +5787,17 @@ def profit_report_view(request):
         })
 
     return render(request, 'invoice/reports/profit_report.html', context)
+
+
+
+
+
+
+
+
+
+
+#=========================================
 
 
 @login_required
@@ -5898,6 +5920,12 @@ def purchases_by_supplier_report(request):
 
 
 
+
+
+
+
+#=============================
+
 import datetime
 from django.contrib.auth.decorators import login_required, permission_required
 from django.utils import timezone
@@ -5906,9 +5934,11 @@ from decimal import Decimal
 from django.shortcuts import render
 # تأكد من استيراد الموديلات (Sale, CashTransaction) في أعلى الملف
 
+
 @login_required
 @permission_required('invoice.view_report', raise_exception=True)
 def daily_sales_summary_report(request):
+    
     """ملخص مبيعات يومي"""
     today = timezone.now().date()
     selected_date_str = request.GET.get('date')
@@ -5926,6 +5956,16 @@ def daily_sales_summary_report(request):
     total_sales = sales_today.aggregate(total=Sum('sale_final_total'))['total'] or Decimal('0.00')
     cash_received = sales_today.aggregate(total=Sum('paid_amount'))['total'] or Decimal('0.00')
     invoices_count = sales_today.count()
+
+    # ==========================================
+    # 1-ب. مرتجعات المبيعات في نفس اليوم — بند 1.5
+    # ==========================================
+    # مرتجع المبيعات يُقلل الإيراد الفعلي لليوم (البضاعة رجعت للمخزون)
+    # السيناريو: بيع 1500 + مرتجع 300 في نفس اليوم → total_sales = 1200
+    # اختبار: فحص_بند_1_5.py → 9/9
+    sales_returns_today = SaleReturn.objects.filter(return_date=selected_date)
+    total_sales_returns = sales_returns_today.aggregate(total=Sum('return_final_total'))['total'] or Decimal('0.00')
+    total_sales -= total_sales_returns
 
     # 2. المصروفات (الحل النهائي النظيف)
     start_of_day_naive = datetime.datetime.combine(selected_date, datetime.time.min)
@@ -5952,9 +5992,15 @@ def daily_sales_summary_report(request):
         'invoices_count': invoices_count,
         'total_expenses': total_expenses,
         'net_cash': net_cash,
+        'total_sales_returns': total_sales_returns,
     }
     
     return render(request, 'invoice/reports/daily_sales_summary.html', context)
+
+#=================================
+
+
+
 
 
 @login_required
@@ -6198,15 +6244,21 @@ def unpaid_invoices_report(request):
     # ==========================================
     all_transactions.sort(key=lambda x: x['date'], reverse=True)
 
+
     # ==========================================
     # 6. حساب صافي الرصيد والإحصائيات (دون دمج الأرصدة، بل عرض مجاميع)
     # ==========================================
     net_balance = total_customers_debt - total_suppliers_debt
     
-    # حساب صافي الديون بعد المرتجعات (للتذييل فقط)
-    net_customer_debt = total_customers_debt + total_sale_returns
-    net_supplier_debt = total_suppliers_debt + total_purchase_returns
-    
+    # ★★★ بند 1.3 — إصلاح العلامة من + إلى - ★★★
+    # مرتجع المبيعات يُقلل ما يطالب به العميل (لا يزيد ديونه)
+    # مرتجع المشتريات يُقلل ما نطالب به المورد (لا يزيد ديوننا له)
+    # السيناريو: فاتورة 1000 + مرتجع 200 بلا صرف → صافي 800 (لا 1200)
+    # اختبار: فحص_إغلاق_بند_1_3.py → 9/9
+    net_customer_debt = total_customers_debt - total_sale_returns
+    net_supplier_debt = total_suppliers_debt - total_purchase_returns
+
+
     # ==========================================
     # 7. تجميع المعاملات حسب الطرف
     # ==========================================

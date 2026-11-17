@@ -68,6 +68,8 @@ def send_custom_email(subject, message, recipient_list):
 # دوال نظام التسعير
 # ==========================================
 
+
+
 def verify_pricing_password(provided_password):
     """
     التحقق من كلمة مرور نظام التسعير (بطريقة آمنة ومشفرة باستخدام Django)
@@ -85,6 +87,7 @@ def verify_pricing_password(provided_password):
         
     # استخدام دالة Django الآمنة للتحقق من النص المشفر
     return check_password(provided_password, stored_password)
+
 
 
 def is_custom_password_set():

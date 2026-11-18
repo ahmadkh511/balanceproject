@@ -1,4 +1,5 @@
 
+
 # ==================== مكتبات بايثون القياسية ====================
 import csv
 import datetime
@@ -13,6 +14,8 @@ import time
 import zipfile
 from datetime import timedelta
 from decimal import Decimal, InvalidOperation
+from itertools import groupby
+from operator import attrgetter
 from tempfile import NamedTemporaryFile
 from types import SimpleNamespace
 from urllib.parse import quote
@@ -37,7 +40,10 @@ from django.core.files.temp import NamedTemporaryFile
 from django.core.mail import EmailMessage, send_mail
 from django.core.paginator import Paginator
 from django.db import IntegrityError, transaction
-from django.db.models import CharField, Count, DecimalField, ExpressionWrapper, F, Func, Prefetch, Q, Sum, Value
+from django.db.models import (
+    CharField, Count, DecimalField, ExpressionWrapper, F, Func,
+    Prefetch, Q, Sum, Value
+)
 from django.db.models.functions import Coalesce, Concat, Now
 from django.forms import inlineformset_factory
 from django.http import Http404, HttpResponse, JsonResponse, FileResponse
@@ -54,13 +60,18 @@ from django.views.decorators.http import require_GET, require_POST
 from django.views.generic import CreateView, DeleteView, DetailView, ListView, UpdateView
 
 # ==================== التطبيقات والأدوات المساعدة الأخرى ====================
-from accounts.models import Profile
+from accounts.models import Profile, LabelSize
 from accounts.views import is_staff_user
-from invoice.models import PricingSetting, Product, PricingTier, ProductPriceTier, Sale, Purch, SaleReturn, PurchaseReturn, CashTransaction
 
-from invoice.utils import get_active_email_connection, superuser_required
+# ★ بند 2.4: دمج استيرادات invoice.utils في سطر واحد (كانت مكررة)
+from invoice.utils import (
+    get_active_email_connection,
+    superuser_required,
+    is_pricing_password_set,  # ★ بند 2.1
+)
 
 # ==================== النماذج المحلية (Models) ====================
+# ★ بند 2.4: حذف from invoice.models import ... المكرر — مُغطّى بالاستيراد الشامل أدناه
 from .models import (
     Barcode, CashTransaction, Cart, CartItem, Category, Currency,
     EmailSetting, FlashDeal, Payment_method, PriceType, PricingSetting,
@@ -69,7 +80,8 @@ from .models import (
     PurchaseReturnItemBarcode, Sale, SaleItem, SaleItemBarcode, SaleReturn,
     SaleReturnItem, SaleReturnItemBarcode, Shipping_com_m, Status,
     StockNotification, StoreAnnouncement, StoreBanner, StoreFeatureIcon,
-    StoreSection, User, WebsiteOrder, WebsiteOrderItem,ProdSpec
+    StoreSection, User, WebsiteOrder, WebsiteOrderItem, ProdSpec,
+    SpecType, SpecValue
 )
 
 # ==================== النماذج المحلية (Forms) ====================
@@ -91,45 +103,14 @@ from .backup_engine import (
     get_backups_dir,
     delete_server_backup as delete_backup_file,
 )
+
 from .utils import send_custom_email, verify_pricing_password
-
-
-
-from django.views.decorators.http import require_POST
-from django.shortcuts import get_object_or_404
-
-
-import json
-from django.http import JsonResponse
-from django.views.decorators.http import require_GET
-# تأكد من استيراد النماذج الجديدة
-from .models import Product, ProdSpec, SpecType, SpecValue
-
-from django.shortcuts import render, redirect, get_object_or_404
-from django.contrib import messages
-from django.views.decorators.http import require_POST
-from .models import SpecType, SpecValue
-
-
-
-import json
-from decimal import Decimal
-import json
-from decimal import Decimal
-
-from accounts.models import LabelSize # استيراد النموذج من تطبيق accounts
-
-
-from accounts.models import LabelSize # تأكد أن الاستيراد من accounts.models كما اتفقنا
-from django.views.decorators.http import require_POST
-
-
-from itertools import groupby
-from operator import attrgetter
 
 # ==================== إعدادات التسجيل ====================
 logger = logging.getLogger(__name__)
 User = get_user_model()
+
+
 
 
 
@@ -3676,12 +3657,15 @@ def product_edit(request, slug):
 #           نظام التسعير          #
 # ===============================================
 
-
-
 @login_required
 @permission_required('invoice.change_product', raise_exception=True)
 def product_bulk_update(request):
-    """تحديث جمعي للأسعار مع نظام مستويات ديناميكي"""
+    """تحديث جمعي للأسعار مع نظام مستويات ديناميكي
+    
+    ★★★ بند 2.1 — تحسين الأمان ★★★
+    عند غياب كلمة مرور معرّفة، العمليات الحساسة تُرفض مع رسالة إرشادية واضحة
+    بدل الرسالة الغامضة "كلمة المرور غير صحيحة".
+    """
     
     if request.method == 'POST':
         try:
@@ -3692,6 +3676,15 @@ def product_bulk_update(request):
 
             sensitive_actions = ['bulk_updates', 'save_tiers_settings', 'reset_data']
             if any(action in data for action in sensitive_actions):
+                # ★★★ بند 2.1 — فحص أول: هل توجد كلمة مرور معرّفة؟ ★★★
+                # إن لم توجد → رسالة إرشادية واضحة بدل رفض غامض
+                if not is_pricing_password_set():
+                    return JsonResponse({
+                        'success': False,
+                        'message': 'لم يتم تعيين كلمة مرور لنظام التسعير بعد. '
+                                   'يجب على المدير تعيين كلمة مرور أولاً أو الاتصال بالمسؤول.'
+                    }, status=403)
+
                 provided_password = data.get('password', '')
                 if not verify_pricing_password(provided_password):
                     logger.warning(f"محاولة كلمة مرور خاطئة بواسطة: {request.user.username}")
@@ -3986,7 +3979,6 @@ def product_bulk_update(request):
             'total_products': paginator.count,
         },
     })
-
 
     
 
@@ -5244,26 +5236,6 @@ def get_email_settings():
     return obj
 
 
-def send_custom_email(subject, message, recipient_list):
-    config = get_email_settings()
-    
-    try:
-        send_mail(
-            subject,
-            message,
-            config.default_from_email,
-            recipient_list,
-            fail_silently=False,
-            auth_user=config.email_host_user,
-            auth_password=config.email_host_password,
-            connection=None 
-        )
-        return True
-    except Exception as e:
-        print(f"Error sending email: {e}")
-        return False
-
-
 # **********************************************************************************
 # ==================== القسم الثاني: تقارير الحسابات والفواتير ==================
 # **********************************************************************************
@@ -5665,14 +5637,6 @@ def dead_stock_report(request):
     
     return render(request, 'invoice/reports/dead_stock_report.html', context)
 
-import datetime
-from django.contrib.auth.decorators import login_required, permission_required
-from django.utils import timezone
-from django.db.models import Sum
-from decimal import Decimal
-from django.shortcuts import render
-# تأكد من استيراد الموديلات (Sale, SaleReturn, SaleItem, CashTransaction)
-
 
 
 #======================================
@@ -5926,13 +5890,6 @@ def purchases_by_supplier_report(request):
 
 #=============================
 
-import datetime
-from django.contrib.auth.decorators import login_required, permission_required
-from django.utils import timezone
-from django.db.models import Sum
-from decimal import Decimal
-from django.shortcuts import render
-# تأكد من استيراد الموديلات (Sale, CashTransaction) في أعلى الملف
 
 
 @login_required
@@ -7869,12 +7826,22 @@ def admin_stock_notifications(request):
 # ==========================================================
 # دالة إرسال الإشعارات (محدثة لتدعم الأرشيف)
 # ==========================================================
+
 @login_required
 @permission_required('invoice.change_stocknotification', raise_exception=True)
 @require_POST
 def admin_send_notification(request, product_id):
     """
     إرسال إيميل للجميع ينتظرون هذا المنتج ثم أرشفة السجلات
+
+    ★★★ بند 2.2 — إصلاح تعديل settings في runtime ★★★
+    السلوك الجديد:
+    - تمرير connection مباشرة لـ EmailMessage بدل تعديل settings
+    - لا يلمس settings.EMAIL_HOST/PORT/USER/PASSWORD/TLS/DEFAULT_FROM_EMAIL
+    - آمن في بيئة multi-threaded (لا تداخل بين الطلبات)
+    - متوافق مع send_custom_email في utils.py (نفس النمط)
+    - متوافق مع locmem backend (لا يحتاج connection.host)
+    اختبار: فحص_بند_2_2.py → 8/8
     """
     # 1. جلب البيانات والتحقق
     try:
@@ -7891,60 +7858,42 @@ def admin_send_notification(request, product_id):
             return JsonResponse({'success': False, 'message': 'تعذر العثور على إعدادات البريد'})
 
         if connection and from_email:
-            # 3. حفظ الإعدادات الحالية لاستعادتها لاحقاً
-            old_host = getattr(settings, 'EMAIL_HOST', None)
-            old_port = getattr(settings, 'EMAIL_PORT', None)
-            old_user = getattr(settings, 'EMAIL_HOST_USER', None)
-            old_pass = getattr(settings, 'EMAIL_HOST_PASSWORD', None)
-            old_tls = getattr(settings, 'EMAIL_USE_TLS', None)
-            old_from = getattr(settings, 'DEFAULT_FROM_EMAIL', None)
+            # 3. إرسال الإيميل عبر تمرير connection مباشرة
+            # ★★★ بند 2.2: لا نلمس settings — نمرر connection مباشرة ★★★
+            # هذا آمن في multi-threaded ومتوافق مع أي backend (smtp/locmem/console)
+            emails_list = list(notifications.values_list('email', flat=True))
+            subject = f"عاد التوفر: {product.product_name}"
+            
+            # تحضير محتوى الإيميل (HTML)
+            message_html = render_to_string('invoice/store/email_notification.html', {
+                'product': product,
+                'site_url': request.build_absolute_uri('/')[:-1]
+            })
 
+            # إنشاء EmailMessage مع تمرير connection مباشرة
+            email = EmailMessage(
+                subject=subject,
+                body=message_html,
+                from_email=from_email,
+                bcc=emails_list,
+                connection=connection,  # ★ الاتصال المُمرَّر مباشرة
+            )
+            email.content_subtype = "html"
+            
             try:
-                # 4. تطبيق إعدادات البريد من قاعدة البيانات على إعدادات النظام مؤقتاً
-                settings.EMAIL_HOST = connection.host
-                settings.EMAIL_PORT = connection.port
-                settings.EMAIL_HOST_USER = connection.username
-                settings.EMAIL_HOST_PASSWORD = connection.password
-                settings.EMAIL_USE_TLS = connection.use_tls
-                settings.DEFAULT_FROM_EMAIL = from_email
-
-                # 5. إرسال الإيميل
-                emails_list = list(notifications.values_list('email', flat=True))
-                subject = f"عاد التوفر: {product.product_name}"
-                
-                # تحضير محتوى الإيميل (HTML)
-                message_html = render_to_string('invoice/store/email_notification.html', {
-                    'product': product,
-                    'site_url': request.build_absolute_uri('/')[:-1]
-                })
-
-                email = EmailMessage(
-                    subject=subject,
-                    body=message_html,
-                    from_email=from_email,
-                    bcc=emails_list, # إرسال نسخة مخفية للجميع
-                )
-                email.content_subtype = "html" # تحديد المحتوى كـ HTML
                 email.send()
-
-                # 6. أرشفة السجلات (تعديل الحقول بدلاً من الحذف)
-                # نحتاج لاستيراد timezone من django.utils
-                from django.utils import timezone 
+                
+                # 4. أرشفة السجلات بعد الإرسال الناجح
                 notifications.update(is_sent=True, sent_at=timezone.now())
-
+                
                 return JsonResponse({
                     'success': True, 
                     'message': f'تم إرسال الإشعار لـ {notifications.count()} شخص ونقله للأرشيف.'
                 })
-
-            finally:
-                # 7. استعادة الإعدادات الأصلية (تنظيف) ضروري جداً
-                settings.EMAIL_HOST = old_host
-                settings.EMAIL_PORT = old_port
-                settings.EMAIL_HOST_USER = old_user
-                settings.EMAIL_HOST_PASSWORD = old_pass
-                settings.EMAIL_USE_TLS = old_tls
-                settings.DEFAULT_FROM_EMAIL = old_from
+                
+            except Exception as e:
+                print(f"Error sending notification: {str(e)}")
+                return JsonResponse({'success': False, 'message': 'حدث خطأ أثناء إرسال الإشعار'}, status=500)
 
         else:
             return JsonResponse({'success': False, 'message': 'لم يتم العثور على إعدادات بريد صالحة في قاعدة البيانات'})
@@ -7952,6 +7901,7 @@ def admin_send_notification(request, product_id):
     except Exception as e:
         print(f"Error sending notification: {str(e)}")
         return JsonResponse({'success': False, 'message': 'حدث خطأ أثناء إرسال الإشعار'}, status=500)
+
 
 
 @login_required

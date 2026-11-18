@@ -24,6 +24,9 @@ logger = logging.getLogger(__name__)
 User = get_user_model()
 
 
+from django.db import models
+from decimal import Decimal
+
 
 
 #================================================
@@ -1523,9 +1526,6 @@ class Product(models.Model):
 
 
 #=================
-
-from django.db import models
-from decimal import Decimal
 
 # 1. جدول أنواع المواصفات (مثال: الألوان، الأحجام)
 class SpecType(models.Model):

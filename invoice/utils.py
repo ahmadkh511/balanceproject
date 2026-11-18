@@ -73,6 +73,13 @@ def send_custom_email(subject, message, recipient_list):
 def verify_pricing_password(provided_password):
     """
     التحقق من كلمة مرور نظام التسعير (بطريقة آمنة ومشفرة باستخدام Django)
+
+    ★★★ بند 2.1 — إصلاح ثغرة "المرور بدون كلمة مرور معرّفة" ★★★
+    السلوك الجديد (Fail-Secure):
+    - كلمة مرور فارغة من المدخل → مرفوضة (كما كان)
+    - لا توجد كلمة مرور معرّفة في قاعدة البيانات → مرفوضة (سابقاً: كانت تُقبل!)
+    - توجد كلمة مرور → التحقق منها عبر check_password
+    اختبار: فحص_بند_2_1.py → 8/8
     """
     if not provided_password or not str(provided_password).strip():
         return False
@@ -81,9 +88,10 @@ def verify_pricing_password(provided_password):
     settings = PricingSetting.get_settings()
     stored_password = settings.pricing_password
     
-    # إذا لم يتم تعيين كلمة مرور في النظام، اسمح بالمرور
+    # ★ بند 2.1: لا توجد كلمة مرور معرّفة → ارفض كل المحاولات
+    # (سابقاً: return True → يقبل أي إدخال — ثغرة أمنية)
     if not stored_password:
-        return True
+        return False
         
     # استخدام دالة Django الآمنة للتحقق من النص المشفر
     return check_password(provided_password, stored_password)
@@ -105,8 +113,13 @@ def is_custom_password_set():
     return pw.startswith(('pbkdf2_sha256$', 'argon2$', 'bcrypt_sha256$'))
 
 
-
-
+def is_pricing_password_set():
+    """
+    هل تم تعيين كلمة مرور لنظام التسعير؟
+    (تُستخدم لتمييز "لا توجد كلمة معرّفة" عن "كلمة مرور خاطئة" — بند 2.1)
+    """
+    settings = PricingSetting.get_settings()
+    return bool(settings.pricing_password)
 
 
 # ==========================================

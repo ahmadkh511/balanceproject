@@ -1,5 +1,5 @@
 # انشاءنا هذا الملف من اجل فصل المهام في الايمل 
-
+from decimal import Decimal
 import logging
 from functools import wraps
 
@@ -31,7 +31,7 @@ def get_active_email_connection():
             username=config.email_host_user,
             password=config.email_host_password,
             use_tls=config.email_use_tls,
-            use_ssl=False,
+            use_ssl=config.email_use_ssl,  # ★★★ بند 3.4 — قراءة من قاعدة البيانات بدل hardcoded False
         )
         return connection, config.default_from_email
     except EmailSetting.DoesNotExist:
@@ -122,10 +122,74 @@ def is_pricing_password_set():
     return bool(settings.pricing_password)
 
 
+
+# ==========================================
+# دوال التسعير
+# ==========================================
+
+def get_product_price(product):
+    """
+    تحديد السعر النهائي للمنتج في المتجر
+    
+    ★★★ بند 3.1 — نقل من views.py إلى utils.py ★★★
+    1. تبحث في تصنيف المنتج (إذا كان مربوطاً بمستوى تسعير).
+    2. إذا لم تجد، ترجع لسعر الجملة.
+    
+    استخدمت في:
+    - views.py (store_front, control_store, إلخ)
+    - models.py (CartItem.total_item_price) — بند 3.1
+    """
+    if hasattr(product, 'category') and product.category and hasattr(product.category, 'pricing_tier') and product.category.pricing_tier:
+        tier_id = product.category.pricing_tier.id
+        try:
+            from .models import ProductPriceTier
+            tier_price = ProductPriceTier.objects.get(product=product, tier_id=tier_id)
+            if tier_price.price and tier_price.price > 0:
+                return tier_price.price
+        except ProductPriceTier.DoesNotExist:
+            pass
+
+    return product.wholesale_price or Decimal('0.00')
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 # ==========================================
 # زخرفة حماية الصلاحيات العليا
 # للمشرف الأعلى (superuser) فقط
 # ==========================================
+
+
+
+
+
+
 
 def superuser_required(view_func):
     """

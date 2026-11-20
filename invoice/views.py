@@ -67,7 +67,8 @@ from accounts.views import is_staff_user
 from invoice.utils import (
     get_active_email_connection,
     superuser_required,
-    is_pricing_password_set,  # ★ بند 2.1
+    is_pricing_password_set,
+    get_product_price,  # ★ بند 3.1 — نقلت من views.py
 )
 
 # ==================== النماذج المحلية (Models) ====================
@@ -726,6 +727,7 @@ def purch_edit(request, slug):
                         # ==========================================
                         # ★ تحديث المخزون بناءً على تغيير الكمية الفعالة
                         # ==========================================
+
                         if item.product:
                             product = item.product
                             product.refresh_from_db()
@@ -743,7 +745,8 @@ def purch_edit(request, slug):
                                     product.save(update_fields=['current_stock_quantity'])
                                     product.refresh_from_db()
                                     product.average_purchase_cost = item.unit_price_base_currency
-                                    product.save()
+                                    # ★★★ بند 3.7 — استخدام update_fields ★★★
+                                    product.save(update_fields=['average_purchase_cost'])
                                 elif stock_difference != 0:
                                     # نفس المنتج، تغيرت الكمية الفعالة
                                     product.current_stock_quantity = F('current_stock_quantity') + stock_difference
@@ -755,7 +758,8 @@ def purch_edit(request, slug):
                                             old_total_value = (product.current_stock_quantity - stock_difference) * product.average_purchase_cost
                                             new_total_value = old_total_value + (stock_difference * item.unit_price_base_currency)
                                             product.average_purchase_cost = (new_total_value / product.current_stock_quantity).quantize(Decimal('0.01'))
-                                            product.save()
+                                            # ★★★ بند 3.7 — استخدام update_fields ★★★
+                                            product.save(update_fields=['average_purchase_cost'])
                             else:
                                 # بند جديد
                                 product.current_stock_quantity = F('current_stock_quantity') + submitted_effective_quantity
@@ -766,7 +770,8 @@ def purch_edit(request, slug):
                                     old_total_value = (product.current_stock_quantity - submitted_effective_quantity) * product.average_purchase_cost
                                     new_total_value = old_total_value + (submitted_effective_quantity * item.unit_price_base_currency)
                                     product.average_purchase_cost = (new_total_value / product.current_stock_quantity).quantize(Decimal('0.01'))
-                                    product.save()
+                                    # ★★★ بند 3.7 — استخدام update_fields ★★★
+                                    product.save(update_fields=['average_purchase_cost'])
 
                             product.last_operation_type = 'purchase'
                             product.save(update_fields=['last_operation_type'])
@@ -2309,19 +2314,19 @@ def sale_delete(request, slug):
 
 
 
-@login_required
-def get_payment_method(request, payment_method_id):
-    """API لجلب بيانات طريقة الدفع"""
-    from .models import PaymentMethod
-    try:
-        payment_method = PaymentMethod.objects.get(id=payment_method_id)
-        return JsonResponse({
-            'id': payment_method.id,
-            'name': payment_method.name,
-            'is_cash': payment_method.is_cash
-        })
-    except PaymentMethod.DoesNotExist:
-        return JsonResponse({'error': 'طريقة الدفع غير موجودة'}, status=404)
+# @login_required
+# def get_payment_method(request, payment_method_id):
+#     """API لجلب بيانات طريقة الدفع"""
+#     from .models import PaymentMethod
+#     try:
+#         payment_method = PaymentMethod.objects.get(id=payment_method_id)
+#         return JsonResponse({
+#             'id': payment_method.id,
+#             'name': payment_method.name,
+#             'is_cash': payment_method.is_cash
+#         })
+#     except PaymentMethod.DoesNotExist:
+#         return JsonResponse({'error': 'طريقة الدفع غير موجودة'}, status=404)
 
 
 
@@ -3090,132 +3095,136 @@ def pos_sale_create(request):
 
 
 
-@login_required
-@permission_required('invoice.view_sale', raise_exception=True)
-def get_sale_items_for_return(request, sale_id):
-    """API لجلب بنود الفاتورة الأصلية مع إمكانية تحديد الكميات القابلة للإرجاع"""
-    try:
-        sale = Sale.objects.get(id=sale_id)
+# @login_required
+# @permission_required('invoice.view_sale', raise_exception=True)
+# def get_sale_items_for_return(request, sale_id):
+#     """API لجلب بنود الفاتورة الأصلية مع إمكانية تحديد الكميات القابلة للإرجاع"""
+#     try:
+#         sale = Sale.objects.get(id=sale_id)
         
-        # جلب جميع بنود الفاتورة مع معلومات الإرجاع السابقة
-        items = []
-        for item in sale.saleitem_set.all():
-            # حساب الكمية التي تم إرجاعها سابقاً لهذا البند
-            returned_qty = SaleReturnItem.objects.filter(
-                original_sale_item=item,
-                sale_return__isnull=False
-            ).aggregate(total=Sum('returned_quantity'))['total'] or Decimal('0.00')
+#         # جلب جميع بنود الفاتورة مع معلومات الإرجاع السابقة
+#         items = []
+#         for item in sale.saleitem_set.all():
+#             # حساب الكمية التي تم إرجاعها سابقاً لهذا البند
+#             returned_qty = SaleReturnItem.objects.filter(
+#                 original_sale_item=item,
+#                 sale_return__isnull=False
+#             ).aggregate(total=Sum('returned_quantity'))['total'] or Decimal('0.00')
             
-            # الكمية القابلة للإرجاع = الكمية المباعة - الكمية المرتجعة سابقاً
-            available_to_return = max(Decimal('0.00'), item.sold_quantity - returned_qty)
+#             # الكمية القابلة للإرجاع = الكمية المباعة - الكمية المرتجعة سابقاً
+#             available_to_return = max(Decimal('0.00'), item.sold_quantity - returned_qty)
             
-            # جلب الباركودات الخاصة بهذا البند
-            barcodes = []
-            if item.product:
-                for ib in item.item_barcodes.filter(barcode_status='active'):
-                    barcodes.append({
-                        'id': ib.barcode.id,
-                        'barcode_in': ib.barcode.barcode_in,
-                        'status': ib.barcode.status
-                    })
+#             # جلب الباركودات الخاصة بهذا البند
+#             barcodes = []
+#             if item.product:
+#                 for ib in item.item_barcodes.filter(barcode_status='active'):
+#                     barcodes.append({
+#                         'id': ib.barcode.id,
+#                         'barcode_in': ib.barcode.barcode_in,
+#                         'status': ib.barcode.status
+#                     })
             
-            items.append({
-                'id': item.id,
-                'product_id': item.product.id if item.product else None,
-                'product_name': item.item_name,
-                'sold_quantity': float(item.sold_quantity),
-                'returned_quantity': float(returned_qty),
-                'available_to_return': float(available_to_return),
-                'unit_price': float(item.unit_price),
-                'has_barcode': len(barcodes) > 0,
-                'barcodes': barcodes
-            })
+#             items.append({
+#                 'id': item.id,
+#                 'product_id': item.product.id if item.product else None,
+#                 'product_name': item.item_name,
+#                 'sold_quantity': float(item.sold_quantity),
+#                 'returned_quantity': float(returned_qty),
+#                 'available_to_return': float(available_to_return),
+#                 'unit_price': float(item.unit_price),
+#                 'has_barcode': len(barcodes) > 0,
+#                 'barcodes': barcodes
+#             })
         
-        return JsonResponse({
-            'success': True,
-            'sale_number': sale.uniqueId,
-            'items': items,
-            'currency': {
-                'id': sale.sale_currency.id if sale.sale_currency else None,
-                'name': sale.sale_currency.name_ar if sale.sale_currency else 'ليرة سورية'
-            }
-        })
+#         return JsonResponse({
+#             'success': True,
+#             'sale_number': sale.uniqueId,
+#             'items': items,
+#             'currency': {
+#                 'id': sale.sale_currency.id if sale.sale_currency else None,
+#                 'name': sale.sale_currency.name_ar if sale.sale_currency else 'ليرة سورية'
+#             }
+#         })
         
-    except Sale.DoesNotExist:
-        return JsonResponse({'success': False, 'error': 'الفاتورة غير موجودة'}, status=404)
-    except Exception as e:
-        logger.error(f"خطأ في جلب بنود الفاتورة للإرجاع: {e}", exc_info=True)
-        # 🔒 تحسين أمني للـ API
-        return JsonResponse({'success': False, 'error': 'حدث خطأ أثناء جلب البيانات'}, status=500)
+#     except Sale.DoesNotExist:
+#         return JsonResponse({'success': False, 'error': 'الفاتورة غير موجودة'}, status=404)
+#     except Exception as e:
+#         logger.error(f"خطأ في جلب بنود الفاتورة للإرجاع: {e}", exc_info=True)
+#         # 🔒 تحسين أمني للـ API
+#         return JsonResponse({'success': False, 'error': 'حدث خطأ أثناء جلب البيانات'}, status=500)
 
 
-@login_required
-@permission_required('invoice.add_salereturn', raise_exception=True)
-def check_barcode_for_return(request, product_id):
-    """API للتحقق من صحة الباركود للإرجاع"""
-    try:
-        product = Product.objects.get(id=product_id)
-        barcode_value = request.GET.get('barcode')
-        sale_item_id = request.GET.get('sale_item_id')
+
+
+
+
+# @login_required
+# @permission_required('invoice.add_salereturn', raise_exception=True)
+# def check_barcode_for_return(request, product_id):
+#     """API للتحقق من صحة الباركود للإرجاع"""
+#     try:
+#         product = Product.objects.get(id=product_id)
+#         barcode_value = request.GET.get('barcode')
+#         sale_item_id = request.GET.get('sale_item_id')
         
-        if not barcode_value:
-            return JsonResponse({'success': False, 'error': 'لم يتم إرسال قيمة الباركود'})
+#         if not barcode_value:
+#             return JsonResponse({'success': False, 'error': 'لم يتم إرسال قيمة الباركود'})
         
-        # البحث عن الباركود
-        try:
-            barcode_obj = Barcode.objects.get(barcode_in=barcode_value, product=product)
-        except Barcode.DoesNotExist:
-            return JsonResponse({
-                'success': False, 
-                'error': 'الباركود غير موجود لهذا المنتج'
-            })
+#         # البحث عن الباركود
+#         try:
+#             barcode_obj = Barcode.objects.get(barcode_in=barcode_value, product=product)
+#         except Barcode.DoesNotExist:
+#             return JsonResponse({
+#                 'success': False, 
+#                 'error': 'الباركود غير موجود لهذا المنتج'
+#             })
         
-        # التحقق من أن هذا الباركود كان مباعاً في هذه الفاتورة
-        if barcode_obj.status != 'sold':
-            return JsonResponse({
-                'success': False,
-                'error': f'هذا الباركود غير مباع (حالته: {barcode_obj.get_status_display()})'
-            })
+#         # التحقق من أن هذا الباركود كان مباعاً في هذه الفاتورة
+#         if barcode_obj.status != 'sold':
+#             return JsonResponse({
+#                 'success': False,
+#                 'error': f'هذا الباركود غير مباع (حالته: {barcode_obj.get_status_display()})'
+#             })
         
-        # التحقق من أن الباركود تابع لهذا البند (إذا تم تحديد البند)
-        if sale_item_id:
-            is_in_sale_item = SaleItemBarcode.objects.filter(
-                sale_item_id=sale_item_id,
-                barcode=barcode_obj,
-                barcode_status='active'
-            ).exists()
+#         # التحقق من أن الباركود تابع لهذا البند (إذا تم تحديد البند)
+#         if sale_item_id:
+#             is_in_sale_item = SaleItemBarcode.objects.filter(
+#                 sale_item_id=sale_item_id,
+#                 barcode=barcode_obj,
+#                 barcode_status='active'
+#             ).exists()
             
-            if not is_in_sale_item:
-                return JsonResponse({
-                    'success': False,
-                    'error': 'هذا الباركود ليس من ضمن بنود هذه الفاتورة'
-                })
+#             if not is_in_sale_item:
+#                 return JsonResponse({
+#                     'success': False,
+#                     'error': 'هذا الباركود ليس من ضمن بنود هذه الفاتورة'
+#                 })
         
-        # التحقق من أن الباركود لم يُرجع سابقاً
-        already_returned = SaleReturnItemBarcode.objects.filter(
-            barcode=barcode_obj,
-            barcode_status='returned'
-        ).exists()
+#         # التحقق من أن الباركود لم يُرجع سابقاً
+#         already_returned = SaleReturnItemBarcode.objects.filter(
+#             barcode=barcode_obj,
+#             barcode_status='returned'
+#         ).exists()
         
-        if already_returned:
-            return JsonResponse({
-                'success': False,
-                'error': 'تم إرجاع هذا الباركود سابقاً'
-            })
+#         if already_returned:
+#             return JsonResponse({
+#                 'success': False,
+#                 'error': 'تم إرجاع هذا الباركود سابقاً'
+#             })
         
-        return JsonResponse({
-            'success': True,
-            'message': 'باركود صالح للإرجاع',
-            'barcode_id': barcode_obj.id,
-            'barcode_value': barcode_obj.barcode_in
-        })
+#         return JsonResponse({
+#             'success': True,
+#             'message': 'باركود صالح للإرجاع',
+#             'barcode_id': barcode_obj.id,
+#             'barcode_value': barcode_obj.barcode_in
+#         })
         
-    except Product.DoesNotExist:
-        return JsonResponse({'success': False, 'error': 'المنتج غير موجود'}, status=404)
-    except Exception as e:
-        logger.error(f"خطأ في التحقق من الباركود للإرجاع: {e}", exc_info=True)
-        # 🔒 تحسين أمني للـ API
-        return JsonResponse({'success': False, 'error': 'حدث خطأ أثناء التحقق من الباركود'}, status=500)
+#     except Product.DoesNotExist:
+#         return JsonResponse({'success': False, 'error': 'المنتج غير موجود'}, status=404)
+#     except Exception as e:
+#         logger.error(f"خطأ في التحقق من الباركود للإرجاع: {e}", exc_info=True)
+#         # 🔒 تحسين أمني للـ API
+#         return JsonResponse({'success': False, 'error': 'حدث خطأ أثناء التحقق من الباركود'}, status=500)
 
 
 
@@ -3259,7 +3268,8 @@ def product_create(request):
         
         try:
             with transaction.atomic():
-                product = Product(
+                # ★★★ بند 3.7 — استخدام objects.create بدل product.save() للإدخال الجديد ★★★
+                product = Product.objects.create(
                     product_name=product_name,
                     main_barcode=main_barcode if main_barcode else None,
                     product_description=product_description,
@@ -3274,13 +3284,9 @@ def product_create(request):
                     price_adjustment=Decimal('0.00'),
                     retail_price=Decimal('0.00'),
                     semi_wholesale_price=Decimal('0.00'),
-                    wholesale_price=Decimal('0.00')
+                    wholesale_price=Decimal('0.00'),
+                    product_image=product_image if product_image else None
                 )
-                
-                if product_image:
-                    product.product_image = product_image
-                
-                product.save()
                 print(f"✅ تم حفظ المادة: {product.product_name} - ID: {product.id} - Slug: {product.slug}")
                 
                 # ===== حفظ المواصفات الديناميكية =====
@@ -3313,6 +3319,7 @@ def product_create(request):
         'title': _('إنشاء مادة جديدة'),
         'spec_types': spec_types
     })
+
 
 
 
@@ -3570,7 +3577,6 @@ def product_delete(request, slug):
 
 
 
-
 @login_required
 @permission_required('invoice.change_product', raise_exception=True)
 def product_edit(request, slug):
@@ -3609,7 +3615,11 @@ def product_edit(request, slug):
                 elif remove_image:
                     product.product_image = None
 
-                product.save()
+                # ★★★ بند 3.7 — استخدام update_fields لتحديث الأعمدة المعدلة فقط ★★★
+                update_fields_list = ['product_name', 'main_barcode', 'product_description', 'Prodnots']
+                if product_image or remove_image:
+                    update_fields_list.append('product_image')
+                product.save(update_fields=update_fields_list)
                 
                 # ===== تحديث المواصفات الديناميكية (Multi-select) =====
                 try:
@@ -3652,6 +3662,7 @@ def product_edit(request, slug):
         'spec_types': spec_types,
         'existing_specs': existing_specs
     })
+
 
 
 #================================================
@@ -6409,22 +6420,24 @@ def get_client_ip(request):
 
 
 
-def get_product_price(product):
-    """
-    تحديد السعر النهائي للمنتج في المتجر
-    1. تبحث في تصنيف المنتج (إذا كان مربوطاً بمستوى تسعير).
-    2. إذا لم تجد، ترجع لسعر الجملة.
-    """
-    if hasattr(product, 'category') and product.category and hasattr(product.category, 'pricing_tier') and product.category.pricing_tier:
-        tier_id = product.category.pricing_tier.id
-        try:
-            tier_price = ProductPriceTier.objects.get(product=product, tier_id=tier_id)
-            if tier_price.price and tier_price.price > 0:
-                return tier_price.price
-        except ProductPriceTier.DoesNotExist:
-            pass
+# def get_product_price(product):
+#     """
+#     تحديد السعر النهائي للمنتج في المتجر
+#     1. تبحث في تصنيف المنتج (إذا كان مربوطاً بمستوى تسعير).
+#     2. إذا لم تجد، ترجع لسعر الجملة.
+#     """
+#     if hasattr(product, 'category') and product.category and hasattr(product.category, 'pricing_tier') and product.category.pricing_tier:
+#         tier_id = product.category.pricing_tier.id
+#         try:
+#             tier_price = ProductPriceTier.objects.get(product=product, tier_id=tier_id)
+#             if tier_price.price and tier_price.price > 0:
+#                 return tier_price.price
+#         except ProductPriceTier.DoesNotExist:
+#             pass
 
-    return product.wholesale_price or Decimal('0.00')
+#     return product.wholesale_price or Decimal('0.00')
+
+
 
 
 def prepare_product_data(product, setting=None):
@@ -6936,154 +6949,156 @@ def add_to_cart(request):
         }, status=500)
 
 
-def update_cart_item(request):
-    """تعديل كمية منتج في السلة (AJAX) - نسخة محسنة"""
-    if request.method != 'POST':
-        return JsonResponse({'success': False, 'message': 'طريقة غير مسموحة'}, status=400)
+# def update_cart_item(request):
+#     """تعديل كمية منتج في السلة (AJAX) - نسخة محسنة"""
+#     if request.method != 'POST':
+#         return JsonResponse({'success': False, 'message': 'طريقة غير مسموحة'}, status=400)
     
-    try:
-        data = json.loads(request.body)
-        item_id = data.get('item_id')
-        quantity = int(data.get('quantity', 1))
+#     try:
+#         data = json.loads(request.body)
+#         item_id = data.get('item_id')
+#         quantity = int(data.get('quantity', 1))
         
-        if not item_id:
-            return JsonResponse({
-                'success': False, 
-                'message': 'معرف العنصر مطلوب'
-            }, status=400)
+#         if not item_id:
+#             return JsonResponse({
+#                 'success': False, 
+#                 'message': 'معرف العنصر مطلوب'
+#             }, status=400)
         
-        cart = get_or_create_cart(request)
-        cart_item = get_object_or_404(CartItem, id=item_id)
+#         cart = get_or_create_cart(request)
+#         cart_item = get_object_or_404(CartItem, id=item_id)
         
-        # التحقق من الملكية
-        if cart_item.cart != cart:
-            return JsonResponse({
-                'success': False, 
-                'message': 'غير مصرح'
-            }, status=403)
+#         # التحقق من الملكية
+#         if cart_item.cart != cart:
+#             return JsonResponse({
+#                 'success': False, 
+#                 'message': 'غير مصرح'
+#             }, status=403)
         
-        if quantity <= 0:
-            # حذف العنصر إذا كانت الكمية 0 أو أقل
-            cart_item.delete()
-            message = 'تم حذف المنتج'
-        else:
-            # التحقق من المخزون
-            if cart_item.product.current_stock_quantity < quantity:
-                return JsonResponse({
-                    'success': False,
-                    'message': f'الكمية المطلوبة غير متوفرة. المتاح: {cart_item.product.current_stock_quantity}'
-                }, status=400)
+#         if quantity <= 0:
+#             # حذف العنصر إذا كانت الكمية 0 أو أقل
+#             cart_item.delete()
+#             message = 'تم حذف المنتج'
+#         else:
+#             # التحقق من المخزون
+#             if cart_item.product.current_stock_quantity < quantity:
+#                 return JsonResponse({
+#                     'success': False,
+#                     'message': f'الكمية المطلوبة غير متوفرة. المتاح: {cart_item.product.current_stock_quantity}'
+#                 }, status=400)
             
-            cart_item.quantity = quantity
-            cart_item.save()
-            message = 'تم تحديث الكمية'
+#             cart_item.quantity = quantity
+#             cart_item.save()
+#             message = 'تم تحديث الكمية'
         
-        # حساب الإجمالي الجديد
-        total = cart.total_price
+#         # حساب الإجمالي الجديد
+#         total = cart.total_price
         
-        return JsonResponse({
-            'success': True,
-            'message': message,
-            'new_total': float(total),
-            'cart_count': cart.total_items_count
-        })
+#         return JsonResponse({
+#             'success': True,
+#             'message': message,
+#             'new_total': float(total),
+#             'cart_count': cart.total_items_count
+#         })
         
-    except json.JSONDecodeError:
-        return JsonResponse({
-            'success': False, 
-            'message': 'بيانات غير صالحة'
-        }, status=400)
-    except Exception as e:
-        logger.error(f"Error in update_cart_item: {e}")
-        return JsonResponse({
-            'success': False, 
-            'message': 'حدث خطأ أثناء تحديث السلة'
-        }, status=500)
+#     except json.JSONDecodeError:
+#         return JsonResponse({
+#             'success': False, 
+#             'message': 'بيانات غير صالحة'
+#         }, status=400)
+#     except Exception as e:
+#         logger.error(f"Error in update_cart_item: {e}")
+#         return JsonResponse({
+#             'success': False, 
+#             'message': 'حدث خطأ أثناء تحديث السلة'
+#         }, status=500)
 
 
-def remove_from_cart(request):
-    """حذف منتج من السلة (AJAX) - نسخة محسنة"""
-    if request.method != 'POST':
-        return JsonResponse({'success': False, 'message': 'طريقة غير مسموحة'}, status=400)
+
+# def remove_from_cart(request):
+#     """حذف منتج من السلة (AJAX) - نسخة محسنة"""
+#     if request.method != 'POST':
+#         return JsonResponse({'success': False, 'message': 'طريقة غير مسموحة'}, status=400)
     
-    try:
-        data = json.loads(request.body)
-        item_id = data.get('item_id')
+#     try:
+#         data = json.loads(request.body)
+#         item_id = data.get('item_id')
         
-        if not item_id:
-            return JsonResponse({
-                'success': False, 
-                'message': 'معرف العنصر مطلوب'
-            }, status=400)
+#         if not item_id:
+#             return JsonResponse({
+#                 'success': False, 
+#                 'message': 'معرف العنصر مطلوب'
+#             }, status=400)
         
-        cart = get_or_create_cart(request)
-        cart_item = get_object_or_404(CartItem, id=item_id)
+#         cart = get_or_create_cart(request)
+#         cart_item = get_object_or_404(CartItem, id=item_id)
         
-        # التحقق من الملكية
-        if cart_item.cart != cart:
-            return JsonResponse({
-                'success': False, 
-                'message': 'غير مصرح'
-            }, status=403)
+#         # التحقق من الملكية
+#         if cart_item.cart != cart:
+#             return JsonResponse({
+#                 'success': False, 
+#                 'message': 'غير مصرح'
+#             }, status=403)
         
-        # حذف العنصر
-        cart_item.delete()
+#         # حذف العنصر
+#         cart_item.delete()
         
-        # حساب الإجمالي الجديد
-        total = cart.total_price
+#         # حساب الإجمالي الجديد
+#         total = cart.total_price
         
-        return JsonResponse({
-            'success': True,
-            'message': 'تم حذف المنتج',
-            'new_total': float(total),
-            'cart_count': cart.total_items_count
-        })
+#         return JsonResponse({
+#             'success': True,
+#             'message': 'تم حذف المنتج',
+#             'new_total': float(total),
+#             'cart_count': cart.total_items_count
+#         })
         
-    except json.JSONDecodeError:
-        return JsonResponse({
-            'success': False, 
-            'message': 'بيانات غير صالحة'
-        }, status=400)
-    except Exception as e:
-        logger.error(f"Error in remove_from_cart: {e}")
-        return JsonResponse({
-            'success': False, 
-            'message': 'حدث خطأ أثناء حذف المنتج'
-        }, status=500)
+#     except json.JSONDecodeError:
+#         return JsonResponse({
+#             'success': False, 
+#             'message': 'بيانات غير صالحة'
+#         }, status=400)
+#     except Exception as e:
+#         logger.error(f"Error in remove_from_cart: {e}")
+#         return JsonResponse({
+#             'success': False, 
+#             'message': 'حدث خطأ أثناء حذف المنتج'
+#         }, status=500)
 
 
-def cart_detail(request):
-    """عرض صفحة السلة - نسخة محسنة"""
-    cart = get_or_create_cart(request)
+
+# def cart_detail(request):
+#     """عرض صفحة السلة - نسخة محسنة"""
+#     cart = get_or_create_cart(request)
     
-    # حساب الإجمالي
-    total = cart.total_price
+#     # حساب الإجمالي
+#     total = cart.total_price
     
-    context = {
-        'cart': cart,
-        'cart_items': cart.items.select_related('product').all(),
-        'cart_total': total,
-        'cart_count': cart.total_items_count,
-        'title': 'سلة التسوق'
-    }
+#     context = {
+#         'cart': cart,
+#         'cart_items': cart.items.select_related('product').all(),
+#         'cart_total': total,
+#         'cart_count': cart.total_items_count,
+#         'title': 'سلة التسوق'
+#     }
     
-    return render(request, 'invoice/store/order.html', context)
+#     return render(request, 'invoice/store/order.html', context)
 
 
-def checkout_view(request):
-    """صفحة إتمام الشراء - نسخة محسنة"""
-    cart = get_or_create_cart(request)
+# def checkout_view(request):
+#     """صفحة إتمام الشراء - نسخة محسنة"""
+#     cart = get_or_create_cart(request)
     
-    if cart.total_items_count == 0:
-        messages.warning(request, 'سلة التسوق فارغة')
-        return redirect('invoice:store_front')
+#     if cart.total_items_count == 0:
+#         messages.warning(request, 'سلة التسوق فارغة')
+#         return redirect('invoice:store_front')
     
-    return render(request, 'invoice/store/checkout.html', {
-        'cart': cart,
-        'cart_items': cart.items.select_related('product').all(),
-        'cart_total': cart.total_price,
-        'title': 'إتمام الشراء'
-    })
+#     return render(request, 'invoice/store/checkout.html', {
+#         'cart': cart,
+#         'cart_items': cart.items.select_related('product').all(),
+#         'cart_total': cart.total_price,
+#         'title': 'إتمام الشراء'
+#     })
 
 
 def update_cart_item(request):
@@ -7685,10 +7700,14 @@ def api_update_product_category(request, product_id):
             from .models import Category
             product.category = get_object_or_404(Category, id=category_id)
             
-        product.save()
+        # ★★★ بند 3.7 — استخدام update_fields ★★★
+        product.save(update_fields=['category'])
         return JsonResponse({'success': True, 'message': 'تم تحديث التصنيف'})
     except Exception as e:
         return JsonResponse({'success': False, 'message': 'حدث خطأ أثناء التحديث'}, status=500)
+
+
+
 
 # ===============================================
 #  إدارة الطلبات (عرض وتحويل لفاتورة)
@@ -7722,7 +7741,16 @@ def order_detail_view(request, order_id):
 @login_required
 @permission_required('invoice.change_websiteorder', raise_exception=True)
 def convert_order_to_invoice(request, order_id):
-    """تحويل طلب المتجر إلى فاتورة بيع في نظام المحاسبة"""
+    """تحويل طلب المتجر إلى فاتورة بيع في نظام المحاسبة
+    
+    ★★★ بند 2.5 — إصلاح تعيين sale_payment_method و sale_currency ★★★
+    السلوك الجديد:
+    - تعيين sale_payment_method للطريقة النقدية الافتراضية
+    - تعيين sale_currency للعملة الأساسية
+    - استدعاء reconcile_cash_transactions بدل إنشاء CashTransaction يدوي
+    - النتيجة: حركة الصندوق تبقى محفوظة حتى بعد sale_edit لاحقاً
+    اختبار: فحص_بند_2_5.py → 6/6
+    """
     order = get_object_or_404(WebsiteOrder, id=order_id)
 
     if order.related_sale:
@@ -7731,6 +7759,16 @@ def convert_order_to_invoice(request, order_id):
 
     try:
         with transaction.atomic():
+            # ★★★ بند 2.5: تعيين طريقة الدفع النقدية الافتراضية ★★★
+            cash_method = Payment_method.objects.filter(is_cash=True).first()
+            if not cash_method:
+                cash_method = Payment_method.objects.filter(name__in=['نقداً', 'نقدا']).first()
+            
+            # ★★★ بند 2.5: تعيين العملة الأساسية الافتراضية ★★★
+            default_currency = Currency.objects.filter(is_default=True).first()
+            if not default_currency:
+                default_currency = Currency.objects.first()
+            
             sale = Sale(
                 created_by=request.user,
                 sale_customer=order.user,
@@ -7738,6 +7776,8 @@ def convert_order_to_invoice(request, order_id):
                 sale_customer_phone=order.phone,
                 sale_address=order.address,
                 sale_notes=f"طلب متجر رقم #{order.id} - {order.notes or ''}",
+                sale_payment_method=cash_method,  # ★ الإصلاح
+                sale_currency=default_currency,   # ★ الإصلاح
                 paid_amount=order.total_amount,
                 is_paid=True
             )
@@ -7748,7 +7788,7 @@ def convert_order_to_invoice(request, order_id):
                     sale=sale,
                     product=item.product,
                     item_name=item.product_name,
-                    sold_quantity=item.quantity,
+                    sold_quantity=Decimal(str(item.quantity)),
                     unit_price=item.price
                 )
                 sale_item.save()
@@ -7757,15 +7797,10 @@ def convert_order_to_invoice(request, order_id):
 
             sale.calculate_and_save_totals()
             
-            CashTransaction.objects.create(
-                transaction_date=timezone.now(),
-                amount_in=order.total_amount,
-                amount_out=Decimal('0.00'),
-                transaction_type='sale_receipt',
-                sale_invoice=sale,
-                notes=f"تحصيل نقد مقابل طلب متجر #{order.id}",
-                created_by=request.user
-            )
+            # ★★★ بند 2.5: استدعاء reconcile_cash_transactions بدل الإنشاء اليدوي ★★★
+            # هذا يضمن أن حركة الصندوق تُسجل بنفس نمط sale_create
+            # وتبقى محفوظة عند sale_edit لاحقاً (لأن payment_method معيّن)
+            sale.reconcile_cash_transactions()
 
             order.related_sale = sale
             order.status = 'processing'
@@ -7777,7 +7812,6 @@ def convert_order_to_invoice(request, order_id):
     except Exception as e:
         messages.error(request, 'حدث خطأ أثناء التحويل، يرجى المحاولة مرة أخرى.')
         return redirect('invoice:order_detail', order_id=order.id)
-
 
 
 # ===============================================

@@ -107,16 +107,15 @@ class CashTransactionForm(forms.ModelForm):
 # ===============================================
 
 
-
 class EmailSettingForm(forms.ModelForm):
     class Meta:
         model = EmailSetting
         fields = '__all__'
         widgets = {
             'email_host_password': forms.PasswordInput(render_value=True),
+            'email_use_tls': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+            'email_use_ssl': forms.CheckboxInput(attrs={'class': 'form-check-input'}),  # ★★★ بند 3.4
         }
-
-
 
 
 #================================================

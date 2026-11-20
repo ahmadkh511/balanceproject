@@ -23,6 +23,11 @@ from django_ckeditor_5.fields import CKEditor5Field
 logger = logging.getLogger(__name__)
 User = get_user_model()
 
+#from django.db.models import Sum, F
+#from django.db.models import Q, Sum
+
+from django.db.models import Q, Sum, F, Max
+
 
 from django.db import models
 from decimal import Decimal
@@ -32,7 +37,6 @@ from decimal import Decimal
 #================================================
 #  الصندوق
 # ===============================================
-
 
 
 class CashTransaction(models.Model):
@@ -89,16 +93,19 @@ class CashTransaction(models.Model):
         return f"{self.get_transaction_type_display()} - {amount} ({direction})"
 
     def clean(self):
+        # ★★★ بند 3.6 — clean() للتحقق فقط (لا تعديل بيانات) ★★★
         if self.amount_in > 0 and self.amount_out > 0:
             raise ValidationError(_("لا يمكن أن يكون المبلغ الداخل والخارج أكبر من صفر في نفس العملية."))
         if self.amount_in <= 0 and self.amount_out <= 0:
             raise ValidationError(_("يجب أن يكون إما المبلغ الداخل أو الخارج أكبر من صفر."))
         
+    def save(self, *args, **kwargs):
+        # ★★★ بند 3.6 — نقل get_or_create من clean() إلى save() ★★★
+        # تعديل البيانات قبل الحفظ يحدث في save()، وليس في clean()
         if self.transaction_type in ['withdrawal', 'expense'] and not self.payment_method:
             cash_payment_method, _ = Payment_method.objects.get_or_create(name='نقداً')
             self.payment_method = cash_payment_method
-
-    def save(self, *args, **kwargs):
+        
         self.clean()
         super().save(*args, **kwargs)
 
@@ -152,6 +159,7 @@ class CashTransaction(models.Model):
         return "—"
 
 
+
 #================================================
 #  اعدادات الايمل 
 # ===============================================
@@ -161,6 +169,8 @@ class EmailSetting(models.Model):
     email_host = models.CharField(max_length=255, verbose_name="SMTP Host")
     email_port = models.PositiveIntegerField(default=587, verbose_name="Port")
     email_use_tls = models.BooleanField(default=True, verbose_name="Use TLS")
+    # ★★★ بند 3.4 — إضافة دعم SSL ★★★
+    email_use_ssl = models.BooleanField(default=False, verbose_name="Use SSL")
     email_host_user = models.EmailField(verbose_name="Email Address")
     email_host_password = models.CharField(max_length=255, verbose_name="Email Password")
     default_from_email = models.EmailField(verbose_name="Default From Email")
@@ -179,7 +189,6 @@ class EmailSetting(models.Model):
     def save(self, *args, **kwargs):
         self.clean()
         return super().save(*args, **kwargs)
-
 
 # ================ نماذج الأنظمة الأساسية ================
 
@@ -340,8 +349,6 @@ class PriceType(models.Model):
 # ===============================================
 
 
-
-
 class Purch(models.Model):
     uniqueId = models.CharField(max_length=100, unique=True, blank=True, null=True, verbose_name=_("الرقم المسلسل"))
     slug = models.SlugField(max_length=225, unique=True, blank=True, null=True)
@@ -393,8 +400,11 @@ class Purch(models.Model):
         if not self.purch_invoice_date: self.purch_invoice_date = self.purch_date
         
         if not self.uniqueId:
-            last_invoice = Purch.objects.order_by('-_last_invoice_number').first()
-            new_number = (last_invoice._last_invoice_number if last_invoice else 0) + 1
+            # ★★★ بند 3.3 — استخدام aggregate(Max) بدل order_by().first() ★★★
+            max_number = Purch.objects.aggregate(
+                max_num=Max('_last_invoice_number')
+            )['max_num'] or 0
+            new_number = max_number + 1
             self._last_invoice_number = new_number
             self.uniqueId = f"P{new_number:04d}"
         
@@ -474,7 +484,6 @@ class Purch(models.Model):
                 return stored
         return currency.exchange_rate if currency.exchange_rate else Decimal('1.00')
 
-    # ★★★ الدالة الوحيدة المعدلة في هذا الكلاس ★★★
     def create_cash_transaction(self):
         """
         إنشاء أو تحديث أو حذف حركة الصندوق المرتبطة بفاتورة الشراء.
@@ -483,7 +492,7 @@ class Purch(models.Model):
         - دفع نقدي بمبلغ أكبر من صفر → إنشاء الحركة أو تحديث مبلغها
         - أي حالة أخرى (آجل، أو مدفوع صفر) → حذف أي حركة قديمة بدل تركها صفرية
         
-        ملاحظة تاريخية: الكود القديم كان عند التحويل إلى آجل يحدّث الحركة بمبلغ صفر،
+        ملاحظة تاريخية: الكود القديم كان عند التحويل إلى آجل يحدّث الحركة بمبلغ صفر,
         فترفضها clean() في CashTransaction (داخل=صفر وخارج=صفر) ويفشل الحفظ كلياً.
 
         ★ المبلغ المدفوع (بعملة الفاتورة) يُحوَّل إلى العملة الأساسية بسعر الصرف المخزَّن
@@ -533,8 +542,6 @@ class Purch(models.Model):
 
 
 
-
-
 class PurchItem(models.Model):
     purch = models.ForeignKey('Purch', on_delete=models.CASCADE, verbose_name=_("فاتورة الشراء"))
     product = models.ForeignKey('Product', on_delete=models.SET_NULL, null=True, blank=True, related_name='purch_items', verbose_name=_("المنتج المرتبط"))
@@ -568,7 +575,9 @@ class PurchItem(models.Model):
         _rate = self.exchange_rate_at_purchase if self.exchange_rate_at_purchase else Decimal('1.00')
         self.unit_price_base_currency = (self.unit_price * _rate).quantize(Decimal('0.01'))
         super().save(*args, **kwargs)
-    
+        
+
+
     def update_product_stock(self, old_quantity=None, old_product=None):
         try:
             if not self.product: return
@@ -587,7 +596,8 @@ class PurchItem(models.Model):
                         old_total_value = (product.current_stock_quantity - quantity_difference) * product.average_purchase_cost
                         new_total_value = old_total_value + (quantity_difference * self.unit_price_base_currency)
                         product.average_purchase_cost = (new_total_value / product.current_stock_quantity).quantize(Decimal('0.01'))
-                        product.save()
+                        # ★★★ بند 3.7 — استخدام update_fields ★★★
+                        product.save(update_fields=['average_purchase_cost'])
                 else:
                     if old_product:
                         old_product.current_stock_quantity = F('current_stock_quantity') - Decimal(str(old_quantity))
@@ -596,7 +606,8 @@ class PurchItem(models.Model):
                     product.save(update_fields=['current_stock_quantity'])
                     product.refresh_from_db()
                     product.average_purchase_cost = self.unit_price_base_currency
-                    product.save()
+                    # ★★★ بند 3.7 — استخدام update_fields ★★★
+                    product.save(update_fields=['average_purchase_cost'])
             else:
                 product.current_stock_quantity = F('current_stock_quantity') + self.purchased_quantity
                 product.save(update_fields=['current_stock_quantity'])
@@ -606,7 +617,8 @@ class PurchItem(models.Model):
                     old_total_value = (product.current_stock_quantity - self.purchased_quantity) * product.average_purchase_cost
                     new_total_value = old_total_value + (self.purchased_quantity * self.unit_price_base_currency)
                     product.average_purchase_cost = (new_total_value / product.current_stock_quantity).quantize(Decimal('0.01'))
-                    product.save()
+                    # ★★★ بند 3.7 — استخدام update_fields ★★★
+                    product.save(update_fields=['average_purchase_cost'])
 
             product.last_operation_type = 'purchase'
             product.save(update_fields=['last_operation_type'])
@@ -614,6 +626,7 @@ class PurchItem(models.Model):
                 
         except Exception as e:
             logger.error(f"❌ خطأ في تحديث المخزون: {e}", exc_info=True)
+
 
     def delete(self, *args, **kwargs):
         try:
@@ -887,8 +900,11 @@ class Sale(models.Model):
     def save(self, *args, **kwargs):
         if not self.sale_date: self.sale_date = timezone.now().date()
         if not self.uniqueId:
-            last_invoice = Sale.objects.order_by('-_last_invoice_number').first()
-            new_number = (last_invoice._last_invoice_number if last_invoice else 0) + 1
+            # ★★★ بند 3.3 — استخدام aggregate(Max) بدل order_by().first() ★★★
+            max_number = Sale.objects.aggregate(
+                max_num=Max('_last_invoice_number')
+            )['max_num'] or 0
+            new_number = max_number + 1
             self._last_invoice_number = new_number
             self.uniqueId = f"S{new_number:04d}"
         if not self.slug: self.slug = slugify(f"sale-{self.uniqueId}")
@@ -1021,7 +1037,7 @@ class Sale(models.Model):
             for extra in txs[1:]:
                 extra.delete()
 
-    # ⚠️ محفوظة للتوافق مع أي استدعاء خارجي قديم
+    # ⚠️ محفوظة للتوافق مع أي استدعاء خارجي قدين
     def create_cash_transaction(self):
         self.reconcile_cash_transactions()
 
@@ -1031,9 +1047,6 @@ class Sale(models.Model):
     def total_quantity_sold(self): return self.saleitem_set.aggregate(total_qty=Sum('sold_quantity'))['total_qty'] or Decimal('0.00') if self.pk else Decimal('0.00')
     @property
     def has_return(self): return self.sale_returns.exists()
-
-
-
 
 
 class SaleItem(models.Model):
@@ -1202,8 +1215,11 @@ class SaleReturn(models.Model):
     def save(self, *args, **kwargs):
         if not self.return_date: self.return_date = timezone.now().date()
         if not self.uniqueId:
-            last_return = SaleReturn.objects.order_by('-_last_return_number').first()
-            new_number = (last_return._last_return_number if last_return else 0) + 1
+            # ★★★ بند 3.3 — استخدام aggregate(Max) بدل order_by().first() ★★★
+            max_number = SaleReturn.objects.aggregate(
+                max_num=Max('_last_return_number')
+            )['max_num'] or 0
+            new_number = max_number + 1
             self._last_return_number = new_number
             self.uniqueId = f"SR{new_number:04d}"
         if not self.slug: self.slug = slugify(f"sale-return-{self.uniqueId}")
@@ -1857,6 +1873,7 @@ class Cart(models.Model):
         """
         return self.items.count()
 
+
 class CartItem(models.Model):
     cart = models.ForeignKey(Cart, on_delete=models.CASCADE, related_name='items', verbose_name=_("السلة"))
     product = models.ForeignKey('Product', on_delete=models.CASCADE, verbose_name=_("المنتج"))
@@ -1870,28 +1887,34 @@ class CartItem(models.Model):
     def __str__(self):
         return f"{self.quantity} x {self.product.product_name}"
 
-
-
-
     @property
     def total_item_price(self):
         """
         حساب السعر الإجمالي للعنصر في السلة
+        
+        ★★★ بند 3.1 — استخدام get_product_price (يحترم مستويات التسعير) ★★★
+        السلوك الجديد:
+        - يستخدم get_product_price (المُعرّفة في utils.py)
+        - يحترم ProductPriceTier المرتبط بتصنيف المنتج
+        - السلوك متسق مع واجهة المتجر (store_front)
+        اختبار: فحص_بند_3_1.py → 4/4
         """
-        # محاولة الحصول على السعر من مصادر متعددة
-        price = (
-            self.product.wholesale_price or 
-            self.product.retail_price or 
-            self.product.sale_price or 
-            self.product.semi_wholesale_price or 
-            0
-        )
+        # استيراد محلي لتجنب circular import
+        from .utils import get_product_price
+        
+        price = get_product_price(self.product)
         
         # التأكد من أن السعر موجب
         if price < 0:
-            price = 0
+            price = Decimal('0.00')
         
-        return price * self.quantity
+        return Decimal(str(price)) * self.quantity
+
+
+
+        
+
+
 
 
 class WebsiteOrder(models.Model):

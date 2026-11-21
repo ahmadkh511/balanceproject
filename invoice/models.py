@@ -1126,14 +1126,22 @@ class SaleItem(models.Model):
     def delete(self, *args, **kwargs):
         try:
             if self.product:
-                self.product.current_stock_quantity = F('current_stock_quantity') + self.sold_quantity
-                self.product.save(update_fields=['current_stock_quantity'])
+                # ★★★ بند 1.6 — حساب الكمية الفعّالة (المباع - المرتجع) ★★★
+                # تحصين دفاعي: لو حُذف بند عليه مرتجع (مثلاً بيع 10، مرتجع 2)
+                # الكود القديم كان يُعيد 10 للمخزون (خطأ). الكود الجديد يُعيد 8 فقط.
+                returned_qty = SaleReturnItem.objects.filter(
+                    original_sale_item=self
+                ).aggregate(total=Sum('returned_quantity'))['total'] or Decimal('0.00')
+                
+                effective_quantity = self.sold_quantity - returned_qty
+                
+                if effective_quantity > 0:
+                    self.product.current_stock_quantity = F('current_stock_quantity') + effective_quantity
+                    self.product.save(update_fields=['current_stock_quantity'])
             super().delete(*args, **kwargs)
         except Exception as e:
             logger.error(f"❌ خطأ في حذف بند البيع: {e}")
             raise
-
-
 
 class SaleItemBarcode(models.Model):
     sale_item = models.ForeignKey('SaleItem', on_delete=models.CASCADE, related_name='item_barcodes', verbose_name=_("بند البيع"))
@@ -1417,7 +1425,6 @@ class SaleReturnItemBarcode(models.Model):
 #  المنتجات و الباركود 
 # ===============================================
 
-
 class Product(models.Model):
     product_name = models.CharField(max_length=255, verbose_name=_("اسم المادة"))
     product_description = models.TextField(blank=True, verbose_name=_("وصف المادة"))
@@ -1499,14 +1506,6 @@ class Product(models.Model):
         prices = [self.retail_price, self.semi_wholesale_price, self.wholesale_price, self.sale_price]
         valid_prices = [p for p in prices if p > 0]
         return min(valid_prices) if valid_prices else self.sale_price
-    
-
-    
-
-    @property
-    def default_sale_price(self):
-        """إرجاع سعر البيع الافتراضي"""
-        return self.retail_price if self.retail_price > 0 else self.sale_price
 
     @property
     def best_available_price(self):
@@ -1534,9 +1533,6 @@ class Product(models.Model):
         # دمجها في نص واحد مع فاصل شرطة (-) لتكون مختصرة
         return " - ".join(specs_list)
     # ==========================================
-    
-
-
 
 
 

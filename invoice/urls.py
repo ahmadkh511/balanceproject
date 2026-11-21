@@ -23,9 +23,11 @@ urlpatterns = [
     path('purch/', views.purch_list, name='purch_list'),
     path('purchases/', views.purch_list, name='purchases_list'),
     path('purch/create/', views.purch_create, name='purch_create'),
-    path('purchases/create/', views.purch_create, name='purchases_create'),
+    # ★★★ بند 4.1: مسار مكرر (نفس الرابط ونفس الدالة) — علّقته للمراجعة
+    # path('purchases/create/', views.purch_create, name='purchases_create'),
     path('purch/<slug:slug>/', views.purch_detail, name='purch_detail'),
-    path('purchases/<slug:slug>/', views.purch_detail, name='purchases_detail'),
+    # ★★★ بند 4.1: مسار مكرر (نفس الرابط ونفس الدالة) — علّقته للمراجعة
+    # path('purchases/<slug:slug>/', views.purch_detail, name='purchases_detail'),
     path('purch/<slug:slug>/edit/', views.purch_edit, name='purch_edit'),
     path('purch/<slug:slug>/delete/', views.purch_delete, name='purch_delete'),
     
@@ -53,12 +55,6 @@ urlpatterns = [
 
     path('settings/label-sizes/', manage_label_sizes, name='manage_label_sizes'),
     path('settings/label-sizes/delete/<int:pk>/', delete_label_size, name='delete_label_size'),
-
-
-
-
-
-
 
     path('barcode/manage/<slug:product_slug>/', views.barcode_manage, name='barcode_manage'),
     path('barcode/delete/<int:barcode_id>/', views.barcode_delete, name='barcode_delete'),
@@ -130,7 +126,6 @@ urlpatterns = [
     
     path('pos/create/', views.pos_sale_create, name='pos_sale_create'),
 
-
     path('sales/create/', views.sale_create, name='sale_create'),
     path('sale/<slug:slug>/', views.sale_detail, name='sale_detail'),
     path('sale/edit/<slug:slug>/', views.sale_edit, name='sale_edit'),
@@ -163,8 +158,6 @@ urlpatterns = [
     path('reports/unpaid-invoices/', unpaid_invoices_report, name='unpaid_invoices_report'),
 
     path('settings/email/', views.email_settings_view, name='email_settings'),
-
-
 
 
     # ================ المتجر الإلكتروني ================
@@ -209,7 +202,6 @@ urlpatterns = [
     path('api/categories/<int:cat_id>/update/', views.api_update_category, name='api_update_category'),
     path('api/categories/<int:cat_id>/delete/', views.api_delete_category, name='api_delete_category'),
     path('api/product/<int:product_id>/update-category/', views.api_update_product_category, name='api_update_product_category'),
-    #path('api/product/<int:product_id>/update-category/', views.api_update_product_category, name='api_update_product_category'),
 
     # من اجل اشعار توفر المادة 
     path('stock-notifications/', views.admin_stock_notifications, name='admin_stock_notifications'),
@@ -217,37 +209,28 @@ urlpatterns = [
     path('api/request-notification/', views.api_request_notification, name='api_request_notification'),
 
     path('notifications/archive/', views.admin_notification_archive, name='notification_archive'),
-
     path('notifications/undo/', views.admin_undo_archive_notification, name='undo_notification'),
-
-
 
     path('api/flash-deals/', views.api_flash_deals, name='api_flash_deals'),
     path('api/flash-deals/add/', views.api_add_flash_deal, name='api_add_flash_deal'),
     path('api/flash-deals/<int:deal_id>/toggle/', views.api_toggle_flash_deal, name='api_toggle_flash_deal'),
     path('api/flash-deals/<int:deal_id>/delete/', views.api_delete_flash_deal, name='api_delete_flash_deal'),
-    path('api/add-announcement/', api_add_announcement, name='api_add_announcement'),
-
-
-
+    
+    # ★★★ بند 4.1: مسار مكرر (يستدعي api_add_announcement بدون views.) — علّقته للمراجعة
+    # path('api/add-announcement/', api_add_announcement, name='api_add_announcement'),
     path('api/add-announcement/', views.api_add_announcement, name='api_add_announcement'),
     path('api/delete-announcement/<int:ann_id>/', views.api_delete_announcement, name='api_delete_announcement'),
     path('api/update-feature/<int:feature_id>/', views.api_update_feature, name='api_update_feature'),
 
-
     path('get-product-barcodes/<int:product_id>/', views.get_product_barcodes, name='get_product_barcodes'),
-
-
     
     # من اجل كلمة المرور في نظام التسعير 
     path('save-pricing-password/', views.save_pricing_password, name='save_pricing_password'),
-    
-    path('save-pricing-password/', views.save_pricing_password, name='save_pricing_password'),
+    # ★★★ بند 4.1: مسار مكرر (نفس الرابط ونفس الدالة) — علّقته للمراجعة
+    # path('save-pricing-password/', views.save_pricing_password, name='save_pricing_password'),
 
     #path('test-backup/', views.download_backup, name='download_backup'),
     #path('test-restore/', views.upload_restore, name='upload_restore'),
-
-
 
     # مسارات النسخ الاحتياطي - أضفها مع باقي المسارات
     path('backup/', views.backup_page, name='backup_page'),
@@ -259,8 +242,4 @@ urlpatterns = [
     path('backup/factory-reset/', views.factory_reset_system, name='factory_reset_system'),
 
     path('order-confirmation/<int:order_id>/', views.order_confirmation, name='order_confirmation'),
-    
 ]
-
-
-

@@ -217,7 +217,6 @@ def purch_list(request):
 @permission_required('invoice.add_purch', raise_exception=True)
 def purch_create(request):
     """إنشاء فاتورة شراء جديدة."""
-    # ★ هل الطلب AJAX (من جافاسكريبت الفورم) أم متصفح عادي؟
     is_ajax = request.headers.get('X-Requested-With') == 'XMLHttpRequest'
 
     if request.method == 'POST':
@@ -248,7 +247,6 @@ def purch_create(request):
                 if PurchItemBarcode.objects.filter(barcode__barcode_in=bc).exists():
                     barcode_errors.append(f"الباركود '{bc}' مستخدم سابقاً في فاتورة شراء أخرى ولا يمكن تكراره.")
 
-        # ★ رسالة الخطأ إذا فشلت المعاملة الذرية بعد نجاح الفورم
         transaction_error = None
 
         if form.is_valid() and formset.is_valid() and not barcode_errors:
@@ -274,7 +272,6 @@ def purch_create(request):
                     for i, instance in enumerate(instances):
                         instance.purch = purchase
 
-                        # ★★★ سعر الصرف التاريخي: يُخزَّن في كل بند لحظة التحرير ★★★
                         if purchase.purch_currency and not purchase.purch_currency.is_default:
                             instance.exchange_rate_at_purchase = purchase.purch_currency.exchange_rate or Decimal('1.00')
                         else:
@@ -300,26 +297,25 @@ def purch_create(request):
                         elif not instance.item_name:
                             instance.item_name = product_search_value if product_search_value else "مادة غير محددة"
                         
+                        # ==========================================
+                        # التعامل الآمن مع صورة البند (SSRF Fix)
+                        # ★★★ بند 3.8 — إصلاح ثغرة SSRF في purch_create ★★★
+                        # ==========================================
                         image_field_name = f'items-{i}-purch_item_image'
-                        image_url = request.POST.get(f'items-{i}-product_image_url', '')
-                        is_auto_image = request.POST.get(f'items-{i}-is_auto_image') == 'true'
-                        is_manual_upload = request.POST.get(f'items-{i}-manual_image_upload') == 'true'
                         
                         if image_field_name in request.FILES:
                             pass 
-                        elif image_url and is_auto_image and not is_manual_upload:
+                        elif instance.product and hasattr(instance.product, 'product_image') and instance.product.product_image:
                             try:
-                                response = requests.get(image_url, timeout=10)
-                                if response.status_code == 200:
-                                    img_temp = NamedTemporaryFile(delete=True)
-                                    img_temp.write(response.content)
-                                    img_temp.flush()
-                                    filename = os.path.basename(image_url)
-                                    if not filename or '.' not in filename:
-                                        filename = f"product_{instance.product_id if instance.product else 'auto'}.jpg"
-                                    instance.purch_item_image.save(filename, File(img_temp), save=False)
+                                image_path = instance.product.product_image.name
+                                if default_storage.exists(image_path):
+                                    with default_storage.open(image_path, 'rb') as f:
+                                        filename = os.path.basename(image_path)
+                                        if not filename or '.' not in filename:
+                                            filename = f"product_{instance.product_id if instance.product else 'auto'}.jpg"
+                                        instance.purch_item_image.save(filename, File(f), save=False)
                             except Exception as e:
-                                logger.error(f"خطأ في تحميل الصورة التلقائية: {e}")
+                                logger.error(f"خطأ أمني/تقني في نسخ الصورة التلقائية للمنتج {instance.product_id}: {e}")
                         
                         instance.save()
                         
@@ -365,7 +361,6 @@ def purch_create(request):
                     
                     purchase.calculate_and_save_totals()
 
-                    # ★ الفحص المرجعي: المبلغ المدفوع مقابل الإجمالي الحقيقي المحسوب من البنود
                     if purchase.paid_amount > purchase.purch_final_total:
                         raise ValidationError(_("المبلغ المدفوع لا يمكن أن يتجاوز الإجمالي النهائي للفاتورة"))
 
@@ -382,20 +377,12 @@ def purch_create(request):
                 logger.error(f"خطأ في إنشاء فاتورة الشراء: {e}", exc_info=True)
                 transaction_error = 'حدث خطأ غير متوقع أثناء إنشاء الفاتورة، يرجى المحاولة مرة أخرى.'
 
-        # ============================================================
-        # ★★★ الوصول إلى هنا = فشل الحفظ ★★★
-        # ============================================================
         if is_ajax:
-            # إرجاع الأخطاء الحقيقية كـ JSON يعرضها الجافاسكريبت مباشرة
             error_list = []
-
             if transaction_error:
                 error_list.append(transaction_error)
-
             for error in barcode_errors:
                 error_list.append(str(error))
-
-            # أخطاء الفورم الرئيسي (مع اسم الحقل بالعربي)
             for field, errors in form.errors.items():
                 if field == '__all__':
                     for err in errors:
@@ -404,8 +391,6 @@ def purch_create(request):
                     label = (form.fields[field].label if field in form.fields else field) or field
                     for err in errors:
                         error_list.append(f"{label}: {err}")
-
-            # أخطاء بنود الفاتورة
             for i, item_form in enumerate(formset):
                 if not item_form.errors:
                     continue
@@ -417,17 +402,12 @@ def purch_create(request):
                         label = (item_form.fields[field].label if field in item_form.fields else field) or field
                         for err in errors:
                             error_list.append(f"البند {i + 1} - {label}: {err}")
-
-            # أخطاء عامة على مستوى الفورم سيت
             for err in formset.non_form_errors():
                 error_list.append(str(err))
-
             if not error_list:
                 error_list.append('لم يتم حفظ الفاتورة، يرجى مراجعة البيانات المدخلة.')
-
             return JsonResponse({'error': '؛ '.join(error_list)}, status=400)
 
-        # متصفح عادي (بدون جافاسكريبت) — نفس السلوك القديم
         for error in barcode_errors:
             messages.error(request, error)
         if transaction_error:
@@ -453,6 +433,8 @@ def purch_create(request):
         'form': form, 'formset': formset, 'products': products,
         'title': 'إنشاء فاتورة شراء جديدة'
     })
+
+
 
 
 
@@ -1542,15 +1524,8 @@ def sale_create(request):
 
                     instances = formset.save(commit=False)
                     
-                    # ✅ [حاجز الفاتورة الفارغة] منع إنشاء
-                    # فاتورة بيع بلا أي بند مملوء. الرفع هنا
-                    # داخل transaction.atomic يلغي حفظ الفاتورة
-                    # نفسها (لا يستهلك رقم تسلسلي).
                     if not instances:
-                        raise ValidationError(
-                            "لا يمكن حفظ فاتورة بيع بلا بنود — "
-                            "أضيفي بنداً واحداً على الأقل."
-                        )
+                        raise ValidationError("لا يمكن حفظ فاتورة بيع بلا بنود — أضيفي بنداً واحداً على الأقل.")
 
                     for i, instance in enumerate(instances):
                         instance.sale = sale
@@ -1576,26 +1551,22 @@ def sale_create(request):
                         
                         # ==========================================
                         # التعامل الآمن مع صورة البند (SSRF Fix)
+                        # ★★★ بند 3.8 — إصلاح ثغرة SSRF ★★★
                         # ==========================================
                         image_field_name = f'items-{i}-sale_item_image'
                         
                         if image_field_name in request.FILES:
-                            # الحالة الأولى: المستخدم قام برفع صورة يدوياً (آمن تماماً)
                             pass 
                         elif instance.product and hasattr(instance.product, 'product_image') and instance.product.product_image:
-                            # الحالة الثانية: نسخ صورة المنتج تلقائياً (محمي 100%)
                             try:
-                                # نأخذ مسار الملف مباشرة من قاعدة البيانات (وليس من الـ POST)
                                 image_path = instance.product.product_image.name
-                                
-                                # نتحقق من وجود الملف في نظام التخزين (سواء كان Local أو S3)
                                 if default_storage.exists(image_path):
-                                    # نفتح الملف بشكل آمن وبدون استخدام requests.get
                                     with default_storage.open(image_path, 'rb') as f:
                                         filename = os.path.basename(image_path)
+                                        if not filename or '.' not in filename:
+                                            filename = f"product_{instance.product_id if instance.product else 'auto'}.jpg"
                                         instance.sale_item_image.save(filename, File(f), save=False)
                             except Exception as e:
-                                # إذا فشل النسخ الآمن لسبب تقني (مثل أذونات الملفات)، نسجل الخطأ ولا نوقف الفاتورة
                                 logger.error(f"خطأ أمني/تقني في نسخ الصورة التلقائية للمنتج {instance.product_id}: {e}")
                         
                         # ==========================================
@@ -1627,9 +1598,6 @@ def sale_create(request):
                             instance.quantity_without_barcode = qty_sold_without_barcode
                             instance.sold_quantity = qty_sold_with_barcode + qty_sold_without_barcode
                             
-                            # ==========================================
-                            # التحقق الصارم من المخزون
-                            # ==========================================
                             total_stock = product.current_stock_quantity
                             available_barcodes_count = Barcode.objects.filter(product=product, status='active').count()
                             non_barcoded_stock = max(Decimal('0.00'), total_stock - Decimal(str(available_barcodes_count)))
@@ -1649,11 +1617,6 @@ def sale_create(request):
                             if errors:
                                 raise ValidationError(f"خطأ في بند '{product.product_name}': " + " | ".join(errors))
                         
-                        # ==================================================
-                        # ✅✅✅ السعر التاريخي: تثبيت عملة الفاتورة وسعرها لحظة الحفظ
-                        # كل بنود الفاتورة الجديدة تأخذ سعر صرف العملة من جدول العملات
-                        # لحظة الإنشاء، ويُخزَّن ولا يتغير لاحقاً (قاعدة القفل).
-                        # ==================================================
                         if sale.sale_currency and not sale.sale_currency.is_default:
                             instance.sale_currency = sale.sale_currency
                             instance.exchange_rate_at_sale = sale.sale_currency.exchange_rate or Decimal('1.00')
@@ -1666,9 +1629,6 @@ def sale_create(request):
                         if instance.product:
                             instance.update_product_stock()
                         
-                        # ==========================================
-                        # ربط الباركودات وتغيير حالتها
-                        # ==========================================
                         for barcode_value in valid_submitted_barcodes:
                             barcode_value = barcode_value.strip()
                             if barcode_value:
@@ -1682,16 +1642,12 @@ def sale_create(request):
                                 except Exception as e:
                                     logger.error(f"خطأ في ربط الباركود {barcode_value}: {e}")
                     
-                    # حذف البنود المحذوفة من الواجهة
                     for instance in formset.deleted_objects:
                         instance.item_barcodes.all().delete()
                         instance.delete()
                     
-                    # حساب الإجماليات المالية
                     sale.calculate_and_save_totals()
 
-                    # التحقق من المبلغ المدفوع
-                    # ✅ [تحسين] قراءة من cleaned_data (يدعم الفواصل العربية) بدلاً من POST مباشرة
                     paid_amt = form.cleaned_data.get('paid_amount') or Decimal('0.00')
                     if paid_amt > sale.sale_final_total:
                         raise ValidationError("المبلغ المدفوع لا يمكن أن يتجاوز الإجمالي النهائي للفاتورة")
@@ -1701,7 +1657,6 @@ def sale_create(request):
                     sale.is_paid = sale.balance_due <= 0
                     sale.save(update_fields=['paid_amount', 'balance_due', 'is_paid'])
 
-                    # ✅✅✅ [تغيير] تسوية حركة الصندوق بمنطق الفرق — بدل الاستدعاء القديم
                     sale.reconcile_cash_transactions()
                     
                     messages.success(request, 'تم إنشاء فاتورة البيع بنجاح وتحديث المخزون')
